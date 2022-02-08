@@ -7,5 +7,4 @@ Game: https://play.crabada.com/
 
 ### Tech Stack
 * python3
-* MetaMask wallet management
 
