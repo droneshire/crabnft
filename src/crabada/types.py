@@ -23,7 +23,7 @@ class TeamMember(TypedDict):
     damage: int
     critical: int
 
-class Game(TypedDict):
+class IdleGame(TypedDict):
     game_id: int
     winner_team_id: int
     status: Literal['open', 'close']
@@ -106,14 +106,21 @@ class Team(TypedDict):
     mine_point: int
     mine_start_time: int
     owner: Address
-    process_status: Literal['create-game', 'attack', 'reinforce-defence', 'reinforce-attack', 'settle']
+    process_status: Literal['create-game', 
+                            'attack', 
+                            'reinforce-defence', 
+                            'reinforce-attack', 
+                            'settle'
+                            ]
     status: TeamStatus
     time_point: int
 
 class CrabForLending(TypedDict):
     crabada_id: int
     id: int # it seems to be the same as crabada_id...
-    price: Wei # IMPORTANT: this is expressed as the TUS price multiplied by 10^18 (like Wei), which means that a value of 100000000000000000 is 1 TUS
+    # IMPORTANT: this is expressed as the TUS price multiplied by 10^18 
+    # (like Wei), which means that a value of 100000000000000000 is 1 TUS
+    price: Wei 
     crabada_name: str
     lender: Address
     is_being_borrowed: Literal[0, 1]
