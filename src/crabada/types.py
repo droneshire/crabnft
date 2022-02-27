@@ -44,12 +44,16 @@ class IdleGame(T.TypedDict):
     defense_crabada_number: T.Literal[3, 4, 5]
     defense_point: int
     defense_mine_point: int
+    defense_team_info: T.List[TeamMember]
+    defense_team_members: T.List[TeamMember]
     # Attack
     attack_team_id: int
     attack_team_owner: Address
     attack_crabada_number: T.Literal[3, 4, 5]
     attack_point: int
     attack_mine_point: int
+    attack_team_info: T.List[TeamMember]
+    attack_team_members: T.List[TeamMember]
     # Rewards
     tus_reward: Wei
     cra_reward: Wei
@@ -70,10 +74,6 @@ class IdleGame(T.TypedDict):
     end_time: int
     round: T.Literal[0, 1, 2, 3, 4]
     process: T.List[GameProcess]
-    attack_team_info: T.List[TeamMember]
-    defense_team_info: T.List[TeamMember]
-    defense_team_members: T.List[TeamMember]
-    attack_team_members: T.List[TeamMember]
 
 
 class Team(T.TypedDict):
