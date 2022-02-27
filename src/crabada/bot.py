@@ -87,6 +87,7 @@ class CrabadaBot:
                 team["game_id"], reinforment_crabada["crabada_id"], reinforment_crabada["price"]
             )
             tx_receipt = self.crabada_w3.getTransactionReceipt(tx_hash)
+            self.game_stats["total_tus"] -= price_tus
             if tx_receipt["status"] != 1:
                 logger.print_fail_arrow(f"Error reinforcing mine {team['game_id']}")
             else:
