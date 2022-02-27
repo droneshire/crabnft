@@ -2,6 +2,7 @@ import sys
 import typing as T
 import logging
 
+
 class Colors:
     """
     ANSI terminal colors.
@@ -17,14 +18,16 @@ class Colors:
     BOLD = "\033[1m"
     UNDERLINE = "\033[4m"
 
+
 class Prefixes:
     ARROW = chr(10236)
+
 
 def is_color_supported() -> bool:
     return hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
 
 
-def make_formatter_printer(color : Colors, prefix=None) -> T.Callable:
+def make_formatter_printer(color: Colors, prefix=None) -> T.Callable:
     game_logger = logging.getLogger(__name__)
 
     def formatter(message, *args, **kwargs):

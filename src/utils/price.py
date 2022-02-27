@@ -3,7 +3,8 @@ import typing as T
 from web3 import Web3
 from web3.types import Wei
 
-Tus = T.NewType('Tus', int)
+Tus = T.NewType("Tus", int)
+
 
 def tus_to_wei(tus: int) -> Wei:
     """
@@ -12,22 +13,25 @@ def tus_to_wei(tus: int) -> Wei:
 
     The conversion is 1 TUS = 10^18 Wei.
     """
-    return Web3.toWei(tus, 'ether')
+    return Web3.toWei(tus, "ether")
+
 
 def wei_to_tus(wei: Wei) -> Tus:
     """
     Convert Wei to TUS
     """
-    return T.cast(Tus, Web3.fromWei(wei, 'ether'))
+    return T.cast(Tus, Web3.fromWei(wei, "ether"))
+
 
 def wei_to_tus_raw(wei: Wei) -> float:
     """
     Convert Wei to TUS in float
     """
-    return Web3.fromWei(wei, 'ether')
+    return Web3.fromWei(wei, "ether")
+
 
 def wei_to_cra_raw(wei: Wei) -> float:
     """
     Convert Wei to CRA in float
     """
-    return Web3.fromWei(wei, 'ether')
+    return Web3.fromWei(wei, "ether")

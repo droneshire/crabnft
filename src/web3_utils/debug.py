@@ -5,6 +5,7 @@ from web3 import Web3
 from web3.datastructures import AttributeDict
 import pprint
 
+
 def printTxInfo(client: Web3Client, txHash: HexStr) -> None:
     """
     Get a transaction receipt and print it, together with
@@ -17,14 +18,17 @@ def printTxInfo(client: Web3Client, txHash: HexStr) -> None:
     logger.print_normal(">>> TX IS ON THE BLOCKCHAIN :-)")
     pprint.pprint(tx_receipt)
     logger.print_normal(">>> ETH SPENT")
-    logger.print_normal(Web3.fromWei(tx_receipt['effectiveGasPrice']*tx_receipt['gasUsed'], 'ether'))
+    logger.print_normal(
+        Web3.fromWei(tx_receipt["effectiveGasPrice"] * tx_receipt["gasUsed"], "ether")
+    )
+
 
 def pprintAttributeDict(attributeDict: AttributeDict[str, Any]) -> None:
     """
     Web3 often returns AttributeDict instead of simple Dictionaries;
     this function pretty prints an AttributeDict
     """
-    logger.print_normal('{')
+    logger.print_normal("{")
     for key, value in attributeDict.items():
         logger.print_normal(f"  {key} -> {pprint.pformat(value, indent=4)}")
-    logger.print_normal('}')
+    logger.print_normal("}")

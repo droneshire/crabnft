@@ -19,15 +19,15 @@ class CrabadaWeb2Client:
     list for list endpoints, a dict for specific endpoints)
     """
 
-    BASE_URL = 'https://idle-api.crabada.com/public/idle'
+    BASE_URL = "https://idle-api.crabada.com/public/idle"
 
     def get_mine(self, mineId: int, params: T.Dict[str, T.Any] = {}) -> IdleGame:
         """Get information from the given mine"""
         res = self.get_mine_raw(mineId, params)
-        return res['result']
+        return res["result"]
 
     def get_mine_raw(self, mineId: int, params: T.Dict[str, T.Any] = {}) -> T.Any:
-        url = self.BASE_URL + '/mine/' + str(mineId)
+        url = self.BASE_URL + "/mine/" + str(mineId)
         return requests.request("GET", url, params=params).json()
 
     def list_mines(self, params: T.Dict[str, T.Any] = {}) -> T.List[IdleGame]:
@@ -39,31 +39,35 @@ class CrabadaWeb2Client:
         """
         res = self.list_mines_raw(params)
         try:
-            return res['result']['data'] or []
+            return res["result"]["data"] or []
         except:
             return []
 
-    def list_my_open_mines(self, user_address: Address, params: T.Dict[str, T.Any] = {}) -> T.List[IdleGame]:
+    def list_my_open_mines(
+        self, user_address: Address, params: T.Dict[str, T.Any] = {}
+    ) -> T.List[IdleGame]:
         """
         Get all mines that belong to the given user address
         and that are open
         """
-        params['user_address'] = user_address
-        params['status'] = 'open'
+        params["user_address"] = user_address
+        params["status"] = "open"
         return self.list_mines(params)
 
-    def list_my_open_loots(self, looter_address: Address, params: [str, T.Any] = {}) -> T.List[IdleGame]:
+    def list_my_open_loots(
+        self, looter_address: Address, params: [str, T.Any] = {}
+    ) -> T.List[IdleGame]:
         """
         Get all mines that are being looted by the given looter address
         and that are open
         """
-        params.pop('user_address', None)
-        params['looter_address'] = looter_address
-        params['status'] = 'open'
+        params.pop("user_address", None)
+        params["looter_address"] = looter_address
+        params["status"] = "open"
         return self.list_mines(params)
 
     def list_mines_raw(self, params: T.Dict[str, T.Any] = {}) -> T.Any:
-        url = self.BASE_URL + '/mines'
+        url = self.BASE_URL + "/mines"
         actual_params = {
             "limit": 15,
             "page": 1,
@@ -85,32 +89,32 @@ class CrabadaWeb2Client:
         """
         res = self.list_teams_raw(user_address, params)
         try:
-            return res['result']['data'] or []
+            return res["result"]["data"] or []
         except:
             return []
 
-    def list_available_teams(self, user_address: Address, params: T.Dict[str, T.Any] = {}) -> T.List[Team]:
+    def list_available_teams(
+        self, user_address: Address, params: T.Dict[str, T.Any] = {}
+    ) -> T.List[Team]:
         """
         Get all available teams of a given user address.
         """
-        actual_params = {'is_team_available': 1}
+        actual_params = {"is_team_available": 1}
         actual_params.update(params)
         return self.list_teams(user_address, actual_params)
 
     def list_teams_raw(self, user_address: Address, params: T.Dict[str, T.Any] = {}) -> T.Any:
-        url = self.BASE_URL + '/teams'
-        actual_params = {
-            "limit": 10,
-            "page": 1,
-            "user_address": user_address
-        }
+        url = self.BASE_URL + "/teams"
+        actual_params = {"limit": 10, "page": 1, "user_address": user_address}
         actual_params.update(params)
         return requests.request("GET", url, params=actual_params).json()
 
-    def list_high_mp_crabs_for_lending(self, params: T.Dict[str, T.Any] = {}) -> T.List[CrabForLending]:
+    def list_high_mp_crabs_for_lending(
+        self, params: T.Dict[str, T.Any] = {}
+    ) -> T.List[CrabForLending]:
         params["limit"] = 100
-        params["orderBy"] = 'mine_point'
-        params["order"] = 'desc'
+        params["orderBy"] = "mine_point"
+        params["order"] = "desc"
         return self.list_crabs_for_lending(params)
 
     def list_crabs_for_lending(self, params: T.Dict[str, T.Any] = {}) -> T.List[CrabForLending]:
@@ -125,13 +129,14 @@ class CrabadaWeb2Client:
         """
         res = self.list_crabs_for_lending_raw(params)
         try:
-            return res['result']['data'] or []
+            return res["result"]["data"] or []
         except:
             return []
 
-    def get_cheapest_high_mp_crab_for_lending(self, params: T.Dict[str, T.Any] = {}) -> CrabForLending:
+    def get_cheapest_high_mp_crab_for_lending(
+        self, params: T.Dict[str, T.Any] = {}
+    ) -> CrabForLending:
         high_mp_crabs = self.list_high_mp_crabs_for_lending(params)
-
 
     def get_cheapest_crab_for_lending(self, params: T.Dict[str, T.Any] = {}) -> CrabForLending:
         """
@@ -139,30 +144,32 @@ class CrabadaWeb2Client:
         or None if no crab is found
         """
         params["limit"] = 1
-        params["orderBy"] = 'price'
-        params["order"] = 'asc'
+        params["orderBy"] = "price"
+        params["order"] = "asc"
         return first_or_none(self.list_crabs_for_lending(params))
 
-    def get_second_cheapest_crab_for_lending(self, params: T.Dict[str, T.Any] = {}) -> CrabForLending:
+    def get_second_cheapest_crab_for_lending(
+        self, params: T.Dict[str, T.Any] = {}
+    ) -> CrabForLending:
         """
         Return the second cheapest crab on the market available for lending,
         or None if no crab is found
         """
         params["limit"] = 2
-        params["orderBy"] = 'price'
-        params["order"] = 'asc'
+        params["orderBy"] = "price"
+        params["order"] = "asc"
         return second_or_none(self.list_crabs_for_lending(params))
 
     def list_crabs_for_lending_raw(self, params: T.Dict[str, T.Any] = {}) -> T.Any:
-        url = self.BASE_URL + '/crabadas/lending'
+        url = self.BASE_URL + "/crabadas/lending"
         actual_params = {
             "limit": 10,
             "page": 1,
-            "orderBy": 'price',
-            "order": 'asc',
+            "orderBy": "price",
+            "order": "asc",
         }
         actual_params.update(params)
-        return requests.request("GET", url, params=actual_params).json() # type: ignore
+        return requests.request("GET", url, params=actual_params).json()  # type: ignore
 
     @staticmethod
     def mine_has_been_attacked(mine: IdleGame) -> bool:
@@ -170,7 +177,7 @@ class CrabadaWeb2Client:
         Return True if, in the given game, the miner (the defense) has
         been attacked
         """
-        return mine['attack_team_id'] is not None
+        return mine["attack_team_id"] is not None
 
     @staticmethod
     def mine_needs_reinforcement(mine: IdleGame) -> bool:
@@ -193,7 +200,7 @@ class CrabadaWeb2Client:
         """
         Return True if the given game is open
         """
-        return mine['status'] == 'open'
+        return mine["status"] == "open"
 
     @staticmethod
     def mine_is_settled(mine: IdleGame) -> bool:
@@ -203,7 +210,7 @@ class CrabadaWeb2Client:
         # TODO: Update to account for the situation where the looting team has less
         # BP than the mining team since the beginning, in which case you get a weird
         # situation where the mine['winner_team_id'] is None. Maybe use process?
-        return get_remaining_time(mine) < 7000 or mine['winner_team_id'] is not None
+        return get_remaining_time(mine) < 7000 or mine["winner_team_id"] is not None
 
     @staticmethod
     def mine_is_finished(mine: IdleGame) -> bool:
@@ -218,14 +225,14 @@ class CrabadaWeb2Client:
         Return true if the given game is closed (meaning the
         game has been settled and the reward has been claimed)
         """
-        return mine['status'] == 'close'
+        return mine["status"] == "close"
 
     @staticmethod
     def get_remaining_time(game: IdleGame) -> int:
         """
         Seconds to the end of the given game
         """
-        return int(game['end_time'] - time.time())
+        return int(game["end_time"] - time.time())
 
     @staticmethod
     def get_remaining_time_formatted(game: IdleGame) -> str:
@@ -242,5 +249,5 @@ class CrabadaWeb2Client:
         has been claimed)
 
         If a game is already finished, it won't be considered"""
-        unfinished_games = [ g for g in games if not mine_is_finished(g) ]
-        return first_or_none(sorted(unfinished_games, key=lambda g: g['end_time']))
+        unfinished_games = [g for g in games if not mine_is_finished(g)]
+        return first_or_none(sorted(unfinished_games, key=lambda g: g["end_time"]))
