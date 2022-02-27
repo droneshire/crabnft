@@ -72,6 +72,8 @@ class IdleGame(T.TypedDict):
     process: T.List[GameProcess]
     attack_team_info: T.List[TeamMember]
     defense_team_info: T.List[TeamMember]
+    defense_team_members: T.List[TeamMember]
+    attack_team_members: T.List[TeamMember]
 
 
 class Team(T.TypedDict):
