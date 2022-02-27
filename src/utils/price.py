@@ -1,10 +1,11 @@
-from typing import cast
+import typing as T
+
 from web3 import Web3
 from web3.types import Wei
 
-from src.common.types import Tus
+Tus = T.NewType('Tus', int)
 
-def tusToWei(tus: int) -> Wei:
+def tus_to_wei(tus: int) -> Wei:
     """
     Convert TUS to Wei; this is required before making comparisons
     because the Crabada APIs (both Web2 and Web3) always return Wei.
@@ -13,8 +14,20 @@ def tusToWei(tus: int) -> Wei:
     """
     return Web3.toWei(tus, 'ether')
 
-def weiToTus(wei: Wei) -> Tus:
+def wei_to_tus(wei: Wei) -> Tus:
     """
     Convert Wei to TUS
     """
-    return cast(Tus, Web3.fromWei(wei, 'ether'))
+    return T.cast(Tus, Web3.fromWei(wei, 'ether'))
+
+def wei_to_tus_raw(wei: Wei) -> float:
+    """
+    Convert Wei to TUS in float
+    """
+    return Web3.fromWei(wei, 'ether')
+
+def wei_to_cra_raw(wei: Wei) -> float:
+    """
+    Convert Wei to CRA in float
+    """
+    return Web3.fromWei(wei, 'ether')

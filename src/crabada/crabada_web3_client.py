@@ -1,11 +1,12 @@
-from typing import cast
-import json
-from eth_typing import Address
-from web3.types import TxParams, Wei
-from src.libs.Web3Client.Web3Client import Web3Client
-from src.libs.Web3Client.AvalancheCWeb3Client import AvalancheCWeb3Client
-from eth_typing.encoding import HexStr
 import os
+import json
+import typing as T
+
+from eth_typing import Address
+from eth_typing.encoding import HexStr
+from web3.types import TxParams, Wei
+from web3_utils.web3_client import Web3Client
+from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 
 class CrabadaWeb3Client(AvalancheCWeb3Client):
     """
@@ -16,50 +17,51 @@ class CrabadaWeb3Client(AvalancheCWeb3Client):
     https://snowtrace.io/address/0x82a85407bd612f52577909f4a58bfc6873f14da8#tokentxns
     """
 
-    contractAddress = cast(Address, '0x82a85407bd612f52577909f4a58bfc6873f14da8')
-    abiDir = os.path.dirname(os.path.realpath(__file__)) + '/abi'
-    abi = Web3Client.getContractAbiFromFile(abiDir + '/abi-crabada.json')
+    contractAddress = T.cast(Address, '0x82a85407bd612f52577909f4a58bfc6873f14da8')
+    this_dir = os.path.dirname(os.path.realpath(__file__))
+    abi_dir = os.path.join(os.path.dirname(this_dir), "web3_utils", "abi", "abi-crabada.json")
+    abi = Web3Client.getContractAbiFromFile(abi_dir)
 
-    def startGame(self, teamId: int) -> HexStr:
+    def start_game(self, team_id: int) -> HexStr:
         """
         Send crabs to mine
         """
-        tx: TxParams = self.buildContractTransaction(self.contract.functions.startGame(teamId))
+        tx: TxParams = self.buildContractTransaction(self.contract.functions.startGame(team_id))
         return self.signAndSendTransaction(tx)
 
-    def attack(self, gameId: int, teamId: int) -> HexStr:
+    def attack(self, game_id: int, team_id: int) -> HexStr:
         """
         Attack an open mine
         """
-        tx: TxParams = self.buildContractTransaction(self.contract.functions.attack(gameId, teamId))
+        tx: TxParams = self.buildContractTransaction(self.contract.functions.attack(game_id, team_id))
         return self.signAndSendTransaction(tx)
 
-    def closeGame(self, gameId: int) -> HexStr:
+    def close_game(self, game_id: int) -> HexStr:
         """
         Close mining game, claim reward & send crabs back home
         """
-        tx: TxParams = self.buildContractTransaction(self.contract.functions.closeGame(gameId))
+        tx: TxParams = self.buildContractTransaction(self.contract.functions.closeGame(game_id))
         return self.signAndSendTransaction(tx)
 
-    def settleGame(self, gameId: int) -> HexStr:
+    def settle_game(self, game_id: int) -> HexStr:
         """
         Close looting game, claim reward & send crabs back home
         """
-        tx: TxParams = self.buildContractTransaction(self.contract.functions.settleGame(gameId))
+        tx: TxParams = self.buildContractTransaction(self.contract.functions.settleGame(game_id))
         return self.signAndSendTransaction(tx)
 
-    def reinforceDefense(self, gameId: int, crabadaId: int, borrowPrice: Wei) -> HexStr:
+    def reinforce_defense(self, game_id: int, crabadaId: int, borrowPrice: Wei) -> HexStr:
         """
         Hire a crab from the tavern to reinforce the mining team; the
         price must be expressed in Wei (1 TUS = 10^18 Wei)
         """
-        tx: TxParams = self.buildContractTransaction(self.contract.functions.reinforceDefense(gameId, crabadaId, borrowPrice))
+        tx: TxParams = self.buildContractTransaction(self.contract.functions.reinforceDefense(game_id, crabadaId, borrowPrice))
         return self.signAndSendTransaction(tx)
 
-    def reinforceAttack(self, gameId: int, crabadaId: int, borrowPrice: Wei) -> HexStr:
+    def reinforce_attack(self, game_id: int, crabadaId: int, borrowPrice: Wei) -> HexStr:
         """
         Hire a crab from the tavern to reinforce the looting team;
         the price must be expressed in Wei (1 TUS = 10^18 Wei)
         """
-        tx: TxParams = self.buildContractTransaction(self.contract.functions.reinforceAttack(gameId, crabadaId, borrowPrice))
+        tx: TxParams = self.buildContractTransaction(self.contract.functions.reinforceAttack(game_id, crabadaId, borrowPrice))
         return self.signAndSendTransaction(tx)

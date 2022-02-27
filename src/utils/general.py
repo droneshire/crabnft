@@ -1,6 +1,6 @@
-from typing import Any, Dict, List
+import typing as T
 
-def getPrettySeconds(s: int) -> str:
+def get_pretty_seconds(s: int) -> str:
     """Given an amount of seconds, return a formatted string with
     hours, minutes and seconds; taken from
     https://stackoverflow.com/a/775075/2972183"""
@@ -8,7 +8,7 @@ def getPrettySeconds(s: int) -> str:
     h, m = divmod(m, 60)
     return f'{h:d}h:{m:02d}m:{s:02d}s'
 
-def firstOrNone(l: List[Any]) -> Any:
+def first_or_none(l: T.List[T.Any]) -> T.Any:
     """Return the first element of a list or None
     if 1) it is not set or 2) it is falsey"""
     try:
@@ -16,7 +16,7 @@ def firstOrNone(l: List[Any]) -> Any:
     except:
         return None
 
-def secondOrNone(l: List[Any]) -> Any:
+def second_or_none(l: T.List[T.Any]) -> T.Any:
     """Return the second element of a list or None
     if 1) it is not set or 2) it is falsey"""
     try:
@@ -24,7 +24,7 @@ def secondOrNone(l: List[Any]) -> Any:
     except:
         return None
 
-def thirdOrNone(l: List[Any]) -> Any:
+def third_or_none(l: T.List[T.Any]) -> T.Any:
     """Return the third element of a list or None
     if 1) it is not set or 2) it is falsey"""
     try:
@@ -32,7 +32,14 @@ def thirdOrNone(l: List[Any]) -> Any:
     except:
         return None
 
-def fourthOrNone(l: List[Any]) -> Any:
+def third_or_better(l: T.List[T.Any]) -> T.Any:
+    """Return the third element of a list or lower """
+    for i in range(3):
+        if len(l) >= i + 1:
+            return l[i]
+    return None
+
+def fourth_or_none(l: T.List[T.Any]) -> T.Any:
     """Return the fourth element of a list or None
     if 1) it is not set or 2) it is falsey"""
     try:
@@ -40,8 +47,8 @@ def fourthOrNone(l: List[Any]) -> Any:
     except:
         return None
 
-def findInList(l: List[Dict[str, Any]], k: str, v: Any) -> Any:
+def find_in_list(l: T.List[T.Dict[str, T.Any]], k: str, v: T.Any) -> T.Any:
     """
     Search a list of dictionaries for a specific one
     """
-    return firstOrNone([i for i in l if i[k] == v])
+    return first_or_none([i for i in l if i[k] == v])

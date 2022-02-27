@@ -1,6 +1,8 @@
 from __future__ import annotations
-from src.libs.Web3Client.Web3Client import Web3Client
+
 from web3.middleware import geth_poa_middleware
+
+from web3_utils.web3_client import Web3Client
 
 class AvalancheCWeb3Client(Web3Client):
     """
