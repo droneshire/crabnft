@@ -188,9 +188,16 @@ class CrabadaWeb2Client:
         if not CrabadaWeb2Client().mine_has_been_attacked(mine):
             return False
 
+        if mine["winner_team_id"] is not None:
+            return False
+
         action = mine["process"][-1]["action"]
         if action not in ["attack", "reinforce-attack"]:
             return False
+
+        if len(mine["defense_team_info"]) >= 5:
+            return False
+
         # we only indicate that we can reinforce if there's sufficient time
         # to actually reinforce, we assume 60 here for now
         return CrabadaWeb2Client().get_remaining_time(mine) > 60

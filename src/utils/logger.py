@@ -64,4 +64,5 @@ print_bold = make_formatter_printer(Colors.BOLD)
 print_normal = make_formatter_printer(Colors.ENDC)
 
 print_ok_arrow = make_formatter_printer(Colors.OKGREEN, Prefixes.ARROW)
-print_fail_arrow = make_formatter_printer(Colors.OKGREEN, Prefixes.ARROW)
+
+print_fail_arrow = make_formatter_printer(Colors.FAIL, Prefixes.ARROW)

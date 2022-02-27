@@ -53,6 +53,7 @@ class CrabadaBot:
                 logger.print_fail(f"Error starting mine for team {team['team_id']}")
             else:
                 logger.print_ok(f"Successfully started mine for team {team['team_id']}")
+            time.sleep(2.0)
 
     def _check_and_maybe_reinforce_mines(self) -> None:
         teams = self.crabada_w2.list_teams(self.address)
@@ -90,6 +91,7 @@ class CrabadaBot:
                 logger.print_fail_arrow(f"Error reinforcing mine {team['game_id']}")
             else:
                 logger.print_ok_arrow(f"Successfully reinforced mine {team['game_id']}")
+            time.sleep(2.0)
 
     def _check_and_maybe_close_mines(self) -> None:
         teams = self.crabada_w2.list_teams(self.address)
@@ -98,15 +100,18 @@ class CrabadaBot:
                 continue
 
             team_mine = self.crabada_w2.get_mine(team["game_id"])
-            if self.crabada_w2.mine_is_finished(team_mine):
-                self._update_bot_stats(team_mine)
-                logger.print_normal(f"Attempting to close game {team['game_id']}")
-                tx_hash = self.crabada_w3.close_game(team["game_id"])
-                tx_receipt = self.crabada_w3.getTransactionReceipt(tx_hash)
-                if tx_receipt["status"] != 1:
-                    logger.print_fail_arrow(f"Error closing mine {team['game_id']}")
-                else:
-                    logger.print_ok_arrow(f"Successfully closed mine {team['game_id']}")
+            if not self.crabada_w2.mine_is_finished(team_mine):
+                continue
+
+            self._update_bot_stats(team, team_mine)
+            logger.print_normal(f"Attempting to close game {team['game_id']}")
+            tx_hash = self.crabada_w3.close_game(team["game_id"])
+            tx_receipt = self.crabada_w3.getTransactionReceipt(tx_hash)
+            if tx_receipt["status"] != 1:
+                logger.print_fail_arrow(f"Error closing mine {team['game_id']}")
+            else:
+                logger.print_ok_arrow(f"Successfully closed mine {team['game_id']}")
+            time.sleep(2.0)
 
     def _update_bot_stats(self, team: Team, mine: IdleGame) -> None:
         if mine["winner_team_id"] == team["team_id"]:
@@ -114,8 +119,8 @@ class CrabadaBot:
         else:
             self.game_stats["losses"] += 1
 
-        game_stats["total_tus"] += wei_to_tus_raw(mine["miner_tus_reward"])
-        game_stats["total_cra"] += wei_to_cra_raw(mine["miner_cra_reward"])
+        self.game_stats["total_tus"] += wei_to_tus_raw(mine["miner_tus_reward"])
+        self.game_stats["total_cra"] += wei_to_cra_raw(mine["miner_cra_reward"])
 
     def _print_bot_stats(self) -> None:
         logger.print_normal("\n")

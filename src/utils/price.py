@@ -27,11 +27,11 @@ def wei_to_tus_raw(wei: Wei) -> float:
     """
     Convert Wei to TUS in float
     """
-    return Web3.fromWei(wei, "ether")
+    return T.cast(float, float(Web3.fromWei(wei, "ether")))
 
 
 def wei_to_cra_raw(wei: Wei) -> float:
     """
     Convert Wei to CRA in float
     """
-    return Web3.fromWei(wei, "ether")
+    return T.cast(float, float(Web3.fromWei(wei, "ether")))
