@@ -21,6 +21,7 @@ class CrabadaWeb2Client:
     """
 
     BASE_URL = "https://idle-api.crabada.com/public/idle"
+    MIN_TIME_LEFT_TO_REINFORCE = 60 * 2
 
     def get_mine(self, mine_id: int, params: T.Dict[str, T.Any] = {}) -> IdleGame:
         """Get information from the given mine"""
@@ -192,16 +193,16 @@ class CrabadaWeb2Client:
         Return True if, in the given game, the miner (the defense) needs
         to reinforce the mine from an attacker
         """
-        if not CrabadaWeb2Client().mine_is_open(mine):
+        if not CrabadaWeb2Client.mine_is_open(mine):
             return False
 
-        if CrabadaWeb2Client().mine_is_finished(mine):
+        if CrabadaWeb2Client.mine_is_finished(mine):
             return False
 
-        if CrabadaWeb2Client().mine_is_settled(mine):
+        if CrabadaWeb2Client.mine_is_settled(mine):
             return False
 
-        if not CrabadaWeb2Client().mine_has_been_attacked(mine):
+        if not CrabadaWeb2Client.mine_has_been_attacked(mine):
             return False
 
         action = mine["process"][-1]["action"]
@@ -213,7 +214,10 @@ class CrabadaWeb2Client:
 
         # we only indicate that we can reinforce if there's sufficient time
         # to actually reinforce, we assume 60 here for now
-        return CrabadaWeb2Client().get_remaining_time(mine) > 60
+        return (
+            CrabadaWeb2Client.get_remaining_time(mine)
+            > CrabadaWeb2Client.MIN_TIME_LEFT_TO_REINFORCE
+        )
 
     @staticmethod
     def mine_is_open(mine: IdleGame) -> bool:
@@ -231,8 +235,7 @@ class CrabadaWeb2Client:
         # BP than the mining team since the beginning, in which case you get a weird
         # situation where the mine['winner_team_id'] is None. Maybe use process?
         return (
-            CrabadaWeb2Client().get_remaining_time(mine) < 7000
-            or mine["winner_team_id"] is not None
+            CrabadaWeb2Client.get_remaining_time(mine) < 7000 or mine["winner_team_id"] is not None
         )
 
     @staticmethod
@@ -240,7 +243,7 @@ class CrabadaWeb2Client:
         """
         Return true if the given game is past its end_time
         """
-        return CrabadaWeb2Client().get_remaining_time(mine) <= 0
+        return CrabadaWeb2Client.get_remaining_time(mine) <= 0
 
     @staticmethod
     def mine_is_closed(mine: IdleGame) -> bool:
@@ -262,7 +265,7 @@ class CrabadaWeb2Client:
         """
         Hours, minutes and seconds to the end of the given game
         """
-        return get_pretty_seconds(CrabadaWeb2Client().get_remaining_time(game))
+        return get_pretty_seconds(CrabadaWeb2Client.get_remaining_time(game))
 
     @staticmethod
     def get_next_mine_to_finish(games: T.List[IdleGame]) -> IdleGame:

@@ -15,6 +15,8 @@ from utils.price import tus_to_wei, wei_to_tus, wei_to_cra_raw, wei_to_tus_raw
 
 class CrabadaBot:
     AVAX_NODE_URL = "https://api.avax.network/ext/bc/C/rpc"
+    TIME_BETWEEN_TRANSACTIONS = 5.0
+    TIME_BETWEEN_EACH_UPDATE = 30.0
 
     def __init__(self, user: str, config: UserConfig, log_dir: str, dry_run: bool) -> None:
         self.user = user
@@ -69,7 +71,7 @@ class CrabadaBot:
                 logger.print_fail(f"Error starting mine for team {team['team_id']}")
             else:
                 logger.print_ok(f"Successfully started mine for team {team['team_id']}")
-            time.sleep(2.0)
+            time.sleep(self.TIME_BETWEEN_TRANSACTIONS)
 
     def _check_and_maybe_reinforce_mines(self) -> None:
         teams = self.crabada_w2.list_teams(self.address)
@@ -121,7 +123,7 @@ class CrabadaBot:
                 logger.print_ok_arrow(f"Successfully reinforced mine {team['game_id']}")
                 self.game_stats["total_tus"] -= price_tus
                 self.updated_game_stats = True
-            time.sleep(2.0)
+            time.sleep(self.TIME_BETWEEN_TRANSACTIONS)
 
     def _check_and_maybe_close_mines(self) -> None:
         teams = self.crabada_w2.list_teams(self.address)
@@ -141,7 +143,7 @@ class CrabadaBot:
             else:
                 logger.print_ok_arrow(f"Successfully closed mine {team['game_id']}")
                 self._update_bot_stats(team, team_mine)
-            time.sleep(2.0)
+            time.sleep(self.TIME_BETWEEN_TRANSACTIONS)
 
     def _update_bot_stats(self, team: Team, mine: IdleGame) -> None:
         if mine["winner_team_id"] == team["team_id"]:
@@ -168,6 +170,7 @@ class CrabadaBot:
         try:
             while True:
                 logger.print_normal("=" * 60)
+                logger.print_ok(f"User: {self.user.upper()}")
                 self._print_mine_status()
                 self._check_and_maybe_start_mines()
                 self._check_and_maybe_reinforce_mines()
@@ -176,9 +179,13 @@ class CrabadaBot:
                     self.updated_game_stats = False
                     self._print_bot_stats()
 
-                time.sleep(5.0)
+                time.sleep(self.TIME_BETWEEN_EACH_UPDATE)
         finally:
             logger.print_fail("Stopping bot...")
 
     def end(self) -> None:
-        logger.print_ok_blue(f"Exiting bot for {self.user}...")
+        logger.print_normal(f"Exiting bot for {self.user}...")
+
+        self._print_bot_stats()
+        with open(self.game_stats_file, "w") as outfile:
+            json.dump(self.game_stats, outfile, indent=4, sort_keys=True)
