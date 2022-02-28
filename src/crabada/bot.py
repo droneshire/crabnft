@@ -164,7 +164,7 @@ class CrabadaBot:
                 logger.print_fail_arrow(f"Error reinforcing mine {team['game_id']}")
             else:
                 logger.print_ok_arrow(f"Successfully reinforced mine {team['game_id']}")
-                self.game_stats["total_tus"] -= price_tus
+                self.game_stats["total_tus_earned"] -= price_tus
                 self.game_stats["reinforcement_tus"] += price_tus
                 self.updated_game_stats = True
             time.sleep(self.TIME_BETWEEN_TRANSACTIONS)
@@ -197,8 +197,8 @@ class CrabadaBot:
         else:
             self.game_stats["losses"] += 1
 
-        self.game_stats["total_tus"] += wei_to_tus_raw(mine["miner_tus_reward"])
-        self.game_stats["total_cra"] += wei_to_cra_raw(mine["miner_cra_reward"])
+        self.game_stats["total_tus_earned"] += wei_to_tus_raw(mine["miner_tus_reward"])
+        self.game_stats["total_cra_earned"] += wei_to_cra_raw(mine["miner_cra_reward"])
 
         self.game_stats["commission_tus"] += (
             wei_to_tus_raw(mine["miner_tus_reward"]) * self.config["commission_percent_per_mine"]

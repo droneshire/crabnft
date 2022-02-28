@@ -21,8 +21,8 @@ class Faction:
 
 
 class GameStats(T.TypedDict):
-    total_tus: float
-    total_cra: float
+    total_tus_earned: float
+    total_cra_earned: float
     wins: int
     losses: int
     commission_tus: float
@@ -30,7 +30,12 @@ class GameStats(T.TypedDict):
 
 
 NULL_GAME_STATS = GameStats(
-    total_tus=0.0, total_cra=0.0, wins=0, losses=0, commission_tus=0.0, reinforcement_tus=0.0
+    total_tus_earned=0.0,
+    total_cra_earned=0.0,
+    wins=0,
+    losses=0,
+    commission_tus=0.0,
+    reinforcement_tus=0.0,
 )
 
 
