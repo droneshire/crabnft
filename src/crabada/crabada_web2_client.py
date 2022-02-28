@@ -5,8 +5,9 @@ import time
 
 from eth_typing import Address
 
-from utils.general import first_or_none, second_or_none, third_or_none, get_pretty_seconds
-from crabada.types import CrabForLending, IdleGame, Team
+from crabada.types import CrabForLending, IdleGame, LendingCategories, Team
+from utils.general import first_or_none, third_or_better, get_pretty_seconds
+from utils.price import wei_to_tus, Tus
 
 
 class CrabadaWeb2Client:
@@ -105,15 +106,23 @@ class CrabadaWeb2Client:
 
     def list_teams_raw(self, user_address: Address, params: T.Dict[str, T.Any] = {}) -> T.Any:
         url = self.BASE_URL + "/teams"
-        actual_params = {"limit": 10, "page": 1, "user_address": user_address}
+        actual_params = {"limit": 20, "page": 1, "user_address": user_address}
         actual_params.update(params)
         return requests.request("GET", url, params=actual_params).json()
 
     def list_high_mp_crabs_for_lending(
         self, params: T.Dict[str, T.Any] = {}
     ) -> T.List[CrabForLending]:
-        params["limit"] = 100
+        params["limit"] = 50
         params["orderBy"] = "mine_point"
+        params["order"] = "desc"
+        return self.list_crabs_for_lending(params)
+
+    def list_high_bp_crabs_for_lending(
+        self, params: T.Dict[str, T.Any] = {}
+    ) -> T.List[CrabForLending]:
+        params["limit"] = 50
+        params["orderBy"] = "battle_point"
         params["order"] = "desc"
         return self.list_crabs_for_lending(params)
 
@@ -133,32 +142,30 @@ class CrabadaWeb2Client:
         except:
             return []
 
-    def get_cheapest_high_mp_crab_for_lending(
-        self, params: T.Dict[str, T.Any] = {}
-    ) -> CrabForLending:
-        high_mp_crabs = self.list_high_mp_crabs_for_lending(params)
-
-    def get_cheapest_crab_for_lending(self, params: T.Dict[str, T.Any] = {}) -> CrabForLending:
-        """
-        Return the cheapest crab on the market available for lending,
-        or None if no crab is found
-        """
-        params["limit"] = 1
-        params["orderBy"] = "price"
-        params["order"] = "asc"
-        return first_or_none(self.list_crabs_for_lending(params))
-
-    def get_second_cheapest_crab_for_lending(
-        self, params: T.Dict[str, T.Any] = {}
+    def get_cheapest_best_crab_from_list_for_lending(
+        self, crabs: T.List[CrabForLending], max_tus: Tus, lending_category: LendingCategories
     ) -> CrabForLending:
         """
-        Return the second cheapest crab on the market available for lending,
-        or None if no crab is found
+        From a list of crabs, pick the one with the best characteristic for the
+        cheapest price
         """
-        params["limit"] = 2
-        params["orderBy"] = "price"
-        params["order"] = "asc"
-        return second_or_none(self.list_crabs_for_lending(params))
+        affordable_crabs = [c for c in crabs if wei_to_tus(c["price"]) < max_tus]
+        sorted_affordable_crabs = sorted(
+            affordable_crabs, key=lambda c: (-c[lending_category], c["price"])
+        )
+        return third_or_better(sorted_affordable_crabs)
+
+    def get_best_high_mp_crab_for_lending(self, max_tus: Tus) -> CrabForLending:
+        high_mp_crabs = self.list_high_mp_crabs_for_lending()
+        return self.get_cheapest_best_crab_from_list_for_lending(
+            high_mp_crabs, max_tus, "mine_point"
+        )
+
+    def get_best_high_bp_crab_for_lending(self, max_tus: Tus) -> CrabForLending:
+        high_bp_crabs = self.list_high_bp_crabs_for_lending()
+        return self.get_cheapest_best_crab_from_list_for_lending(
+            high_bp_crabs, max_tus, "battle_point"
+        )
 
     def list_crabs_for_lending_raw(self, params: T.Dict[str, T.Any] = {}) -> T.Any:
         url = self.BASE_URL + "/crabadas/lending"
@@ -185,10 +192,16 @@ class CrabadaWeb2Client:
         Return True if, in the given game, the miner (the defense) needs
         to reinforce the mine from an attacker
         """
-        if not CrabadaWeb2Client().mine_has_been_attacked(mine):
+        if not CrabadaWeb2Client().mine_is_open(mine):
             return False
 
-        if mine["winner_team_id"] is not None:
+        if CrabadaWeb2Client().mine_is_finished(mine):
+            return False
+
+        if CrabadaWeb2Client().mine_is_settled(mine):
+            return False
+
+        if not CrabadaWeb2Client().mine_has_been_attacked(mine):
             return False
 
         action = mine["process"][-1]["action"]
@@ -217,7 +230,10 @@ class CrabadaWeb2Client:
         # TODO: Update to account for the situation where the looting team has less
         # BP than the mining team since the beginning, in which case you get a weird
         # situation where the mine['winner_team_id'] is None. Maybe use process?
-        return get_remaining_time(mine) < 7000 or mine["winner_team_id"] is not None
+        return (
+            CrabadaWeb2Client().get_remaining_time(mine) < 7000
+            or mine["winner_team_id"] is not None
+        )
 
     @staticmethod
     def mine_is_finished(mine: IdleGame) -> bool:

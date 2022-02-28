@@ -39,6 +39,7 @@ class Web3Client:
     ----------
     contractChecksumAddress: str = None
     w3: Web3 = None
+    nonce: Nonce = None
     contract: Contract = None
     """
 
@@ -103,7 +104,14 @@ class Web3Client:
         if self.dry_run:
             return ""
 
-        tx_hash = self.w3.eth.send_raw_transaction(signedTx.rawTransaction)
+        try:
+            tx_hash = self.w3.eth.send_raw_transaction(signedTx.rawTransaction)
+            self.nonce = self.getNonce()
+        except ValueError as exception:
+            if exception["message"].starts_with("nonce too low:"):
+                self.nonce += 1
+            else:
+                raise ValueError
         return self.w3.toHex(tx_hash)
 
     def signAndSendTransaction(self, tx: TxParams) -> HexStr:
@@ -193,6 +201,7 @@ class Web3Client:
         """
         self.nodeUri = nodeUri
         self.w3 = self.getProvider()
+        self.nonce = self.getNonce()
         # Set the contract if possible, e.g. if the subclass defines address & ABI.
         try:
             self.setContract(address=self.contractAddress, abi=self.abi)
@@ -201,6 +210,9 @@ class Web3Client:
         return self
 
     def setCredentials(self, user_address: Address, privateKey: str) -> Web3Client:
+        """
+        Set credentials, must be set before setNodeUri
+        """
         self.user_address = user_address
         self.privateKey = privateKey
         return self

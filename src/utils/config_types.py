@@ -14,3 +14,4 @@ class UserConfig(T.TypedDict):
     mining_teams: T.List[MiningTeam]
     max_gas_price: float
     max_reinforcement_price_tus: Tus
+    max_reinforce_bp_delta: int

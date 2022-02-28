@@ -1,4 +1,5 @@
 import typing as T
+from enum import Enum
 from eth_typing import Address
 from web3.types import Wei
 
@@ -6,6 +7,17 @@ from web3.types import Wei
 Possible states for a team
 """
 TeamStatus = T.Literal["MINING", "LOOTING", "AVAILABLE"]
+LendingCategories = T.Literal["mine_point", "battle_point", "price"]
+
+
+class Faction:
+    ABYSS = "ABYSS"
+    FAERIES = "FAERIES"
+    LUX = "LUX"
+    MACHINE = "MACHINE"
+    ORE = "ORE"
+    TRENCH = "TRENCH"
+    NO_FACTION = "NO_FACTION"
 
 
 class GameStats(T.TypedDict):
@@ -46,6 +58,7 @@ class IdleGame(T.TypedDict):
     defense_mine_point: int
     defense_team_info: T.List[TeamMember]
     defense_team_members: T.List[TeamMember]
+    defense_team_faction: Faction
     # Attack
     attack_team_id: int
     attack_team_owner: Address
@@ -54,6 +67,7 @@ class IdleGame(T.TypedDict):
     attack_mine_point: int
     attack_team_info: T.List[TeamMember]
     attack_team_members: T.List[TeamMember]
+    attack_team_faction: Faction
     # Rewards
     tus_reward: Wei
     cra_reward: Wei
@@ -129,6 +143,7 @@ class Team(T.TypedDict):
     ]
     status: TeamStatus
     time_point: int
+    faction: Faction
 
 
 class CrabForLending(T.TypedDict):

@@ -4,11 +4,6 @@ import logging
 
 
 class Colors:
-    """
-    ANSI terminal colors.
-    See: http://stackoverflow.com/questions/287871/print-in-terminal-with-colors-using-python
-    """
-
     HEADER = "\033[95m"
     OKBLUE = "\033[94m"
     OKGREEN = "\033[92m"
@@ -27,7 +22,7 @@ def is_color_supported() -> bool:
     return hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
 
 
-def make_formatter_printer(color: Colors, prefix=None) -> T.Callable:
+def make_formatter_printer(color: Colors, log_level=logging.INFO, prefix=None) -> T.Callable:
     game_logger = logging.getLogger(__name__)
 
     def formatter(message, *args, **kwargs):
@@ -44,7 +39,13 @@ def make_formatter_printer(color: Colors, prefix=None) -> T.Callable:
         return formatted_text
 
     def printer(message, *args, **kwargs):
-        game_logger.info(message)
+        if log_level == logging.DEBUG:
+            game_logger.debug(message)
+        elif log_level == logging.CRITICAL:
+            game_logger.critical(message)
+        else:
+            game_logger.info(message)
+
         print(formatter(message, *args, **kwargs))
         sys.stdout.flush()
 
@@ -63,6 +64,6 @@ print_bold = make_formatter_printer(Colors.BOLD)
 
 print_normal = make_formatter_printer(Colors.ENDC)
 
-print_ok_arrow = make_formatter_printer(Colors.OKGREEN, Prefixes.ARROW)
+print_ok_arrow = make_formatter_printer(Colors.OKGREEN, prefix=Prefixes.ARROW)
 
-print_fail_arrow = make_formatter_printer(Colors.FAIL, Prefixes.ARROW)
+print_fail_arrow = make_formatter_printer(Colors.FAIL, prefix=Prefixes.ARROW)

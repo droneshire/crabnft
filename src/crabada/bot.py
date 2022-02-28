@@ -3,6 +3,7 @@ import typing as T
 
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
+from crabada.factional_advantage import get_faction_adjusted_battle_point
 from crabada.types import CrabForLending, GameStats, IdleGame, Team
 from utils import logger
 from utils.config_types import UserConfig
@@ -21,8 +22,8 @@ class CrabadaBot:
             CrabadaWeb3Client,
             (
                 CrabadaWeb3Client()
-                .setNodeUri(self.AVAX_NODE_URL)
                 .setCredentials(config["address"], config["private_key"])
+                .setNodeUri(self.AVAX_NODE_URL)
             ).setDryRun(dry_run),
         )
         self.crabada_w2 = CrabadaWeb2Client()
@@ -60,38 +61,50 @@ class CrabadaBot:
         for team in teams:
             team_mine = self.crabada_w2.get_mine(team["game_id"])
             if not self.crabada_w2.mine_needs_reinforcement(team_mine):
+                logger.print_normal(f"Mine[{team_mine['game_id']}]: No need for reinforcement")
                 continue
-            available_crabada = self.crabada_w2.list_high_mp_crabs_for_lending()
 
-            affordable_crabs = [
-                c
-                for c in available_crabada
-                if wei_to_tus(c["price"]) < self.config["max_reinforcement_price_tus"]
-            ]
-            sorted_affordable_crabs = sorted(
-                affordable_crabs, key=lambda c: (-c["mine_point"], c["price"])
-            )
-            reinforment_crabada = third_or_better(sorted_affordable_crabs)
-            if reinforment_crabada is None:
+            reinforcment_crab = None
+            if (
+                team_mine["attack_point"] - get_faction_adjusted_battle_point(team, team_mine)
+                < self.config["max_reinforce_bp_delta"]
+            ):
+                logger.print_normal(
+                    f"Mine[{team_mine['game_id']}]: using reinforcement strategy of highest bp"
+                )
+                reinforcment_crab = self.crabada_w2.get_best_high_bp_crab_for_lending(
+                    self.config["max_reinforcement_price_tus"]
+                )
+            else:
+                logger.print_normal(
+                    f"Mine[{team_mine['game_id']}]: using reinforcement strategy of highest mp"
+                )
+                reinforcment_crab = self.crabada_w2.get_best_high_mp_crab_for_lending(
+                    self.config["max_reinforcement_price_tus"]
+                )
+
+            if reinforcment_crab is None:
                 logger.print_fail("Could not find affordable reinforcement!")
+                return
 
-            price_tus = wei_to_tus(reinforment_crabada["price"])
-            battle_points = reinforment_crabada["battle_point"]
-            mine_points = reinforment_crabada["mine_point"]
-            crabada_id = reinforment_crabada["crabada_id"]
+            price_tus = wei_to_tus_raw(reinforcment_crab["price"])
+            battle_points = reinforcment_crab["battle_point"]
+            mine_points = reinforcment_crab["mine_point"]
+            crabada_id = reinforcment_crab["crabada_id"]
+
             logger.print_normal(
-                f"Found reinforcement crabada {crabada_id} for {price_tus} Tus [BP {battle_points} | MP {mine_points}]"
+                f"Mine[{team_mine['game_id']}]: Found reinforcement crabada {crabada_id} for {price_tus} Tus [BP {battle_points} | MP {mine_points}]"
             )
 
             tx_hash = self.crabada_w3.reinforce_defense(
-                team["game_id"], reinforment_crabada["crabada_id"], reinforment_crabada["price"]
+                team["game_id"], crabada_id, reinforcment_crab["price"]
             )
             tx_receipt = self.crabada_w3.getTransactionReceipt(tx_hash)
-            self.game_stats["total_tus"] -= price_tus
             if tx_receipt["status"] != 1:
                 logger.print_fail_arrow(f"Error reinforcing mine {team['game_id']}")
             else:
                 logger.print_ok_arrow(f"Successfully reinforced mine {team['game_id']}")
+                self.game_stats["total_tus"] -= price_tus
             time.sleep(2.0)
 
     def _check_and_maybe_close_mines(self) -> None:
