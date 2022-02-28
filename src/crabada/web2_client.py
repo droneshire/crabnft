@@ -6,7 +6,7 @@ import time
 from eth_typing import Address
 
 from crabada.types import CrabForLending, IdleGame, LendingCategories, Team
-from utils.general import first_or_none, third_or_better, get_pretty_seconds
+from utils.general import first_or_none, third_or_better_or_none, get_pretty_seconds
 from utils.price import wei_to_tus, Tus
 
 
@@ -23,14 +23,20 @@ class CrabadaWeb2Client:
     BASE_URL = "https://idle-api.crabada.com/public/idle"
     MIN_TIME_LEFT_TO_REINFORCE = 60 * 2
 
-    def get_mine(self, mine_id: int, params: T.Dict[str, T.Any] = {}) -> T.Optional[IdleGame]:
+    def get_mine(self, mine_id: int, params: T.Dict[str, T.Any] = {}) -> IdleGame:
         """Get information from the given mine"""
         res = self.get_mine_raw(mine_id, params)
-        return res.get("result", None)
+        if res:
+            return res.get("result", None) or {}
+        else:
+            return {}
 
     def get_mine_raw(self, mine_id: int, params: T.Dict[str, T.Any] = {}) -> T.Any:
         url = self.BASE_URL + "/mine/" + str(mine_id)
-        return requests.request("GET", url, params=params).json()
+        try:
+            return requests.request("GET", url, params=params).json()
+        except:
+            return {}
 
     def list_mines(self, params: T.Dict[str, T.Any] = {}) -> T.List[IdleGame]:
         """
@@ -75,7 +81,10 @@ class CrabadaWeb2Client:
             "page": 1,
         }
         actual_params.update(params)
-        return requests.request("GET", url, params=actual_params).json()
+        try:
+            return requests.request("GET", url, params=actual_params).json()
+        except:
+            return {}
 
     def get_team(self) -> None:
         raise Exception("The team route does not exit on the server!")
@@ -154,7 +163,7 @@ class CrabadaWeb2Client:
         sorted_affordable_crabs = sorted(
             affordable_crabs, key=lambda c: (-c[lending_category], c["price"])
         )
-        return third_or_better(sorted_affordable_crabs)
+        return third_or_better_or_none(sorted_affordable_crabs)
 
     def get_best_high_mp_crab_for_lending(self, max_tus: Tus) -> CrabForLending:
         high_mp_crabs = self.list_high_mp_crabs_for_lending()
@@ -177,7 +186,10 @@ class CrabadaWeb2Client:
             "order": "asc",
         }
         actual_params.update(params)
-        return requests.request("GET", url, params=actual_params).json()  # type: ignore
+        try:
+            return requests.request("GET", url, params=actual_params).json()
+        except:
+            return {}
 
     @staticmethod
     def mine_has_been_attacked(mine: IdleGame) -> bool:

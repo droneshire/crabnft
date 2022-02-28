@@ -37,7 +37,7 @@ def third_or_none(l: T.List[T.Any]) -> T.Any:
         return None
 
 
-def third_or_better(l: T.List[T.Any]) -> T.Any:
+def third_or_better_or_none(l: T.List[T.Any]) -> T.Any:
     """Return the third element of a list or lower """
     for i in range(3):
         if len(l) >= i + 1:

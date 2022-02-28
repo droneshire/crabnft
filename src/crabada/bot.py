@@ -11,7 +11,7 @@ from crabada.factional_advantage import get_faction_adjusted_battle_point
 from crabada.types import CrabForLending, GameStats, IdleGame, NULL_GAME_STATS, Team
 from utils import logger
 from utils.config_types import UserConfig, SmsConfig
-from utils.general import third_or_better
+from utils.general import third_or_better_or_none
 from utils.price import tus_to_wei, wei_to_tus, wei_to_cra_raw, wei_to_tus_raw
 
 
