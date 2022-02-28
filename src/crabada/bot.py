@@ -89,13 +89,19 @@ class CrabadaBot:
         logger.print_warn(f"Mines ({formatted_date})")
         for mine in open_mines:
             logger.print_normal(
-                f"\t{mine['game_id']}\t\tround {mine['round']}\t\t{self.crabada_w2.get_remaining_time_formatted(mine)}\t\t{mine['min']}"
+                f"\t{mine['game_id']}\t\tround {mine['round']}\t\t{self.crabada_w2.get_remaining_time_formatted(mine)}\t\t"
             )
         logger.print_normal("\n")
 
     def _check_and_maybe_start_mines(self) -> None:
         available_teams = self.crabada_w2.list_available_teams(self.address)
         for team in available_teams:
+
+            teams_specified_to_mine = [m["team_id"] for m in self.config["mining_teams"]]
+            if team["team_id"] not in teams_specified_to_mine:
+                logger.print_warn(f"Skipping team {team['team_id']} for mining...")
+                continue
+
             logger.print_normal(f"Attemting to start new mine with team {team['team_id']}!")
             tx_hash = self.crabada_w3.start_game(team["team_id"])
             tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
