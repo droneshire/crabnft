@@ -8,6 +8,12 @@ class MiningTeam(T.TypedDict):
     team_id: int
 
 
+class SmsConfig(T.TypedDict):
+    account_sid: str
+    account_auth_token: str
+    from_sms_number: str
+
+
 class UserConfig(T.TypedDict):
     private_key: str
     address: Address
@@ -16,3 +22,5 @@ class UserConfig(T.TypedDict):
     max_reinforcement_price_tus: Tus
     max_reinforce_bp_delta: int
     commission_percent_per_mine: float
+    sms_number: str
+    get_sms_updates: bool

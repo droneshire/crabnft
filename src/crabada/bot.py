@@ -1,14 +1,16 @@
 import json
+import logging
 import os
 import time
 import typing as T
+from twilio.rest import Client
 
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
 from crabada.factional_advantage import get_faction_adjusted_battle_point
 from crabada.types import CrabForLending, GameStats, IdleGame, NULL_GAME_STATS, Team
 from utils import logger
-from utils.config_types import UserConfig
+from utils.config_types import UserConfig, SmsConfig
 from utils.general import third_or_better
 from utils.price import tus_to_wei, wei_to_tus, wei_to_cra_raw, wei_to_tus_raw
 
@@ -18,10 +20,20 @@ class CrabadaBot:
     TIME_BETWEEN_TRANSACTIONS = 5.0
     TIME_BETWEEN_EACH_UPDATE = 30.0
 
-    def __init__(self, user: str, config: UserConfig, log_dir: str, dry_run: bool) -> None:
+    def __init__(
+        self,
+        user: str,
+        config: UserConfig,
+        from_sms_number: str,
+        sms_client: Client,
+        log_dir: str,
+        dry_run: bool,
+    ) -> None:
         self.user = user
         self.config = config
         self.address = self.config["address"]
+        self.sms = sms_client
+        self.from_sms_number = from_sms_number
         self.crabada_w3 = T.cast(
             CrabadaWeb3Client,
             (
@@ -45,6 +57,29 @@ class CrabadaBot:
                 self.game_stats = json.load(infile)
         logger.print_normal(f"Adding bot for user {self.user} with address {self.address}\n\n")
 
+    def _send_status_update_sms(self, custom_message: str) -> None:
+        if not self.config["get_sms_updates"]:
+            return
+
+        text_message = "Crabada Bot Alert\n\n"
+        text_message += f"Action: {custom_message}\n\n"
+
+        text_message += "----GAME STATS----\n"
+        for k, v in self.game_stats.items():
+            if isinstance(v, float):
+                text_message += f"{k.upper()}: {v:2f}\n"
+            else:
+                text_message += f"{k.upper()}: {v}\n"
+
+        text_message += "\n"
+
+        message = self.sms.messages.create(
+            body=text_message, from_=self.from_sms_number, to=self.config["sms_number"]
+        )
+        game_logger = logging.getLogger()
+        if game_logger:
+            game_logger.debug(json.dumps(message.sid, indent=4, sort_keys=True))
+
     def _print_mine_status(self) -> None:
         open_mines = self.crabada_w2.list_my_open_mines((self.address))
         team_to_mines = {mine["game_id"]: mine for mine in open_mines}
@@ -54,7 +89,7 @@ class CrabadaBot:
         logger.print_warn(f"Mines ({formatted_date})")
         for mine in open_mines:
             logger.print_normal(
-                f"\t{mine['game_id']}\t\tround {mine['round']}\t\t{self.crabada_w2.get_remaining_time_formatted(mine)}"
+                f"\t{mine['game_id']}\t\tround {mine['round']}\t\t{self.crabada_w2.get_remaining_time_formatted(mine)}\t\t{mine['min']}"
             )
         logger.print_normal("\n")
 
@@ -68,6 +103,7 @@ class CrabadaBot:
                 logger.print_fail(f"Error starting mine for team {team['team_id']}")
             else:
                 logger.print_ok(f"Successfully started mine for team {team['team_id']}")
+                self._send_status_update_sms(f"started mine for {team['team_id']}")
             time.sleep(self.TIME_BETWEEN_TRANSACTIONS)
 
     def _check_and_maybe_reinforce_mines(self) -> None:
@@ -145,6 +181,8 @@ class CrabadaBot:
             else:
                 logger.print_ok_arrow(f"Successfully closed mine {team['game_id']}")
                 self._update_bot_stats(team, team_mine)
+                outcome = "won!" if mine["winner_team_id"] == team["team_id"] else "lost :/"
+                self._send_status_update_sms(f"finished mine for {team['team_id']}, you {outcome}")
             time.sleep(self.TIME_BETWEEN_TRANSACTIONS)
 
     def _update_bot_stats(self, team: Team, mine: IdleGame) -> None:

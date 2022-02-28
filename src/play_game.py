@@ -6,8 +6,9 @@ import logging
 import os
 import sys
 import time
+from twilio.rest import Client
 
-from config import USERS
+from config import TWILIO_CONFIG, USERS
 from crabada.bot import CrabadaBot
 from utils import logger
 
@@ -44,7 +45,14 @@ def run_bot() -> None:
 
     setup_log(args.log_level, args.log_dir)
 
-    bots = [CrabadaBot(user, config, args.log_dir, args.dry_run) for user, config in USERS.items()]
+    sms_client = Client(TWILIO_CONFIG["account_sid"], TWILIO_CONFIG["account_auth_token"])
+
+    bots = [
+        CrabadaBot(
+            user, config, TWILIO_CONFIG["from_sms_number"], sms_client, args.log_dir, args.dry_run,
+        )
+        for user, config in USERS.items()
+    ]
 
     try:
         for bot in bots:
