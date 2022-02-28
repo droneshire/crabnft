@@ -197,7 +197,10 @@ class CrabadaWeb2Client:
         Return True if, in the given game, the miner (the defense) has
         been attacked
         """
-        return mine["attack_team_id"] is not None
+        if not mine:
+            return False
+
+        return mine.get("attack_team_id", None) is not None
 
     @staticmethod
     def mine_needs_reinforcement(mine: IdleGame) -> bool:
@@ -205,6 +208,9 @@ class CrabadaWeb2Client:
         Return True if, in the given game, the miner (the defense) needs
         to reinforce the mine from an attacker
         """
+        if not mine:
+            return False
+
         if not CrabadaWeb2Client.mine_is_open(mine):
             return False
 
@@ -236,18 +242,22 @@ class CrabadaWeb2Client:
         """
         Return True if the given game is open
         """
-        return mine["status"] == "open"
+        if not mine:
+            return False
+
+        return mine.get("status", "") == "open"
 
     @staticmethod
     def mine_is_settled(mine: IdleGame) -> bool:
         """
         Return True if the given game is settled
         """
-        # TODO: Update to account for the situation where the looting team has less
-        # BP than the mining team since the beginning, in which case you get a weird
-        # situation where the mine['winner_team_id'] is None. Maybe use process?
+        if not mine:
+            return False
+
         return (
-            CrabadaWeb2Client.get_remaining_time(mine) < 7000 or mine["winner_team_id"] is not None
+            CrabadaWeb2Client.get_remaining_time(mine) < 7000
+            or mine.get("winner_team_id", None) is not None
         )
 
     @staticmethod
@@ -263,14 +273,14 @@ class CrabadaWeb2Client:
         Return true if the given game is closed (meaning the
         game has been settled and the reward has been claimed)
         """
-        return mine["status"] == "close"
+        return mine.get("status", "") == "close"
 
     @staticmethod
     def get_remaining_time(game: IdleGame) -> int:
         """
         Seconds to the end of the given game
         """
-        return int(game["end_time"] - time.time())
+        return int(game.get("end_time", 10e20) - time.time())
 
     @staticmethod
     def get_remaining_time_formatted(game: IdleGame) -> str:
@@ -288,4 +298,4 @@ class CrabadaWeb2Client:
 
         If a game is already finished, it won't be considered"""
         unfinished_games = [g for g in games if not mine_is_finished(g)]
-        return first_or_none(sorted(unfinished_games, key=lambda g: g["end_time"]))
+        return first_or_none(sorted(unfinished_games, key=lambda g: g.get("end_time", 10e20)))
