@@ -1,3 +1,5 @@
+import json
+import os
 import time
 import typing as T
 
@@ -14,7 +16,7 @@ from utils.price import tus_to_wei, wei_to_tus, wei_to_cra_raw, wei_to_tus_raw
 class CrabadaBot:
     AVAX_NODE_URL = "https://api.avax.network/ext/bc/C/rpc"
 
-    def __init__(self, user: str, config: UserConfig, dry_run: bool) -> None:
+    def __init__(self, user: str, config: UserConfig, log_dir: str, dry_run: bool) -> None:
         self.user = user
         self.config = config
         self.address = self.config["address"]
@@ -28,7 +30,20 @@ class CrabadaBot:
         )
         self.crabada_w2 = CrabadaWeb2Client()
         self.game_stats = GameStats(total_tus=0.0, total_cra=0.0, wins=0, losses=0)
+        self.game_stats_file = os.path.join(log_dir, user.lower() + "_lifetime_game_bot_stats.json")
+        self.updated_game_stats = True
 
+        if not os.path.isfile(self.game_stats_file):
+            with open(self.game_stats_file, "w") as outfile:
+                json.dump(
+                    GameStats(total_tus=0.0, total_cra=0.0, wins=0, losses=0),
+                    outfile,
+                    indent=4,
+                    sort_keys=True,
+                )
+        else:
+            with open(self.game_stats_file, "r") as infile:
+                self.game_stats = json.load(infile)
         logger.print_normal(f"Adding bot for user {self.user} with address {self.address}\n\n")
 
     def _print_mine_status(self) -> None:
@@ -105,6 +120,7 @@ class CrabadaBot:
             else:
                 logger.print_ok_arrow(f"Successfully reinforced mine {team['game_id']}")
                 self.game_stats["total_tus"] -= price_tus
+                self.updated_game_stats = True
             time.sleep(2.0)
 
     def _check_and_maybe_close_mines(self) -> None:
@@ -117,7 +133,6 @@ class CrabadaBot:
             if not self.crabada_w2.mine_is_finished(team_mine):
                 continue
 
-            self._update_bot_stats(team, team_mine)
             logger.print_normal(f"Attempting to close game {team['game_id']}")
             tx_hash = self.crabada_w3.close_game(team["game_id"])
             tx_receipt = self.crabada_w3.getTransactionReceipt(tx_hash)
@@ -125,6 +140,7 @@ class CrabadaBot:
                 logger.print_fail_arrow(f"Error closing mine {team['game_id']}")
             else:
                 logger.print_ok_arrow(f"Successfully closed mine {team['game_id']}")
+                self._update_bot_stats(team, team_mine)
             time.sleep(2.0)
 
     def _update_bot_stats(self, team: Team, mine: IdleGame) -> None:
@@ -135,6 +151,10 @@ class CrabadaBot:
 
         self.game_stats["total_tus"] += wei_to_tus_raw(mine["miner_tus_reward"])
         self.game_stats["total_cra"] += wei_to_cra_raw(mine["miner_cra_reward"])
+
+        with open(self.game_stats_file, "w") as outfile:
+            json.dump(self.game_stats, outfile, indent=4, sort_keys=True)
+        self.updated_game_stats = True
 
     def _print_bot_stats(self) -> None:
         logger.print_normal("\n")
@@ -152,7 +172,9 @@ class CrabadaBot:
                 self._check_and_maybe_start_mines()
                 self._check_and_maybe_reinforce_mines()
                 self._check_and_maybe_close_mines()
-                self._print_bot_stats()
+                if self.updated_game_stats:
+                    self.updated_game_stats = False
+                    self._print_bot_stats()
 
                 time.sleep(5.0)
         finally:
