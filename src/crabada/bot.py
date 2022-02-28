@@ -237,7 +237,7 @@ class CrabadaBot:
         logger.print_normal(f"Exiting bot for {self.user}...")
 
         if self.config["get_sms_updates"]:
-            self.sms.messages.create(
+            message = self.sms.messages.create(
                 body="Crabada bot stopped!!!",
                 from_=self.from_sms_number,
                 to=self.config["sms_number"],
