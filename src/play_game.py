@@ -49,7 +49,13 @@ def run_bot() -> None:
 
     bots = [
         CrabadaBot(
-            user, config, TWILIO_CONFIG["from_sms_number"], sms_client, args.log_dir, args.dry_run,
+            user,
+            config,
+            TWILIO_CONFIG["from_sms_number"],
+            TWILIO_CONFIG["admin_sms_number"],
+            sms_client,
+            args.log_dir,
+            args.dry_run,
         )
         for user, config in USERS.items()
     ]

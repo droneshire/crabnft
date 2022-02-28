@@ -25,6 +25,7 @@ class CrabadaBot:
         user: str,
         config: UserConfig,
         from_sms_number: str,
+        admin_sms_number: str,
         sms_client: Client,
         log_dir: str,
         dry_run: bool,
@@ -34,6 +35,7 @@ class CrabadaBot:
         self.address = self.config["address"]
         self.sms = sms_client
         self.from_sms_number = from_sms_number
+        self.admin_sms_number = admin_sms_number
         self.crabada_w3 = T.cast(
             CrabadaWeb3Client,
             (
@@ -238,9 +240,7 @@ class CrabadaBot:
 
         if self.config["get_sms_updates"]:
             message = self.sms.messages.create(
-                body="Crabada bot stopped!!!",
-                from_=self.from_sms_number,
-                to=self.config["sms_number"],
+                body="Crabada bot stopped!!!", from_=self.from_sms_number, to=self.admin_sms_number,
             )
             game_logger = logging.getLogger()
             if game_logger:
