@@ -17,12 +17,17 @@ def parse_args() -> argparse.Namespace:
     this_dir = os.path.dirname(os.path.realpath(__file__))
     log_dir = os.path.join(os.path.dirname(this_dir), "logs")
     parser.add_argument("--dry-run", action="store_true", help="Dry run")
-    parser.add_argument("-l", "--log-level", choices=["INFO", "DEBUG", "ERROR"], default="INFO")
+    parser.add_argument(
+        "-l", "--log-level", choices=["INFO", "DEBUG", "ERROR", "NONE"], default="INFO"
+    )
     parser.add_argument("-f", "--log-dir", default=log_dir)
     return parser.parse_args()
 
 
 def setup_log(log_level: str, log_dir: str) -> None:
+    if log_level == "NONE":
+        return
+
     log_name = time.strftime("%Y_%m_%d__%H_%M_%S", time.localtime(time.time())) + "_crabada.log"
     log_file = os.path.join(log_dir, log_name)
     logging.basicConfig(

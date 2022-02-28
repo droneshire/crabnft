@@ -6,7 +6,7 @@ import typing as T
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
 from crabada.factional_advantage import get_faction_adjusted_battle_point
-from crabada.types import CrabForLending, GameStats, IdleGame, Team
+from crabada.types import CrabForLending, GameStats, IdleGame, NULL_GAME_STATS, Team
 from utils import logger
 from utils.config_types import UserConfig
 from utils.general import third_or_better
@@ -31,17 +31,14 @@ class CrabadaBot:
             ).set_dry_run(dry_run),
         )
         self.crabada_w2 = CrabadaWeb2Client()
-        self.game_stats = GameStats(total_tus=0.0, total_cra=0.0, wins=0, losses=0)
+        self.game_stats = NULL_GAME_STATS
         self.game_stats_file = os.path.join(log_dir, user.lower() + "_lifetime_game_bot_stats.json")
         self.updated_game_stats = True
 
         if not os.path.isfile(self.game_stats_file):
             with open(self.game_stats_file, "w") as outfile:
                 json.dump(
-                    GameStats(total_tus=0.0, total_cra=0.0, wins=0, losses=0),
-                    outfile,
-                    indent=4,
-                    sort_keys=True,
+                    NULL_GAME_STATS, outfile, indent=4, sort_keys=True,
                 )
         else:
             with open(self.game_stats_file, "r") as infile:
@@ -77,6 +74,10 @@ class CrabadaBot:
         teams = self.crabada_w2.list_teams(self.address)
         for team in teams:
             team_mine = self.crabada_w2.get_mine(team["game_id"])
+
+            if team_mine is None:
+                continue
+
             if not self.crabada_w2.mine_needs_reinforcement(team_mine):
                 logger.print_normal(f"Mine[{team_mine['game_id']}]: No need for reinforcement")
                 continue
@@ -122,6 +123,7 @@ class CrabadaBot:
             else:
                 logger.print_ok_arrow(f"Successfully reinforced mine {team['game_id']}")
                 self.game_stats["total_tus"] -= price_tus
+                self.game_stats["reinforcement_tus"] += price_tus
                 self.updated_game_stats = True
             time.sleep(self.TIME_BETWEEN_TRANSACTIONS)
 

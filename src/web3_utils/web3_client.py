@@ -61,7 +61,7 @@ class Web3Client:
             "chainId": self.chain_id,
             "gas": self.gas_limit,  # type: ignore
             "maxFeePerGas": Web3.toWei(self.estimate_max_fee_per_gas_in_gwei(), "gwei"),
-            "maxPriorityFeePerGas": Web3.toWei(self.maxPriorityFeePerGasInGwei, "gwei"),
+            "maxPriorityFeePerGas": Web3.toWei(self.max_priority_fee_per_gas_in_gwei, "gwei"),
             "nonce": self.get_nonce(),
         }
         return tx
@@ -154,7 +154,7 @@ class Web3Client:
         latest_block = self.w3.eth.get_block("latest")
         baseFeeInWei = latest_block["baseFeePerGas"]  # in wei
         baseFeeInGwei = int(Web3.fromWei(baseFeeInWei, "gwei"))
-        return 2 * baseFeeInGwei + self.maxPriorityFeePerGasInGwei
+        return 2 * baseFeeInGwei + self.max_priority_fee_per_gas_in_gwei
 
     def get_latest_block(self) -> BlockData:
         """

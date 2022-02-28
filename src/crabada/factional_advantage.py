@@ -2,6 +2,7 @@ import math
 import typing as T
 
 from crabada.types import Faction, IdleGame, Team
+from utils import logger
 
 FACTIONAL_ADVANTAGE_MULT = 0.93
 NEUTRAL_ADVANTAGE_MULT = 0.97
@@ -24,12 +25,13 @@ def get_faction_adjusted_battle_point(team: Team, game: IdleGame) -> int:
     attack_faction = T.cast(Faction, game["attack_team_faction"])
     defense_faction = T.cast(Faction, game["defense_team_faction"])
 
+    logger.print_ok_arrow(f"Attack from {attack_faction} -> {defense_faction}")
     if defense_faction in FACTIONAL_ADVANTAGE[attack_faction]:
-        print("factional advantage found")
+        logger.print_ok_arrow(f"Battle point decrease of {1 - FACTIONAL_ADVANTAGE_MULT}")
         return int(math.ceil(team_defense_point * FACTIONAL_ADVANTAGE_MULT)) + reinforce_point
 
     if defense_faction == Faction.NO_FACTION:
-        print("neutral advantage found")
+        logger.print_ok_arrow(f"Battle point decrease of {1 - NEUTRAL_ADVANTAGE_MULT}")
         return int(math.ceil(team_defense_point * NEUTRAL_ADVANTAGE_MULT)) + reinforce_point
 
     return defense_point

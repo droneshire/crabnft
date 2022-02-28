@@ -23,10 +23,10 @@ class CrabadaWeb2Client:
     BASE_URL = "https://idle-api.crabada.com/public/idle"
     MIN_TIME_LEFT_TO_REINFORCE = 60 * 2
 
-    def get_mine(self, mine_id: int, params: T.Dict[str, T.Any] = {}) -> IdleGame:
+    def get_mine(self, mine_id: int, params: T.Dict[str, T.Any] = {}) -> T.Optional[IdleGame]:
         """Get information from the given mine"""
         res = self.get_mine_raw(mine_id, params)
-        return res["result"]
+        return res.get("result", None)
 
     def get_mine_raw(self, mine_id: int, params: T.Dict[str, T.Any] = {}) -> T.Any:
         url = self.BASE_URL + "/mine/" + str(mine_id)

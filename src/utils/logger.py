@@ -41,9 +41,9 @@ def make_formatter_printer(color: Colors, log_level=logging.INFO, prefix=None) -
     def printer(message, *args, **kwargs):
         if log_level == logging.DEBUG:
             game_logger.debug(message)
-        elif log_level == logging.CRITICAL:
+        elif log_level == logging.ERROR:
             game_logger.critical(message)
-        else:
+        elif log_level == logging.INFO:
             game_logger.info(message)
 
         print(formatter(message, *args, **kwargs))
