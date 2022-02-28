@@ -12,6 +12,7 @@ class SmsConfig(T.TypedDict):
     account_sid: str
     account_auth_token: str
     from_sms_number: str
+    admin_sms_number: str
 
 
 class UserConfig(T.TypedDict):
