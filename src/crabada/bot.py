@@ -5,8 +5,8 @@ import time
 import typing as T
 from twilio.rest import Client
 
-from crabada.crabada_web2_client import CrabadaWeb2Client
-from crabada.crabada_web3_client import CrabadaWeb3Client
+from crabada.web2_client import CrabadaWeb2Client
+from crabada.web3_client import CrabadaWeb3Client
 from crabada.factional_advantage import get_faction_adjusted_battle_point
 from crabada.types import CrabForLending, GameStats, IdleGame, NULL_GAME_STATS, Team
 from utils import logger
