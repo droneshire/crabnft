@@ -15,3 +15,4 @@ class UserConfig(T.TypedDict):
     max_gas_price: float
     max_reinforcement_price_tus: Tus
     max_reinforce_bp_delta: int
+    commission_percent_per_mine: float

@@ -154,6 +154,10 @@ class CrabadaBot:
         self.game_stats["total_tus"] += wei_to_tus_raw(mine["miner_tus_reward"])
         self.game_stats["total_cra"] += wei_to_cra_raw(mine["miner_cra_reward"])
 
+        self.game_stats["commission_tus"] += (
+            wei_to_tus_raw(mine["miner_tus_reward"]) * self.config["commission_percent_per_mine"]
+        )
+
         with open(self.game_stats_file, "w") as outfile:
             json.dump(self.game_stats, outfile, indent=4, sort_keys=True)
         self.updated_game_stats = True

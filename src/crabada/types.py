@@ -25,6 +25,7 @@ class GameStats(T.TypedDict):
     total_cra: float
     wins: int
     losses: int
+    commission_tus: float
 
 
 class GameProcess(T.TypedDict):
