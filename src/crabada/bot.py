@@ -24,9 +24,9 @@ class CrabadaBot:
             CrabadaWeb3Client,
             (
                 CrabadaWeb3Client()
-                .setCredentials(config["address"], config["private_key"])
-                .setNodeUri(self.AVAX_NODE_URL)
-            ).setDryRun(dry_run),
+                .set_credentials(config["address"], config["private_key"])
+                .set_node_uri(self.AVAX_NODE_URL)
+            ).set_dry_run(dry_run),
         )
         self.crabada_w2 = CrabadaWeb2Client()
         self.game_stats = GameStats(total_tus=0.0, total_cra=0.0, wins=0, losses=0)
@@ -64,7 +64,7 @@ class CrabadaBot:
         for team in available_teams:
             logger.print_normal(f"Attemting to start new mine with team {team['team_id']}!")
             tx_hash = self.crabada_w3.start_game(team["team_id"])
-            tx_receipt = self.crabada_w3.getTransactionReceipt(tx_hash)
+            tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
             if tx_receipt["status"] != 1:
                 logger.print_fail(f"Error starting mine for team {team['team_id']}")
             else:
@@ -114,7 +114,7 @@ class CrabadaBot:
             tx_hash = self.crabada_w3.reinforce_defense(
                 team["game_id"], crabada_id, reinforcment_crab["price"]
             )
-            tx_receipt = self.crabada_w3.getTransactionReceipt(tx_hash)
+            tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
             if tx_receipt["status"] != 1:
                 logger.print_fail_arrow(f"Error reinforcing mine {team['game_id']}")
             else:
@@ -135,7 +135,7 @@ class CrabadaBot:
 
             logger.print_normal(f"Attempting to close game {team['game_id']}")
             tx_hash = self.crabada_w3.close_game(team["game_id"])
-            tx_receipt = self.crabada_w3.getTransactionReceipt(tx_hash)
+            tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
             if tx_receipt["status"] != 1:
                 logger.print_fail_arrow(f"Error closing mine {team['game_id']}")
             else:

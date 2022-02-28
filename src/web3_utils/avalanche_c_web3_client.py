@@ -11,14 +11,14 @@ class AvalancheCWeb3Client(Web3Client):
     its smart contracts.
     """
 
-    chainId: int = 43114
-    gasLimit: int = 450000  # sensible value for Avalanche
-    maxPriorityFeePerGasInGwei: int = 2
+    chain_id: int = 43114
+    gas_limit: int = 450000  # sensible value for Avalanche
+    max_priority_fee_per_gas_in_gwei: int = 2
 
-    def setNodeUri(self, nodeUri: str = None) -> AvalancheCWeb3Client:
+    def set_node_uri(self, node_uri: str = None) -> AvalancheCWeb3Client:
         """
         Inject the POA middleware
         """
-        super().setNodeUri(nodeUri)
+        super().set_node_uri(node_uri)
         self.w3.middleware_onion.inject(geth_poa_middleware, layer=0)
         return self

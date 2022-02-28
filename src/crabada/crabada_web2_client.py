@@ -22,13 +22,13 @@ class CrabadaWeb2Client:
 
     BASE_URL = "https://idle-api.crabada.com/public/idle"
 
-    def get_mine(self, mineId: int, params: T.Dict[str, T.Any] = {}) -> IdleGame:
+    def get_mine(self, mine_id: int, params: T.Dict[str, T.Any] = {}) -> IdleGame:
         """Get information from the given mine"""
-        res = self.get_mine_raw(mineId, params)
+        res = self.get_mine_raw(mine_id, params)
         return res["result"]
 
-    def get_mine_raw(self, mineId: int, params: T.Dict[str, T.Any] = {}) -> T.Any:
-        url = self.BASE_URL + "/mine/" + str(mineId)
+    def get_mine_raw(self, mine_id: int, params: T.Dict[str, T.Any] = {}) -> T.Any:
+        url = self.BASE_URL + "/mine/" + str(mine_id)
         return requests.request("GET", url, params=params).json()
 
     def list_mines(self, params: T.Dict[str, T.Any] = {}) -> T.List[IdleGame]:

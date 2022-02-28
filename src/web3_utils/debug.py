@@ -6,15 +6,15 @@ from web3.datastructures import AttributeDict
 import pprint
 
 
-def printTxInfo(client: Web3Client, txHash: HexStr) -> None:
+def printTxInfo(client: Web3Client, tx_hash: HexStr) -> None:
     """
     Get a transaction receipt and print it, together with
     the tx cost
     """
     logger.print_normal(">>> TX SENT!")
-    logger.print_normal("Hash = " + txHash)
+    logger.print_normal("Hash = " + tx_hash)
     logger.print_normal("Waiting for transaction to finalize...")
-    tx_receipt = client.getTransactionReceipt(txHash)
+    tx_receipt = client.get_transaction_receipt(tx_hash)
     logger.print_normal(">>> TX IS ON THE BLOCKCHAIN :-)")
     pprint.pprint(tx_receipt)
     logger.print_normal(">>> ETH SPENT")

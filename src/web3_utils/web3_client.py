@@ -25,19 +25,19 @@ class Web3Client:
 
     Attributes
     ----------
-    maxPriorityFeePerGasInGwei : int
-    gasLimit : int
-    contractAddress : Address
+    max_priority_fee_per_gas_in_gwei : int
+    gas_limit : int
+    contract_address : Address
     abi: T.Dict[str, T.Any] = None
-    chainId: int = None
-    nodeUri: str = None
+    chain_id: int = None
+    node_uri: str = None
     user_address: Address = None
     privateKey: str = None
     dry_run: bool
 
     Derived attributes
     ----------
-    contractChecksumAddress: str = None
+    contract_checksum_address: str = None
     w3: Web3 = None
     nonce: Nonce = None
     contract: Contract = None
@@ -47,57 +47,57 @@ class Web3Client:
     # Build Tx
     ####################
 
-    def buildBaseTransaction(self) -> TxParams:
+    def build_base_transaction(self) -> TxParams:
         """
         Build a basic EIP-1559 transaction with just nonce, chain ID and gas;
-        before invoking this method you need to have specified a chainId and
-        called setNodeUri().
+        before invoking this method you need to have specified a chain_id and
+        called set_node_uri().
 
         Gas is estimated according to the formula
         maxMaxFeePerGas = 2 * baseFee + maxPriorityFeePerGas.
         """
         tx: TxParams = {
             "type": 0x2,
-            "chainId": self.chainId,
-            "gas": self.gasLimit,  # type: ignore
-            "maxFeePerGas": Web3.toWei(self.estimateMaxFeePerGasInGwei(), "gwei"),
+            "chainId": self.chain_id,
+            "gas": self.gas_limit,  # type: ignore
+            "maxFeePerGas": Web3.toWei(self.estimate_max_fee_per_gas_in_gwei(), "gwei"),
             "maxPriorityFeePerGas": Web3.toWei(self.maxPriorityFeePerGasInGwei, "gwei"),
-            "nonce": self.getNonce(),
+            "nonce": self.get_nonce(),
         }
         return tx
 
-    def buildTransactionWithValue(self, to: Address, valueInEth: float) -> TxParams:
+    def build_transaction_with_value(self, to: Address, value_in_eth: float) -> TxParams:
         """
         Build a transaction involving a transfer of value to an address,
         where the value is expressed in the blockchain token (e.g. ETH or AVAX).
         """
-        tx = self.buildBaseTransaction()
-        tx_value: TxParams = {"to": to, "value": self.w3.toWei(valueInEth, "ether")}
+        tx = self.build_base_transaction()
+        tx_value: TxParams = {"to": to, "value": self.w3.toWei(value_in_eth, "ether")}
         tx.update(tx_value)
         return tx
 
-    def buildContractTransaction(self, contractFunction: ContractFunction) -> TxParams:
+    def build_contract_transaction(self, contractFunction: ContractFunction) -> TxParams:
         """
         Build a transaction that involves a contract interation.
 
         Requires passing the contract function as detailed in the docs:
         https://web3py.readthedocs.io/en/stable/web3.eth.account.html#sign-a-contract-transaction
         """
-        baseTx = self.buildBaseTransaction()
+        baseTx = self.build_base_transaction()
         return contractFunction.buildTransaction(baseTx)
 
     ####################
     # Sign & send Tx
     ####################
 
-    def signTransaction(self, tx: TxParams) -> SignedTransaction:
+    def sign_transaction(self, tx: TxParams) -> SignedTransaction:
         """
         Sign the give transaction; the private key must have
         been set with setCredential().
         """
         return self.w3.eth.account.sign_transaction(tx, self.privateKey)
 
-    def sendSignedTransaction(self, signedTx: SignedTransaction) -> HexStr:
+    def send_signed_transaction(self, signed_tx: SignedTransaction) -> HexStr:
         """
         Send a signed transaction and return the tx hash
         """
@@ -105,8 +105,8 @@ class Web3Client:
             return ""
 
         try:
-            tx_hash = self.w3.eth.send_raw_transaction(signedTx.rawTransaction)
-            self.nonce = self.getNonce()
+            tx_hash = self.w3.eth.send_raw_transaction(signed_tx.rawTransaction)
+            self.nonce = self.get_nonce()
         except ValueError as exception:
             if exception["message"].starts_with("nonce too low:"):
                 self.nonce += 1
@@ -114,37 +114,37 @@ class Web3Client:
                 raise ValueError
         return self.w3.toHex(tx_hash)
 
-    def signAndSendTransaction(self, tx: TxParams) -> HexStr:
+    def sign_and_send_transaction(self, tx: TxParams) -> HexStr:
         """
         Sign a transaction and send it
         """
-        signedTx = self.signTransaction(tx)
-        return self.sendSignedTransaction(signedTx)
+        signed_tx = self.sign_transaction(tx)
+        return self.send_signed_transaction(signed_tx)
 
-    def getTransactionReceipt(self, txHash: HexStr) -> TxReceipt:
+    def get_transaction_receipt(self, tx_hash: HexStr) -> TxReceipt:
         """
         Given a transaction hash, wait for the blockchain to confirm
         it and return the tx receipt.
         """
         if self.dry_run:
             return {"status": 1}
-        return self.w3.eth.wait_for_transaction_receipt(txHash)
+        return self.w3.eth.wait_for_transaction_receipt(tx_hash)
 
-    def getTransaction(self, txHash: HexStr) -> TxData:
+    def get_transaction(self, tx_hash: HexStr) -> TxData:
         """
         Given a transaction hash, get the transaction; will raise error
         if the transaction has not been mined yet.
         """
-        return self.w3.eth.get_transaction(txHash)
+        return self.w3.eth.get_transaction(tx_hash)
 
     ####################
     # Utils
     ####################
 
-    def getNonce(self) -> Nonce:
+    def get_nonce(self) -> Nonce:
         return self.w3.eth.get_transaction_count(self.user_address)
 
-    def estimateMaxFeePerGasInGwei(self) -> int:
+    def estimate_max_fee_per_gas_in_gwei(self) -> int:
         """
         Gets the base fee from the latest block and returns a maxFeePerGas
         estimate as 2 * baseFee + maxPriorityFeePerGas, as done in the
@@ -156,13 +156,13 @@ class Web3Client:
         baseFeeInGwei = int(Web3.fromWei(baseFeeInWei, "gwei"))
         return 2 * baseFeeInGwei + self.maxPriorityFeePerGasInGwei
 
-    def getLatestBlock(self) -> BlockData:
+    def get_latest_block(self) -> BlockData:
         """
         Return the latest block
         """
         return self.w3.eth.get_block("latest")
 
-    def getPendingBlock(self) -> BlockData:
+    def get_pending_block(self) -> BlockData:
         """
         Return the pending block
         """
@@ -172,80 +172,78 @@ class Web3Client:
     # Setters
     ####################
 
-    def setContract(
-        self, address: Address, abiFile: str = None, abi: T.Dict[str, T.Any] = None
+    def set_contract(
+        self, address: Address, abi_file: str = None, abi: T.Dict[str, T.Any] = None
     ) -> Web3Client:
         """
         Load the smart contract, required before running
-        buildContractTransaction().
+        build_contract_transaction().
 
-        Run only after setting the node URI (setNodeUri)
+        Run only after setting the node URI (set_node_uri)
         """
-        self.contractAddress = address
-        self.contractChecksumAddress = Web3.toChecksumAddress(address)
-        if abiFile:  # Read the contract's ABI from a JSON file
-            self.abi = self.getContractAbiFromFile(abiFile)
+        self.contract_address = address
+        self.contract_checksum_address = Web3.toChecksumAddress(address)
+        if abi_file:  # Read the contract's ABI from a JSON file
+            self.abi = self._get_contract_abi_from_file(abi_file)
         elif abi:  # read the contract's ABI from a string
             self.abi = abi
         if not self.abi:
             raise MissingParameter("Missing ABI")
-        self.contract = self.w3.eth.contract(address=self.contractChecksumAddress, abi=self.abi)
+        self.contract = self.w3.eth.contract(address=self.contract_checksum_address, abi=self.abi)
         return self
 
-    def setNodeUri(self, nodeUri: str = None) -> Web3Client:
+    def set_node_uri(self, node_uri: str = None) -> Web3Client:
         """
         Set node URI and initalize provider (HTTPS & WS supported).
 
-        Provide an empty nodeUri to use autodetection,
+        Provide an empty node_uri to use autodetection,
         docs here https://web3py.readthedocs.io/en/stable/providers.html#how-automated-detection-works
         """
-        self.nodeUri = nodeUri
-        self.w3 = self.getProvider()
-        self.nonce = self.getNonce()
+        self.node_uri = node_uri
+        self.w3 = self._get_provider()
+        self.nonce = self.get_nonce()
         # Set the contract if possible, e.g. if the subclass defines address & ABI.
         try:
-            self.setContract(address=self.contractAddress, abi=self.abi)
+            self.set_contract(address=self.contract_address, abi=self.abi)
         except:
             pass
         return self
 
-    def setCredentials(self, user_address: Address, privateKey: str) -> Web3Client:
+    def set_credentials(self, user_address: Address, privateKey: str) -> Web3Client:
         """
-        Set credentials, must be set before setNodeUri
+        Set credentials, must be set before set_node_uri
         """
         self.user_address = user_address
         self.privateKey = privateKey
         return self
 
-    def setChainId(self, chainId: int) -> Web3Client:
-        self.chainId = int(chainId)
+    def set_chain_id(self, chain_id: int) -> Web3Client:
+        self.chain_id = int(chain_id)
         return self
 
-    def setMaxPriorityFeePerGasInGwei(self, maxPriorityFeePerGasInGwei: int) -> Web3Client:
-        self.maxPriorityFeePerGasInGwei = maxPriorityFeePerGasInGwei
+    def set_max_priority_fee_per_gas_in_gwei(
+        self, max_priority_fee_per_gas_in_gwei: int
+    ) -> Web3Client:
+        self.max_priority_fee_per_gas_in_gwei = max_priority_fee_per_gas_in_gwei
         return self
 
-    def setGasLimit(self, gasLimit: int) -> Web3Client:
-        self.gasLimit = gasLimit
+    def set_gas_limit(self, gas_limit: int) -> Web3Client:
+        self.gas_limit = gas_limit
         return self
 
-    def setDryRun(self, dry_run: bool = False) -> None:
+    def set_dry_run(self, dry_run: bool = False) -> None:
         self.dry_run = dry_run
         return self
 
-    ####################
-    # Protected
-    ####################
-
     @staticmethod
-    def getContractAbiFromFile(fileName: str) -> T.Any:
-        with open(fileName) as file:
+    def _get_contract_abi_from_file(file_name: str) -> T.Any:
+        with open(file_name) as file:
             return json.load(file)
 
-    def getProvider(self) -> Web3:
-        if self.nodeUri[0:4] == "http":
-            return Web3(Web3.HTTPProvider(self.nodeUri))
-        elif self.nodeUri[0:2] == "ws":
-            return Web3(Web3.WebsocketProvider(self.nodeUri))
+    def _get_provider(self) -> Web3:
+        if self.node_uri[0:4] == "http":
+            return Web3(Web3.HTTPProvider(self.node_uri))
+        elif self.node_uri[0:2] == "ws":
+            return Web3(Web3.WebsocketProvider(self.node_uri))
         else:
             return Web3()
