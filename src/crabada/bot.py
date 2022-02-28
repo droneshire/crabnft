@@ -236,6 +236,16 @@ class CrabadaBot:
     def end(self) -> None:
         logger.print_normal(f"Exiting bot for {self.user}...")
 
+        if self.config["get_sms_updates"]:
+            self.sms.messages.create(
+                body="Crabada bot stopped!!!",
+                from_=self.from_sms_number,
+                to=self.config["sms_number"],
+            )
+            game_logger = logging.getLogger()
+            if game_logger:
+                game_logger.debug(json.dumps(message.sid, indent=4, sort_keys=True))
+
         self._print_bot_stats()
         with open(self.game_stats_file, "w") as outfile:
             json.dump(self.game_stats, outfile, indent=4, sort_keys=True)
