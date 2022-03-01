@@ -203,7 +203,11 @@ class CrabadaBot:
             else:
                 logger.print_ok_arrow(f"Successfully closed mine {team['game_id']}")
                 self._update_bot_stats(team, team_mine)
-                outcome = "won!" if team_mine["winner_team_id"] == team["team_id"] else "lost :/"
+                outcome = (
+                    "won \U0001F389"
+                    if team_mine["winner_team_id"] == team["team_id"]
+                    else "lost \U0001F915"
+                )
                 self._send_status_update_sms(f"finished mine for {team['team_id']}, you {outcome}")
             time.sleep(self.TIME_BETWEEN_TRANSACTIONS)
 
