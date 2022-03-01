@@ -123,7 +123,7 @@ class CrabadaWeb2Client:
     def list_high_mp_crabs_for_lending(
         self, params: T.Dict[str, T.Any] = {}
     ) -> T.List[CrabForLending]:
-        params["limit"] = 50
+        params["limit"] = 100
         params["orderBy"] = "mine_point"
         params["order"] = "desc"
         return self.list_crabs_for_lending(params)
@@ -131,7 +131,7 @@ class CrabadaWeb2Client:
     def list_high_bp_crabs_for_lending(
         self, params: T.Dict[str, T.Any] = {}
     ) -> T.List[CrabForLending]:
-        params["limit"] = 50
+        params["limit"] = 100
         params["orderBy"] = "battle_point"
         params["order"] = "desc"
         return self.list_crabs_for_lending(params)
@@ -180,7 +180,7 @@ class CrabadaWeb2Client:
     def list_crabs_for_lending_raw(self, params: T.Dict[str, T.Any] = {}) -> T.Any:
         url = self.BASE_URL + "/crabadas/lending"
         actual_params = {
-            "limit": 10,
+            "limit": 100,
             "page": 1,
             "orderBy": "price",
             "order": "asc",

@@ -19,6 +19,7 @@ class CrabadaBot:
     AVAX_NODE_URL = "https://api.avax.network/ext/bc/C/rpc"
     TIME_BETWEEN_TRANSACTIONS = 5.0
     TIME_BETWEEN_EACH_UPDATE = 30.0
+    SMS_COST_PER_MESSAGE = 0.0075
 
     def __init__(
         self,
@@ -63,10 +64,11 @@ class CrabadaBot:
         if not self.config["get_sms_updates"]:
             return
 
-        text_message = "Crabada Bot Alert\n\n"
+        text_message = f"\U0001F980 Crabada Bot Alert \U0001F980\n\n"
         text_message += f"Action: {custom_message}\n\n"
 
-        text_message += "----GAME STATS----\n"
+        text_message += f"Explorer: https://snowtrace.io/address/{self.config['address']}\n\n"
+        text_message += "---\U0001F579  GAME STATS\U0001F579  ---\n"
         for k, v in self.game_stats.items():
             if isinstance(v, float):
                 text_message += f"{k.upper()}: {v:2f}\n"
@@ -78,6 +80,10 @@ class CrabadaBot:
         message = self.sms.messages.create(
             body=text_message, from_=self.from_sms_number, to=self.config["sms_number"]
         )
+
+        self.game_stats["sms_cost"] += self.SMS_COST_PER_MESSAGE
+        self.game_stats["sms_sent"] += 1
+
         game_logger = logging.getLogger()
         if game_logger:
             game_logger.debug(json.dumps(message.sid, indent=4, sort_keys=True))
@@ -110,8 +116,7 @@ class CrabadaBot:
             if tx_receipt["status"] != 1:
                 logger.print_fail(f"Error starting mine for team {team['team_id']}")
             else:
-                logger.print_ok(f"Successfully started mine for team {team['team_id']}")
-                self._send_status_update_sms(f"started mine for {team['team_id']}")
+                logger.print_ok_arrow(f"Successfully started mine for team {team['team_id']}")
             time.sleep(self.TIME_BETWEEN_TRANSACTIONS)
 
     def _check_and_maybe_reinforce_mines(self) -> None:
@@ -123,7 +128,9 @@ class CrabadaBot:
                 continue
 
             if not self.crabada_w2.mine_needs_reinforcement(team_mine):
-                logger.print_normal(f"Mine[{team_mine['game_id']}]: No need for reinforcement")
+                logger.print_normal(
+                    f"Mine[{team_mine.get('game_id', 'null')}]: No need for reinforcement"
+                )
                 continue
 
             reinforcment_crab = None
@@ -189,15 +196,19 @@ class CrabadaBot:
             else:
                 logger.print_ok_arrow(f"Successfully closed mine {team['game_id']}")
                 self._update_bot_stats(team, team_mine)
-                outcome = "won!" if mine["winner_team_id"] == team["team_id"] else "lost :/"
+                outcome = "won!" if team_mine["winner_team_id"] == team["team_id"] else "lost :/"
                 self._send_status_update_sms(f"finished mine for {team['team_id']}, you {outcome}")
             time.sleep(self.TIME_BETWEEN_TRANSACTIONS)
 
     def _update_bot_stats(self, team: Team, mine: IdleGame) -> None:
         if mine["winner_team_id"] == team["team_id"]:
-            self.game_stats["wins"] += 1
+            self.game_stats["game_wins"] += 1
         else:
-            self.game_stats["losses"] += 1
+            self.game_stats["game_losses"] += 1
+
+        self.game_stats["game_win_percent"] = float(self.game_stats["game_wins"]) / (
+            self.game_stats["game_wins"] + self.game_stats["game_losses"]
+        )
 
         self.game_stats["total_tus_earned"] += wei_to_tus_raw(mine["miner_tus_reward"])
         self.game_stats["total_cra_earned"] += wei_to_cra_raw(mine["miner_cra_reward"])
@@ -212,10 +223,11 @@ class CrabadaBot:
 
     def _print_bot_stats(self) -> None:
         logger.print_normal("\n")
-        logger.print_bold("--------GAME STATS--------")
+        logger.print_bold("--------\U0001F579  GAME STATS\U0001F579  ------")
+        logger.print_normal(f"Explorer: https://snowtrace.io/address/{self.config['address']}\n\n")
         for k, v in self.game_stats.items():
             logger.print_ok_blue(f"{k.upper()}: {v}")
-        logger.print_bold("--------------------------\n")
+        logger.print_bold("------------------------------\n")
 
     def run(self) -> None:
         logger.print_bold(f"Starting game bot for user {self.user}...\n")
@@ -239,8 +251,10 @@ class CrabadaBot:
         logger.print_normal(f"Exiting bot for {self.user}...")
 
         if self.config["get_sms_updates"]:
+            sms_message = f"\U0001F980 Crabada Bot Alert \U0001F980\n\n"
+            sms_message += f"Crabada Bot Stopped \U0000203C\n"
             message = self.sms.messages.create(
-                body="Crabada bot stopped!!!", from_=self.from_sms_number, to=self.admin_sms_number,
+                body=sms_message, from_=self.from_sms_number, to=self.admin_sms_number,
             )
             game_logger = logging.getLogger()
             if game_logger:
