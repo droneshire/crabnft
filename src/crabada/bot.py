@@ -62,7 +62,7 @@ class CrabadaBot:
         else:
             with open(self.game_stats_file, "r") as infile:
                 self.game_stats = json.load(infile)
-        logger.print_normal(f"Adding bot for user {self.user} with address {self.address}\n\n")
+        logger.print_ok_blue(f"Adding bot for user {self.user} with address {self.address}")
 
     def _send_status_update_sms(self, custom_message: str) -> None:
         if not self.config["get_sms_updates"]:
@@ -241,8 +241,6 @@ class CrabadaBot:
         logger.print_bold("------------------------------\n")
 
     def run(self) -> None:
-        logger.print_bold(f"Starting game bot for user {self.user}...\n")
-
         logger.print_normal("=" * 60)
         logger.print_ok(f"User: {self.user.upper()}")
         self._print_mine_status()
