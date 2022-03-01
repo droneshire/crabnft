@@ -208,7 +208,9 @@ class CrabadaBot:
                     if team_mine["winner_team_id"] == team["team_id"]
                     else "lost \U0001F915"
                 )
-                self._send_status_update_sms(f"finished mine for {team['team_id']}, you {outcome}")
+                self._send_status_update_sms(
+                    f"finished mine for team {team['team_id']}, you {outcome}"
+                )
             time.sleep(self.TIME_BETWEEN_TRANSACTIONS)
 
     def _update_bot_stats(self, team: Team, mine: IdleGame) -> None:
