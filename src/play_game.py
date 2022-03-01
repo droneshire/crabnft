@@ -49,14 +49,7 @@ def run_bot() -> None:
 
     bots = [
         CrabadaBot(
-            user,
-            config,
-            TWILIO_CONFIG["from_sms_number"],
-            TWILIO_CONFIG["admin_sms_number"],
-            TWILIO_CONFIG["enable_admin_sms"],
-            sms_client,
-            args.log_dir,
-            args.dry_run,
+            user, config, TWILIO_CONFIG["from_sms_number"], sms_client, args.log_dir, args.dry_run,
         )
         for user, config in USERS.items()
     ]
@@ -71,6 +64,15 @@ def run_bot() -> None:
     finally:
         for bot in bots:
             bot.end()
+        if TWILIO_CONFIG["enable_admin_sms"]:
+            sms_message = f"\U0001F980 Crabada Bot Alert \U0001F980\n\n"
+            sms_message += f"Crabada Bot Stopped \U0000203C\n"
+            message = sms_client.messages.create(
+                body=sms_message,
+                from_=TWILIO_CONFIG["from_sms_number"],
+                to=TWILIO_CONFIG["admin_sms_number"],
+            )
+            logger.print_normal(json.dumps(message.sid, indent=4, sort_keys=True))
 
 
 if __name__ == "__main__":

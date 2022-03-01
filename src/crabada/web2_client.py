@@ -118,7 +118,10 @@ class CrabadaWeb2Client:
         url = self.BASE_URL + "/teams"
         actual_params = {"limit": 20, "page": 1, "user_address": user_address}
         actual_params.update(params)
-        return requests.request("GET", url, params=actual_params).json()
+        try:
+            return requests.request("GET", url, params=actual_params).json()
+        except:
+            return {}
 
     def list_high_mp_crabs_for_lending(
         self, params: T.Dict[str, T.Any] = {}

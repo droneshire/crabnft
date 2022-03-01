@@ -25,8 +25,6 @@ class CrabadaBot:
         user: str,
         config: UserConfig,
         from_sms_number: str,
-        admin_sms_number: str,
-        enable_admin_sms_alert: bool,
         sms_client: Client,
         log_dir: str,
         dry_run: bool,
@@ -34,8 +32,6 @@ class CrabadaBot:
         self.user = user
         self.config = config
         self.from_sms_number = from_sms_number
-        self.admin_sms_number = admin_sms_number
-        self.enable_admin_sms_alert = enable_admin_sms_alert
         self.sms = sms_client
 
         self.crabada_w3 = T.cast(
@@ -134,9 +130,6 @@ class CrabadaBot:
                 continue
 
             if not self.crabada_w2.mine_needs_reinforcement(team_mine):
-                logger.print_normal(
-                    f"Mine[{team_mine.get('game_id', 'null')}]: No need for reinforcement"
-                )
                 continue
 
             reinforcment_crab = None
@@ -262,16 +255,6 @@ class CrabadaBot:
 
     def end(self) -> None:
         logger.print_fail(f"Exiting bot for {self.user}...")
-
-        if self.enable_admin_sms_alert:
-            sms_message = f"\U0001F980 Crabada Bot Alert \U0001F980\n\n"
-            sms_message += f"Crabada Bot Stopped \U0000203C\n"
-            message = self.sms.messages.create(
-                body=sms_message, from_=self.from_sms_number, to=self.admin_sms_number,
-            )
-            game_logger = logging.getLogger()
-            if game_logger:
-                game_logger.debug(json.dumps(message.sid, indent=4, sort_keys=True))
 
         self._print_bot_stats()
         with open(self.game_stats_file, "w") as outfile:
