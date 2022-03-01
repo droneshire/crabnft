@@ -180,8 +180,8 @@ class CrabadaBot:
                 logger.print_fail_arrow(f"Error reinforcing mine {team['game_id']}")
             else:
                 logger.print_ok_arrow(f"Successfully reinforced mine {team['game_id']}")
-                self.game_stats["total_tus_earned"] -= price_tus
-                self.game_stats["reinforcement_tus"] += price_tus
+                self.game_stats["tus_net"] -= price_tus
+                self.game_stats["tus_reinforcement"] += price_tus
                 self.updated_game_stats = True
             time.sleep(self.TIME_BETWEEN_TRANSACTIONS)
 
@@ -219,12 +219,14 @@ class CrabadaBot:
             / (self.game_stats["game_wins"] + self.game_stats["game_losses"])
         )
 
-        self.game_stats["total_tus_earned"] += wei_to_tus_raw(mine["miner_tus_reward"])
-        self.game_stats["total_cra_earned"] += wei_to_cra_raw(mine["miner_cra_reward"])
+        self.game_stats["tus_gross"] += wei_to_tus_raw(mine["miner_tus_reward"])
+        self.game_stats["cra_net"] += wei_to_cra_raw(mine["miner_cra_reward"])
+        self.game_stats["tus_net"] += wei_to_tus_raw(mine["miner_tus_reward"])
 
         self.game_stats["commission_tus"] += (
             wei_to_tus_raw(mine["miner_tus_reward"]) * self.config["commission_percent_per_mine"]
         )
+        self.game_stats["tus_net"] -= self.game_stats["commission_tus"]
 
         with open(self.game_stats_file, "w") as outfile:
             json.dump(self.game_stats, outfile, indent=4, sort_keys=True)
