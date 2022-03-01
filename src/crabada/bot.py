@@ -74,7 +74,7 @@ class CrabadaBot:
         text_message += "---\U0001F579  GAME STATS\U0001F579  ---\n"
         for k, v in self.game_stats.items():
             if isinstance(v, float):
-                text_message += f"{k.upper()}: {v:2f}\n"
+                text_message += f"{k.upper()}: {v:.2f}\n"
             else:
                 text_message += f"{k.upper()}: {v}\n"
 
@@ -84,11 +84,11 @@ class CrabadaBot:
             message = self.sms.messages.create(
                 body=text_message, from_=self.from_sms_number, to=self.config["sms_number"]
             )
+            self.game_stats["sms_cost"] += self.SMS_COST_PER_MESSAGE
+            self.game_stats["sms_sent"] += 1
         except:
+            logger.print_fail("Failed to send SMS alert")
             pass
-
-        self.game_stats["sms_cost"] += self.SMS_COST_PER_MESSAGE
-        self.game_stats["sms_sent"] += 1
 
         game_logger = logging.getLogger()
         if game_logger:
@@ -242,7 +242,10 @@ class CrabadaBot:
         logger.print_bold("--------\U0001F579  GAME STATS\U0001F579  ------")
         logger.print_normal(f"Explorer: https://snowtrace.io/address/{self.config['address']}\n\n")
         for k, v in self.game_stats.items():
-            logger.print_ok_blue(f"{k.upper()}: {v}")
+            if isinstance(v, float):
+                logger.print_ok_blue(f"{k.upper()}: {v:.2f}")
+            else:
+                logger.print_ok_blue(f"{k.upper()}: {v}")
         logger.print_bold("------------------------------\n")
 
     def run(self) -> None:

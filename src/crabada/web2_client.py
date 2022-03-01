@@ -153,7 +153,11 @@ class CrabadaWeb2Client:
             return []
 
     def get_cheapest_best_crab_from_list_for_lending(
-        self, crabs: T.List[CrabForLending], max_tus: Tus, lending_category: LendingCategories
+        self,
+        crabs: T.List[CrabForLending],
+        max_tus: Tus,
+        n_crab_from_floor: int,
+        lending_category: LendingCategories,
     ) -> CrabForLending:
         """
         From a list of crabs, pick the one with the best characteristic for the
@@ -163,18 +167,18 @@ class CrabadaWeb2Client:
         sorted_affordable_crabs = sorted(
             affordable_crabs, key=lambda c: (-c[lending_category], c["price"])
         )
-        return n_or_better_or_none(3, sorted_affordable_crabs)
+        return n_or_better_or_none(n_crab_from_floor, sorted_affordable_crabs)
 
     def get_best_high_mp_crab_for_lending(self, max_tus: Tus) -> CrabForLending:
         high_mp_crabs = self.list_high_mp_crabs_for_lending()
         return self.get_cheapest_best_crab_from_list_for_lending(
-            high_mp_crabs, max_tus, "mine_point"
+            high_mp_crabs, max_tus, 3, "mine_point"
         )
 
     def get_best_high_bp_crab_for_lending(self, max_tus: Tus) -> CrabForLending:
         high_bp_crabs = self.list_high_bp_crabs_for_lending()
         return self.get_cheapest_best_crab_from_list_for_lending(
-            high_bp_crabs, max_tus, "battle_point"
+            high_bp_crabs, max_tus, 7, "battle_point"
         )
 
     def list_crabs_for_lending_raw(self, params: T.Dict[str, T.Any] = {}) -> T.Any:

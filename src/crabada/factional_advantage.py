@@ -30,13 +30,13 @@ def get_faction_adjusted_battle_point(team: Team, game: IdleGame) -> int:
     )
     if defense_faction in FACTIONAL_ADVANTAGE[attack_faction]:
         logger.print_normal(
-            f"Mine[{game['game_id']}]: Battle point decrease of {(1 - FACTIONAL_ADVANTAGE_MULT) * 100.0}"
+            f"Mine[{game['game_id']}]: Battle point decrease of {(1 - FACTIONAL_ADVANTAGE_MULT) * 100.0:2f}%"
         )
         return int(math.ceil(team_defense_point * FACTIONAL_ADVANTAGE_MULT)) + reinforce_point
 
     if defense_faction == Faction.NO_FACTION:
         logger.print_ok_arrow(
-            f"Mine[{game['game_id']}]: Battle point decrease of {(1 - NEUTRAL_ADVANTAGE_MULT)* 100.0}"
+            f"Mine[{game['game_id']}]: Battle point decrease of {(1 - NEUTRAL_ADVANTAGE_MULT)* 100.0:2f}%"
         )
         return int(math.ceil(team_defense_point * NEUTRAL_ADVANTAGE_MULT)) + reinforce_point
 
