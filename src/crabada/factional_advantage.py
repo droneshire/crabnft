@@ -9,9 +9,9 @@ NEUTRAL_ADVANTAGE_MULT = 0.97
 
 FACTIONAL_ADVANTAGE = {
     Faction.ABYSS: [Faction.TRENCH, Faction.MACHINE],
-    Faction.FAERIES: [Faction.ABYSS, Faction.ORE],
-    Faction.LUX: [Faction.ORE, Faction.FAERIES],
-    Faction.MACHINE: [Faction.FAERIES, Faction.LUX],
+    Faction.FAERIE: [Faction.ABYSS, Faction.ORE],
+    Faction.LUX: [Faction.ORE, Faction.FAERIE],
+    Faction.MACHINE: [Faction.FAERIE, Faction.LUX],
     Faction.ORE: [Faction.ABYSS, Faction.TRENCH],
     Faction.TRENCH: [Faction.LUX, Faction.MACHINE],
 }

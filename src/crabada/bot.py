@@ -27,16 +27,18 @@ class CrabadaBot:
         config: UserConfig,
         from_sms_number: str,
         admin_sms_number: str,
+        enable_admin_sms_alert: bool,
         sms_client: Client,
         log_dir: str,
         dry_run: bool,
     ) -> None:
         self.user = user
         self.config = config
-        self.address = self.config["address"]
-        self.sms = sms_client
         self.from_sms_number = from_sms_number
         self.admin_sms_number = admin_sms_number
+        self.enable_admin_sms_alert = enable_admin_sms_alert
+        self.sms = sms_client
+
         self.crabada_w3 = T.cast(
             CrabadaWeb3Client,
             (
@@ -46,6 +48,8 @@ class CrabadaBot:
             ).set_dry_run(dry_run),
         )
         self.crabada_w2 = CrabadaWeb2Client()
+
+        self.address = self.config["address"]
         self.game_stats = NULL_GAME_STATS
         self.game_stats_file = os.path.join(log_dir, user.lower() + "_lifetime_game_bot_stats.json")
         self.updated_game_stats = True
@@ -77,9 +81,12 @@ class CrabadaBot:
 
         text_message += "\n"
 
-        message = self.sms.messages.create(
-            body=text_message, from_=self.from_sms_number, to=self.config["sms_number"]
-        )
+        try:
+            message = self.sms.messages.create(
+                body=text_message, from_=self.from_sms_number, to=self.config["sms_number"]
+            )
+        except:
+            pass
 
         self.game_stats["sms_cost"] += self.SMS_COST_PER_MESSAGE
         self.game_stats["sms_sent"] += 1
@@ -206,8 +213,10 @@ class CrabadaBot:
         else:
             self.game_stats["game_losses"] += 1
 
-        self.game_stats["game_win_percent"] = float(self.game_stats["game_wins"]) / (
-            self.game_stats["game_wins"] + self.game_stats["game_losses"]
+        self.game_stats["game_win_percent"] = (
+            100.0
+            * float(self.game_stats["game_wins"])
+            / (self.game_stats["game_wins"] + self.game_stats["game_losses"])
         )
 
         self.game_stats["total_tus_earned"] += wei_to_tus_raw(mine["miner_tus_reward"])
@@ -231,26 +240,22 @@ class CrabadaBot:
 
     def run(self) -> None:
         logger.print_bold(f"Starting game bot for user {self.user}...\n")
-        try:
-            while True:
-                logger.print_normal("=" * 60)
-                logger.print_ok(f"User: {self.user.upper()}")
-                self._print_mine_status()
-                self._check_and_maybe_start_mines()
-                self._check_and_maybe_reinforce_mines()
-                self._check_and_maybe_close_mines()
-                if self.updated_game_stats:
-                    self.updated_game_stats = False
-                    self._print_bot_stats()
 
-                time.sleep(self.TIME_BETWEEN_EACH_UPDATE)
-        finally:
-            logger.print_fail("Stopping bot...")
+        logger.print_normal("=" * 60)
+        logger.print_ok(f"User: {self.user.upper()}")
+        self._print_mine_status()
+        self._check_and_maybe_start_mines()
+        self._check_and_maybe_reinforce_mines()
+        self._check_and_maybe_close_mines()
+        if self.updated_game_stats:
+            self.updated_game_stats = False
+            self._print_bot_stats()
+        time.sleep(self.TIME_BETWEEN_EACH_UPDATE)
 
     def end(self) -> None:
-        logger.print_normal(f"Exiting bot for {self.user}...")
+        logger.print_fail(f"Exiting bot for {self.user}...")
 
-        if self.config["get_sms_updates"]:
+        if self.enable_admin_sms_alert:
             sms_message = f"\U0001F980 Crabada Bot Alert \U0001F980\n\n"
             sms_message += f"Crabada Bot Stopped \U0000203C\n"
             message = self.sms.messages.create(

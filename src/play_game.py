@@ -53,6 +53,7 @@ def run_bot() -> None:
             config,
             TWILIO_CONFIG["from_sms_number"],
             TWILIO_CONFIG["admin_sms_number"],
+            TWILIO_CONFIG["enable_admin_sms"],
             sms_client,
             args.log_dir,
             args.dry_run,
@@ -61,8 +62,9 @@ def run_bot() -> None:
     ]
 
     try:
-        for bot in bots:
-            bot.run()
+        while True:
+            for bot in bots:
+                bot.run()
     finally:
         for bot in bots:
             bot.end()

@@ -12,7 +12,7 @@ LendingCategories = T.Literal["mine_point", "battle_point", "price"]
 
 class Faction:
     ABYSS = "ABYSS"
-    FAERIES = "FAERIES"
+    FAERIE = "FAERIE"
     LUX = "LUX"
     MACHINE = "MACHINE"
     ORE = "ORE"
