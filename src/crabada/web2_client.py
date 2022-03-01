@@ -6,7 +6,7 @@ import time
 from eth_typing import Address
 
 from crabada.types import CrabForLending, IdleGame, LendingCategories, Team
-from utils.general import first_or_none, third_or_better_or_none, get_pretty_seconds
+from utils.general import first_or_none, n_or_better_or_none, get_pretty_seconds
 from utils.price import wei_to_tus, Tus
 
 
@@ -163,7 +163,7 @@ class CrabadaWeb2Client:
         sorted_affordable_crabs = sorted(
             affordable_crabs, key=lambda c: (-c[lending_category], c["price"])
         )
-        return third_or_better_or_none(sorted_affordable_crabs)
+        return n_or_better_or_none(3, sorted_affordable_crabs)
 
     def get_best_high_mp_crab_for_lending(self, max_tus: Tus) -> CrabForLending:
         high_mp_crabs = self.list_high_mp_crabs_for_lending()
