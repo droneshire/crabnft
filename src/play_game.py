@@ -2,6 +2,7 @@
 Starts bots for interacting with the Crabada Dapp P2E game
 """
 import argparse
+import json
 import logging
 import os
 import sys

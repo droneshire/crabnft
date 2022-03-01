@@ -12,6 +12,7 @@ from crabada.types import CrabForLending, GameStats, IdleGame, NULL_GAME_STATS, 
 from utils import logger
 from utils.config_types import UserConfig, SmsConfig
 from utils.price import tus_to_wei, wei_to_tus, wei_to_cra_raw, wei_to_tus_raw
+from web3_utils.web3_client import web3_transaction
 
 
 class CrabadaBot:
@@ -19,6 +20,7 @@ class CrabadaBot:
     TIME_BETWEEN_TRANSACTIONS = 5.0
     TIME_BETWEEN_EACH_UPDATE = 30.0
     SMS_COST_PER_MESSAGE = 0.0075
+    ALERT_THROTTLING_TIME = 60.0 * 5
 
     def __init__(
         self,
@@ -33,6 +35,8 @@ class CrabadaBot:
         self.config = config
         self.from_sms_number = from_sms_number
         self.sms = sms_client
+
+        self.time_since_last_alert = 0.0
 
         self.crabada_w3 = T.cast(
             CrabadaWeb3Client,
@@ -90,6 +94,19 @@ class CrabadaBot:
         if game_logger:
             game_logger.debug(json.dumps(message.sid, indent=4, sort_keys=True))
 
+    def _send_out_of_gas_sms(self):
+        now = time.time()
+        if (
+            self.time_since_last_alert
+            and now - self.time_since_last_alert < self.ALERT_THROTTLING_TIME
+        ):
+            return
+
+        message = f"Unable to complete bot transaction due to insufficient gas \U000026FD!\n"
+        message += f"Please add AVAX to your wallet ASAP to avoid delay in mining!\n"
+        self._send_status_update_sms(message)
+        self.time_since_last_alert = now
+
     def _print_mine_status(self) -> None:
         open_mines = self.crabada_w2.list_my_open_mines((self.address))
         team_to_mines = {mine["game_id"]: mine for mine in open_mines}
@@ -113,12 +130,14 @@ class CrabadaBot:
                 continue
 
             logger.print_normal(f"Attemting to start new mine with team {team['team_id']}!")
-            tx_hash = self.crabada_w3.start_game(team["team_id"])
-            tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
-            if tx_receipt["status"] != 1:
-                logger.print_fail(f"Error starting mine for team {team['team_id']}")
-            else:
-                logger.print_ok_arrow(f"Successfully started mine for team {team['team_id']}")
+            with web3_transaction(self._send_out_of_gas_sms):
+                tx_hash = self.crabada_w3.start_game(team["team_id"])
+                tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
+                if tx_receipt["status"] != 1:
+                    logger.print_fail(f"Error starting mine for team {team['team_id']}")
+                else:
+                    logger.print_ok_arrow(f"Successfully started mine for team {team['team_id']}")
+
             time.sleep(self.TIME_BETWEEN_TRANSACTIONS)
 
     def _check_and_maybe_reinforce_mines(self) -> None:
@@ -163,18 +182,19 @@ class CrabadaBot:
             logger.print_normal(
                 f"Mine[{team_mine['game_id']}]: Found reinforcement crabada {crabada_id} for {price_tus} Tus [BP {battle_points} | MP {mine_points}]"
             )
+            with web3_transaction(self._send_out_of_gas_sms):
+                tx_hash = self.crabada_w3.reinforce_defense(
+                    team["game_id"], crabada_id, reinforcment_crab["price"]
+                )
+                tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
+                if tx_receipt["status"] != 1:
+                    logger.print_fail_arrow(f"Error reinforcing mine {team['game_id']}")
+                else:
+                    logger.print_ok_arrow(f"Successfully reinforced mine {team['game_id']}")
+                    self.game_stats["tus_net"] -= price_tus
+                    self.game_stats["tus_reinforcement"] += price_tus
+                    self.updated_game_stats = True
 
-            tx_hash = self.crabada_w3.reinforce_defense(
-                team["game_id"], crabada_id, reinforcment_crab["price"]
-            )
-            tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
-            if tx_receipt["status"] != 1:
-                logger.print_fail_arrow(f"Error reinforcing mine {team['game_id']}")
-            else:
-                logger.print_ok_arrow(f"Successfully reinforced mine {team['game_id']}")
-                self.game_stats["tus_net"] -= price_tus
-                self.game_stats["tus_reinforcement"] += price_tus
-                self.updated_game_stats = True
             time.sleep(self.TIME_BETWEEN_TRANSACTIONS)
 
     def _check_and_maybe_close_mines(self) -> None:
@@ -188,21 +208,23 @@ class CrabadaBot:
                 continue
 
             logger.print_normal(f"Attempting to close game {team['game_id']}")
-            tx_hash = self.crabada_w3.close_game(team["game_id"])
-            tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
-            if tx_receipt["status"] != 1:
-                logger.print_fail_arrow(f"Error closing mine {team['game_id']}")
-            else:
-                logger.print_ok_arrow(f"Successfully closed mine {team['game_id']}")
-                self._update_bot_stats(team, team_mine)
-                outcome = (
-                    "won \U0001F389"
-                    if team_mine["winner_team_id"] == team["team_id"]
-                    else "lost \U0001F915"
-                )
-                self._send_status_update_sms(
-                    f"finished mine for team {team['team_id']}, you {outcome}"
-                )
+            with web3_transaction(self._send_out_of_gas_sms):
+                tx_hash = self.crabada_w3.close_game(team["game_id"])
+                tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
+                if tx_receipt["status"] != 1:
+                    logger.print_fail_arrow(f"Error closing mine {team['game_id']}")
+                else:
+                    logger.print_ok_arrow(f"Successfully closed mine {team['game_id']}")
+                    self._update_bot_stats(team, team_mine)
+                    outcome = (
+                        "won \U0001F389"
+                        if team_mine["winner_team_id"] == team["team_id"]
+                        else "lost \U0001F915"
+                    )
+                    self._send_status_update_sms(
+                        f"finished mine for team {team['team_id']}, you {outcome}"
+                    )
+
             time.sleep(self.TIME_BETWEEN_TRANSACTIONS)
 
     def _update_bot_stats(self, team: Team, mine: IdleGame) -> None:

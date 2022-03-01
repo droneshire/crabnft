@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import typing as T
+from contextlib import contextmanager
 
 from eth_account.datastructures import SignedTransaction
 from eth_typing import Address, BlockIdentifier, ChecksumAddress
@@ -9,6 +10,17 @@ from eth_typing.encoding import HexStr
 from web3 import Web3
 from web3.contract import Contract, ContractFunction
 from web3.types import BlockData, Nonce, TxParams, TxReceipt, TxData
+
+
+@contextmanager
+def web3_transaction(out_of_gas_handler: T.Callable) -> T.Iterator[None]:
+    try:
+        yield
+    except ValueError as exception:
+        if exception["message"].startswith("insufficient funds for gas"):
+            out_of_gas_handler()
+        else:
+            raise exception
 
 
 class MissingParameter(Exception):
@@ -111,7 +123,7 @@ class Web3Client:
             if exception["message"].starts_with("nonce too low:"):
                 self.nonce += 1
             else:
-                raise ValueError
+                raise exception
         return self.w3.toHex(tx_hash)
 
     def sign_and_send_transaction(self, tx: TxParams) -> HexStr:
