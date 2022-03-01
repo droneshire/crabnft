@@ -62,8 +62,8 @@ def run_bot() -> None:
     ]
 
     for bot in bots:
-        logger.print_bold(f"Starting game bot for user {bot.user}...\n")
-
+        logger.print_bold(f"Starting game bot for user {bot.user}...")
+    logger.print_normal("\n")
     try:
         while True:
             for bot in bots:
