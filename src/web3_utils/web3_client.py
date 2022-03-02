@@ -20,7 +20,7 @@ def web3_transaction(err_string_compare: str, handler: T.Callable) -> T.Iterator
         if err_string_compare in e.args[0]["message"]:
             handler()
         else:
-            raise exception
+            raise e
 
 
 class MissingParameter(Exception):
