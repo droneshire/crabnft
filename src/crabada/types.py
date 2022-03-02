@@ -31,6 +31,7 @@ class GameStats(T.TypedDict):
     tus_reinforcement: float
     sms_sent: int
     sms_cost: float
+    avax_gas_usd: float
 
 
 NULL_GAME_STATS = GameStats(
@@ -44,6 +45,7 @@ NULL_GAME_STATS = GameStats(
     tus_reinforcement=0.0,
     sms_sent=0,
     sms_cost=0.0,
+    avax_gas_usd=0.0,
 )
 
 

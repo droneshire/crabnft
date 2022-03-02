@@ -287,7 +287,8 @@ class CrabadaWeb2Client:
         """
         Seconds to the end of the given game
         """
-        return int(game.get("end_time", 10e20) - time.time())
+        now = time.time()
+        return int(game.get("end_time", now) - now)
 
     @staticmethod
     def get_remaining_time_formatted(game: IdleGame) -> str:

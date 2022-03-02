@@ -12,8 +12,8 @@ class AvalancheCWeb3Client(Web3Client):
     """
 
     chain_id: int = 43114
-    gas_limit: int = 450000  # sensible value for Avalanche
-    max_priority_fee_per_gas_in_gwei: int = 2
+    gas_limit: int = 400000  # sensible value for Avalanche
+    max_priority_fee_per_gas_in_gwei: int = 1
 
     def set_node_uri(self, node_uri: str = None) -> AvalancheCWeb3Client:
         """

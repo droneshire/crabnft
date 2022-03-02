@@ -9,7 +9,7 @@ import sys
 import time
 from twilio.rest import Client
 
-from config import TWILIO_CONFIG, USERS
+from config import IEX_API_TOKEN, TWILIO_CONFIG, USERS
 from crabada.bot import CrabadaBot
 from utils import logger
 
@@ -50,7 +50,13 @@ def run_bot() -> None:
 
     bots = [
         CrabadaBot(
-            user, config, TWILIO_CONFIG["from_sms_number"], sms_client, args.log_dir, args.dry_run,
+            user,
+            config,
+            TWILIO_CONFIG["from_sms_number"],
+            sms_client,
+            IEX_API_TOKEN,
+            args.log_dir,
+            args.dry_run,
         )
         for user, config in USERS.items()
     ]
@@ -58,10 +64,12 @@ def run_bot() -> None:
     for bot in bots:
         logger.print_bold(f"Starting game bot for user {bot.user}...")
     logger.print_normal("\n")
+
     try:
         while True:
             for bot in bots:
                 bot.run()
+
     finally:
         for bot in bots:
             bot.end()

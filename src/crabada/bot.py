@@ -4,6 +4,7 @@ import os
 import time
 import typing as T
 from twilio.rest import Client
+from web3.types import TxReceipt
 
 from crabada.web2_client import CrabadaWeb2Client
 from crabada.web3_client import CrabadaWeb3Client
@@ -11,7 +12,7 @@ from crabada.factional_advantage import get_faction_adjusted_battle_point
 from crabada.types import CrabForLending, GameStats, IdleGame, NULL_GAME_STATS, Team
 from utils import logger
 from utils.config_types import UserConfig, SmsConfig
-from utils.price import tus_to_wei, wei_to_tus, wei_to_cra_raw, wei_to_tus_raw
+from utils.price import get_avax_price_usd, tus_to_wei, wei_to_tus, wei_to_cra_raw, wei_to_tus_raw
 from web3_utils.web3_client import web3_transaction
 
 
@@ -28,6 +29,7 @@ class CrabadaBot:
         config: UserConfig,
         from_sms_number: str,
         sms_client: Client,
+        crypto_api_token: str,
         log_dir: str,
         dry_run: bool,
     ) -> None:
@@ -35,6 +37,7 @@ class CrabadaBot:
         self.config = config
         self.from_sms_number = from_sms_number
         self.sms = sms_client
+        self.api_token = crypto_api_token
 
         self.time_since_last_alert = 0.0
 
@@ -74,7 +77,7 @@ class CrabadaBot:
         text_message += "---\U0001F579  GAME STATS\U0001F579  ---\n"
         for k, v in self.game_stats.items():
             if isinstance(v, float):
-                text_message += f"{k.upper()}: {v:.2f}\n"
+                text_message += f"{k.upper()}: {v:.3f}\n"
             else:
                 text_message += f"{k.upper()}: {v}\n"
 
@@ -107,6 +110,12 @@ class CrabadaBot:
         self._send_status_update_sms(message)
         self.time_since_last_alert = now
 
+    def _calculate_and_log_gas_price(self, tx_receipt: TxReceipt) -> None:
+        avax_gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        avax_gas_usd = get_avax_price_usd(self.api_token) * avax_gas
+        self.game_stats["avax_gas_usd"] += avax_gas_usd
+        logger.print_bold(f"Paid {avax_gas_usd} AVAX (${avax_gas_usd}) in gas")
+
     def _print_mine_status(self) -> None:
         open_mines = self.crabada_w2.list_my_open_mines((self.address))
         team_to_mines = {mine["game_id"]: mine for mine in open_mines}
@@ -114,6 +123,7 @@ class CrabadaBot:
         open_mines_str = " ".join([str(m["game_id"]) for m in open_mines])
         formatted_date = time.strftime("%A, %Y-%m-%d %H:%M:%S", time.localtime(time.time()))
         logger.print_warn(f"Mines ({formatted_date})")
+
         for mine in open_mines:
             logger.print_normal(
                 f"\t{mine['game_id']}\t\tround {mine['round']}\t\t{self.crabada_w2.get_remaining_time_formatted(mine)}\t\t"
@@ -130,15 +140,17 @@ class CrabadaBot:
                 continue
 
             logger.print_normal(f"Attemting to start new mine with team {team['team_id']}!")
-            with web3_transaction(self._send_out_of_gas_sms):
+
+            with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
                 tx_hash = self.crabada_w3.start_game(team["team_id"])
                 tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
+
+                self._calculate_and_log_gas_price(tx_receipt)
+
                 if tx_receipt["status"] != 1:
                     logger.print_fail(f"Error starting mine for team {team['team_id']}")
                 else:
                     logger.print_ok_arrow(f"Successfully started mine for team {team['team_id']}")
-
-            time.sleep(self.TIME_BETWEEN_TRANSACTIONS)
 
     def _check_and_maybe_reinforce_mines(self) -> None:
         teams = self.crabada_w2.list_teams(self.address)
@@ -182,11 +194,15 @@ class CrabadaBot:
             logger.print_normal(
                 f"Mine[{team_mine['game_id']}]: Found reinforcement crabada {crabada_id} for {price_tus} Tus [BP {battle_points} | MP {mine_points}]"
             )
-            with web3_transaction(self._send_out_of_gas_sms):
+
+            with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
                 tx_hash = self.crabada_w3.reinforce_defense(
                     team["game_id"], crabada_id, reinforcment_crab["price"]
                 )
                 tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
+
+                self._calculate_and_log_gas_price(tx_receipt)
+
                 if tx_receipt["status"] != 1:
                     logger.print_fail_arrow(f"Error reinforcing mine {team['game_id']}")
                 else:
@@ -194,8 +210,6 @@ class CrabadaBot:
                     self.game_stats["tus_net"] -= price_tus
                     self.game_stats["tus_reinforcement"] += price_tus
                     self.updated_game_stats = True
-
-            time.sleep(self.TIME_BETWEEN_TRANSACTIONS)
 
     def _check_and_maybe_close_mines(self) -> None:
         teams = self.crabada_w2.list_teams(self.address)
@@ -208,9 +222,13 @@ class CrabadaBot:
                 continue
 
             logger.print_normal(f"Attempting to close game {team['game_id']}")
-            with web3_transaction(self._send_out_of_gas_sms):
+
+            with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
                 tx_hash = self.crabada_w3.close_game(team["game_id"])
                 tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
+
+                self._calculate_and_log_gas_price(tx_receipt)
+
                 if tx_receipt["status"] != 1:
                     logger.print_fail_arrow(f"Error closing mine {team['game_id']}")
                 else:
@@ -224,8 +242,6 @@ class CrabadaBot:
                     self._send_status_update_sms(
                         f"finished mine for team {team['team_id']}, you {outcome}"
                     )
-
-            time.sleep(self.TIME_BETWEEN_TRANSACTIONS)
 
     def _update_bot_stats(self, team: Team, mine: IdleGame) -> None:
         if mine["winner_team_id"] == team["team_id"]:
@@ -258,21 +274,26 @@ class CrabadaBot:
         logger.print_normal(f"Explorer: https://snowtrace.io/address/{self.config['address']}\n\n")
         for k, v in self.game_stats.items():
             if isinstance(v, float):
-                logger.print_ok_blue(f"{k.upper()}: {v:.2f}")
+                logger.print_ok_blue(f"{k.upper()}: {v:.3f}")
             else:
                 logger.print_ok_blue(f"{k.upper()}: {v}")
         logger.print_bold("------------------------------\n")
 
     def run(self) -> None:
         logger.print_normal("=" * 60)
-        logger.print_ok(f"User: {self.user.upper()}")
+
+        avax_price_usd = get_avax_price_usd(self.api_token)
+        logger.print_ok(f"User: {self.user.upper()}, AVAX/USD: ${avax_price_usd:.2f}")
+
         self._print_mine_status()
         self._check_and_maybe_start_mines()
         self._check_and_maybe_reinforce_mines()
         self._check_and_maybe_close_mines()
+
         if self.updated_game_stats:
             self.updated_game_stats = False
             self._print_bot_stats()
+
         time.sleep(self.TIME_BETWEEN_EACH_UPDATE)
 
     def end(self) -> None:

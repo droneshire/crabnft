@@ -1,9 +1,23 @@
+import requests
 import typing as T
 
 from web3 import Web3
 from web3.types import Wei
 
 Tus = T.NewType("Tus", int)
+
+
+def get_avax_price_usd(api_token: str) -> T.Optional[float]:
+    price = 1.0
+    for symbol in ["btcusd", "avaxbtc"]:
+        api_url = f"https://cloud.iexapis.com/stable/crypto/{symbol}/price?token={api_token}"
+        try:
+            raw = requests.get(api_url).json()
+            price = price * float(raw["price"])
+        except:
+            return None
+
+    return price
 
 
 def tus_to_wei(tus: int) -> Wei:

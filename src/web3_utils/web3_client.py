@@ -7,17 +7,17 @@ from contextlib import contextmanager
 from eth_account.datastructures import SignedTransaction
 from eth_typing import Address, BlockIdentifier, ChecksumAddress
 from eth_typing.encoding import HexStr
-from web3 import Web3
+from web3 import eth, Web3
 from web3.contract import Contract, ContractFunction
-from web3.types import BlockData, Nonce, TxParams, TxReceipt, TxData
+from web3.types import BlockData, Nonce, TxParams, TxReceipt, TxData, Wei
 
 
 @contextmanager
-def web3_transaction(out_of_gas_handler: T.Callable) -> T.Iterator[None]:
+def web3_transaction(err_string_compare: str, out_of_gas_handler: T.Callable) -> T.Iterator[None]:
     try:
         yield
     except ValueError as exception:
-        if exception["message"].startswith("insufficient funds for gas"):
+        if exception["message"].startswith(err_string_compare):
             out_of_gas_handler()
         else:
             raise exception
@@ -44,7 +44,7 @@ class Web3Client:
     chain_id: int = None
     node_uri: str = None
     user_address: Address = None
-    privateKey: str = None
+    private_key: str = None
     dry_run: bool
 
     Derived attributes
@@ -71,7 +71,7 @@ class Web3Client:
         tx: TxParams = {
             "type": 0x2,
             "chainId": self.chain_id,
-            "gas": self.gas_limit,  # type: ignore
+            "gas": self.gas_limit,
             "maxFeePerGas": Web3.toWei(self.estimate_max_fee_per_gas_in_gwei(), "gwei"),
             "maxPriorityFeePerGas": Web3.toWei(self.max_priority_fee_per_gas_in_gwei, "gwei"),
             "nonce": self.get_nonce(),
@@ -107,7 +107,7 @@ class Web3Client:
         Sign the give transaction; the private key must have
         been set with setCredential().
         """
-        return self.w3.eth.account.sign_transaction(tx, self.privateKey)
+        return self.w3.eth.account.sign_transaction(tx, self.private_key)
 
     def send_signed_transaction(self, signed_tx: SignedTransaction) -> HexStr:
         """
@@ -116,14 +116,12 @@ class Web3Client:
         if self.dry_run:
             return ""
 
-        try:
+        def fail_handler() -> None:
+            self.nonce += 1
+
+        with web3_transaction("nonce too low:", fail_handler):
             tx_hash = self.w3.eth.send_raw_transaction(signed_tx.rawTransaction)
             self.nonce = self.get_nonce()
-        except ValueError as exception:
-            if exception["message"].starts_with("nonce too low:"):
-                self.nonce += 1
-            else:
-                raise exception
         return self.w3.toHex(tx_hash)
 
     def sign_and_send_transaction(self, tx: TxParams) -> HexStr:
@@ -180,6 +178,9 @@ class Web3Client:
         """
         return self.w3.eth.get_block("pending")
 
+    def get_gas_cost_of_transaction_wei(self, tx_receipt: TxReceipt) -> Wei:
+        return tx_receipt["effectiveGasPrice"] * tx_receipt["gasUsed"]
+
     ####################
     # Setters
     ####################
@@ -221,12 +222,12 @@ class Web3Client:
             pass
         return self
 
-    def set_credentials(self, user_address: Address, privateKey: str) -> Web3Client:
+    def set_credentials(self, user_address: Address, private_key: str) -> Web3Client:
         """
         Set credentials, must be set before set_node_uri
         """
         self.user_address = user_address
-        self.privateKey = privateKey
+        self.private_key = private_key
         return self
 
     def set_chain_id(self, chain_id: int) -> Web3Client:
