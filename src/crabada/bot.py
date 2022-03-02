@@ -22,6 +22,7 @@ class CrabadaBot:
     TIME_BETWEEN_EACH_UPDATE = 30.0
     SMS_COST_PER_MESSAGE = 0.0075
     ALERT_THROTTLING_TIME = 60.0 * 5
+    MAX_FEE_PER_GAS = 150
 
     def __init__(
         self,
@@ -55,6 +56,7 @@ class CrabadaBot:
         self.game_stats = NULL_GAME_STATS
         self.game_stats_file = os.path.join(log_dir, user.lower() + "_lifetime_game_bot_stats.json")
         self.updated_game_stats = True
+        self.have_reinforced_at_least_once: T.Dict[str, bool] = {}
 
         if not os.path.isfile(self.game_stats_file):
             with open(self.game_stats_file, "w") as outfile:
@@ -151,6 +153,7 @@ class CrabadaBot:
                     logger.print_fail(f"Error starting mine for team {team['team_id']}")
                 else:
                     logger.print_ok_arrow(f"Successfully started mine for team {team['team_id']}")
+                    self.have_reinforced_at_least_once[team["team_id"]] = False
 
     def _check_and_maybe_reinforce_mines(self) -> None:
         if not self.config["should_reinforce"]:
@@ -165,6 +168,13 @@ class CrabadaBot:
 
             if not self.crabada_w2.mine_needs_reinforcement(team_mine):
                 continue
+
+            fee_per_gas_wei = self.crabada_w3.estimate_max_fee_per_gas_in_gwei()
+            if fee_per_gas_wei > self.MAX_FEE_PER_GAS:
+                logger.print_warn(f"Warning: High Fee/Gas ({fee_per_gas_wei})!")
+                if not self.have_reinforced_at_least_once.get(team["team_id"], True):
+                    logger.print_warn(f"Skipping reinforcement due to high gas cost")
+                    return
 
             reinforcment_crab = None
             if (
@@ -213,6 +223,7 @@ class CrabadaBot:
                     self.game_stats["tus_net"] -= price_tus
                     self.game_stats["tus_reinforcement"] += price_tus
                     self.updated_game_stats = True
+                    self.have_reinforced_at_least_once[team["team_id"]] = True
 
     def _check_and_maybe_close_mines(self) -> None:
         teams = self.crabada_w2.list_teams(self.address)
@@ -286,7 +297,9 @@ class CrabadaBot:
         logger.print_normal("=" * 60)
 
         avax_price_usd = get_avax_price_usd(self.api_token)
-        logger.print_ok(f"User: {self.user.upper()}, AVAX/USD: ${avax_price_usd:.2f}")
+        logger.print_ok(f"User: {self.user.upper()}")
+        fee_per_gas_wei = self.crabada_w3.estimate_max_fee_per_gas_in_gwei()
+        logger.print_ok(f"AVAX/USD: ${avax_price_usd:.2f}, Est. Fee/Gas: {fee_per_gas_wei}")
 
         self._print_mine_status()
         self._check_and_maybe_start_mines()
