@@ -26,3 +26,4 @@ class UserConfig(T.TypedDict):
     commission_percent_per_mine: float
     sms_number: str
     get_sms_updates: bool
+    should_reinforce: bool

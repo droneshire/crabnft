@@ -14,6 +14,7 @@ FACTIONAL_ADVANTAGE = {
     Faction.MACHINE: [Faction.FAERIE, Faction.LUX],
     Faction.ORE: [Faction.ABYSS, Faction.TRENCH],
     Faction.TRENCH: [Faction.LUX, Faction.MACHINE],
+    Faction.NO_FACTION: [],
 }
 
 
@@ -28,7 +29,7 @@ def get_faction_adjusted_battle_point(team: Team, game: IdleGame) -> int:
     logger.print_normal(
         f"Mine[{game['game_id']}]: Attack from {attack_faction} -> {defense_faction}"
     )
-    if defense_faction in FACTIONAL_ADVANTAGE[attack_faction]:
+    if defense_faction in FACTIONAL_ADVANTAGE.get(attack_faction, []):
         logger.print_normal(
             f"Mine[{game['game_id']}]: Battle point decrease of {(1 - FACTIONAL_ADVANTAGE_MULT) * 100.0:.2f}%"
         )

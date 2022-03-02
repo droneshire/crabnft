@@ -114,7 +114,7 @@ class CrabadaBot:
         avax_gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         avax_gas_usd = get_avax_price_usd(self.api_token) * avax_gas
         self.game_stats["avax_gas_usd"] += avax_gas_usd
-        logger.print_bold(f"Paid {avax_gas_usd} AVAX (${avax_gas_usd:.2f}) in gas")
+        logger.print_bold(f"Paid {avax_gas} AVAX (${avax_gas_usd:.2f}) in gas")
 
     def _print_mine_status(self) -> None:
         open_mines = self.crabada_w2.list_my_open_mines((self.address))
@@ -153,6 +153,9 @@ class CrabadaBot:
                     logger.print_ok_arrow(f"Successfully started mine for team {team['team_id']}")
 
     def _check_and_maybe_reinforce_mines(self) -> None:
+        if not self.config["should_reinforce"]:
+            return
+
         teams = self.crabada_w2.list_teams(self.address)
         for team in teams:
             team_mine = self.crabada_w2.get_mine(team["game_id"])
