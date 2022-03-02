@@ -16,8 +16,8 @@ from web3.types import BlockData, Nonce, TxParams, TxReceipt, TxData, Wei
 def web3_transaction(err_string_compare: str, out_of_gas_handler: T.Callable) -> T.Iterator[None]:
     try:
         yield
-    except ValueError as exception:
-        if exception["message"].startswith(err_string_compare):
+    except ValueError as e:
+        if err_string_compare in e.args[0]["message"]:
             out_of_gas_handler()
         else:
             raise exception

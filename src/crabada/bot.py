@@ -63,7 +63,7 @@ class CrabadaBot:
             team_mine = self.crabada_w2.get_mine(team["game_id"])
             if team_mine is None:
                 continue
-            self.have_reinforced_at_least_once[team["team_id"]] = team_mine["round"] > 1
+            self.have_reinforced_at_least_once[team["team_id"]] = team_mine.get("round", 0) > 1
 
         if not os.path.isfile(self.game_stats_file):
             with open(self.game_stats_file, "w") as outfile:
@@ -121,6 +121,8 @@ class CrabadaBot:
 
     def _calculate_and_log_gas_price(self, tx_receipt: TxReceipt) -> None:
         avax_gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        if avax_gas is None:
+            return
         avax_gas_usd = get_avax_price_usd(self.api_token) * avax_gas
         self.game_stats["avax_gas_usd"] += avax_gas_usd
         logger.print_bold(f"Paid {avax_gas} AVAX (${avax_gas_usd:.2f}) in gas")
@@ -177,7 +179,7 @@ class CrabadaBot:
                 continue
 
             fee_per_gas_wei = self.crabada_w3.estimate_max_fee_per_gas_in_gwei()
-            if fee_per_gas_wei > self.MAX_FEE_PER_GAS:
+            if fee_per_gas_wei is not None and fee_per_gas_wei > self.MAX_FEE_PER_GAS:
                 logger.print_warn(f"Warning: High Fee/Gas ({fee_per_gas_wei})!")
                 if not self.have_reinforced_at_least_once.get(team["team_id"], True):
                     logger.print_warn(f"Skipping reinforcement due to high gas cost")
@@ -306,6 +308,8 @@ class CrabadaBot:
         avax_price_usd = get_avax_price_usd(self.api_token)
         logger.print_ok(f"User: {self.user.upper()}")
         fee_per_gas_wei = self.crabada_w3.estimate_max_fee_per_gas_in_gwei()
+        if fee_per_gas_wei is None:
+            fee_per_gas_wei = "UNKNOWN"
         logger.print_ok(f"AVAX/USD: ${avax_price_usd:.2f}, Est. Fee/Gas: {fee_per_gas_wei}")
 
         self._print_mine_status()
