@@ -58,6 +58,13 @@ class CrabadaBot:
         self.updated_game_stats = True
         self.have_reinforced_at_least_once: T.Dict[str, bool] = {}
 
+        teams = self.crabada_w2.list_teams(self.address)
+        for team in teams:
+            team_mine = self.crabada_w2.get_mine(team["game_id"])
+            if team_mine is None:
+                continue
+            self.have_reinforced_at_least_once[team["team_id"]] = team_mine["round"] > 1
+
         if not os.path.isfile(self.game_stats_file):
             with open(self.game_stats_file, "w") as outfile:
                 json.dump(
@@ -174,7 +181,7 @@ class CrabadaBot:
                 logger.print_warn(f"Warning: High Fee/Gas ({fee_per_gas_wei})!")
                 if not self.have_reinforced_at_least_once.get(team["team_id"], True):
                     logger.print_warn(f"Skipping reinforcement due to high gas cost")
-                    return
+                    continue
 
             reinforcment_crab = None
             if (
@@ -197,7 +204,7 @@ class CrabadaBot:
 
             if reinforcment_crab is None:
                 logger.print_fail("Could not find affordable reinforcement!")
-                return
+                continue
 
             price_tus = wei_to_tus_raw(reinforcment_crab["price"])
             battle_points = reinforcment_crab["battle_point"]
