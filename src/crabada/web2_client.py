@@ -175,7 +175,7 @@ class CrabadaWeb2Client:
     def get_best_high_mp_crab_for_lending(self, max_tus: Tus) -> CrabForLending:
         high_mp_crabs = self.list_high_mp_crabs_for_lending()
         return self.get_cheapest_best_crab_from_list_for_lending(
-            high_mp_crabs, max_tus, 3, "mine_point"
+            high_mp_crabs, max_tus, 6, "mine_point"
         )
 
     def get_best_high_bp_crab_for_lending(self, max_tus: Tus) -> CrabForLending:
