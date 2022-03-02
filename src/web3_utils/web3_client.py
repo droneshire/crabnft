@@ -119,10 +119,12 @@ class Web3Client:
         def fail_handler() -> None:
             self.nonce += 1
 
+        hex_tx_hash = ""
         with web3_transaction("nonce too low:", fail_handler):
             tx_hash = self.w3.eth.send_raw_transaction(signed_tx.rawTransaction)
             self.nonce = self.get_nonce()
-        return self.w3.toHex(tx_hash)
+            hex_tx_hash = self.w3.toHex(tx_hash)
+        return hex_tx_hash
 
     def sign_and_send_transaction(self, tx: TxParams) -> HexStr:
         """
@@ -138,6 +140,8 @@ class Web3Client:
         """
         if self.dry_run:
             return {"status": 1}
+        if not tx_hash:
+            return {"status": 0}
         return self.w3.eth.wait_for_transaction_receipt(tx_hash)
 
     def get_transaction(self, tx_hash: HexStr) -> TxData:
