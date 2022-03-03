@@ -305,12 +305,13 @@ class CrabadaBot:
     def run(self) -> None:
         logger.print_normal("=" * 60)
 
-        avax_price_usd = get_avax_price_usd(self.api_token)
         logger.print_ok(f"User: {self.user.upper()}")
+
+        avax_price_usd = get_avax_price_usd(self.api_token)
+        avax_price_usd = "UNKNOWN" if avax_price_usd is None else f"{avax_price_usd:.2f}"
         fee_per_gas_wei = self.crabada_w3.estimate_max_fee_per_gas_in_gwei()
-        if fee_per_gas_wei is None:
-            fee_per_gas_wei = "UNKNOWN"
-        logger.print_ok(f"AVAX/USD: ${avax_price_usd:.2f}, Est. Fee/Gas: {fee_per_gas_wei}")
+        fee_per_gas_wei = "UNKNOWN" if fee_per_gas_wei is None else fee_per_gas_wei
+        logger.print_ok(f"AVAX/USD: ${avax_price_usd}, Est. Fee/Gas: {fee_per_gas_wei}")
 
         self._print_mine_status()
         self._check_and_maybe_start_mines()
