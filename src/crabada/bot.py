@@ -13,16 +13,15 @@ from crabada.types import CrabForLending, GameStats, IdleGame, NULL_GAME_STATS, 
 from utils import logger
 from utils.config_types import UserConfig, SmsConfig
 from utils.price import get_avax_price_usd, tus_to_wei, wei_to_tus, wei_to_cra_raw, wei_to_tus_raw
+from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.web3_client import web3_transaction
 
 
 class CrabadaBot:
-    AVAX_NODE_URL = "https://api.avax.network/ext/bc/C/rpc"
     TIME_BETWEEN_TRANSACTIONS = 5.0
     TIME_BETWEEN_EACH_UPDATE = 30.0
     SMS_COST_PER_MESSAGE = 0.0075
     ALERT_THROTTLING_TIME = 60.0 * 5
-    MAX_FEE_PER_GAS = 145
 
     def __init__(
         self,
@@ -47,7 +46,7 @@ class CrabadaBot:
             (
                 CrabadaWeb3Client()
                 .set_credentials(config["address"], config["private_key"])
-                .set_node_uri(self.AVAX_NODE_URL)
+                .set_node_uri(AvalancheCWeb3Client.AVAX_NODE_URL)
             ).set_dry_run(dry_run),
         )
         self.crabada_w2 = CrabadaWeb2Client()
@@ -57,6 +56,7 @@ class CrabadaBot:
         self.game_stats_file = os.path.join(log_dir, user.lower() + "_lifetime_game_bot_stats.json")
         self.updated_game_stats = True
         self.have_reinforced_at_least_once: T.Dict[str, bool] = {}
+        self.closed_mines = 0
 
         teams = self.crabada_w2.list_teams(self.address)
         for team in teams:
@@ -179,7 +179,10 @@ class CrabadaBot:
                 continue
 
             fee_per_gas_wei = self.crabada_w3.estimate_max_fee_per_gas_in_gwei()
-            if fee_per_gas_wei is not None and fee_per_gas_wei > self.MAX_FEE_PER_GAS:
+            if (
+                fee_per_gas_wei is not None
+                and fee_per_gas_wei > self.self.config["max_fee_per_gas"]
+            ):
                 logger.print_warn(f"Warning: High Fee/Gas ({fee_per_gas_wei})!")
                 if not self.have_reinforced_at_least_once.get(team["team_id"], True):
                     logger.print_warn(f"Skipping reinforcement due to high gas cost")
@@ -255,16 +258,16 @@ class CrabadaBot:
                 if tx_receipt["status"] != 1:
                     logger.print_fail_arrow(f"Error closing mine {team['game_id']}")
                 else:
-                    logger.print_ok_arrow(f"Successfully closed mine {team['game_id']}")
-                    self._update_bot_stats(team, team_mine)
                     outcome = (
                         "won \U0001F389"
                         if team_mine["winner_team_id"] == team["team_id"]
                         else "lost \U0001F915"
                     )
-                    self._send_status_update_sms(
-                        f"finished mine for team {team['team_id']}, you {outcome}"
+                    logger.print_ok_arrow(
+                        f"Successfully closed mine {team['game_id']}, we {outcome}"
                     )
+                    self._update_bot_stats(team, team_mine)
+                    self.closed_mines += 1
 
     def _update_bot_stats(self, team: Team, mine: IdleGame) -> None:
         if mine["winner_team_id"] == team["team_id"]:
@@ -321,6 +324,12 @@ class CrabadaBot:
         if self.updated_game_stats:
             self.updated_game_stats = False
             self._print_bot_stats()
+
+        if self.closed_mines >= len(self.config["mining_teams"]):
+            self.closed_mines = 0
+            self._send_status_update_sms(
+                f"Successfully finished {self.closed_mines} mines! \U0001F389"
+            )
 
         time.sleep(self.TIME_BETWEEN_EACH_UPDATE)
 
