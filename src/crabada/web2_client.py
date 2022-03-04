@@ -230,7 +230,7 @@ class CrabadaWeb2Client:
         if not CrabadaWeb2Client.mine_has_been_attacked(mine):
             return False
 
-        if len(mine["defense_team_info"]) >= 5:
+        if len(mine.get("defense_team_info", [])) >= 5:
             return False
 
         action = mine["process"][-1]["action"]

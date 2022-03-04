@@ -63,7 +63,9 @@ class CrabadaBot:
             mine = self.crabada_w2.get_mine(team["game_id"])
             if mine is None:
                 continue
-            self.have_reinforced_at_least_once[team["team_id"]] = len(mine["defense_team_info"]) > 3
+            self.have_reinforced_at_least_once[team["team_id"]] = (
+                len(mine.get("defense_team_info", [])) > 3
+            )
 
         if not os.path.isfile(self.game_stats_file):
             with open(self.game_stats_file, "w") as outfile:
