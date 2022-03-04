@@ -21,7 +21,7 @@ class CrabadaWeb2Client:
     """
 
     BASE_URL = "https://idle-api.crabada.com/public/idle"
-    MIN_TIME_LEFT_TO_REINFORCE = 60 * 2
+    REINFORCE_TIME_WINDOW = 60 * (30 - 2)  # 30 minute window + 2 minute buffer
 
     def get_mine(self, mine_id: int, params: T.Dict[str, T.Any] = {}) -> IdleGame:
         """Get information from the given mine"""
@@ -175,13 +175,13 @@ class CrabadaWeb2Client:
     def get_best_high_mp_crab_for_lending(self, max_tus: Tus) -> CrabForLending:
         high_mp_crabs = self.list_high_mp_crabs_for_lending()
         return self.get_cheapest_best_crab_from_list_for_lending(
-            high_mp_crabs, max_tus, 6, "mine_point"
+            high_mp_crabs, max_tus, 10, "mine_point"
         )
 
     def get_best_high_bp_crab_for_lending(self, max_tus: Tus) -> CrabForLending:
         high_bp_crabs = self.list_high_bp_crabs_for_lending()
         return self.get_cheapest_best_crab_from_list_for_lending(
-            high_bp_crabs, max_tus, 7, "battle_point"
+            high_bp_crabs, max_tus, 10, "battle_point"
         )
 
     def list_crabs_for_lending_raw(self, params: T.Dict[str, T.Any] = {}) -> T.Any:
@@ -230,19 +230,15 @@ class CrabadaWeb2Client:
         if not CrabadaWeb2Client.mine_has_been_attacked(mine):
             return False
 
+        if len(mine["defense_team_info"]) >= 5:
+            return False
+
         action = mine["process"][-1]["action"]
         if action not in ["attack", "reinforce-attack"]:
             return False
 
-        if len(mine["defense_team_info"]) >= 5:
-            return False
-
-        # we only indicate that we can reinforce if there's sufficient time
-        # to actually reinforce, we assume 60 here for now
-        return (
-            CrabadaWeb2Client.get_remaining_time(mine)
-            > CrabadaWeb2Client.MIN_TIME_LEFT_TO_REINFORCE
-        )
+        attack_start_time = mine["process"][-1]["transaction_time"]
+        return time.time() - attack_start_time < CrabadaWeb2Client.REINFORCE_TIME_WINDOW
 
     @staticmethod
     def mine_is_open(mine: IdleGame) -> bool:

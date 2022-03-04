@@ -63,7 +63,9 @@ class CrabadaBot:
             team_mine = self.crabada_w2.get_mine(team["game_id"])
             if team_mine is None:
                 continue
-            self.have_reinforced_at_least_once[team["team_id"]] = team_mine.get("round", 0) > 1
+            self.have_reinforced_at_least_once[team["team_id"]] = (
+                len(team_mine["defense_team_info"]) > 3
+            )
 
         if not os.path.isfile(self.game_stats_file):
             with open(self.game_stats_file, "w") as outfile:
@@ -159,7 +161,9 @@ class CrabadaBot:
                 self._calculate_and_log_gas_price(tx_receipt)
 
                 if tx_receipt["status"] != 1:
-                    logger.print_fail(f"Error starting mine for team {team['team_id']}")
+                    logger.print_fail(
+                        f"Error starting mine for team {team['team_id']}: {tx_receipt['status']}"
+                    )
                 else:
                     logger.print_ok_arrow(f"Successfully started mine for team {team['team_id']}")
                     self.have_reinforced_at_least_once[team["team_id"]] = False
@@ -179,10 +183,7 @@ class CrabadaBot:
                 continue
 
             fee_per_gas_wei = self.crabada_w3.estimate_max_fee_per_gas_in_gwei()
-            if (
-                fee_per_gas_wei is not None
-                and fee_per_gas_wei > self.self.config["max_fee_per_gas"]
-            ):
+            if fee_per_gas_wei is not None and fee_per_gas_wei > self.config["max_fee_per_gas"]:
                 logger.print_warn(f"Warning: High Fee/Gas ({fee_per_gas_wei})!")
                 if not self.have_reinforced_at_least_once.get(team["team_id"], True):
                     logger.print_warn(f"Skipping reinforcement due to high gas cost")
@@ -229,7 +230,9 @@ class CrabadaBot:
                 self._calculate_and_log_gas_price(tx_receipt)
 
                 if tx_receipt["status"] != 1:
-                    logger.print_fail_arrow(f"Error reinforcing mine {team['game_id']}")
+                    logger.print_fail_arrow(
+                        f"Error reinforcing mine {team['game_id']}: {tx_receipt['status']}"
+                    )
                 else:
                     logger.print_ok_arrow(f"Successfully reinforced mine {team['game_id']}")
                     self.game_stats["tus_net"] -= price_tus
@@ -256,7 +259,9 @@ class CrabadaBot:
                 self._calculate_and_log_gas_price(tx_receipt)
 
                 if tx_receipt["status"] != 1:
-                    logger.print_fail_arrow(f"Error closing mine {team['game_id']}")
+                    logger.print_fail_arrow(
+                        f"Error closing mine {team['game_id']}: {tx_receipt['status']}"
+                    )
                 else:
                     outcome = (
                         "won \U0001F389"
