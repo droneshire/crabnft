@@ -139,7 +139,12 @@ class CrabadaBot:
 
         for mine in open_mines:
             logger.print_normal(
-                f"\t{mine['game_id']}\t\tround {mine['round']}\t\t{self.crabada_w2.get_remaining_time_formatted(mine)}\t\t"
+                "\t{}\t\tround {}\t\t{}\t{}".format(
+                    mine["game_id"],
+                    mine["round"],
+                    self.crabada_w2.get_remaining_time_formatted(mine),
+                    "under attack" if mine.get("attack_team_id", "") else "safe",
+                )
             )
         logger.print_normal("\n")
 

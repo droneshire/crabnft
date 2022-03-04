@@ -183,7 +183,7 @@ class Web3Client:
         return self.w3.eth.get_block("pending")
 
     def get_gas_cost_of_transaction_wei(self, tx_receipt: TxReceipt) -> Wei:
-        return tx_receipt["effectiveGasPrice"] * tx_receipt["gasUsed"]
+        return tx_receipt.get("effectiveGasPrice", 0.0) * tx_receipt.get("gasUsed", 0.0)
 
     ####################
     # Setters
