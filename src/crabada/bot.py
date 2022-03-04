@@ -22,7 +22,7 @@ class CrabadaBot:
     TIME_BETWEEN_EACH_UPDATE = 30.0
     SMS_COST_PER_MESSAGE = 0.0075
     ALERT_THROTTLING_TIME = 60.0 * 5
-    MAX_FEE_PER_GAS = 150
+    MAX_FEE_PER_GAS = 145
 
     def __init__(
         self,
