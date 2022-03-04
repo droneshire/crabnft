@@ -60,12 +60,10 @@ class CrabadaBot:
 
         teams = self.crabada_w2.list_teams(self.address)
         for team in teams:
-            team_mine = self.crabada_w2.get_mine(team["game_id"])
-            if team_mine is None:
+            mine = self.crabada_w2.get_mine(team["game_id"])
+            if mine is None:
                 continue
-            self.have_reinforced_at_least_once[team["team_id"]] = (
-                len(team_mine["defense_team_info"]) > 3
-            )
+            self.have_reinforced_at_least_once[team["team_id"]] = len(mine["defense_team_info"]) > 3
 
         if not os.path.isfile(self.game_stats_file):
             with open(self.game_stats_file, "w") as outfile:
@@ -174,12 +172,12 @@ class CrabadaBot:
 
         teams = self.crabada_w2.list_teams(self.address)
         for team in teams:
-            team_mine = self.crabada_w2.get_mine(team["game_id"])
+            mine = self.crabada_w2.get_mine(team["game_id"])
 
-            if team_mine is None:
+            if mine is None:
                 continue
 
-            if not self.crabada_w2.mine_needs_reinforcement(team_mine):
+            if not self.crabada_w2.mine_needs_reinforcement(mine):
                 continue
 
             fee_per_gas_wei = self.crabada_w3.estimate_max_fee_per_gas_in_gwei()
@@ -191,18 +189,18 @@ class CrabadaBot:
 
             reinforcment_crab = None
             if (
-                team_mine["attack_point"] - get_faction_adjusted_battle_point(team, team_mine)
+                mine["attack_point"] - get_faction_adjusted_battle_point(team, mine)
                 < self.config["max_reinforce_bp_delta"]
             ):
                 logger.print_normal(
-                    f"Mine[{team_mine['game_id']}]: using reinforcement strategy of highest bp"
+                    f"Mine[{mine['game_id']}]: using reinforcement strategy of highest bp"
                 )
                 reinforcment_crab = self.crabada_w2.get_best_high_bp_crab_for_lending(
                     self.config["max_reinforcement_price_tus"]
                 )
             else:
                 logger.print_normal(
-                    f"Mine[{team_mine['game_id']}]: using reinforcement strategy of highest mp"
+                    f"Mine[{mine['game_id']}]: using reinforcement strategy of highest mp"
                 )
                 reinforcment_crab = self.crabada_w2.get_best_high_mp_crab_for_lending(
                     self.config["max_reinforcement_price_tus"]
@@ -218,7 +216,7 @@ class CrabadaBot:
             crabada_id = reinforcment_crab["crabada_id"]
 
             logger.print_normal(
-                f"Mine[{team_mine['game_id']}]: Found reinforcement crabada {crabada_id} for {price_tus} Tus [BP {battle_points} | MP {mine_points}]"
+                f"Mine[{mine['game_id']}]: Found reinforcement crabada {crabada_id} for {price_tus} Tus [BP {battle_points} | MP {mine_points}]"
             )
 
             with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
@@ -246,8 +244,8 @@ class CrabadaBot:
             if team["game_id"] is None and team["game_type"] != "mining":
                 continue
 
-            team_mine = self.crabada_w2.get_mine(team["game_id"])
-            if not self.crabada_w2.mine_is_finished(team_mine):
+            mine = self.crabada_w2.get_mine(team["game_id"])
+            if not self.crabada_w2.mine_is_finished(mine):
                 continue
 
             logger.print_normal(f"Attempting to close game {team['game_id']}")
@@ -265,13 +263,13 @@ class CrabadaBot:
                 else:
                     outcome = (
                         "won \U0001F389"
-                        if team_mine["winner_team_id"] == team["team_id"]
+                        if mine["winner_team_id"] == team["team_id"]
                         else "lost \U0001F915"
                     )
                     logger.print_ok_arrow(
                         f"Successfully closed mine {team['game_id']}, we {outcome}"
                     )
-                    self._update_bot_stats(team, team_mine)
+                    self._update_bot_stats(team, mine)
                     self.closed_mines += 1
 
     def _update_bot_stats(self, team: Team, mine: IdleGame) -> None:
