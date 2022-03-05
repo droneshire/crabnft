@@ -47,7 +47,8 @@ class CrabadaBot:
                 CrabadaWeb3Client()
                 .set_credentials(config["address"], config["private_key"])
                 .set_node_uri(AvalancheCWeb3Client.AVAX_NODE_URL)
-            ).set_dry_run(dry_run),
+                .set_dry_run(dry_run)
+            )
         )
         self.crabada_w2 = CrabadaWeb2Client()
 
