@@ -336,10 +336,10 @@ class CrabadaBot:
             self._print_bot_stats()
 
         if self.closed_mines >= len(self.config["mining_teams"]):
-            self.closed_mines = 0
             self._send_status_update_sms(
                 f"Successfully finished {self.closed_mines} mines! \U0001F389"
             )
+            self.closed_mines = 0
 
         time.sleep(self.TIME_BETWEEN_EACH_UPDATE)
 
