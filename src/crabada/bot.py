@@ -245,6 +245,7 @@ class CrabadaBot:
                     self.game_stats["tus_reinforcement"] += price_tus
                     self.updated_game_stats = True
                     self.have_reinforced_at_least_once[team["team_id"]] = True
+            time.sleep(1.0)
 
     def _check_and_maybe_close_mines(self) -> None:
         teams = self.crabada_w2.list_teams(self.address)
@@ -329,7 +330,9 @@ class CrabadaBot:
 
         self._print_mine_status()
         self._check_and_maybe_start_mines()
+        time.sleep(3.0)
         self._check_and_maybe_reinforce_mines()
+        time.sleep(3.0)
         self._check_and_maybe_close_mines()
 
         if self.updated_game_stats:
