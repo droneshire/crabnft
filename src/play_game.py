@@ -50,6 +50,7 @@ def run_bot() -> None:
     sms_client = Client(TWILIO_CONFIG["account_sid"], TWILIO_CONFIG["account_auth_token"])
 
     encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
+
     bots = []
     for user, config in USERS.items():
         config["private_key"] = security.decrypt(

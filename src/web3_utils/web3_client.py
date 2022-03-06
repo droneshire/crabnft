@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from eth_account.datastructures import SignedTransaction
 from eth_typing import Address, BlockIdentifier, ChecksumAddress
 from eth_typing.encoding import HexStr
-from web3 import eth, Web3
+from web3 import eth, exceptions, Web3
 from web3.contract import Contract, ContractFunction
 from web3.types import BlockData, Nonce, TxParams, TxReceipt, TxData, Wei
 
@@ -142,7 +142,10 @@ class Web3Client:
             return {"status": 1}
         if not tx_hash:
             return {"status": 0}
-        return self.w3.eth.wait_for_transaction_receipt(tx_hash)
+        try:
+            return self.w3.eth.wait_for_transaction_receipt(tx_hash)
+        except exceptions.TimeExhausted:
+            return {"status": 0}
 
     def get_transaction(self, tx_hash: HexStr) -> TxData:
         """
