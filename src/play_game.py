@@ -2,6 +2,7 @@
 Starts bots for interacting with the Crabada Dapp P2E game
 """
 import argparse
+import getpass
 import json
 import logging
 import os
@@ -10,8 +11,8 @@ import time
 from twilio.rest import Client
 
 from config import IEX_API_TOKEN, TWILIO_CONFIG, USERS
-from crabada.bot import CrabadaBot
-from utils import logger
+from crabada.bot import CrabadaMineBot
+from utils import logger, security
 
 
 def parse_args() -> argparse.Namespace:
@@ -48,18 +49,23 @@ def run_bot() -> None:
 
     sms_client = Client(TWILIO_CONFIG["account_sid"], TWILIO_CONFIG["account_auth_token"])
 
-    bots = [
-        CrabadaBot(
-            user,
-            config,
-            TWILIO_CONFIG["from_sms_number"],
-            sms_client,
-            IEX_API_TOKEN,
-            args.log_dir,
-            args.dry_run,
+    encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
+    bots = []
+    for user, config in USERS.items():
+        config["private_key"] = security.decrypt(
+            str.encode(encrypt_password), config["private_key"]
+        ).decode()
+        bots.append(
+            CrabadaMineBot(
+                user,
+                config,
+                TWILIO_CONFIG["from_sms_number"],
+                sms_client,
+                IEX_API_TOKEN,
+                args.log_dir,
+                args.dry_run,
+            )
         )
-        for user, config in USERS.items()
-    ]
 
     for bot in bots:
         logger.print_bold(f"Starting game bot for user {bot.user}...")
@@ -70,9 +76,9 @@ def run_bot() -> None:
             for bot in bots:
                 bot.run()
 
-    finally:
-        for bot in bots:
-            bot.end()
+    except KeyboardInterrupt:
+        pass
+    except:
         if TWILIO_CONFIG["enable_admin_sms"]:
             sms_message = f"\U0001F980 Crabada Bot Alert \U0001F980\n\n"
             sms_message += f"Crabada Bot Stopped \U0000203C\n"
@@ -82,6 +88,9 @@ def run_bot() -> None:
                 to=TWILIO_CONFIG["admin_sms_number"],
             )
             logger.print_normal(json.dumps(message.sid, indent=4, sort_keys=True))
+    finally:
+        for bot in bots:
+            bot.end()
 
 
 if __name__ == "__main__":

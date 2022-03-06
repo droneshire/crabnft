@@ -17,7 +17,7 @@ from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.web3_client import web3_transaction
 
 
-class CrabadaBot:
+class CrabadaMineBot:
     TIME_BETWEEN_TRANSACTIONS = 5.0
     TIME_BETWEEN_EACH_UPDATE = 30.0
     SMS_COST_PER_MESSAGE = 0.0075
@@ -48,7 +48,7 @@ class CrabadaBot:
                 .set_credentials(config["address"], config["private_key"])
                 .set_node_uri(AvalancheCWeb3Client.AVAX_NODE_URL)
                 .set_dry_run(dry_run)
-            )
+            ),
         )
         self.crabada_w2 = CrabadaWeb2Client()
 
@@ -127,6 +127,8 @@ class CrabadaBot:
         if avax_gas is None:
             return
         avax_gas_usd = get_avax_price_usd(self.api_token) * avax_gas
+        if not avax_gas_usd:
+            return
         self.game_stats["avax_gas_usd"] += avax_gas_usd
         logger.print_bold(f"Paid {avax_gas} AVAX (${avax_gas_usd:.2f}) in gas")
 
@@ -245,6 +247,7 @@ class CrabadaBot:
                     self.game_stats["tus_reinforcement"] += price_tus
                     self.updated_game_stats = True
                     self.have_reinforced_at_least_once[team["team_id"]] = True
+            time.sleep(1.0)
 
     def _check_and_maybe_close_mines(self) -> None:
         teams = self.crabada_w2.list_teams(self.address)
@@ -329,7 +332,9 @@ class CrabadaBot:
 
         self._print_mine_status()
         self._check_and_maybe_start_mines()
+        time.sleep(3.0)
         self._check_and_maybe_reinforce_mines()
+        time.sleep(3.0)
         self._check_and_maybe_close_mines()
 
         if self.updated_game_stats:
