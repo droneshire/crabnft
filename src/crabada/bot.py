@@ -299,10 +299,11 @@ class CrabadaMineBot:
         self.game_stats["cra_net"] += wei_to_cra_raw(mine["miner_cra_reward"])
         self.game_stats["tus_net"] += wei_to_tus_raw(mine["miner_tus_reward"])
 
-        self.game_stats["commission_tus"] += wei_to_tus_raw(mine["miner_tus_reward"]) * (
+        commission_tus = wei_to_tus_raw(mine["miner_tus_reward"]) * (
             self.config["commission_percent_per_mine"] / 100.0
         )
-        self.game_stats["tus_net"] -= self.game_stats["commission_tus"]
+        self.game_stats["commission_tus"] += commission_tus
+        self.game_stats["tus_net"] -= commission_tus
 
         with open(self.game_stats_file, "w") as outfile:
             json.dump(self.game_stats, outfile, indent=4, sort_keys=True)
