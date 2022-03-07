@@ -20,8 +20,7 @@ from web3_utils.web3_client import web3_transaction
 class CrabadaMineBot:
     TIME_BETWEEN_TRANSACTIONS = 5.0
     TIME_BETWEEN_EACH_UPDATE = 30.0
-    SMS_COST_PER_MESSAGE = 0.0075
-    ALERT_THROTTLING_TIME = 60.0 * 5
+    ALERT_THROTTLING_TIME = 60.0 * 60 * 2
 
     def __init__(
         self,
@@ -39,7 +38,7 @@ class CrabadaMineBot:
         self.sms = sms_client
         self.api_token = crypto_api_token
 
-        self.time_since_last_alert = 0.0
+        self.time_since_last_alert = None
 
         self.crabada_w3 = T.cast(
             CrabadaWeb3Client,
@@ -99,8 +98,6 @@ class CrabadaMineBot:
             message = self.sms.messages.create(
                 body=text_message, from_=self.from_sms_number, to=self.config["sms_number"]
             )
-            self.game_stats["sms_cost"] += self.SMS_COST_PER_MESSAGE
-            self.game_stats["sms_sent"] += 1
         except:
             logger.print_fail("Failed to send SMS alert")
             pass
@@ -173,6 +170,7 @@ class CrabadaMineBot:
                         f"Error starting mine for team {team['team_id']}: {tx_receipt['status']}"
                     )
                 else:
+                    self.time_since_last_alert = None
                     logger.print_ok_arrow(f"Successfully started mine for team {team['team_id']}")
                     self.have_reinforced_at_least_once[team["team_id"]] = False
 
@@ -242,6 +240,7 @@ class CrabadaMineBot:
                         f"Error reinforcing mine {team['game_id']}: {tx_receipt['status']}"
                     )
                 else:
+                    self.time_since_last_alert = None
                     logger.print_ok_arrow(f"Successfully reinforced mine {team['game_id']}")
                     self.game_stats["tus_net"] -= price_tus
                     self.game_stats["tus_reinforcement"] += price_tus
@@ -272,6 +271,7 @@ class CrabadaMineBot:
                         f"Error closing mine {team['game_id']}: {tx_receipt['status']}"
                     )
                 else:
+                    self.time_since_last_alert = None
                     outcome = (
                         "won \U0001F389"
                         if mine["winner_team_id"] == team["team_id"]
@@ -299,8 +299,8 @@ class CrabadaMineBot:
         self.game_stats["cra_net"] += wei_to_cra_raw(mine["miner_cra_reward"])
         self.game_stats["tus_net"] += wei_to_tus_raw(mine["miner_tus_reward"])
 
-        self.game_stats["commission_tus"] += (
-            wei_to_tus_raw(mine["miner_tus_reward"]) * self.config["commission_percent_per_mine"]
+        self.game_stats["commission_tus"] += wei_to_tus_raw(mine["miner_tus_reward"]) * (
+            self.config["commission_percent_per_mine"] / 100.0
         )
         self.game_stats["tus_net"] -= self.game_stats["commission_tus"]
 
