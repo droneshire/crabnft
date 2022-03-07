@@ -196,10 +196,14 @@ class CrabadaMineBot:
                     continue
 
             reinforcment_crab = None
-            if (
-                mine["attack_point"] - get_faction_adjusted_battle_point(team, mine)
-                < self.config["max_reinforce_bp_delta"]
-            ):
+            defense_battle_point = get_faction_adjusted_battle_point(team, mine)
+            if defense_battle_point >= mine["attack_point"]:
+                logger.print_normal(
+                    f"Mine[{mine['game_id']}]: not reinforcing since we've already won!"
+                )
+                continue
+
+            if mine["attack_point"] - defense_battle_point < self.config["max_reinforce_bp_delta"]:
                 logger.print_normal(
                     f"Mine[{mine['game_id']}]: using reinforcement strategy of highest bp"
                 )
