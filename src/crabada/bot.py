@@ -21,6 +21,7 @@ class CrabadaMineBot:
     TIME_BETWEEN_TRANSACTIONS = 5.0
     TIME_BETWEEN_EACH_UPDATE = 30.0
     ALERT_THROTTLING_TIME = 60.0 * 60 * 2
+    MIN_MINE_POINT = 60
 
     def __init__(
         self,
@@ -207,9 +208,17 @@ class CrabadaMineBot:
                 logger.print_normal(
                     f"Mine[{mine['game_id']}]: using reinforcement strategy of highest bp"
                 )
-                reinforcment_crab = self.crabada_w2.get_best_high_bp_crab_for_lending(
-                    self.config["max_reinforcement_price_tus"]
-                )
+                if (
+                    self.have_reinforced_at_least_once.get(team["team_id"], True)
+                    or reinforcment_crab["mine_point"] > self.MIN_MINE_POINT
+                ):
+                    reinforcment_crab = self.crabada_w2.get_best_high_bp_crab_for_lending(
+                        self.config["max_reinforcement_price_tus"]
+                    )
+                else:
+                    logger.print_warn(
+                        f"Mine[{mine['game_id']}]: not reinforcing due to lack of high mp crabs"
+                    )
             else:
                 logger.print_normal(
                     f"Mine[{mine['game_id']}]: using reinforcement strategy of highest mp"
@@ -219,7 +228,7 @@ class CrabadaMineBot:
                 )
 
             if reinforcment_crab is None:
-                logger.print_fail("Could not find affordable reinforcement!")
+                logger.print_fail("Could not find suitable reinforcement!")
                 continue
 
             price_tus = wei_to_tus_raw(reinforcment_crab["price"])
