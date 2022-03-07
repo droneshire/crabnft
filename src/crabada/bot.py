@@ -193,7 +193,9 @@ class CrabadaMineBot:
             if fee_per_gas_wei is not None and fee_per_gas_wei > self.config["max_fee_per_gas"]:
                 logger.print_warn(f"Warning: High Fee/Gas ({fee_per_gas_wei})!")
                 if not self.have_reinforced_at_least_once.get(team["team_id"], True):
-                    logger.print_warn(f"Skipping reinforcement due to high gas cost")
+                    logger.print_warn(
+                        f"Skipping reinforcement of Mine[{mine['game_id']}] due to high gas cost"
+                    )
                     continue
 
             reinforcment_crab = None
