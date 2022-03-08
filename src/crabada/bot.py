@@ -213,17 +213,9 @@ class CrabadaMineBot:
                 logger.print_normal(
                     f"Mine[{mine['game_id']}]: using reinforcement strategy of highest bp"
                 )
-                if (
-                    self.have_reinforced_at_least_once.get(team["team_id"], True)
-                    or reinforcment_crab["mine_point"] > self.MIN_MINE_POINT
-                ):
-                    reinforcment_crab = self.crabada_w2.get_best_high_bp_crab_for_lending(
-                        self.config["max_reinforcement_price_tus"]
-                    )
-                else:
-                    logger.print_warn(
-                        f"Mine[{mine['game_id']}]: not reinforcing due to lack of high mp crabs"
-                    )
+                reinforcment_crab = self.crabada_w2.get_best_high_bp_crab_for_lending(
+                    self.config["max_reinforcement_price_tus"]
+                )
             else:
                 logger.print_normal(
                     f"Mine[{mine['game_id']}]: using reinforcement strategy of highest mp"
@@ -233,7 +225,18 @@ class CrabadaMineBot:
                 )
 
             if reinforcment_crab is None:
-                logger.print_fail("Could not find suitable reinforcement!")
+                logger.print_fail(
+                    f"Mine[{mine['game_id']}]: Could not find suitable reinforcement!"
+                )
+                continue
+
+            if (
+                not self.have_reinforced_at_least_once.get(team["team_id"], True)
+                and reinforcment_crab["mine_point"] < self.MIN_MINE_POINT
+            ):
+                logger.print_warn(
+                    f"Mine[{mine['game_id']}]: not reinforcing due to lack of high mp crabs"
+                )
                 continue
 
             price_tus = wei_to_tus_raw(reinforcment_crab["price"])

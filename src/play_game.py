@@ -8,6 +8,7 @@ import logging
 import os
 import sys
 import time
+import traceback
 from twilio.rest import Client
 
 from config import IEX_API_TOKEN, TWILIO_CONFIG, USERS
@@ -91,9 +92,9 @@ def run_bot() -> None:
 
     try:
         while True:
+            now = time.time()
             for bot in bots:
                 bot.run()
-
                 now = time.time()
                 if now - last_avax_price_update > AVAX_PRICE_UPDATE_TIME:
                     bot.update_avax_price(get_avax_price_usd(IEX_API_TOKEN))
@@ -101,7 +102,7 @@ def run_bot() -> None:
 
     except KeyboardInterrupt:
         pass
-    except:
+    except Exception as e:
         if TWILIO_CONFIG["enable_admin_sms"]:
             sms_message = f"\U0001F980 Crabada Bot Alert \U0001F980\n\n"
             sms_message += f"Crabada Bot Stopped \U0000203C\n"
@@ -110,6 +111,7 @@ def run_bot() -> None:
                 from_=TWILIO_CONFIG["from_sms_number"],
                 to=TWILIO_CONFIG["admin_sms_number"],
             )
+        logger.print_fail(traceback.format_exc())
     finally:
         for bot in bots:
             bot.end()
