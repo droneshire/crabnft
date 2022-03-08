@@ -66,7 +66,6 @@ def run_bot() -> None:
                 config,
                 TWILIO_CONFIG["from_sms_number"],
                 sms_client,
-                IEX_API_TOKEN,
                 args.log_dir,
                 args.dry_run,
             )
@@ -74,6 +73,8 @@ def run_bot() -> None:
 
     game_stats = GameStats()
     for bot in bots:
+        bot.update_avax_price(get_avax_price_usd(IEX_API_TOKEN))
+
         logger.print_bold(f"Starting game bot for user {bot.user}...")
         bot_stats = bot.get_lifetime_stats()
         game_stats["commission_tus"] = (
@@ -95,7 +96,7 @@ def run_bot() -> None:
 
                 now = time.time()
                 if now - last_avax_price_update > AVAX_PRICE_UPDATE_TIME:
-                    bot.get_avax_price_usd()
+                    bot.update_avax_price(get_avax_price_usd(IEX_API_TOKEN))
                     last_avax_price_update = now
 
     except KeyboardInterrupt:

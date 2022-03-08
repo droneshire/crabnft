@@ -29,7 +29,6 @@ class CrabadaMineBot:
         config: UserConfig,
         from_sms_number: str,
         sms_client: Client,
-        crypto_api_token: str,
         log_dir: str,
         dry_run: bool,
     ) -> None:
@@ -37,7 +36,6 @@ class CrabadaMineBot:
         self.config = config
         self.from_sms_number = from_sms_number
         self.sms = sms_client
-        self.api_token = crypto_api_token
 
         self.time_since_last_alert = None
 
@@ -72,7 +70,7 @@ class CrabadaMineBot:
         if not os.path.isfile(self.game_stats_file):
             with open(self.game_stats_file, "w") as outfile:
                 json.dump(
-                    NULL_GAME_STATS,
+                    self.game_stats,
                     outfile,
                     indent=4,
                     sort_keys=True,
@@ -358,11 +356,11 @@ class CrabadaMineBot:
         logger.print_ok(f"AVAX/USD: ${self.avax_price_usd:.2f}, Est. Fee/Gas: {fee_per_gas_wei}")
 
         self._print_mine_status()
+        self._check_and_maybe_close_mines()
+        time.sleep(1.0)
         self._check_and_maybe_start_mines()
         time.sleep(1.0)
         self._check_and_maybe_reinforce_mines()
-        time.sleep(1.0)
-        self._check_and_maybe_close_mines()
 
         if self.updated_game_stats:
             self.updated_game_stats = False
