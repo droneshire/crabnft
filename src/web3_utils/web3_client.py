@@ -146,8 +146,8 @@ class Web3Client:
             return {"status": 0}
         try:
             return self.w3.eth.wait_for_transaction_receipt(tx_hash)
-        except exceptions.TimeExhausted:
-            return {"status": 0}
+        except:
+            return {"status": 10}
 
     def get_transaction(self, tx_hash: HexStr) -> TxData:
         """

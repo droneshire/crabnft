@@ -12,7 +12,7 @@ from crabada.factional_advantage import get_faction_adjusted_battle_point
 from crabada.types import CrabForLending, GameStats, IdleGame, NULL_GAME_STATS, Team
 from utils import logger
 from utils.config_types import UserConfig, SmsConfig
-from utils.price import get_avax_price_usd, tus_to_wei, wei_to_tus, wei_to_cra_raw, wei_to_tus_raw
+from utils.price import tus_to_wei, wei_to_tus, wei_to_cra_raw, wei_to_tus_raw
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.web3_client import web3_transaction
 
@@ -58,6 +58,7 @@ class CrabadaMineBot:
         self.updated_game_stats = True
         self.have_reinforced_at_least_once: T.Dict[str, bool] = {}
         self.closed_mines = 0
+        self.avax_price_usd = 0.0
 
         teams = self.crabada_w2.list_teams(self.address)
         for team in teams:
@@ -71,7 +72,10 @@ class CrabadaMineBot:
         if not os.path.isfile(self.game_stats_file):
             with open(self.game_stats_file, "w") as outfile:
                 json.dump(
-                    NULL_GAME_STATS, outfile, indent=4, sort_keys=True,
+                    NULL_GAME_STATS,
+                    outfile,
+                    indent=4,
+                    sort_keys=True,
                 )
         else:
             with open(self.game_stats_file, "r") as infile:
@@ -124,11 +128,8 @@ class CrabadaMineBot:
         avax_gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         if avax_gas is None:
             return
-        try:
-            avax_gas_usd = get_avax_price_usd(self.api_token) * avax_gas
-        except:
-            logger.print_fail("Error querying avax token price!")
-            avax_gas_usd = None
+
+        avax_gas_usd = self.avax_price_usd * avax_gas
         if not avax_gas_usd:
             return
         self.game_stats["avax_gas_usd"] += avax_gas_usd
@@ -342,16 +343,19 @@ class CrabadaMineBot:
     def get_lifetime_stats(self) -> T.Dict[str, T.Any]:
         return self.game_stats
 
+    def update_avax_price(self, avax_price_usd: T.Optional[float]) -> None:
+        if avax_price_usd is None:
+            return
+        self.avax_price_usd = avax_price_usd
+
     def run(self) -> None:
         logger.print_normal("=" * 60)
 
         logger.print_ok(f"User: {self.user.upper()}")
 
-        avax_price_usd = get_avax_price_usd(self.api_token)
-        avax_price_usd = "UNKNOWN" if avax_price_usd is None else f"{avax_price_usd:.2f}"
         fee_per_gas_wei = self.crabada_w3.estimate_max_fee_per_gas_in_gwei()
         fee_per_gas_wei = "UNKNOWN" if fee_per_gas_wei is None else fee_per_gas_wei
-        logger.print_ok(f"AVAX/USD: ${avax_price_usd}, Est. Fee/Gas: {fee_per_gas_wei}")
+        logger.print_ok(f"AVAX/USD: ${self.avax_price_usd:.2f}, Est. Fee/Gas: {fee_per_gas_wei}")
 
         self._print_mine_status()
         self._check_and_maybe_start_mines()

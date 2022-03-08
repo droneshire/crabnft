@@ -38,7 +38,7 @@ def third_or_none(l: T.List[T.Any]) -> T.Any:
 
 
 def n_or_better_or_none(n: int, l: T.List[T.Any]) -> T.Any:
-    """Return the nth element of a list or lower otherwise None """
+    """Return the nth element of a list or lower otherwise None"""
     for i in range(n, 0, -1):
         if len(l) >= i:
             return l[i - 1]

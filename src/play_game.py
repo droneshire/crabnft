@@ -14,6 +14,9 @@ from config import IEX_API_TOKEN, TWILIO_CONFIG, USERS
 from crabada.bot import CrabadaMineBot
 from crabada.types import GameStats
 from utils import logger, security
+from utils.price import get_avax_price_usd
+
+AVAX_PRICE_UPDATE_TIME = 60.0
 
 
 def parse_args() -> argparse.Namespace:
@@ -83,10 +86,17 @@ def run_bot() -> None:
     )
     logger.print_normal("\n")
 
+    last_avax_price_update = time.time()
+
     try:
         while True:
             for bot in bots:
                 bot.run()
+
+                now = time.time()
+                if now - last_avax_price_update > AVAX_PRICE_UPDATE_TIME:
+                    bot.get_avax_price_usd()
+                    last_avax_price_update = now
 
     except KeyboardInterrupt:
         pass
