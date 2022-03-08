@@ -19,7 +19,7 @@ from web3_utils.web3_client import web3_transaction
 
 class CrabadaMineBot:
     TIME_BETWEEN_TRANSACTIONS = 5.0
-    TIME_BETWEEN_EACH_UPDATE = 30.0
+    TIME_BETWEEN_EACH_UPDATE = 10.0
     ALERT_THROTTLING_TIME = 60.0 * 60 * 2
     MIN_MINE_POINT = 60
 
@@ -355,9 +355,9 @@ class CrabadaMineBot:
 
         self._print_mine_status()
         self._check_and_maybe_start_mines()
-        time.sleep(3.0)
+        time.sleep(1.0)
         self._check_and_maybe_reinforce_mines()
-        time.sleep(3.0)
+        time.sleep(1.0)
         self._check_and_maybe_close_mines()
 
         if self.updated_game_stats:
