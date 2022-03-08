@@ -12,6 +12,7 @@ from twilio.rest import Client
 
 from config import IEX_API_TOKEN, TWILIO_CONFIG, USERS
 from crabada.bot import CrabadaMineBot
+from crabada.types import GameStats
 from utils import logger, security
 
 
@@ -68,8 +69,18 @@ def run_bot() -> None:
             )
         )
 
+    game_stats = GameStats()
     for bot in bots:
         logger.print_bold(f"Starting game bot for user {bot.user}...")
+        bot_stats = bot.get_lifetime_stats()
+        game_stats["commission_tus"] = (
+            game_stats.get("commission_tus", 0.0) + bot_stats["commission_tus"]
+        )
+        game_stats["tus_gross"] = game_stats.get("tus_gross", 0.0) + bot_stats["tus_gross"]
+
+    logger.print_bold(
+        f"Mined TUS: {game_stats['tus_gross']}TUS Commission TUS: {game_stats['commission_tus']}TUS"
+    )
     logger.print_normal("\n")
 
     try:

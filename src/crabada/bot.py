@@ -124,7 +124,11 @@ class CrabadaMineBot:
         avax_gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         if avax_gas is None:
             return
-        avax_gas_usd = get_avax_price_usd(self.api_token) * avax_gas
+        try:
+            avax_gas_usd = get_avax_price_usd(self.api_token) * avax_gas
+        except:
+            logger.print_fail("Error querying avax token price!")
+            avax_gas_usd = None
         if not avax_gas_usd:
             return
         self.game_stats["avax_gas_usd"] += avax_gas_usd
@@ -334,6 +338,9 @@ class CrabadaMineBot:
             else:
                 logger.print_ok_blue(f"{k.upper()}: {v}")
         logger.print_bold("------------------------------\n")
+
+    def get_lifetime_stats(self) -> T.Dict[str, T.Any]:
+        return self.game_stats
 
     def run(self) -> None:
         logger.print_normal("=" * 60)

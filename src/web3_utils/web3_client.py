@@ -7,6 +7,7 @@ from contextlib import contextmanager
 from eth_account.datastructures import SignedTransaction
 from eth_typing import Address, BlockIdentifier, ChecksumAddress
 from eth_typing.encoding import HexStr
+from utils import logger
 from web3 import eth, exceptions, Web3
 from web3.contract import Contract, ContractFunction
 from web3.types import BlockData, Nonce, TxParams, TxReceipt, TxData, Wei
@@ -17,6 +18,7 @@ def web3_transaction(err_string_compare: str, handler: T.Callable) -> T.Iterator
     try:
         yield
     except ValueError as e:
+        logger.print_fail(e)
         if err_string_compare in e.args[0]["message"]:
             handler()
         else:
