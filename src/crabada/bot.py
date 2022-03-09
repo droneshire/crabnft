@@ -209,20 +209,35 @@ class CrabadaMineBot:
                 )
                 continue
 
+            crabs_in_mine = [c["crabada_id"] for c in mine.get("defense_team_info", [])]
             if mine["attack_point"] - defense_battle_point < self.config["max_reinforce_bp_delta"]:
                 logger.print_normal(
                     f"Mine[{mine['game_id']}]: using reinforcement strategy of highest bp"
                 )
-                reinforcment_crab = self.crabada_w2.get_best_high_bp_crab_for_lending(
-                    self.config["max_reinforcement_price_tus"]
-                )
+                reinforcment_crab = self.crabada_w2.get_my_best_bp_crab_for_lending(self.address)
+                if (
+                    reinforcment_crab is not None
+                    and reinforcment_crab["crabada_id"] not in crabs_in_mine
+                ):
+                    logger.print_bold(f"Mine[{mine['game_id']}]: using our own crab to reinforce!")
+                else:
+                    reinforcment_crab = self.crabada_w2.get_best_high_bp_crab_for_lending(
+                        self.config["max_reinforcement_price_tus"]
+                    )
             else:
                 logger.print_normal(
                     f"Mine[{mine['game_id']}]: using reinforcement strategy of highest mp"
                 )
-                reinforcment_crab = self.crabada_w2.get_best_high_mp_crab_for_lending(
-                    self.config["max_reinforcement_price_tus"]
-                )
+                reinforcment_crab = self.crabada_w2.get_my_best_mp_crab_for_lending(self.address)
+                if (
+                    reinforcment_crab is not None
+                    and reinforcment_crab["crabada_id"] not in crabs_in_mine
+                ):
+                    logger.print_bold(f"Mine[{mine['game_id']}]: using our own crab to reinforce!")
+                else:
+                    reinforcment_crab = self.crabada_w2.get_best_high_mp_crab_for_lending(
+                        self.config["max_reinforcement_price_tus"]
+                    )
 
             if reinforcment_crab is None:
                 logger.print_fail(

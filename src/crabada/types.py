@@ -192,3 +192,30 @@ class CrabForLending(T.TypedDict):
     battle_point: int
     time_point: int
     mine_point: int
+
+
+class Crab(T.TypedDict):
+    crabada_id: int
+    id: int
+    crabada_name: str
+    team_id: int
+    game_id: int
+    crabada_status: T.Literal["GAME", "AVAILABLE", "LENDING"]
+    owner: Address
+    crabada_type: int
+    crabada_class: int
+    class_id: int
+    class_name: str
+    is_origin: int
+    is_genesis: int
+    legend_number: int
+    pure_number: int
+    photo: str
+    hp: int
+    damage: int
+    armor: int
+    speed: int
+    critical: int
+    battle_point: int
+    time_point: int
+    mine_point: int

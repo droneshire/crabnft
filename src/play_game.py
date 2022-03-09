@@ -6,9 +6,11 @@ import getpass
 import json
 import logging
 import os
+import requests
 import sys
 import time
 import traceback
+from discord import Webhook, RequestsWebhookAdapter
 from twilio.rest import Client
 
 from config import IEX_API_TOKEN, TWILIO_CONFIG, USERS
@@ -18,6 +20,9 @@ from utils import logger, security
 from utils.price import get_avax_price_usd
 
 AVAX_PRICE_UPDATE_TIME = 60.0
+DISCORD_UPDATE_TIME = 60.0 * 60.0 * 6
+
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/951028752257789972/WBDD5vLKziawAMRkluuLvx_eacNLItLdHHmL8PHKUj1p-q6COHks_11--Mt39l8K1T1I"
 
 
 def parse_args() -> argparse.Namespace:
@@ -54,6 +59,7 @@ def run_bot() -> None:
 
     sms_client = Client(TWILIO_CONFIG["account_sid"], TWILIO_CONFIG["account_auth_token"])
 
+    webhook = Webhook.from_url(DISCORD_WEBHOOK_URL, adapter=RequestsWebhookAdapter())
     encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
 
     bots = []
@@ -88,17 +94,34 @@ def run_bot() -> None:
     )
     logger.print_normal("\n")
 
-    last_avax_price_update = time.time()
+    last_avax_price_update = 0.0
+    last_discord_update = 0.0
 
     try:
         while True:
-            now = time.time()
+            gross_tus = 0.0
+            wins = 0
+            losses = 0
+
             for bot in bots:
                 bot.run()
+
+                bot_stats = bot.get_lifetime_stats()
+                gross_tus += bot_stats["tus_gross"]
+                wins += bot_stats["game_wins"]
+                losses += bot_stats["game_losses"]
+
                 now = time.time()
                 if now - last_avax_price_update > AVAX_PRICE_UPDATE_TIME:
                     bot.update_avax_price(get_avax_price_usd(IEX_API_TOKEN))
                     last_avax_price_update = now
+
+            if time.time() - last_discord_update > DISCORD_UPDATE_TIME:
+                last_discord_update = time.time()
+                webhook_text = f"\U0001F980\t**Total TUS mined by bots: {gross_tus:.2f} TUS**\n"
+                win_percentage = float(wins) / (wins + losses) * 100.0
+                webhook_text += f"\U0001F916\t**Bot win percentage: {win_percentage:.2f}%**\n"
+                webhook.send(webhook_text)
 
     except KeyboardInterrupt:
         pass

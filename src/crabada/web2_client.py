@@ -5,7 +5,7 @@ import time
 
 from eth_typing import Address
 
-from crabada.types import CrabForLending, IdleGame, LendingCategories, Team
+from crabada.types import Crab, CrabForLending, IdleGame, LendingCategories, Team
 from utils.general import first_or_none, n_or_better_or_none, get_pretty_seconds
 from utils.price import wei_to_tus, Tus
 
@@ -50,6 +50,31 @@ class CrabadaWeb2Client:
             return res["result"]["data"] or []
         except:
             return []
+
+    def list_my_available_crabs_for_reinforcement(
+        self, user_address: Address, params: T.Dict[str, T.Any] = {}
+    ) -> T.List[Crab]:
+        res = self.list_crabs_in_game_raw(user_address, params)
+        try:
+            return [c for c in res["result"]["data"] if c["crabada_status"] == "AVAILABLE"] or []
+        except:
+            return []
+
+    def list_crabs_in_game_raw(
+        self, user_address: Address, params: T.Dict[str, T.Any] = {}
+    ) -> T.Any:
+        url = self.BASE_URL + "/crabadas/in-game"
+        actual_params = {
+            "limit": 30,
+            "page": 1,
+            "user_address": user_address,
+            "order": "desc",
+        }
+        actual_params.update(params)
+        try:
+            return requests.request("GET", url, params=actual_params).json()
+        except:
+            return {}
 
     def list_my_open_mines(
         self, user_address: Address, params: T.Dict[str, T.Any] = {}
@@ -166,23 +191,41 @@ class CrabadaWeb2Client:
         From a list of crabs, pick the one with the best characteristic for the
         cheapest price
         """
-        affordable_crabs = [c for c in crabs if wei_to_tus(c["price"]) < max_tus]
+        affordable_crabs = [c for c in crabs if wei_to_tus(c.get("price", max_tus)) < max_tus]
         sorted_affordable_crabs = sorted(
-            affordable_crabs, key=lambda c: (-c[lending_category], c["price"])
+            affordable_crabs, key=lambda c: (-c[lending_category], c.get("price", max_tus))
         )
         return n_or_better_or_none(n_crab_from_floor, sorted_affordable_crabs)
 
-    def get_best_high_mp_crab_for_lending(self, max_tus: Tus) -> CrabForLending:
+    def get_best_high_mp_crab_for_lending(self, max_tus: Tus) -> T.Optional[CrabForLending]:
         high_mp_crabs = self.list_high_mp_crabs_for_lending()
         return self.get_cheapest_best_crab_from_list_for_lending(
-            high_mp_crabs, max_tus, 20, "mine_point"
+            high_mp_crabs, max_tus, 10, "mine_point"
         )
 
-    def get_best_high_bp_crab_for_lending(self, max_tus: Tus) -> CrabForLending:
+    def get_best_high_bp_crab_for_lending(self, max_tus: Tus) -> T.Optional[CrabForLending]:
         high_bp_crabs = self.list_high_bp_crabs_for_lending()
         return self.get_cheapest_best_crab_from_list_for_lending(
             high_bp_crabs, max_tus, 20, "battle_point"
         )
+
+    def get_my_best_mp_crab_for_lending(self, user_address: Address) -> T.Optional[CrabForLending]:
+        return self.get_my_best_crab_for_lending(user_address, params={"orderBy": "mine_point"})
+
+    def get_my_best_bp_crab_for_lending(self, user_address: Address) -> T.Optional[CrabForLending]:
+        return self.get_my_best_crab_for_lending(user_address, params={"orderBy": "battle_point"})
+
+    def get_my_best_crab_for_lending(
+        self, user_address: Address, params: T.Dict[str, T.Any] = {}
+    ) -> T.Optional[CrabForLending]:
+        my_crabs = self.list_my_available_crabs_for_reinforcement(user_address, params)
+        if not my_crabs:
+            return None
+
+        sorted_crabs = sorted(my_crabs, key=lambda c: c["battle_point"])
+        best_crab = sorted_crabs[0]
+        best_crab["price"] = 0
+        return best_crab
 
     def list_crabs_for_lending_raw(self, params: T.Dict[str, T.Any] = {}) -> T.Any:
         url = self.BASE_URL + "/crabadas/lending"
