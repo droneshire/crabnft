@@ -209,7 +209,8 @@ class CrabadaMineBot:
                 )
                 continue
 
-            crabs_in_mine = [c["crabada_id"] for c in mine.get("defense_team_info", [])]
+            crabs_in_mine = self.crabada_w2.list_crabs_in_my_mines(self.address)
+
             if mine["attack_point"] - defense_battle_point < self.config["max_reinforce_bp_delta"]:
                 logger.print_normal(
                     f"Mine[{mine['game_id']}]: using reinforcement strategy of highest bp"

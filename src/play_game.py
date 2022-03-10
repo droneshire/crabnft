@@ -20,7 +20,7 @@ from utils import logger, security
 from utils.price import get_avax_price_usd
 
 AVAX_PRICE_UPDATE_TIME = 60.0
-DISCORD_UPDATE_TIME = 60.0 * 60.0 * 6
+DISCORD_UPDATE_TIME = 60.0 * 60.0 * 12
 
 DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/951028752257789972/WBDD5vLKziawAMRkluuLvx_eacNLItLdHHmL8PHKUj1p-q6COHks_11--Mt39l8K1T1I"
 

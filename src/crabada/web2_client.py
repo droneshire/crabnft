@@ -51,6 +51,13 @@ class CrabadaWeb2Client:
         except:
             return []
 
+    def list_crabs_in_my_mines(self, user_address: Address) -> T.List[CrabForLending]:
+        mines = self.list_my_mines(user_address)
+        crabs_in_mine = []
+        for mine in mines:
+            crabs_in_mine.extend([c["crabada_id"] for c in mine.get("defense_team_info", [])])
+        return crabs_in_mine
+
     def list_my_available_crabs_for_reinforcement(
         self, user_address: Address, params: T.Dict[str, T.Any] = {}
     ) -> T.List[Crab]:
@@ -75,6 +82,15 @@ class CrabadaWeb2Client:
             return requests.request("GET", url, params=actual_params).json()
         except:
             return {}
+
+    def list_my_mines(
+        self, user_address: Address, params: T.Dict[str, T.Any] = {}
+    ) -> T.List[IdleGame]:
+        """
+        Get all mines that belong to the given user address
+        """
+        params["user_address"] = user_address
+        return self.list_mines(params)
 
     def list_my_open_mines(
         self, user_address: Address, params: T.Dict[str, T.Any] = {}
