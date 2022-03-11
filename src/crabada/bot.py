@@ -209,16 +209,19 @@ class CrabadaMineBot:
                 )
                 continue
 
-            crabs_in_mine = self.crabada_w2.list_crabs_in_my_mines(self.address)
+            crabs_in_mines = self.crabada_w2.list_crabs_in_my_mines(self.address)
+            crab_ids_in_mines = [c["crabada_id"] for c in crabs_in_mines]
+            logger.print_ok_blue(f"Crabs in mines: {', '.join(crab_ids_in_mines)}")
 
             if mine["attack_point"] - defense_battle_point < self.config["max_reinforce_bp_delta"]:
                 logger.print_normal(
                     f"Mine[{mine['game_id']}]: using reinforcement strategy of highest bp"
                 )
                 reinforcment_crab = self.crabada_w2.get_my_best_bp_crab_for_lending(self.address)
-                if reinforcment_crab is not None and reinforcment_crab["crabada_id"] not in [
-                    c["crabada_id"] for c in crabs_in_mine
-                ]:
+                if (
+                    reinforcment_crab is not None
+                    and reinforcment_crab["crabada_id"] not in crab_ids_in_mines
+                ):
                     logger.print_bold(f"Mine[{mine['game_id']}]: using our own crab to reinforce!")
                 else:
                     reinforcment_crab = self.crabada_w2.get_best_high_bp_crab_for_lending(
@@ -229,9 +232,10 @@ class CrabadaMineBot:
                     f"Mine[{mine['game_id']}]: using reinforcement strategy of highest mp"
                 )
                 reinforcment_crab = self.crabada_w2.get_my_best_mp_crab_for_lending(self.address)
-                if reinforcment_crab is not None and reinforcment_crab["crabada_id"] not in [
-                    c["crabada_id"] for c in crabs_in_mine
-                ]:
+                if (
+                    reinforcment_crab is not None
+                    and reinforcment_crab["crabada_id"] not in crab_ids_in_mines
+                ):
                     logger.print_bold(f"Mine[{mine['game_id']}]: using our own crab to reinforce!")
                 else:
                     reinforcment_crab = self.crabada_w2.get_best_high_mp_crab_for_lending(
@@ -290,7 +294,10 @@ class CrabadaMineBot:
                 continue
 
             mine = self.crabada_w2.get_mine(team["game_id"])
-            if not self.crabada_w2.mine_is_finished(mine):
+            if (
+                not self.crabada_w2.mine_is_finished(mine)
+                or team["game_id"] not in self.config["mining_teams"]
+            ):
                 continue
 
             logger.print_normal(f"Attempting to close game {team['game_id']}")
