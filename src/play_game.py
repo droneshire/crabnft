@@ -126,15 +126,18 @@ def run_bot() -> None:
     except KeyboardInterrupt:
         pass
     except Exception as e:
+        stop_message = f"\U0001F980 Crabada Bot Alert \U0001F980\n\n"
+        stop_message += f"Crabada Bot Stopped \U0000203C\n"
         if TWILIO_CONFIG["enable_admin_sms"]:
-            sms_message = f"\U0001F980 Crabada Bot Alert \U0001F980\n\n"
-            sms_message += f"Crabada Bot Stopped \U0000203C\n"
+            stop_message = f"\U0001F980 Crabada Bot Alert \U0001F980\n\n"
+            stop_message += f"Crabada Bot Stopped \U0000203C\n"
             message = sms_client.messages.create(
-                body=sms_message,
+                body=stop_message,
                 from_=TWILIO_CONFIG["from_sms_number"],
                 to=TWILIO_CONFIG["admin_sms_number"],
             )
         logger.print_fail(traceback.format_exc())
+        webhook.send(stop_message)
     finally:
         for bot in bots:
             bot.end()

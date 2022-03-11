@@ -18,7 +18,7 @@ def web3_transaction(err_string_compare: str, handler: T.Callable) -> T.Iterator
     try:
         yield
     except ValueError as e:
-        logger.print_fail(e.args[0])
+        logger.print_fail(e.args[0]["message"])
         if err_string_compare in e.args[0]["message"]:
             handler()
         else:
