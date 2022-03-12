@@ -1,3 +1,4 @@
+import os
 import sys
 import typing as T
 import logging
@@ -16,6 +17,12 @@ class Colors:
 
 class Prefixes:
     ARROW = chr(10236)
+
+
+def get_logging_dir() -> str:
+    this_dir = os.path.dirname(os.path.realpath(__file__))
+    src_dir = os.path.dirname(this_dir)
+    return os.path.join(os.path.dirname(src_dir), "logs")
 
 
 def is_color_supported() -> bool:
