@@ -61,13 +61,15 @@ def run_bot() -> None:
     sms_client = Client(TWILIO_CONFIG["account_sid"], TWILIO_CONFIG["account_auth_token"])
 
     webhook = Webhook.from_url(DISCORD_WEBHOOK_URL, adapter=RequestsWebhookAdapter())
-    encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
+
+    private_key = ""
+    if not args.dry_run:
+        encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
+        private_key = security.decrypt(str.encode(encrypt_password), config["private_key"]).decode()
 
     bots = []
     for user, config in USERS.items():
-        config["private_key"] = security.decrypt(
-            str.encode(encrypt_password), config["private_key"]
-        ).decode()
+        config["private_key"] = private_key
         bots.append(
             CrabadaMineBot(
                 user,
