@@ -56,6 +56,7 @@ def run_bot() -> None:
 
     webhook = discord.get_discord_hook()
 
+    encrypt_password = ""
     if not args.dry_run:
         encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
 

@@ -72,7 +72,7 @@ class CrabadaMineBot:
         if not os.path.isfile(self.game_stats_file):
             write_game_stats(self.user, self.game_stats_file, self.game_stats)
         else:
-            self.game_stats = get_game_stats(self.user, self.game_stats_file)
+            self.game_stats = get_game_stats(self.user, log_dir)
         logger.print_ok_blue(f"Adding bot for user {self.user} with address {self.address}")
 
     def _send_status_update_sms(self, custom_message: str) -> None:
