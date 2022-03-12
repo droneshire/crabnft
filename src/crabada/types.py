@@ -56,12 +56,16 @@ class TeamMember(T.TypedDict):
     """
 
     crabada_id: int
+    crabada_class: int
     photo: str
     hp: int
     speed: int
     armor: int
     damage: int
     critical: int
+    is_origin: int
+    is_genesis: int
+    legend_number: int
 
 
 class IdleGame(T.TypedDict):
@@ -74,7 +78,6 @@ class IdleGame(T.TypedDict):
     defense_crabada_number: T.Literal[3, 4, 5]
     defense_point: int
     defense_mine_point: int
-    defense_team_info: T.List[TeamMember]
     defense_team_members: T.List[TeamMember]
     defense_team_faction: Faction
     # Attack

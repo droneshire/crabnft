@@ -209,10 +209,6 @@ class CrabadaMineBot:
                 )
                 continue
 
-            crabs_in_mines = self.crabada_w2.list_crabs_in_my_mines(self.address)
-            crab_ids_in_mines = [c["crabada_id"] for c in crabs_in_mines]
-            logger.print_ok_blue(f"Crabs in mines: {', '.join(crab_ids_in_mines)}")
-
             if mine["attack_point"] - defense_battle_point < self.config["max_reinforce_bp_delta"]:
                 logger.print_normal(
                     f"Mine[{mine['game_id']}]: using reinforcement strategy of highest bp"
@@ -220,7 +216,6 @@ class CrabadaMineBot:
                 reinforcment_crab = self.crabada_w2.get_my_best_bp_crab_for_lending(self.address)
                 if (
                     reinforcment_crab is not None
-                    and reinforcment_crab["crabada_id"] not in crab_ids_in_mines
                 ):
                     logger.print_bold(f"Mine[{mine['game_id']}]: using our own crab to reinforce!")
                 else:
@@ -234,7 +229,6 @@ class CrabadaMineBot:
                 reinforcment_crab = self.crabada_w2.get_my_best_mp_crab_for_lending(self.address)
                 if (
                     reinforcment_crab is not None
-                    and reinforcment_crab["crabada_id"] not in crab_ids_in_mines
                 ):
                     logger.print_bold(f"Mine[{mine['game_id']}]: using our own crab to reinforce!")
                 else:
@@ -294,11 +288,8 @@ class CrabadaMineBot:
                 continue
 
             mine = self.crabada_w2.get_mine(team["game_id"])
-            allocated_mines = [m["team_id"] for m in self.config["mining_teams"]]
-            if (
-                not self.crabada_w2.mine_is_finished(mine)
-                or team["team_id"] not in allocated_mines
-            ):
+            mining_teams = [m["team_id"] for m in self.config["mining_teams"]]
+            if not self.crabada_w2.mine_is_finished(mine) or team["team_id"] not in mining_teams:
                 continue
 
             logger.print_normal(f"Attempting to close game {team['game_id']}")

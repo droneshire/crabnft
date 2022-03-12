@@ -51,21 +51,27 @@ class CrabadaWeb2Client:
         except:
             return []
 
-    def list_crabs_in_my_mines(self, user_address: Address) -> T.List[CrabForLending]:
-        mines = self.list_my_mines(user_address)
-        crabs_in_mine = []
-        for mine in mines:
-            crabs_in_mine.extend([c["crabada_id"] for c in mine.get("defense_team_info", [])])
-        return crabs_in_mine
-
     def list_my_available_crabs_for_reinforcement(
         self, user_address: Address, params: T.Dict[str, T.Any] = {}
     ) -> T.List[Crab]:
-        res = self.list_crabs_in_game_raw(user_address, params)
+        res = self.list_can_join_game_raw(user_address, params)
         try:
-            return [c for c in res["result"]["data"] if c["crabada_status"] == "AVAILABLE"] or []
+            return [c for c in res["result"]["data"]] or []
         except:
             return []
+
+    def list_can_join_game_raw(
+        self, user_address: Address, params: T.Dict[str, T.Any] = {}
+    ) -> T.List[Crab]:
+        url = self.BASE_URL + "/crabadas/can-join-team"
+        actual_params = {
+            "user_address": user_address,
+        }
+        actual_params.update(params)
+        try:
+            return requests.request("GET", url, params=actual_params).json()
+        except:
+            return {}
 
     def list_crabs_in_game_raw(
         self, user_address: Address, params: T.Dict[str, T.Any] = {}
@@ -289,11 +295,12 @@ class CrabadaWeb2Client:
         if not CrabadaWeb2Client.mine_has_been_attacked(mine):
             return False
 
-        if len(mine.get("defense_team_info", [])) >= 5:
+        process = mine["process"]
+        action = process[-1]["action"]
+        if action not in ["attack", "reinforce-attack"]:
             return False
 
-        action = mine["process"][-1]["action"]
-        if action not in ["attack", "reinforce-attack"]:
+        if len(process) >= 5:
             return False
 
         attack_start_time = mine["process"][-1]["transaction_time"]
