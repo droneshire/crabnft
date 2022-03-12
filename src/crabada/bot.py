@@ -9,9 +9,11 @@ from web3.types import TxReceipt
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
 from crabada.factional_advantage import get_faction_adjusted_battle_point
-from crabada.types import CrabForLending, GameStats, IdleGame, NULL_GAME_STATS, Team
+from crabada.types import CrabForLending, IdleGame, Team
 from utils import logger
 from utils.config_types import UserConfig, SmsConfig
+from utils.game_stats import GameStats, NULL_GAME_STATS
+from utils.game_stats import get_game_stats, get_lifetime_stats_file, write_game_stats
 from utils.price import tus_to_wei, wei_to_tus, wei_to_cra_raw, wei_to_tus_raw
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.web3_client import web3_transaction
@@ -52,7 +54,7 @@ class CrabadaMineBot:
 
         self.address = self.config["address"]
         self.game_stats = NULL_GAME_STATS
-        self.game_stats_file = os.path.join(log_dir, user.lower() + "_lifetime_game_bot_stats.json")
+        self.game_stats_file = get_lifetime_stats_file(user, log_dir)
         self.updated_game_stats = True
         self.have_reinforced_at_least_once: T.Dict[str, bool] = {}
         self.closed_mines = 0
@@ -68,16 +70,9 @@ class CrabadaMineBot:
             )
 
         if not os.path.isfile(self.game_stats_file):
-            with open(self.game_stats_file, "w") as outfile:
-                json.dump(
-                    self.game_stats,
-                    outfile,
-                    indent=4,
-                    sort_keys=True,
-                )
+            write_game_stats(self.user, self.game_stats_file, self.game_stats)
         else:
-            with open(self.game_stats_file, "r") as infile:
-                self.game_stats = json.load(infile)
+            self.game_stats = get_game_stats(self.user, self.game_stats_file)
         logger.print_ok_blue(f"Adding bot for user {self.user} with address {self.address}")
 
     def _send_status_update_sms(self, custom_message: str) -> None:
@@ -335,8 +330,7 @@ class CrabadaMineBot:
         self.game_stats["commission_tus"] += commission_tus
         self.game_stats["tus_net"] -= commission_tus
 
-        with open(self.game_stats_file, "w") as outfile:
-            json.dump(self.game_stats, outfile, indent=4, sort_keys=True)
+        write_game_stats(self.user, self.game_stats_file, self.game_stats)
         self.updated_game_stats = True
 
     def _print_bot_stats(self) -> None:
@@ -388,7 +382,5 @@ class CrabadaMineBot:
 
     def end(self) -> None:
         logger.print_fail(f"Exiting bot for {self.user}...")
-
+        write_game_stats(self.user, self.game_stats_file, self.game_stats)
         self._print_bot_stats()
-        with open(self.game_stats_file, "w") as outfile:
-            json.dump(self.game_stats, outfile, indent=4, sort_keys=True)

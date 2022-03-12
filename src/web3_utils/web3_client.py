@@ -169,6 +169,9 @@ class Web3Client:
     def get_nonce(self) -> Nonce:
         return self.w3.eth.get_transaction_count(self.user_address)
 
+    def get_gas_price_gwei(self) -> int:
+        return self.w3.fromWei(self.w3.eth.gas_price, "gwei")
+
     def estimate_max_fee_per_gas_in_gwei(self) -> int:
         """
         Gets the base fee from the latest block and returns a maxFeePerGas

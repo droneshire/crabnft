@@ -10,31 +10,25 @@ import requests
 import sys
 import time
 import traceback
-from discord import Webhook, RequestsWebhookAdapter
 from twilio.rest import Client
 
 from config import IEX_API_TOKEN, TWILIO_CONFIG, USERS
 from crabada.bot import CrabadaMineBot
-from crabada.types import GameStats
-from utils import logger, security
+from utils import discord, logger, security
+from utils.game_stats import GameStats
 from utils.price import get_avax_price_usd
 
 AVAX_PRICE_UPDATE_TIME = 60.0
 DISCORD_UPDATE_TIME = 60.0 * 60.0 * 12
 
-DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/951028752257789972/WBDD5vLKziawAMRkluuLvx_eacNLItLdHHmL8PHKUj1p-q6COHks_11--Mt39l8K1T1I"
-
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    this_dir = os.path.dirname(os.path.realpath(__file__))
-    log_dir = os.path.join(os.path.dirname(this_dir), "logs")
+    log_dir = logger.get_logging_dir()
     parser.add_argument("--dry-run", action="store_true", help="Dry run")
     parser.add_argument("--quiet", action="store_true", help="Disable alerts")
-    parser.add_argument(
-        "-l", "--log-level", choices=["INFO", "DEBUG", "ERROR", "NONE"], default="INFO"
-    )
-    parser.add_argument("-f", "--log-dir", default=log_dir)
+    parser.add_argument("--log-level", choices=["INFO", "DEBUG", "ERROR", "NONE"], default="INFO")
+    parser.add_argument("--log-dir", default=log_dir)
     return parser.parse_args()
 
 
@@ -60,18 +54,19 @@ def run_bot() -> None:
 
     sms_client = Client(TWILIO_CONFIG["account_sid"], TWILIO_CONFIG["account_auth_token"])
 
-    webhook = Webhook.from_url(DISCORD_WEBHOOK_URL, adapter=RequestsWebhookAdapter())
+    webhook = discord.get_discord_hook()
 
     if not args.dry_run:
         encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
 
     bots = []
     for user, config in USERS.items():
-        if encrypt_password:
-            private_key = security.decrypt(
-                str.encode(encrypt_password), config["private_key"]
-            ).decode()
-            config["private_key"] = private_key
+        private_key = (
+            ""
+            if not encrypt_password
+            else security.decrypt(str.encode(encrypt_password), config["private_key"]).decode()
+        )
+        config["private_key"] = private_key
 
         bots.append(
             CrabadaMineBot(
