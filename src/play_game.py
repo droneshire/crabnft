@@ -62,14 +62,17 @@ def run_bot() -> None:
 
     webhook = Webhook.from_url(DISCORD_WEBHOOK_URL, adapter=RequestsWebhookAdapter())
 
-    private_key = ""
     if not args.dry_run:
         encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
-        private_key = security.decrypt(str.encode(encrypt_password), config["private_key"]).decode()
 
     bots = []
     for user, config in USERS.items():
-        config["private_key"] = private_key
+        if encrypt_password:
+            private_key = security.decrypt(
+                str.encode(encrypt_password), config["private_key"]
+            ).decode()
+            config["private_key"] = private_key
+
         bots.append(
             CrabadaMineBot(
                 user,
