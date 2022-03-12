@@ -30,6 +30,7 @@ def parse_args() -> argparse.Namespace:
     this_dir = os.path.dirname(os.path.realpath(__file__))
     log_dir = os.path.join(os.path.dirname(this_dir), "logs")
     parser.add_argument("--dry-run", action="store_true", help="Dry run")
+    parser.add_argument("--quiet", action="store_true", help="Disable alerts")
     parser.add_argument(
         "-l", "--log-level", choices=["INFO", "DEBUG", "ERROR", "NONE"], default="INFO"
     )
@@ -116,7 +117,7 @@ def run_bot() -> None:
                     bot.update_avax_price(get_avax_price_usd(IEX_API_TOKEN))
                     last_avax_price_update = now
 
-            if time.time() - last_discord_update > DISCORD_UPDATE_TIME:
+            if not args.quiet and time.time() - last_discord_update > DISCORD_UPDATE_TIME:
                 last_discord_update = time.time()
                 webhook_text = f"\U0001F980\t**Total TUS mined by bots: {gross_tus:.2f} TUS**\n"
                 win_percentage = float(wins) / (wins + losses) * 100.0
