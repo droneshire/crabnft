@@ -359,7 +359,7 @@ class CrabadaMineBot:
 
         gas_price_gwei = self.crabada_w3.get_gas_price_gwei()
         gas_price_gwei = "UNKNOWN" if gas_price_gwei is None else gas_price_gwei
-        logger.print_ok(f"AVAX/USD: ${self.avax_price_usd:.2f}, Gas: {gas_price_gwei}")
+        logger.print_ok(f"AVAX/USD: ${self.avax_price_usd:.2f}, Gas: {gas_price_gwei:.2f}")
 
         self._print_mine_status()
         self._check_and_maybe_close_mines()
