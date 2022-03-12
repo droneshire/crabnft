@@ -214,9 +214,7 @@ class CrabadaMineBot:
                     f"Mine[{mine['game_id']}]: using reinforcement strategy of highest bp"
                 )
                 reinforcment_crab = self.crabada_w2.get_my_best_bp_crab_for_lending(self.address)
-                if (
-                    reinforcment_crab is not None
-                ):
+                if reinforcment_crab is not None:
                     logger.print_bold(f"Mine[{mine['game_id']}]: using our own crab to reinforce!")
                 else:
                     reinforcment_crab = self.crabada_w2.get_best_high_bp_crab_for_lending(
@@ -227,9 +225,7 @@ class CrabadaMineBot:
                     f"Mine[{mine['game_id']}]: using reinforcement strategy of highest mp"
                 )
                 reinforcment_crab = self.crabada_w2.get_my_best_mp_crab_for_lending(self.address)
-                if (
-                    reinforcment_crab is not None
-                ):
+                if reinforcment_crab is not None:
                     logger.print_bold(f"Mine[{mine['game_id']}]: using our own crab to reinforce!")
                 else:
                     reinforcment_crab = self.crabada_w2.get_best_high_mp_crab_for_lending(

@@ -104,11 +104,14 @@ class Web3Client:
     # Sign & send Tx
     ####################
 
-    def sign_transaction(self, tx: TxParams) -> SignedTransaction:
+    def sign_transaction(self, tx: TxParams) -> T.Optional[SignedTransaction]:
         """
         Sign the give transaction; the private key must have
         been set with setCredential().
         """
+        if self.dry_run:
+            return None
+
         return self.w3.eth.account.sign_transaction(tx, self.private_key)
 
     def send_signed_transaction(self, signed_tx: SignedTransaction) -> HexStr:
@@ -132,6 +135,9 @@ class Web3Client:
         """
         Sign a transaction and send it
         """
+        if self.dry_run:
+            return ""
+
         signed_tx = self.sign_transaction(tx)
         return self.send_signed_transaction(signed_tx)
 

@@ -100,6 +100,7 @@ def run_bot() -> None:
     last_avax_price_update = 0.0
     last_discord_update = 0.0
 
+    alerts_enabled = not args.quiet and not args.dry_run
     try:
         while True:
             gross_tus = 0.0
@@ -119,7 +120,7 @@ def run_bot() -> None:
                     bot.update_avax_price(get_avax_price_usd(IEX_API_TOKEN))
                     last_avax_price_update = now
 
-            if not args.quiet and time.time() - last_discord_update > DISCORD_UPDATE_TIME:
+            if alerts_enabled and time.time() - last_discord_update > DISCORD_UPDATE_TIME:
                 last_discord_update = time.time()
                 webhook_text = f"\U0001F980\t**Total TUS mined by bots: {gross_tus:.2f} TUS**\n"
                 win_percentage = float(wins) / (wins + losses) * 100.0
@@ -131,7 +132,7 @@ def run_bot() -> None:
     except Exception as e:
         stop_message = f"\U0001F980 Crabada Bot Alert \U0001F980\n\n"
         stop_message += f"Crabada Bot Stopped \U0000203C\n"
-        if TWILIO_CONFIG["enable_admin_sms"]:
+        if alerts_enabled and TWILIO_CONFIG["enable_admin_sms"]:
             stop_message = f"\U0001F980 Crabada Bot Alert \U0001F980\n\n"
             stop_message += f"Crabada Bot Stopped \U0000203C\n"
             message = sms_client.messages.create(
@@ -139,7 +140,8 @@ def run_bot() -> None:
                 from_=TWILIO_CONFIG["from_sms_number"],
                 to=TWILIO_CONFIG["admin_sms_number"],
             )
-        webhook.send(stop_message)
+        if alerts_enabled:
+            webhook.send(stop_message)
         logger.print_fail(traceback.format_exc())
     finally:
         for bot in bots:

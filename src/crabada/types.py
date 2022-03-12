@@ -20,6 +20,17 @@ class Faction:
     NO_FACTION = "NO_FACTION"
 
 
+class CrabadaClass:
+    SURGE = 1
+    SUNKEN = 2
+    PRIME = 3
+    BULK = 4
+    CRABOID = 5
+    RUINED = 6
+    GEM = 7
+    ORGANIC = 8
+
+
 class GameStats(T.TypedDict):
     tus_gross: float
     cra_net: float
@@ -56,7 +67,7 @@ class TeamMember(T.TypedDict):
     """
 
     crabada_id: int
-    crabada_class: int
+    crabada_class: CrabadaClass
     photo: str
     hp: int
     speed: int
@@ -179,7 +190,7 @@ class CrabForLending(T.TypedDict):
     borrower: Address
     game_id: int
     crabada_type: int
-    crabada_class: int
+    crabada_class: CrabadaClass
     class_id: int
     class_name: str
     is_origin: T.Literal[0, 1]
@@ -206,7 +217,7 @@ class Crab(T.TypedDict):
     crabada_status: T.Literal["GAME", "AVAILABLE", "LENDING"]
     owner: Address
     crabada_type: int
-    crabada_class: int
+    crabada_class: CrabadaClass
     class_id: int
     class_name: str
     is_origin: int
