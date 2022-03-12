@@ -187,9 +187,9 @@ class CrabadaMineBot:
             if not self.crabada_w2.mine_needs_reinforcement(mine):
                 continue
 
-            fee_per_gas_wei = self.crabada_w3.estimate_max_fee_per_gas_in_gwei()
-            if fee_per_gas_wei is not None and fee_per_gas_wei > self.config["max_fee_per_gas"]:
-                logger.print_warn(f"Warning: High Fee/Gas ({fee_per_gas_wei})!")
+            gas_price_gwei = self.crabada_w3.get_gas_price_gwei()
+            if gas_price_gwei is not None and gas_price_gwei > self.config["max_gas_price_gwei"]:
+                logger.print_warn(f"Warning: High Gas ({gas_price_gwei})!")
                 if not self.have_reinforced_at_least_once.get(team["team_id"], True):
                     logger.print_warn(
                         f"Skipping reinforcement of Mine[{mine['game_id']}] due to high gas cost"
@@ -357,9 +357,9 @@ class CrabadaMineBot:
 
         logger.print_ok(f"User: {self.user.upper()}")
 
-        fee_per_gas_wei = self.crabada_w3.estimate_max_fee_per_gas_in_gwei()
-        fee_per_gas_wei = "UNKNOWN" if fee_per_gas_wei is None else fee_per_gas_wei
-        logger.print_ok(f"AVAX/USD: ${self.avax_price_usd:.2f}, Est. Fee/Gas: {fee_per_gas_wei}")
+        gas_price_gwei = self.crabada_w3.get_gas_price_gwei()
+        gas_price_gwei = "UNKNOWN" if gas_price_gwei is None else gas_price_gwei
+        logger.print_ok(f"AVAX/USD: ${self.avax_price_usd:.2f}, Gas: {gas_price_gwei:.2f}")
 
         self._print_mine_status()
         self._check_and_maybe_close_mines()
