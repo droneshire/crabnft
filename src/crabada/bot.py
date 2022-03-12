@@ -54,7 +54,7 @@ class CrabadaMineBot:
 
         self.address = self.config["address"]
         self.game_stats = NULL_GAME_STATS
-        self.game_stats_file = get_lifetime_stats_file(user, log_dir)
+        self.log_dir = log_dir
         self.updated_game_stats = True
         self.have_reinforced_at_least_once: T.Dict[str, bool] = {}
         self.closed_mines = 0
@@ -69,10 +69,10 @@ class CrabadaMineBot:
                 len(mine.get("defense_team_info", [])) > 3
             )
 
-        if not os.path.isfile(self.game_stats_file):
-            write_game_stats(self.user, self.game_stats_file, self.game_stats)
+        if not os.path.isfile(get_lifetime_stats_file(user, self.log_dir)):
+            write_game_stats(self.user, self.log_dir, self.game_stats)
         else:
-            self.game_stats = get_game_stats(self.user, log_dir)
+            self.game_stats = get_game_stats(self.user, self.log_dir)
         logger.print_ok_blue(f"Adding bot for user {self.user} with address {self.address}")
 
     def _send_status_update_sms(self, custom_message: str) -> None:
@@ -330,7 +330,7 @@ class CrabadaMineBot:
         self.game_stats["commission_tus"] += commission_tus
         self.game_stats["tus_net"] -= commission_tus
 
-        write_game_stats(self.user, self.game_stats_file, self.game_stats)
+        write_game_stats(self.user, self.log_dir, self.game_stats)
         self.updated_game_stats = True
 
     def _print_bot_stats(self) -> None:
@@ -382,5 +382,5 @@ class CrabadaMineBot:
 
     def end(self) -> None:
         logger.print_fail(f"Exiting bot for {self.user}...")
-        write_game_stats(self.user, self.game_stats_file, self.game_stats)
+        write_game_stats(self.user, self.log_dir, self.game_stats)
         self._print_bot_stats()
