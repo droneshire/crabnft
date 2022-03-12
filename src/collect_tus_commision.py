@@ -160,7 +160,21 @@ def collect_tus_commission(
             logger.print_ok_blue(sms_message)
             if not dry_run:
                 send_sms_message(config["sms_number"], sms_message)
-        logger.print_bold(f"Collected {total_commission_collected_tus} TUS in commission!!!")
+
+    logger.print_bold(f"Collected {total_commission_collected_tus} TUS in commission!!!")
+    stats_file = os.path.join(logger.get_logging_dir(), "commission_lifetime_bot_stats.json")
+    stats = {"total_commission_tus": total_commission_collected_tus}
+    if os.path.isfile(stats_file):
+        with open(stats_file, "r") as infile:
+            old_stats = json.load(infile)
+        stats["total_commission_tus"] += old_stats["total_commission_tus"]
+    with open(stats_file, "w") as outfile:
+        json.dump(
+            stats,
+            outfile,
+            indent=4,
+            sort_keys=True,
+        )
 
 
 def parse_args() -> argparse.Namespace:
