@@ -136,8 +136,8 @@ def run_bot() -> None:
                 from_=TWILIO_CONFIG["from_sms_number"],
                 to=TWILIO_CONFIG["admin_sms_number"],
             )
-        logger.print_fail(traceback.format_exc())
         webhook.send(stop_message)
+        logger.print_fail(traceback.format_exc())
     finally:
         for bot in bots:
             bot.end()

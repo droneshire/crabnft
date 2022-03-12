@@ -285,7 +285,7 @@ class CrabadaMineBot:
                     self.game_stats["tus_reinforcement"] += price_tus
                     self.updated_game_stats = True
                     self.have_reinforced_at_least_once[team["team_id"]] = True
-            time.sleep(1.0)
+            time.sleep(5.0)
 
     def _check_and_maybe_close_mines(self) -> None:
         teams = self.crabada_w2.list_teams(self.address)
@@ -294,9 +294,10 @@ class CrabadaMineBot:
                 continue
 
             mine = self.crabada_w2.get_mine(team["game_id"])
+            allocated_mines = [m["team_id"] for m in self.config["mining_teams"]]
             if (
                 not self.crabada_w2.mine_is_finished(mine)
-                or team["game_id"] not in self.config["mining_teams"]
+                or team["team_id"] not in allocated_mines
             ):
                 continue
 
