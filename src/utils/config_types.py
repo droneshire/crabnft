@@ -30,4 +30,5 @@ class UserConfig(T.TypedDict):
     sms_number: str
     email: str
     get_sms_updates: bool
+    get_email_updates: bool
     should_reinforce: bool
