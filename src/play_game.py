@@ -12,14 +12,14 @@ import time
 import traceback
 from twilio.rest import Client
 
-from config import IEX_API_TOKEN, TWILIO_CONFIG, USERS
+from config import GMAIL, IEX_API_TOKEN, TWILIO_CONFIG, USERS
 from crabada.bot import CrabadaMineBot
-from utils import discord, logger, security
+from utils import discord, email, logger, security
 from utils.game_stats import GameStats
 from utils.price import get_avax_price_usd
 
 AVAX_PRICE_UPDATE_TIME = 60.0
-DISCORD_UPDATE_TIME = 60.0 * 60.0 * 12
+DISCORD_UPDATE_TIME = 60.0 * 60.0 * 6
 
 
 def parse_args() -> argparse.Namespace:
@@ -60,6 +60,9 @@ def run_bot() -> None:
     if not args.dry_run:
         encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
 
+    email_password = security.decrypt(str.encode(encrypt_password), GMAIL["password"]).decode()
+    email_account = email.Email(address=GMAIL["user"], password=email_password)
+
     bots = []
     for user, config in USERS.items():
         private_key = (
@@ -75,6 +78,7 @@ def run_bot() -> None:
                 config,
                 TWILIO_CONFIG["from_sms_number"],
                 sms_client,
+                email_account,
                 args.log_dir,
                 args.dry_run,
             )
@@ -97,7 +101,7 @@ def run_bot() -> None:
     logger.print_normal("\n")
 
     last_avax_price_update = 0.0
-    last_discord_update = 0.0
+    last_discord_update = time.time()
 
     alerts_enabled = not args.quiet and not args.dry_run
     try:

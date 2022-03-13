@@ -12,6 +12,7 @@ from crabada.factional_advantage import get_faction_adjusted_battle_point
 from crabada.types import CrabForLending, IdleGame, Team
 from utils import logger
 from utils.config_types import UserConfig, SmsConfig
+from utils.email import Email, send_email
 from utils.game_stats import GameStats, NULL_GAME_STATS
 from utils.game_stats import get_game_stats, get_lifetime_stats_file, write_game_stats
 from utils.price import tus_to_wei, wei_to_tus, wei_to_cra_raw, wei_to_tus_raw
@@ -31,6 +32,7 @@ class CrabadaMineBot:
         config: UserConfig,
         from_sms_number: str,
         sms_client: Client,
+        email_account: Email,
         log_dir: str,
         dry_run: bool,
     ) -> None:
@@ -38,6 +40,7 @@ class CrabadaMineBot:
         self.config = config
         self.from_sms_number = from_sms_number
         self.sms = sms_client
+        self.email = email_account
 
         self.time_since_last_alert = None
 
@@ -57,7 +60,6 @@ class CrabadaMineBot:
         self.log_dir = log_dir
         self.updated_game_stats = True
         self.have_reinforced_at_least_once: T.Dict[str, bool] = {}
-        self.closed_mines = 0
         self.avax_price_usd = 0.0
 
         teams = self.crabada_w2.list_teams(self.address)
@@ -75,34 +77,34 @@ class CrabadaMineBot:
             self.game_stats = get_game_stats(self.user, self.log_dir)
         logger.print_ok_blue(f"Adding bot for user {self.user} with address {self.address}")
 
-    def _send_status_update_sms(self, custom_message: str) -> None:
-        if not self.config["get_sms_updates"]:
-            return
+    def _send_status_update(
+        self, do_send_sms: bool, do_send_email: bool, custom_message: str
+    ) -> None:
+        content = f"Action: {custom_message}\n\n"
 
-        text_message = f"\U0001F980 Crabada Bot Alert \U0001F980\n\n"
-        text_message += f"Action: {custom_message}\n\n"
-
-        text_message += f"Explorer: https://snowtrace.io/address/{self.config['address']}\n\n"
-        text_message += "---\U0001F579  GAME STATS\U0001F579  ---\n"
+        content += f"Explorer: https://snowtrace.io/address/{self.config['address']}\n\n"
+        content += "---\U0001F579  GAME STATS\U0001F579  ---\n"
         for k, v in self.game_stats.items():
             if isinstance(v, float):
-                text_message += f"{k.upper()}: {v:.3f}\n"
+                content += f"{k.upper()}: {v:.3f}\n"
             else:
-                text_message += f"{k.upper()}: {v}\n"
+                content += f"{k.upper()}: {v}\n"
 
-        text_message += "\n"
+        content += "\n"
 
         try:
-            message = self.sms.messages.create(
-                body=text_message, from_=self.from_sms_number, to=self.config["sms_number"]
-            )
+            if do_send_sms:
+                sms_message = f"\U0001F980 Crabada Bot Alert \U0001F980\n\n"
+                sms_message += content
+                message = self.sms.messages.create(
+                    body=sms_message, from_=self.from_sms_number, to=self.config["sms_number"]
+                )
+            if do_send_email:
+                send_email(
+                    self.email, self.config["email"], f"\U0001F980 Crabada Bot Update", content
+                )
         except:
-            logger.print_fail("Failed to send SMS alert")
-            pass
-
-        game_logger = logging.getLogger()
-        if game_logger:
-            game_logger.debug(json.dumps(message.sid, indent=4, sort_keys=True))
+            logger.print_fail("Failed to send email/sms alert")
 
     def _send_out_of_gas_sms(self):
         now = time.time()
@@ -114,7 +116,9 @@ class CrabadaMineBot:
 
         message = f"Unable to complete bot transaction due to insufficient gas \U000026FD!\n"
         message += f"Please add AVAX to your wallet ASAP to avoid delay in mining!\n"
-        self._send_status_update_sms(message)
+        self._send_status_update(
+            self.config["get_sms_updates"], self.config["get_email_updates"], message
+        )
         self.time_since_last_alert = now
 
     def _calculate_and_log_gas_price(self, tx_receipt: TxReceipt) -> None:
@@ -321,11 +325,12 @@ class CrabadaMineBot:
                         if mine["winner_team_id"] == team["team_id"]
                         else "lost \U0001F915"
                     )
-                    logger.print_ok_arrow(
-                        f"Successfully closed mine {team['game_id']}, we {outcome}"
+                    message = f"Successfully closed mine {team['game_id']}, we {outcome}"
+                    self._send_status_update(
+                        self.config["get_sms_updates"], self.config["get_email_updates"], message
                     )
                     self._update_bot_stats(team, mine)
-                    self.closed_mines += 1
+                    logger.print_ok_arrow(message)
 
     def _update_bot_stats(self, team: Team, mine: IdleGame) -> None:
         if mine["winner_team_id"] == team["team_id"]:
@@ -390,12 +395,6 @@ class CrabadaMineBot:
         if self.updated_game_stats:
             self.updated_game_stats = False
             self._print_bot_stats()
-
-        if self.closed_mines >= len(self.config["mining_teams"]):
-            self._send_status_update_sms(
-                f"Successfully finished {self.closed_mines} mines! \U0001F389"
-            )
-            self.closed_mines = 0
 
         time.sleep(self.TIME_BETWEEN_EACH_UPDATE)
 
