@@ -140,6 +140,7 @@ def run_bot() -> None:
                 to=TWILIO_CONFIG["admin_sms_number"],
             )
         if alerts_enabled:
+            stop_message += "Please manually attend your mines until we're back up"
             webhook.send(stop_message)
         logger.print_fail(traceback.format_exc())
     finally:

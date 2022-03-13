@@ -147,12 +147,15 @@ class CrabadaMineBot:
             )
         logger.print_normal("\n")
 
+    def _is_team_allowed_to_mine(self, team: Team) -> bool:
+        teams_specified_to_mine = [m["team_id"] for m in self.config["mining_teams"]]
+        return team["team_id"] in teams_specified_to_mine
+
     def _check_and_maybe_start_mines(self) -> None:
         available_teams = self.crabada_w2.list_available_teams(self.address)
         for team in available_teams:
 
-            teams_specified_to_mine = [m["team_id"] for m in self.config["mining_teams"]]
-            if team["team_id"] not in teams_specified_to_mine:
+            if not self._is_team_allowed_to_mine(team):
                 logger.print_warn(f"Skipping team {team['team_id']} for mining...")
                 continue
 
@@ -181,6 +184,9 @@ class CrabadaMineBot:
         for team in teams:
             mine = self.crabada_w2.get_mine(team["game_id"])
 
+            if not self._is_team_allowed_to_mine(team):
+                continue
+
             if mine is None:
                 continue
 
@@ -204,12 +210,19 @@ class CrabadaMineBot:
                 )
                 continue
 
+            allowed_reinforcement_crabs = [
+                c["crabada_id"] for c in self.config["reinforcing_crabs"]
+            ]
+
             if mine["attack_point"] - defense_battle_point < self.config["max_reinforce_bp_delta"]:
                 logger.print_normal(
                     f"Mine[{mine['game_id']}]: using reinforcement strategy of highest bp"
                 )
                 reinforcment_crab = self.crabada_w2.get_my_best_bp_crab_for_lending(self.address)
-                if reinforcment_crab is not None:
+                if (
+                    reinforcment_crab is not None
+                    and reinforcment_crab["crabada_id"] in allowed_reinforcement_crabs
+                ):
                     logger.print_bold(f"Mine[{mine['game_id']}]: using our own crab to reinforce!")
                 else:
                     reinforcment_crab = self.crabada_w2.get_best_high_bp_crab_for_lending(
@@ -220,7 +233,10 @@ class CrabadaMineBot:
                     f"Mine[{mine['game_id']}]: using reinforcement strategy of highest mp"
                 )
                 reinforcment_crab = self.crabada_w2.get_my_best_mp_crab_for_lending(self.address)
-                if reinforcment_crab is not None:
+                if (
+                    reinforcment_crab is not None
+                    and reinforcment_crab["crabada_id"] in allowed_reinforcement_crabs
+                ):
                     logger.print_bold(f"Mine[{mine['game_id']}]: using our own crab to reinforce!")
                 else:
                     reinforcment_crab = self.crabada_w2.get_best_high_mp_crab_for_lending(
@@ -276,6 +292,9 @@ class CrabadaMineBot:
         teams = self.crabada_w2.list_teams(self.address)
         for team in teams:
             if team["game_id"] is None and team["game_type"] != "mining":
+                continue
+
+            if not self._is_team_allowed_to_mine(team):
                 continue
 
             mine = self.crabada_w2.get_mine(team["game_id"])

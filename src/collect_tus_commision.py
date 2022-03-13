@@ -117,15 +117,15 @@ def collect_tus_commission(
             ),
         )
 
-        print("Gas", tus_w3.get_gas_price_gwei())
-        if commission_tus < MINIMUM_TUS_TO_TRANSFER:
-            logger.print_warn(f"Skipping transfer of {commission_tus:.2f} from {user} (too small)")
-            continue
-
         available_tus = float(tus_w3.get_balance())
         logger.print_ok(
             f"{from_address} balance: {available_tus} TUS, commission: {commission_tus} TUS"
         )
+
+        if commission_tus < MINIMUM_TUS_TO_TRANSFER:
+            logger.print_warn(f"Skipping transfer of {commission_tus:.2f} from {user} (too small)")
+            continue
+
         if commission_tus > available_tus:
             logger.print_fail(
                 f"Skipping transfer of {commission_tus:.2f} from {user}: insufficient funds!"
