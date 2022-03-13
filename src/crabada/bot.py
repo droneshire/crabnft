@@ -100,8 +100,13 @@ class CrabadaMineBot:
                     body=sms_message, from_=self.from_sms_number, to=self.config["sms_number"]
                 )
             if do_send_email:
+                email_message = f"Hello {self.user}!\n"
+                email_message += content
                 send_email(
-                    self.email, self.config["email"], f"\U0001F980 Crabada Bot Update", content
+                    self.email,
+                    self.config["email"],
+                    f"\U0001F980 Crabada Bot Update",
+                    email_message,
                 )
         except:
             logger.print_fail("Failed to send email/sms alert")
