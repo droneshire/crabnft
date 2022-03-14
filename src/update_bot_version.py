@@ -6,6 +6,7 @@ import logging
 
 from utils import discord, logger
 
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--new-version", help="new version number")
@@ -26,7 +27,6 @@ def main() -> None:
 
     text = f"\U0001F980   \U0001F916 **Bot upgraded! Version {args.new_version}**"
     discord.get_discord_hook().send(text)
-
 
 
 if __name__ == "__main__":

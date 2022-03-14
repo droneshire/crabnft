@@ -12,7 +12,7 @@ def get_avax_price_usd(api_token: str) -> T.Optional[float]:
     for symbol in ["btcusd", "avaxbtc"]:
         api_url = f"https://cloud.iexapis.com/stable/crypto/{symbol}/price?token={api_token}"
         try:
-            raw = requests.get(api_url).json()
+            raw = requests.get(api_url, timeout=5.0).json()
             price = price * float(raw["price"])
         except:
             return None

@@ -20,7 +20,12 @@ class ReinforcementStrategy:
         self.address = address
         self.crabada_w2 = crabada_w2_client
 
-    def get_reinforcement_crab(self, team: Team, mine: IdleGame()) -> T.Optional[TeamMember]:
+        self.time_since_last_attack = None  # T.Optional[float]
+
+    def get_reinforcement_crab(self, team: Team, mine: IdleGame) -> T.Optional[TeamMember]:
+        raise NotImplementedError
+
+    def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:
         raise NotImplementedError
 
     def _use_bp_reinforcement(
@@ -29,7 +34,7 @@ class ReinforcementStrategy:
         reinforcement_crab = None
         allowed_reinforcing_crabs = [c["crabada_id"] for c in self.reinforcing_crabs]
 
-        logger.print_normal(f"Mine[{mine['game_id']}]: using reinforcement strategy of highest bp")
+        logger.print_normal(f"Mine[{mine['game_id']}]: using highest bp")
 
         if use_own_crabs:
             reinforcement_crab = self.crabada_w2.get_my_best_bp_crab_for_lending(self.address)
@@ -52,7 +57,7 @@ class ReinforcementStrategy:
         reinforcement_crab = None
         allowed_reinforcing_crabs = [c["crabada_id"] for c in self.reinforcing_crabs]
 
-        logger.print_normal(f"Mine[{mine['game_id']}]: using reinforcement strategy of highest mp")
+        logger.print_normal(f"Mine[{mine['game_id']}]: using highest mp")
 
         if use_own_crabs:
             reinforcement_crab = self.crabada_w2.get_my_best_mp_crab_for_lending(self.address)

@@ -259,7 +259,9 @@ class CrabadaMineBot:
                 continue
 
             reinforcement_crab = self.reinforcement_strategy.get_reinforcement_crab(team, mine)
-            self._reinforce_with_crab(team, mine, reinforcement_crab)
+
+            if self.reinforcement_strategy.should_reinforce(mine):
+                self._reinforce_with_crab(team, mine, reinforcement_crab)
             time.sleep(1.0)
 
     def _check_and_maybe_close_mines(self) -> None:

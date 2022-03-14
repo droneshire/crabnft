@@ -24,6 +24,7 @@ class CrabadaWeb2Client:
     BASE_URL = "https://idle-api.crabada.com/public/idle"
     REINFORCE_TIME_WINDOW = 60 * (30 - 2)  # 30 minute window + 2 minute buffer
     N_CRAB_PERCENT = 5.0
+    TIME_PER_MINING_ACTION = 60.0 * 30
 
     def get_mine(self, mine_id: int, params: T.Dict[str, T.Any] = {}) -> IdleGame:
         """Get information from the given mine"""
@@ -36,7 +37,7 @@ class CrabadaWeb2Client:
     def get_mine_raw(self, mine_id: int, params: T.Dict[str, T.Any] = {}) -> T.Any:
         url = self.BASE_URL + "/mine/" + str(mine_id)
         try:
-            return requests.request("GET", url, params=params).json()
+            return requests.request("GET", url, params=params, timeout=5.0).json()
         except:
             return {}
 
@@ -71,7 +72,7 @@ class CrabadaWeb2Client:
         }
         actual_params.update(params)
         try:
-            return requests.request("GET", url, params=actual_params).json()
+            return requests.request("GET", url, params=actual_params, timeout=5.0).json()
         except:
             return {}
 
@@ -87,7 +88,7 @@ class CrabadaWeb2Client:
         }
         actual_params.update(params)
         try:
-            return requests.request("GET", url, params=actual_params).json()
+            return requests.request("GET", url, params=actual_params, timeout=5.0).json()
         except:
             return {}
 
@@ -131,7 +132,7 @@ class CrabadaWeb2Client:
         }
         actual_params.update(params)
         try:
-            return requests.request("GET", url, params=actual_params).json()
+            return requests.request("GET", url, params=actual_params, timeout=5.0).json()
         except:
             return {}
 
@@ -168,7 +169,7 @@ class CrabadaWeb2Client:
         actual_params = {"limit": 20, "page": 1, "user_address": user_address}
         actual_params.update(params)
         try:
-            return requests.request("GET", url, params=actual_params).json()
+            return requests.request("GET", url, params=actual_params, timeout=5.0).json()
         except:
             return {}
 
@@ -261,7 +262,7 @@ class CrabadaWeb2Client:
         }
         actual_params.update(params)
         try:
-            return requests.request("GET", url, params=actual_params).json()
+            return requests.request("GET", url, params=actual_params, timeout=5.0).json()
         except:
             return {}
 
@@ -368,6 +369,35 @@ class CrabadaWeb2Client:
         """
         now = time.time()
         return int(game.get("end_time", now) - now)
+
+    @staticmethod
+    def get_time_since_last_action(game: IdleGame) -> int:
+        """
+        Seconds since last game action
+        """
+        now = time.time()
+        transaction_time = game["process"][-1]["transaction_time"]
+        return int(now - transaction_time)
+
+    @staticmethod
+    def get_time_since_last_action_formatted(game: IdleGame) -> str:
+        """
+        Hours, minutes and seconds to the end of the current action
+        """
+        return get_pretty_seconds(CrabadaWeb2Client.get_time_since_last_action(game))
+
+    @staticmethod
+    def get_remaining_time_for_action(game: IdleGame) -> int:
+        now = time.time()
+        last_transaction_time = game["process"][-1]["transaction_time"]
+        return int(last_transaction_time + CrabadaWeb2Client.TIME_PER_MINING_ACTION - now)
+
+    @staticmethod
+    def get_remaining_time_for_action_formatted(game: IdleGame) -> str:
+        """
+        Hours, minutes and seconds to the end of the current action
+        """
+        return get_pretty_seconds(CrabadaWeb2Client.get_remaining_time_for_action(game))
 
     @staticmethod
     def get_remaining_time_formatted(game: IdleGame) -> str:

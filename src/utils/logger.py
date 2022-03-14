@@ -73,4 +73,6 @@ print_normal = make_formatter_printer(Colors.ENDC)
 
 print_ok_arrow = make_formatter_printer(Colors.OKGREEN, prefix=Prefixes.ARROW)
 
+print_ok_blue_arrow = make_formatter_printer(Colors.OKBLUE, prefix=Prefixes.ARROW)
+
 print_fail_arrow = make_formatter_printer(Colors.FAIL, prefix=Prefixes.ARROW)
