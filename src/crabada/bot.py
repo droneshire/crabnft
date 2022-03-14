@@ -281,7 +281,7 @@ class CrabadaMineBot:
         self._update_bot_stats(team, mine)
         logger.print_ok_arrow(message)
 
-    def _start_mine(self, team: Team, mine: IdleGame) -> None:
+    def _start_mine(self, team: Team) -> None:
         logger.print_normal(f"Attemting to start new mine with team {team['team_id']}!")
 
         with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
@@ -320,7 +320,7 @@ class CrabadaMineBot:
                 )
                 continue
 
-            self._start_mine(team, mine)
+            self._start_mine(mine)
 
     def _check_and_maybe_reinforce(self) -> None:
         if not self.config["should_reinforce"]:
