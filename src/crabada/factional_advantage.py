@@ -18,27 +18,47 @@ FACTIONAL_ADVANTAGE = {
 }
 
 
-def get_faction_adjusted_battle_point(team: Team, game: IdleGame) -> int:
-    team_defense_point = team["battle_point"]
-    defense_point = game["defense_point"]
-    reinforce_point = defense_point - team_defense_point
+def get_attack_faction(game: IdleGame) -> Faction:
+    return T.cast(Faction, game["attack_team_faction"])
 
-    attack_faction = T.cast(Faction, game["attack_team_faction"])
-    defense_faction = T.cast(Faction, game["defense_team_faction"])
 
-    logger.print_normal(
-        f"Mine[{game['game_id']}]: Attack from {attack_faction} -> {defense_faction}"
-    )
-    if defense_faction in FACTIONAL_ADVANTAGE.get(attack_faction, []):
+def get_defense_faction(game: IdleGame) -> Faction:
+    return T.cast(Faction, game["defense_team_faction"])
+
+
+def get_faction_adjusted_battle_point(team: Team, game: IdleGame, verbose: bool = False) -> int:
+    team_points = team["battle_point"]
+
+    if game["attack_team_id"] == team["team_id"]:
+        # we're looting, so get attack_point
+        total_points = game["attack_point"]
+        their_faction = get_defense_faction(game)
+        our_faction = get_attack_faction(game)
+    else:
+        # we're mining, get defense_point
+        total_points = game["defense_point"]
+        their_faction = get_attack_faction(game)
+        our_faction = get_defense_faction(game)
+
+    reinforce_points = total_points - team_points
+
+    if verbose:
         logger.print_normal(
-            f"Mine[{game['game_id']}]: Battle point decrease of {(1 - FACTIONAL_ADVANTAGE_MULT) * 100.0:.2f}%"
+            f"Mine[{game['game_id']}]: Attack from {their_faction} -> {our_faction}"
         )
-        return int(math.ceil(team_defense_point * FACTIONAL_ADVANTAGE_MULT)) + reinforce_point
 
-    if defense_faction == Faction.NO_FACTION:
-        logger.print_ok_arrow(
-            f"Mine[{game['game_id']}]: Battle point decrease of {(1 - NEUTRAL_ADVANTAGE_MULT)* 100.0:.2f}%"
-        )
-        return int(math.ceil(team_defense_point * NEUTRAL_ADVANTAGE_MULT)) + reinforce_point
+    if our_faction in FACTIONAL_ADVANTAGE.get(their_faction, []):
+        if verbose:
+            logger.print_normal(
+                f"Mine[{game['game_id']}]: Battle point decrease of {(1 - FACTIONAL_ADVANTAGE_MULT) * 100.0:.2f}%"
+            )
+        return int(math.ceil(team_points * FACTIONAL_ADVANTAGE_MULT)) + reinforce_points
 
-    return defense_point
+    if our_faction == Faction.NO_FACTION:
+        if verbose:
+            logger.print_ok_arrow(
+                f"Mine[{game['game_id']}]: Battle point decrease of {(1 - NEUTRAL_ADVANTAGE_MULT)* 100.0:.2f}%"
+            )
+        return int(math.ceil(team_points * NEUTRAL_ADVANTAGE_MULT)) + reinforce_points
+
+    return total_points
