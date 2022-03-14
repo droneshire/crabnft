@@ -132,7 +132,7 @@ class DelayReinforcementStrategy(MiningStrategy):
         time_till_action_pretty = get_pretty_seconds(
             int(self.DELAY_BEFORE_REINFORCING - time_since_last_action)
         )
-        logger.print_ok_blue_arrow(
+        logger.print_warn(
             f"Mine[{mine['game_id']}]:Not reinforcing for {time_till_action_pretty} due to delay strategy"
         )
         return False
