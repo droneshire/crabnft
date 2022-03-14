@@ -1,10 +1,11 @@
 import typing as T
-
+import math
 import requests
 import time
 
 from eth_typing import Address
 
+from crabada.factional_advantage import get_faction_adjusted_battle_point
 from crabada.types import Crab, CrabForLending, IdleGame, LendingCategories, Team
 from utils.general import first_or_none, n_or_better_or_none, get_pretty_seconds
 from utils.price import wei_to_tus, Tus
@@ -22,6 +23,7 @@ class CrabadaWeb2Client:
 
     BASE_URL = "https://idle-api.crabada.com/public/idle"
     REINFORCE_TIME_WINDOW = 60 * (30 - 2)  # 30 minute window + 2 minute buffer
+    N_CRAB_PERCENT = 5.0
 
     def get_mine(self, mine_id: int, params: T.Dict[str, T.Any] = {}) -> IdleGame:
         """Get information from the given mine"""
@@ -206,7 +208,6 @@ class CrabadaWeb2Client:
         self,
         crabs: T.List[CrabForLending],
         max_tus: Tus,
-        n_crab_from_floor: int,
         lending_category: LendingCategories,
     ) -> CrabForLending:
         """
@@ -217,18 +218,19 @@ class CrabadaWeb2Client:
         sorted_affordable_crabs = sorted(
             affordable_crabs, key=lambda c: (-c[lending_category], c.get("price", max_tus))
         )
-        return n_or_better_or_none(n_crab_from_floor, sorted_affordable_crabs)
+        nth_crab = int(math.ceil(self.N_CRAB_PERCENT / 100.0 * len(affordable_crabs)))
+        return n_or_better_or_none(nth_crab, sorted_affordable_crabs)
 
     def get_best_high_mp_crab_for_lending(self, max_tus: Tus) -> T.Optional[CrabForLending]:
         high_mp_crabs = self.list_high_mp_crabs_for_lending()
         return self.get_cheapest_best_crab_from_list_for_lending(
-            high_mp_crabs, max_tus, 10, "mine_point"
+            high_mp_crabs, max_tus, "mine_point"
         )
 
     def get_best_high_bp_crab_for_lending(self, max_tus: Tus) -> T.Optional[CrabForLending]:
         high_bp_crabs = self.list_high_bp_crabs_for_lending()
         return self.get_cheapest_best_crab_from_list_for_lending(
-            high_bp_crabs, max_tus, 20, "battle_point"
+            high_bp_crabs, max_tus, "battle_point"
         )
 
     def get_my_best_mp_crab_for_lending(self, user_address: Address) -> T.Optional[CrabForLending]:
@@ -264,20 +266,16 @@ class CrabadaWeb2Client:
             return {}
 
     @staticmethod
-    def mine_has_been_won(mine: IdleGame) -> bool:
+    def mine_is_winning(mine: IdleGame) -> bool:
         """
-        Determines if defense miner has won a battle already
+        Determines if defense miner has won the battle
         """
         user_address = mine["owner"]
         team_id = mine["team_id"]
         teams = CrabadaWeb2Client().list_teams(user_address)
         team = [t for t in teams if t["team_id"] == team_id][0]
-        defense_battle_point = get_faction_adjusted_battle_point(team, mine)
-        if defense_battle_point >= mine["attack_point"]:
-            logger.print_normal(
-                f"Mine[{mine['game_id']}]: not reinforcing since we've already won!"
-            )
-            return None
+        defense_battle_point = get_faction_adjusted_battle_point(team, mine, verbose=False)
+        return defense_battle_point >= mine["attack_point"]
 
     @staticmethod
     def mine_has_been_attacked(mine: IdleGame) -> bool:
@@ -311,18 +309,18 @@ class CrabadaWeb2Client:
         if not CrabadaWeb2Client.mine_has_been_attacked(mine):
             return False
 
-        if not CrabadaWeb2Client.mine_has_been_won(mine):
-            return False
-
         process = mine["process"]
-        action = process[-1]["action"]
-        if action not in ["attack", "reinforce-attack"]:
+        actions = [p["action"] for p in process]
+        if actions[-1] not in ["attack", "reinforce-attack"]:
             return False
 
-        if len(process) >= 5:
+        if actions.count("reinforce-defense") >= 2:
             return False
 
-        attack_start_time = mine["process"][-1]["transaction_time"]
+        if CrabadaWeb2Client.mine_is_winning(mine):
+            return False
+
+        attack_start_time = process[-1]["transaction_time"]
         return time.time() - attack_start_time < CrabadaWeb2Client.REINFORCE_TIME_WINDOW
 
     @staticmethod
