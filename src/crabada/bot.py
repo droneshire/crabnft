@@ -161,7 +161,9 @@ class CrabadaMineBot:
     def _is_gas_too_high_to_reinforce(self, team: Team, mine: IdleGame) -> bool:
         gas_price_gwei = self.crabada_w3.get_gas_price_gwei()
         if gas_price_gwei is not None and gas_price_gwei > self.config["max_gas_price_gwei"]:
-            logger.print_warn(f"Warning: High Gas ({gas_price_gwei})!")
+            logger.print_warn(
+                f"Warning: High Gas ({gas_price_gwei}) > {self.config['max_gas_price_gwei']}!"
+            )
             if not have_reinforced_mine_at_least_once(self.crabada_w2, team):
                 logger.print_warn(
                     f"Skipping reinforcement of Mine[{mine['game_id']}] due to high gas cost"
