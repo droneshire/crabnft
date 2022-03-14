@@ -21,6 +21,7 @@ class UserConfig(T.TypedDict):
     private_key: str
     address: Address
     mining_teams: T.List[MiningTeam]
+    looting_teams: T.List[MiningTeam]
     max_gas_price: int
     max_gas_price_gwei: int
     max_reinforcement_price_tus: Tus

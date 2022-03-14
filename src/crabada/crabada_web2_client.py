@@ -264,6 +264,22 @@ class CrabadaWeb2Client:
             return {}
 
     @staticmethod
+    def mine_has_been_won(mine: IdleGame) -> bool:
+        """
+        Determines if defense miner has won a battle already
+        """
+        user_address = mine["owner"]
+        team_id = mine["team_id"]
+        teams = CrabadaWeb2Client().list_teams(user_address)
+        team = [t for t in teams if t["team_id"] == team_id][0]
+        defense_battle_point = get_faction_adjusted_battle_point(team, mine)
+        if defense_battle_point >= mine["attack_point"]:
+            logger.print_normal(
+                f"Mine[{mine['game_id']}]: not reinforcing since we've already won!"
+            )
+            return None
+
+    @staticmethod
     def mine_has_been_attacked(mine: IdleGame) -> bool:
         """
         Return True if, in the given game, the miner (the defense) has
@@ -293,6 +309,9 @@ class CrabadaWeb2Client:
             return False
 
         if not CrabadaWeb2Client.mine_has_been_attacked(mine):
+            return False
+
+        if not CrabadaWeb2Client.mine_has_been_won(mine):
             return False
 
         process = mine["process"]

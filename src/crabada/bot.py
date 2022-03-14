@@ -160,6 +160,10 @@ class CrabadaMineBot:
         teams_specified_to_mine = [m["team_id"] for m in self.config["mining_teams"]]
         return team["team_id"] in teams_specified_to_mine
 
+    def _is_team_allowed_to_loot(self, team: Team) -> bool:
+        teams_specified_to_loot = [m["team_id"] for m in self.config["looting_teams"]]
+        return team["team_id"] in teams_specified_to_loot
+
     def _check_and_maybe_start_mines(self) -> None:
         available_teams = self.crabada_w2.list_available_teams(self.address)
         for team in available_teams:
@@ -185,7 +189,7 @@ class CrabadaMineBot:
                     logger.print_ok_arrow(f"Successfully started mine for team {team['team_id']}")
                     self.have_reinforced_at_least_once[team["team_id"]] = False
 
-    def _check_and_maybe_reinforce_mines(self) -> None:
+    def _check_and_maybe_reinforce(self) -> None:
         if not self.config["should_reinforce"]:
             return
 
@@ -193,7 +197,8 @@ class CrabadaMineBot:
         for team in teams:
             mine = self.crabada_w2.get_mine(team["game_id"])
 
-            if not self._is_team_allowed_to_mine(team):
+            if not self._is_team_allowed_to_mine(team) and not self._is_team_allowed_to_loot(team):
+                logger.print_warn(f"Skipping team {team['team_id']} for reinforcing...")
                 continue
 
             if mine is None:
@@ -304,6 +309,7 @@ class CrabadaMineBot:
                 continue
 
             if not self._is_team_allowed_to_mine(team):
+                logger.print_warn(f"Skipping team {team['team_id']} for closing...")
                 continue
 
             mine = self.crabada_w2.get_mine(team["game_id"])
@@ -395,7 +401,7 @@ class CrabadaMineBot:
         time.sleep(1.0)
         self._check_and_maybe_start_mines()
         time.sleep(1.0)
-        self._check_and_maybe_reinforce_mines()
+        self._check_and_maybe_reinforce()
 
         if self.updated_game_stats:
             self.updated_game_stats = False
