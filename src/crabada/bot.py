@@ -75,6 +75,14 @@ class CrabadaMineBot:
             self.game_stats = get_game_stats(self.user, self.log_dir)
         logger.print_ok_blue(f"Adding bot for user {self.user} with address {self.address}")
 
+        self._print_out_config()
+
+    def _print_out_config(self)-> None:
+        logger.print_bold(f"{self.user} Configuration\n")
+        for config_item, value in self.config.items():
+            logger.print_normal(f"{config_item}: {value}\n")
+        logger.print_normal("\n")
+
     def _send_status_update(
         self, do_send_sms: bool, do_send_email: bool, custom_message: str
     ) -> None:
