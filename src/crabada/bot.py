@@ -9,7 +9,7 @@ from web3.types import TxReceipt
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
 from crabada.factional_advantage import get_faction_adjusted_battle_point
-from crabada.mining_reinforcement import have_reinforced_mine_at_least_once
+from crabada.strategies.mining_reinforcement import have_reinforced_mine_at_least_once
 from crabada.types import CrabForLending, IdleGame, Team
 from utils import logger
 from utils.config_types import UserConfig, SmsConfig

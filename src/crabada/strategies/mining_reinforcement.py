@@ -3,7 +3,7 @@ from eth_typing import Address
 
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.factional_advantage import get_faction_adjusted_battle_point
-from crabada.reinforcement import ReinforcementStrategy
+from crabada.strategies.reinforcement import ReinforcementStrategy
 from crabada.types import IdleGame, Team, TeamMember
 from utils import logger
 from utils.price import Tus
