@@ -123,6 +123,42 @@ class CrabadaMineBot:
         except:
             logger.print_fail("Failed to send email/sms alert")
 
+    def _update_bot_stats(self, team: Team, mine: IdleGame) -> None:
+        if mine["winner_team_id"] == team["team_id"]:
+            self.game_stats["game_wins"] += 1
+        else:
+            self.game_stats["game_losses"] += 1
+
+        self.game_stats["game_win_percent"] = (
+            100.0
+            * float(self.game_stats["game_wins"])
+            / (self.game_stats["game_wins"] + self.game_stats["game_losses"])
+        )
+
+        self.game_stats["tus_gross"] += wei_to_tus_raw(mine["miner_tus_reward"])
+        self.game_stats["cra_net"] += wei_to_cra_raw(mine["miner_cra_reward"])
+        self.game_stats["tus_net"] += wei_to_tus_raw(mine["miner_tus_reward"])
+
+        commission_tus = wei_to_tus_raw(mine["miner_tus_reward"]) * (
+            self.config["commission_percent_per_mine"] / 100.0
+        )
+        self.game_stats["commission_tus"] += commission_tus
+        self.game_stats["tus_net"] -= commission_tus
+
+        write_game_stats(self.user, self.log_dir, self.game_stats)
+        self.updated_game_stats = True
+
+    def _print_bot_stats(self) -> None:
+        logger.print_normal("\n")
+        logger.print_bold("--------\U0001F579  GAME STATS\U0001F579  ------")
+        logger.print_normal(f"Explorer: https://snowtrace.io/address/{self.config['address']}\n\n")
+        for k, v in self.game_stats.items():
+            if isinstance(v, float):
+                logger.print_ok_blue(f"{k.upper()}: {v:.3f}")
+            else:
+                logger.print_ok_blue(f"{k.upper()}: {v}")
+        logger.print_bold("------------------------------\n")
+
     def _send_out_of_gas_sms(self):
         now = time.time()
         if (
@@ -155,7 +191,7 @@ class CrabadaMineBot:
 
         open_mines_str = " ".join([str(m["game_id"]) for m in open_mines])
         formatted_date = time.strftime("%A, %Y-%m-%d %H:%M:%S", time.localtime(time.time()))
-        logger.print_warn(f"Mines ({formatted_date})")
+        logger.print_normal(f"Mines ({formatted_date})")
 
         for mine in open_mines:
             logger.print_normal(
@@ -168,17 +204,15 @@ class CrabadaMineBot:
             )
         logger.print_normal("\n")
 
-    def _is_gas_too_high_to_reinforce(self, team: Team, mine: IdleGame) -> bool:
+    def _is_gas_too_high(self, margin: int = 0) -> bool:
         gas_price_gwei = self.crabada_w3.get_gas_price_gwei()
-        if gas_price_gwei is not None and gas_price_gwei > self.config["max_gas_price_gwei"]:
+        if gas_price_gwei is not None and (
+            int(gas_price_gwei) > self.config["max_gas_price_gwei"] + margin
+        ):
             logger.print_warn(
                 f"Warning: High Gas ({gas_price_gwei}) > {self.config['max_gas_price_gwei']}!"
             )
-            if not have_reinforced_mine_at_least_once(self.crabada_w2, team):
-                logger.print_warn(
-                    f"Skipping reinforcement of Mine[{mine['game_id']}] due to high gas cost"
-                )
-                return True
+            return True
         return False
 
     def _reinforce_with_crab(
@@ -219,6 +253,52 @@ class CrabadaMineBot:
 
         return False
 
+    def _close_mine(self, team: Team, mine: IdleGame) -> None:
+        logger.print_normal(f"Attempting to close game {team['game_id']}")
+
+        with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
+            tx_hash = self.crabada_w3.close_game(team["game_id"])
+            tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
+
+            self._calculate_and_log_gas_price(tx_receipt)
+
+            if tx_receipt["status"] != 1:
+                logger.print_fail_arrow(
+                    f"Error closing mine {team['game_id']}: {tx_receipt['status']}"
+                )
+                return
+
+        outcome = (
+            "won \U0001F389"
+            if mine.get("winner_team_id", -1) == team["team_id"]
+            else "lost \U0001F915"
+        )
+        message = f"Successfully closed mine {team['game_id']}, we {outcome}"
+        self._send_status_update(
+            self.config["get_sms_updates"], self.config["get_email_updates"], message
+        )
+        self.time_since_last_alert = None
+        self._update_bot_stats(team, mine)
+        logger.print_ok_arrow(message)
+
+    def _start_mine(self, team: Team, mine: IdleGame) -> None:
+        logger.print_normal(f"Attemting to start new mine with team {team['team_id']}!")
+
+        with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
+            tx_hash = self.crabada_w3.start_game(team["team_id"])
+            tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
+
+            self._calculate_and_log_gas_price(tx_receipt)
+
+            if tx_receipt["status"] != 1:
+                logger.print_fail(
+                    f"Error starting mine for team {team['team_id']}: {tx_receipt['status']}"
+                )
+                return
+
+        logger.print_ok_arrow(f"Successfully started mine for team {team['team_id']}")
+        self.time_since_last_alert = None
+
     def _is_team_allowed_to_mine(self, team: Team) -> bool:
         teams_specified_to_mine = [m["team_id"] for m in self.config["mining_teams"]]
         return team["team_id"] in teams_specified_to_mine
@@ -230,26 +310,17 @@ class CrabadaMineBot:
     def _check_and_maybe_start_mines(self) -> None:
         available_teams = self.crabada_w2.list_available_teams(self.address)
         for team in available_teams:
-
             if not self._is_team_allowed_to_mine(team):
                 logger.print_warn(f"Skipping team {team['team_id']} for mining...")
                 continue
 
-            logger.print_normal(f"Attemting to start new mine with team {team['team_id']}!")
+            if self._is_gas_too_high(margin=10):
+                logger.print_warn(
+                    f"Skipping closing of Mine[{mine['game_id']}] due to high gas cost"
+                )
+                continue
 
-            with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
-                tx_hash = self.crabada_w3.start_game(team["team_id"])
-                tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
-
-                self._calculate_and_log_gas_price(tx_receipt)
-
-                if tx_receipt["status"] != 1:
-                    logger.print_fail(
-                        f"Error starting mine for team {team['team_id']}: {tx_receipt['status']}"
-                    )
-                else:
-                    logger.print_ok_arrow(f"Successfully started mine for team {team['team_id']}")
-                    self.time_since_last_alert = None
+            self._start_mine(team, mine)
 
     def _check_and_maybe_reinforce(self) -> None:
         if not self.config["should_reinforce"]:
@@ -270,7 +341,12 @@ class CrabadaMineBot:
                 logger.print_warn(f"Skipping team {team['team_id']} for mine reinforcing...")
                 continue
 
-            if self._is_gas_too_high_to_reinforce(team, mine):
+            if self._is_gas_too_high() and not have_reinforced_mine_at_least_once(
+                self.crabada_w2, team
+            ):
+                logger.print_warn(
+                    f"Skipping reinforcement of Mine[{mine['game_id']}] due to high gas cost"
+                )
                 continue
 
             for _ in range(2):
@@ -296,67 +372,13 @@ class CrabadaMineBot:
             if not self.crabada_w2.mine_is_finished(mine):
                 continue
 
-            logger.print_normal(f"Attempting to close game {team['game_id']}")
+            if self._is_gas_too_high(margin=10):
+                logger.print_warn(
+                    f"Skipping closing of Mine[{mine['game_id']}] due to high gas cost"
+                )
+                continue
 
-            with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
-                tx_hash = self.crabada_w3.close_game(team["game_id"])
-                tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
-
-                self._calculate_and_log_gas_price(tx_receipt)
-
-                if tx_receipt["status"] != 1:
-                    logger.print_fail_arrow(
-                        f"Error closing mine {team['game_id']}: {tx_receipt['status']}"
-                    )
-                else:
-                    outcome = (
-                        "won \U0001F389"
-                        if mine.get("winner_team_id", -1) == team["team_id"]
-                        else "lost \U0001F915"
-                    )
-                    message = f"Successfully closed mine {team['game_id']}, we {outcome}"
-                    self._send_status_update(
-                        self.config["get_sms_updates"], self.config["get_email_updates"], message
-                    )
-                    self.time_since_last_alert = None
-                    self._update_bot_stats(team, mine)
-                    logger.print_ok_arrow(message)
-
-    def _update_bot_stats(self, team: Team, mine: IdleGame) -> None:
-        if mine["winner_team_id"] == team["team_id"]:
-            self.game_stats["game_wins"] += 1
-        else:
-            self.game_stats["game_losses"] += 1
-
-        self.game_stats["game_win_percent"] = (
-            100.0
-            * float(self.game_stats["game_wins"])
-            / (self.game_stats["game_wins"] + self.game_stats["game_losses"])
-        )
-
-        self.game_stats["tus_gross"] += wei_to_tus_raw(mine["miner_tus_reward"])
-        self.game_stats["cra_net"] += wei_to_cra_raw(mine["miner_cra_reward"])
-        self.game_stats["tus_net"] += wei_to_tus_raw(mine["miner_tus_reward"])
-
-        commission_tus = wei_to_tus_raw(mine["miner_tus_reward"]) * (
-            self.config["commission_percent_per_mine"] / 100.0
-        )
-        self.game_stats["commission_tus"] += commission_tus
-        self.game_stats["tus_net"] -= commission_tus
-
-        write_game_stats(self.user, self.log_dir, self.game_stats)
-        self.updated_game_stats = True
-
-    def _print_bot_stats(self) -> None:
-        logger.print_normal("\n")
-        logger.print_bold("--------\U0001F579  GAME STATS\U0001F579  ------")
-        logger.print_normal(f"Explorer: https://snowtrace.io/address/{self.config['address']}\n\n")
-        for k, v in self.game_stats.items():
-            if isinstance(v, float):
-                logger.print_ok_blue(f"{k.upper()}: {v:.3f}")
-            else:
-                logger.print_ok_blue(f"{k.upper()}: {v}")
-        logger.print_bold("------------------------------\n")
+            self._close_mine(team, mine)
 
     def get_lifetime_stats(self) -> T.Dict[str, T.Any]:
         return self.game_stats
