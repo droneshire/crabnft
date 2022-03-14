@@ -320,7 +320,7 @@ class CrabadaMineBot:
                 )
                 continue
 
-            self._start_mine(mine)
+            self._start_mine(team)
 
     def _check_and_maybe_reinforce(self) -> None:
         if not self.config["should_reinforce"]:
@@ -350,12 +350,12 @@ class CrabadaMineBot:
                 continue
 
             for _ in range(2):
-                reinforcement_crab = self.reinforcement_strategy.get_reinforcement_crab(team, mine)
-
-                if self.reinforcement_strategy.should_reinforce(mine) and self._reinforce_with_crab(
-                    team, mine, reinforcement_crab
-                ):
+                if not self.reinforcement_strategy.should_reinforce(mine):
                     break
+                reinforcement_crab = self.reinforcement_strategy.get_reinforcement_crab(team, mine)
+                if self._reinforce_with_crab(team, mine, reinforcement_crab):
+                    break
+
             time.sleep(1.0)
 
     def _check_and_maybe_close_mines(self) -> None:
