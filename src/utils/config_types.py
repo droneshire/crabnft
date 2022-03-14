@@ -2,6 +2,7 @@ import typing as T
 from eth_typing import Address
 
 from utils.price import Tus
+from crabada.strategies.reinforcement import ReinforcementStrategy
 from crabada.types import CrabForLending
 
 
@@ -21,11 +22,13 @@ class UserConfig(T.TypedDict):
     private_key: str
     address: Address
     mining_teams: T.List[MiningTeam]
+    looting_teams: T.List[MiningTeam]
     max_gas_price: int
     max_gas_price_gwei: int
     max_reinforcement_price_tus: Tus
     max_reinforce_bp_delta: int
     reinforcing_crabs: T.List[CrabForLending]
+    reinforcement_strategy: ReinforcementStrategy
     commission_percent_per_mine: float
     sms_number: str
     email: str

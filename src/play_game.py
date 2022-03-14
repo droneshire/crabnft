@@ -57,10 +57,11 @@ def run_bot() -> None:
     webhook = discord.get_discord_hook()
 
     encrypt_password = ""
+    email_password = ""
     if not args.dry_run:
         encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
+        email_password = security.decrypt(str.encode(encrypt_password), GMAIL["password"]).decode()
 
-    email_password = security.decrypt(str.encode(encrypt_password), GMAIL["password"]).decode()
     email_account = email.Email(address=GMAIL["user"], password=email_password)
 
     bots = []
