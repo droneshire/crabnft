@@ -77,11 +77,13 @@ class CrabadaMineBot:
 
         self._print_out_config()
 
-    def _print_out_config(self)-> None:
+    def _print_out_config(self) -> None:
         logger.print_bold(f"{self.user} Configuration\n")
         for config_item, value in self.config.items():
-            logger.print_normal(f"{config_item}: {value}\n")
-        logger.print_normal("\n")
+            if config_item == "private_key":
+                continue
+            logger.print_normal(f"\t{config_item}: {value}")
+        logger.print_normal("")
 
     def _send_status_update(
         self, do_send_sms: bool, do_send_email: bool, custom_message: str
@@ -181,7 +183,7 @@ class CrabadaMineBot:
 
     def _reinforce_with_crab(
         self, team: Team, mine: IdleGame, reinforcement_crab: CrabForLending
-    ) -> None:
+    ) -> bool:
         if reinforcement_crab is None:
             logger.print_warn(f"Mine[{mine['game_id']}: Unable to find suitable reinforcement...")
             return
@@ -213,6 +215,9 @@ class CrabadaMineBot:
                 self.game_stats["tus_net"] -= price_tus
                 self.game_stats["tus_reinforcement"] += price_tus
                 self.updated_game_stats = True
+                return True
+
+        return False
 
     def _is_team_allowed_to_mine(self, team: Team) -> bool:
         teams_specified_to_mine = [m["team_id"] for m in self.config["mining_teams"]]
@@ -268,10 +273,13 @@ class CrabadaMineBot:
             if self._is_gas_too_high_to_reinforce(team, mine):
                 continue
 
-            reinforcement_crab = self.reinforcement_strategy.get_reinforcement_crab(team, mine)
+            for _ in range(2):
+                reinforcement_crab = self.reinforcement_strategy.get_reinforcement_crab(team, mine)
 
-            if self.reinforcement_strategy.should_reinforce(mine):
-                self._reinforce_with_crab(team, mine, reinforcement_crab)
+                if self.reinforcement_strategy.should_reinforce(mine) and self._reinforce_with_crab(
+                    team, mine, reinforcement_crab
+                ):
+                    break
             time.sleep(1.0)
 
     def _check_and_maybe_close_mines(self) -> None:
