@@ -20,15 +20,16 @@ class Faction:
     NO_FACTION = "NO_FACTION"
 
 
-class CrabadaClass:
-    SURGE = 1
-    SUNKEN = 2
-    PRIME = 3
-    BULK = 4
-    CRABOID = 5
-    RUINED = 6
-    GEM = 7
-    ORGANIC = 8
+CRABADA_ID_TO_CLASS = {
+    1: "SURGE",
+    2: "SUNKEN",
+    3: "PRIME",
+    4: "BULK",
+    5: "CRABOID",
+    6: "RUINED",
+    7: "GEM",
+    8: "ORGANIC",
+}
 
 
 class GameProcess(T.TypedDict):
