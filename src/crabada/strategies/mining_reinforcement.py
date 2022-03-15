@@ -83,7 +83,10 @@ class PreferOtherMpCrabs(MiningStrategy):
     ) -> None:
         super().__init__(address, crabada_w2_client, reinforcing_crabs, max_reinforcement_price_tus)
 
-    def get_reinforcement_crab(self, team: Team, mine: IdleGame()) -> T.Optional[TeamMember]:
+    def get_reinforcement_crab(
+        self, team: Team, mine: IdleGame(), reinforcement_search_backoff: int = 0
+    ) -> T.Optional[TeamMember]:
+        self.reinforcement_search_backoff = reinforcement_search_backoff
         return super()._get_best_mine_reinforcement(team, mine, use_own_crabs=False)
 
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:
@@ -100,7 +103,10 @@ class PreferOwnMpCrabs(MiningStrategy):
     ) -> None:
         super().__init__(address, crabada_w2_client, reinforcing_crabs, max_reinforcement_price_tus)
 
-    def get_reinforcement_crab(self, team: Team, mine: IdleGame()) -> T.Optional[TeamMember]:
+    def get_reinforcement_crab(
+        self, team: Team, mine: IdleGame(), reinforcement_search_backoff: int = 0
+    ) -> T.Optional[TeamMember]:
+        self.reinforcement_search_backoff = reinforcement_search_backoff
         return super()._get_best_mine_reinforcement(team, mine, use_own_crabs=True)
 
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:
@@ -109,7 +115,7 @@ class PreferOwnMpCrabs(MiningStrategy):
 
 class DelayReinforcementStrategy(MiningStrategy):
     MAX_TIME_REMAINING_DELTA = 60.0 * 3
-    DELAY_BEFORE_REINFORCING = 60.0 * 25
+    DELAY_BEFORE_REINFORCING = 60.0 * 21
 
     def __init__(
         self,
@@ -148,7 +154,10 @@ class PreferOtherMpCrabsAndDelayReinforcement(DelayReinforcementStrategy):
     ) -> None:
         super().__init__(address, crabada_w2_client, reinforcing_crabs, max_reinforcement_price_tus)
 
-    def get_reinforcement_crab(self, team: Team, mine: IdleGame()) -> T.Optional[TeamMember]:
+    def get_reinforcement_crab(
+        self, team: Team, mine: IdleGame(), reinforcement_search_backoff: int = 0
+    ) -> T.Optional[TeamMember]:
+        self.reinforcement_search_backoff = reinforcement_search_backoff
         return super()._get_best_mine_reinforcement(team, mine, use_own_crabs=False)
 
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:
@@ -165,7 +174,10 @@ class PreferOwnMpCrabsAndDelayReinforcement(DelayReinforcementStrategy):
     ) -> None:
         super().__init__(address, crabada_w2_client, reinforcing_crabs, max_reinforcement_price_tus)
 
-    def get_reinforcement_crab(self, team: Team, mine: IdleGame()) -> T.Optional[TeamMember]:
+    def get_reinforcement_crab(
+        self, team: Team, mine: IdleGame(), reinforcement_search_backoff: int = 0
+    ) -> T.Optional[TeamMember]:
+        self.reinforcement_search_backoff = reinforcement_search_backoff
         return super()._get_best_mine_reinforcement(team, mine, use_own_crabs=True)
 
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:

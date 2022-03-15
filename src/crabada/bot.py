@@ -69,7 +69,7 @@ class CrabadaMineBot:
             self.config["max_reinforcement_price_tus"],
         )
 
-        if not os.path.isfile(get_lifetime_stats_file(user, self.log_dir)):
+        if not dry_run and not os.path.isfile(get_lifetime_stats_file(user, self.log_dir)):
             write_game_stats(self.user, self.log_dir, self.game_stats)
         else:
             self.game_stats = get_game_stats(self.user, self.log_dir)
@@ -145,7 +145,8 @@ class CrabadaMineBot:
         self.game_stats["commission_tus"] += commission_tus
         self.game_stats["tus_net"] -= commission_tus
 
-        write_game_stats(self.user, self.log_dir, self.game_stats)
+        if not self.dry_run:
+            write_game_stats(self.user, self.log_dir, self.game_stats)
         self.updated_game_stats = True
 
     def _print_bot_stats(self) -> None:
@@ -349,14 +350,19 @@ class CrabadaMineBot:
                 )
                 continue
 
+            reinforcement_search_backoff = 0
             for _ in range(2):
                 if not self.reinforcement_strategy.should_reinforce(mine):
                     break
-                reinforcement_crab = self.reinforcement_strategy.get_reinforcement_crab(team, mine)
+                reinforcement_crab = self.reinforcement_strategy.get_reinforcement_crab(
+                    team, mine, reinforcement_search_backoff
+                )
                 if self._reinforce_with_crab(team, mine, reinforcement_crab):
                     break
-
-            time.sleep(1.0)
+                logger.print_warn(f"Mine[{mine['game_id']}]: retrying reinforcement with backoff")
+                # back off by 5 in the tavern every failure
+                reinforcement_search_backoff += 5
+                time.sleep(1.0)
 
     def _check_and_maybe_close_mines(self) -> None:
         teams = self.crabada_w2.list_teams(self.address)
@@ -412,5 +418,6 @@ class CrabadaMineBot:
 
     def end(self) -> None:
         logger.print_fail(f"Exiting bot for {self.user}...")
-        write_game_stats(self.user, self.log_dir, self.game_stats)
+        if not self.dry_run:
+            write_game_stats(self.user, self.log_dir, self.game_stats)
         self._print_bot_stats()

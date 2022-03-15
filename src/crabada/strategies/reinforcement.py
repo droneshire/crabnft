@@ -20,9 +20,12 @@ class ReinforcementStrategy:
         self.address = address
         self.crabada_w2 = crabada_w2_client
 
+        self.reinforcement_search_backoff = 0
         self.time_since_last_attack = None  # T.Optional[float]
 
-    def get_reinforcement_crab(self, team: Team, mine: IdleGame) -> T.Optional[TeamMember]:
+    def get_reinforcement_crab(
+        self, team: Team, mine: IdleGame, reinforcement_search_backoff: int = 0
+    ) -> T.Optional[TeamMember]:
         raise NotImplementedError
 
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:
@@ -46,7 +49,7 @@ class ReinforcementStrategy:
             logger.print_bold(f"Mine[{mine['game_id']}]: using our own crab to reinforce!")
         else:
             reinforcement_crab = self.crabada_w2.get_best_high_bp_crab_for_lending(
-                self.max_reinforcement_price_tus
+                self.max_reinforcement_price_tus, self.reinforcement_search_backoff
             )
 
         return reinforcement_crab
@@ -69,7 +72,7 @@ class ReinforcementStrategy:
             logger.print_bold(f"Mine[{mine['game_id']}]: using our own crab to reinforce!")
         else:
             reinforcement_crab = self.crabada_w2.get_best_high_mp_crab_for_lending(
-                self.max_reinforcement_price_tus
+                self.max_reinforcement_price_tus, self.reinforcement_search_backoff
             )
 
         return reinforcement_crab

@@ -23,7 +23,7 @@ class CrabadaWeb2Client:
 
     BASE_URL = "https://idle-api.crabada.com/public/idle"
     REINFORCE_TIME_WINDOW = 60 * (30 - 2)  # 30 minute window + 2 minute buffer
-    N_CRAB_PERCENT = 5.0
+    N_CRAB_PERCENT = 5.5
     TIME_PER_MINING_ACTION = 60.0 * 30
 
     def get_mine(self, mine_id: int, params: T.Dict[str, T.Any] = {}) -> IdleGame:
@@ -209,6 +209,7 @@ class CrabadaWeb2Client:
         self,
         crabs: T.List[CrabForLending],
         max_tus: Tus,
+        reinforcement_search_backoff: int,
         lending_category: LendingCategories,
     ) -> CrabForLending:
         """
@@ -220,18 +221,23 @@ class CrabadaWeb2Client:
             affordable_crabs, key=lambda c: (-c[lending_category], c.get("price", max_tus))
         )
         nth_crab = int(math.ceil(self.N_CRAB_PERCENT / 100.0 * len(affordable_crabs)))
+        nth_crab += reinforcement_search_backoff
         return n_or_better_or_none(nth_crab, sorted_affordable_crabs)
 
-    def get_best_high_mp_crab_for_lending(self, max_tus: Tus) -> T.Optional[CrabForLending]:
+    def get_best_high_mp_crab_for_lending(
+        self, max_tus: Tus, reinforcement_search_backoff: int
+    ) -> T.Optional[CrabForLending]:
         high_mp_crabs = self.list_high_mp_crabs_for_lending()
         return self.get_cheapest_best_crab_from_list_for_lending(
-            high_mp_crabs, max_tus, "mine_point"
+            high_mp_crabs, max_tus, reinforcement_search_backoff, "mine_point"
         )
 
-    def get_best_high_bp_crab_for_lending(self, max_tus: Tus) -> T.Optional[CrabForLending]:
+    def get_best_high_bp_crab_for_lending(
+        self, max_tus: Tus, reinforcement_search_backoff: int
+    ) -> T.Optional[CrabForLending]:
         high_bp_crabs = self.list_high_bp_crabs_for_lending()
         return self.get_cheapest_best_crab_from_list_for_lending(
-            high_bp_crabs, max_tus, "battle_point"
+            high_bp_crabs, max_tus, reinforcement_search_backoff, "battle_point"
         )
 
     def get_my_best_mp_crab_for_lending(self, user_address: Address) -> T.Optional[CrabForLending]:
