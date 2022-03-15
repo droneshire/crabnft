@@ -25,7 +25,7 @@ class MiningStrategy(ReinforcementStrategy):
     """
 
     MAX_BP_DELTA = 3
-    MIN_MINE_POINT = 70
+    MIN_MINE_POINT = 65
 
     def __init__(
         self,
