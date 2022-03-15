@@ -69,7 +69,6 @@ class CrabadaMineBot:
             self.config["max_reinforcement_price_tus"],
         )
 
-
         if not dry_run and not os.path.isfile(get_lifetime_stats_file(user, self.log_dir)):
             write_game_stats(self.user, self.log_dir, self.game_stats)
         else:
