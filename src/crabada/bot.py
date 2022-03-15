@@ -349,14 +349,18 @@ class CrabadaMineBot:
                 )
                 continue
 
+            reinforcement_search_backoff = 0
             for _ in range(2):
                 if not self.reinforcement_strategy.should_reinforce(mine):
                     break
-                reinforcement_crab = self.reinforcement_strategy.get_reinforcement_crab(team, mine)
+                reinforcement_crab = self.reinforcement_strategy.get_reinforcement_crab(
+                    team, mine, reinforcement_search_backoff
+                )
                 if self._reinforce_with_crab(team, mine, reinforcement_crab):
                     break
-
-            time.sleep(1.0)
+                # back off by 5 in the tavern every failure
+                reinforcement_search_backoff += 5
+                time.sleep(1.0)
 
     def _check_and_maybe_close_mines(self) -> None:
         teams = self.crabada_w2.list_teams(self.address)
