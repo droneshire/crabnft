@@ -316,7 +316,7 @@ class CrabadaMineBot:
 
             if self._is_gas_too_high(margin=10):
                 logger.print_warn(
-                    f"Skipping closing of Mine[{mine['game_id']}] due to high gas cost"
+                    f"Skipping closing of mine for team {team['team_id']} due to high gas cost"
                 )
                 continue
 
@@ -365,7 +365,7 @@ class CrabadaMineBot:
                             f"Reinforcement backoff: {last_reinforcement_search_backoff}->{self.reinforcement_search_backoff}"
                         )
                     break
-                self.reinforcement_search_backoff += 5
+                self.reinforcement_search_backoff = min(self.reinforcement_search_backoff + 5, 15)
                 logger.print_ok_blue(
                     f"Adjusting reinforcement backoff to {self.reinforcement_search_backoff}"
                 )
