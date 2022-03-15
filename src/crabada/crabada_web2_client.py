@@ -274,14 +274,18 @@ class CrabadaWeb2Client:
         user_address = mine["owner"]
         team_id = mine["team_id"]
         teams = CrabadaWeb2Client().list_teams(user_address)
-        team = [t for t in teams if t["team_id"] == team_id][0]
-        defense_battle_point = get_faction_adjusted_battle_point(team, mine, verbose=False)
+        team = [t for t in teams if t["team_id"] == team_id]
+        if len(team) < 1:
+            return False
+        defense_battle_point = get_faction_adjusted_battle_point(team[0], mine, verbose=False)
 
         attack_address = mine["attack_team_owner"]
         attack_team_id = mine["attack_team_id"]
         attack_teams = CrabadaWeb2Client().list_teams(attack_address)
-        attack_team = [t for t in attack_teams if t["team_id"] == attack_team_id][0]
-        attack_battle_point = get_faction_adjusted_battle_point(attack_team, mine, verbose=False)
+        attack_team = [t for t in attack_teams if t["team_id"] == attack_team_id]
+        if len(attack_team) < 1:
+            return True
+        attack_battle_point = get_faction_adjusted_battle_point(attack_team[0], mine, verbose=False)
         return defense_battle_point >= attack_battle_point
 
     @staticmethod
