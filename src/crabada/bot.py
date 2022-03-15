@@ -206,12 +206,9 @@ class CrabadaMineBot:
 
     def _is_gas_too_high(self, margin: int = 0) -> bool:
         gas_price_gwei = self.crabada_w3.get_gas_price_gwei()
-        if gas_price_gwei is not None and (
-            int(gas_price_gwei) > self.config["max_gas_price_gwei"] + margin
-        ):
-            logger.print_warn(
-                f"Warning: High Gas ({gas_price_gwei}) > {self.config['max_gas_price_gwei']}!"
-            )
+        gas_price_limit = self.config["max_gas_price_gwei"] + margin
+        if gas_price_gwei is not None and (int(gas_price_gwei) > int(gas_price_limit)):
+            logger.print_warn(f"Warning: High Gas ({gas_price_gwei}) > {gas_price_limit}!")
             return True
         return False
 
@@ -316,7 +313,7 @@ class CrabadaMineBot:
 
             if self._is_gas_too_high(margin=10):
                 logger.print_warn(
-                    f"Skipping closing of mine for team {team['team_id']} due to high gas cost"
+                    f"Skipping open of mine for team {team['team_id']} due to high gas cost"
                 )
                 continue
 
@@ -341,9 +338,9 @@ class CrabadaMineBot:
                 logger.print_warn(f"Skipping team {team['team_id']} for mine reinforcing...")
                 continue
 
-            if self._is_gas_too_high() and not have_reinforced_mine_at_least_once(
-                self.crabada_w2, team
-            ):
+            have_reinforced_once = have_reinforced_mine_at_least_once(self.crabada_w2, team)
+            reinforce_margin = 30 if have_reinforced_once else 0
+            if self._is_gas_too_high(margin=reinforce_margin):
                 logger.print_warn(
                     f"Skipping reinforcement of Mine[{mine['game_id']}] due to high gas cost"
                 )
@@ -386,7 +383,7 @@ class CrabadaMineBot:
             if not self.crabada_w2.mine_is_finished(mine):
                 continue
 
-            if self._is_gas_too_high(margin=10):
+            if self._is_gas_too_high(margin=0):
                 logger.print_warn(
                     f"Skipping closing of Mine[{mine['game_id']}] due to high gas cost"
                 )
