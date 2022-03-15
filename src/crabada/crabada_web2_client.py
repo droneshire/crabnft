@@ -8,6 +8,7 @@ from eth_typing import Address
 from crabada.factional_advantage import get_faction_adjusted_battle_point
 from crabada.types import Crab, CrabForLending, IdleGame, LendingCategories, Team
 from utils.general import first_or_none, n_or_better_or_none, get_pretty_seconds
+from utils import logger
 from utils.price import wei_to_tus, Tus
 
 
@@ -222,6 +223,7 @@ class CrabadaWeb2Client:
         )
         nth_crab = int(math.ceil(self.N_CRAB_PERCENT / 100.0 * len(affordable_crabs)))
         nth_crab += reinforcement_search_backoff
+        logger.print_ok_blue(f"Crab list: {nth_crab}/{len(affordable_crabs)}")
         return n_or_better_or_none(nth_crab, sorted_affordable_crabs)
 
     def get_best_high_mp_crab_for_lending(

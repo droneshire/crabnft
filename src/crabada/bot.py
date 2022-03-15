@@ -68,6 +68,7 @@ class CrabadaMineBot:
             self.config["reinforcing_crabs"],
             self.config["max_reinforcement_price_tus"],
         )
+        self.reinforcement_search_backoff = 0
 
         if not dry_run and not os.path.isfile(get_lifetime_stats_file(user, self.log_dir)):
             write_game_stats(self.user, self.log_dir, self.game_stats)
@@ -170,9 +171,7 @@ class CrabadaMineBot:
 
         message = f"Unable to complete bot transaction due to insufficient gas \U000026FD!\n"
         message += f"Please add AVAX to your wallet ASAP to avoid delay in mining!\n"
-        self._send_status_update(
-            self.config["get_sms_updates"], self.config["get_email_updates"], message
-        )
+        self._send_status_update(True, True, message)
         self.time_since_last_alert = now
 
     def _calculate_and_log_gas_price(self, tx_receipt: TxReceipt) -> None:
@@ -350,18 +349,27 @@ class CrabadaMineBot:
                 )
                 continue
 
-            reinforcement_search_backoff = 0
             for _ in range(2):
                 if not self.reinforcement_strategy.should_reinforce(mine):
                     break
                 reinforcement_crab = self.reinforcement_strategy.get_reinforcement_crab(
-                    team, mine, reinforcement_search_backoff
+                    team, mine, self.reinforcement_search_backoff
                 )
                 if self._reinforce_with_crab(team, mine, reinforcement_crab):
+                    last_reinforcement_search_backoff = self.reinforcement_search_backoff
+                    self.reinforcement_search_backoff = max(
+                        0, self.reinforcement_search_backoff - 1
+                    )
+                    if last_reinforcement_search_backoff != self.reinforcement_search_backoff:
+                        logger.print_ok_blue(
+                            f"Reinforcement backoff: {last_reinforcement_search_backoff}->{self.reinforcement_search_backoff}"
+                        )
                     break
-                logger.print_warn(f"Mine[{mine['game_id']}]: retrying reinforcement with backoff")
+                self.reinforcement_search_backoff += 5
+                logger.print_ok_blue(
+                    f"Adjusting reinforcement backoff to {self.reinforcement_search_backoff}"
+                )
                 # back off by 5 in the tavern every failure
-                reinforcement_search_backoff += 5
                 time.sleep(1.0)
 
     def _check_and_maybe_close_mines(self) -> None:
