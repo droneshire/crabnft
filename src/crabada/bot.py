@@ -125,7 +125,7 @@ class CrabadaMineBot:
             logger.print_fail("Failed to send email/sms alert")
 
     def _update_bot_stats(self, team: Team, mine: IdleGame) -> None:
-        if mine["winner_team_id"] == team["team_id"]:
+        if mine.get("winner_team_id", "") == team["team_id"]:
             self.game_stats["game_wins"] += 1
         else:
             self.game_stats["game_losses"] += 1
@@ -187,19 +187,20 @@ class CrabadaMineBot:
 
     def _print_mine_status(self) -> None:
         open_mines = self.crabada_w2.list_my_open_mines((self.address))
-        team_to_mines = {mine["game_id"]: mine for mine in open_mines}
 
-        open_mines_str = " ".join([str(m["game_id"]) for m in open_mines])
         formatted_date = time.strftime("%A, %Y-%m-%d %H:%M:%S", time.localtime(time.time()))
         logger.print_normal(f"Mines ({formatted_date})")
 
-        for mine in open_mines:
+        for inx, mine in enumerate(open_mines):
+            mine_data = self.crabada_w2.get_mine(mine["game_id"])
             logger.print_normal(
-                "\t{}\t\tround {}\t\t{}\t{}".format(
+                "#{}\t{}\t\tround {}\t\t{}\t{}\t[{}]".format(
+                    inx + 1,
                     mine["game_id"],
                     mine["round"],
                     self.crabada_w2.get_remaining_time_formatted(mine),
                     "under attack" if mine.get("attack_team_id", "") else "safe",
+                    "winning" if self.crabada_w2.mine_is_winning(mine_data) else "losing",
                 )
             )
         logger.print_normal("\n")

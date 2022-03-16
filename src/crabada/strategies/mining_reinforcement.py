@@ -115,7 +115,7 @@ class PreferOwnMpCrabs(MiningStrategy):
 
 class DelayReinforcementStrategy(MiningStrategy):
     MAX_TIME_REMAINING_DELTA = 60.0 * 3
-    DELAY_BEFORE_REINFORCING = 60.0 * 21
+    DELAY_BEFORE_REINFORCING = 60.0 * 19
 
     def __init__(
         self,
