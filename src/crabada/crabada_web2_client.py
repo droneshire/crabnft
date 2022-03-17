@@ -279,6 +279,12 @@ class CrabadaWeb2Client:
         """
         Determines if defense miner has won the battle
         """
+        try:
+            if mine.get("winner_team_id", -1) == mine["team_id"]:
+                return True
+        except:
+            return False
+
         user_address = mine["owner"]
         team_id = mine["team_id"]
         teams = CrabadaWeb2Client().list_teams(user_address)
