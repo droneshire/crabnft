@@ -386,7 +386,7 @@ class CrabadaMineBot:
 
             if self._is_gas_too_high(margin=0):
                 logger.print_warn(
-                    f"Skipping closing of Mine[{mine['game_id']}] due to high gas cost"
+                    f"Skipping closing of Mine[{mine.get('game_id', '')}] due to high gas cost"
                 )
                 continue
 

@@ -15,7 +15,7 @@ def have_reinforced_mine_at_least_once(crabada_w2: CrabadaWeb2Client, team: Team
     if mine is None:
         return False
 
-    process = mine["process"]
+    process = mine.get("process", [])
     return "reinforce-defense" in [p["action"] for p in process]
 
 
