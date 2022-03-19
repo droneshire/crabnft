@@ -18,12 +18,13 @@ from utils.game_stats import GameStats, NULL_GAME_STATS
 from utils.game_stats import get_game_stats, get_lifetime_stats_file, write_game_stats
 from utils.price import tus_to_wei, wei_to_tus, wei_to_cra_raw, wei_to_tus_raw
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
+from web3_utils.tus_web3_client import TusWeb3Client
 from web3_utils.web3_client import web3_transaction
 
 
 class CrabadaMineBot:
     TIME_BETWEEN_TRANSACTIONS = 5.0
-    TIME_BETWEEN_EACH_UPDATE = 0.0
+    TIME_BETWEEN_EACH_UPDATE = 2.0
     ALERT_THROTTLING_TIME = 60.0 * 30.3
     MIN_MINE_POINT = 60
 
@@ -52,6 +53,15 @@ class CrabadaMineBot:
             (
                 CrabadaWeb3Client()
                 .set_credentials(config["address"], config["private_key"])
+                .set_node_uri(AvalancheCWeb3Client.AVAX_NODE_URL)
+                .set_dry_run(dry_run)
+            ),
+        )
+        self.tus_w3 = T.cast(
+            TusWeb3Client,
+            (
+                TusWeb3Client()
+                .set_credentials(self.config["address"], config["private_key"])
                 .set_node_uri(AvalancheCWeb3Client.AVAX_NODE_URL)
                 .set_dry_run(dry_run)
             ),
@@ -228,6 +238,13 @@ class CrabadaMineBot:
         logger.print_normal(
             f"Mine[{mine['game_id']}]: Found reinforcement crabada {crabada_id} for {price_tus} Tus [BP {battle_points} | MP {mine_points}]"
         )
+
+        available_tus = float(self.tus_w3.get_balance())
+        if available_tus < price_tus:
+            logger.print_warn(
+                f"Insufficient TUS to purchase reinforcement! Balance: {available_tus}, Needed: {price_tus}"
+            )
+            return True
 
         with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
             tx_hash = self.crabada_w3.reinforce_defense(
@@ -411,11 +428,11 @@ class CrabadaMineBot:
 
         self._print_mine_status()
         self._check_and_maybe_close_mines()
-        time.sleep(1.0)
+        print(".")
         self._check_and_maybe_start_mines()
-        time.sleep(1.0)
+        print("*")
         self._check_and_maybe_reinforce()
-
+        print("@")
         if self.updated_game_stats:
             self.updated_game_stats = False
             self._print_bot_stats()
