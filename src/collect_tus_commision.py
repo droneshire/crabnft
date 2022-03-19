@@ -53,7 +53,9 @@ def setup_log(log_level: str, log_dir: str) -> None:
     )
 
 
-def send_collection_notice(from_users: T.List[str], log_dir: str, dry_run: bool = False) -> None:
+def send_collection_notice(
+    from_users: T.List[str], log_dir: str, encrypt_password: str = "", dry_run: bool = False
+) -> None:
     run_all_users = "ALL" in from_users
     for user, config in USERS.items():
         if not run_all_users and user not in from_users:
@@ -62,7 +64,33 @@ def send_collection_notice(from_users: T.List[str], log_dir: str, dry_run: bool 
         game_stats = get_game_stats(user, log_dir)
         commission_tus = game_stats["commission_tus"]
 
-        if commission_tus <= MINIMUM_TUS_TO_TRANSFER:
+        private_key = (
+            ""
+            if not encrypt_password
+            else decrypt(str.encode(encrypt_password), config["private_key"]).decode()
+        )
+
+        tus_w3 = T.cast(
+            TusWeb3Client,
+            (
+                TusWeb3Client()
+                .set_credentials(config["address"], config["private_key"])
+                .set_node_uri(AvalancheCWeb3Client.AVAX_NODE_URL)
+                .set_dry_run(dry_run)
+            ),
+        )
+
+        available_tus = float(tus_w3.get_balance())
+        logger.print_ok(f"{user} balance: {available_tus} TUS, commission: {commission_tus} TUS")
+
+        if commission_tus < MINIMUM_TUS_TO_TRANSFER:
+            logger.print_warn(f"Skipping transfer of {commission_tus:.2f} from {user} (too small)")
+            continue
+
+        if commission_tus > available_tus:
+            logger.print_fail(
+                f"Skipping transfer of {commission_tus:.2f} from {user}: insufficient funds!"
+            )
             continue
 
         sms_message = f"\U0000203C  COURTESY NOTICE  \U0000203C\n"
@@ -205,17 +233,17 @@ def main() -> None:
     if args.dry_run:
         logger.print_warn(f"DRY RUN ACTIVATED")
 
-    if args.send_notice:
-        logger.print_bold(f"Sending SMS notice that we're collecting in 30 mins!")
-        send_collection_notice(from_users, args.log_dir, args.dry_run)
-        return
-
-    logger.print_ok(f"Collecting TUS Commissions from {', '.join(from_users)} -> {args.to_user}")
-
     if not args.dry_run:
         encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
     else:
         encrypt_password = ""
+
+    if args.send_notice:
+        logger.print_bold(f"Sending SMS notice that we're collecting in 30 mins!")
+        send_collection_notice(from_users, args.log_dir, encrypt_password, args.dry_run)
+        return
+
+    logger.print_ok(f"Collecting TUS Commissions from {', '.join(from_users)} -> {args.to_user}")
 
     collect_tus_commission(
         args.to_user, args.from_users, args.log_dir, encrypt_password, args.dry_run
