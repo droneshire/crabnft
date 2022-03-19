@@ -363,7 +363,7 @@ class CrabadaMineBot:
                             f"Reinforcement backoff: {last_reinforcement_search_backoff}->{self.reinforcement_search_backoff}"
                         )
                     break
-                self.reinforcement_search_backoff = min(self.reinforcement_search_backoff + 5, 15)
+                self.reinforcement_search_backoff = min(self.reinforcement_search_backoff + 5, 20)
                 logger.print_ok_blue(
                     f"Adjusting reinforcement backoff to {self.reinforcement_search_backoff}"
                 )
