@@ -24,7 +24,7 @@ from web3_utils.web3_client import web3_transaction
 class CrabadaMineBot:
     TIME_BETWEEN_TRANSACTIONS = 5.0
     TIME_BETWEEN_EACH_UPDATE = 0.0
-    ALERT_THROTTLING_TIME = 60.0 * 60 * 2
+    ALERT_THROTTLING_TIME = 60.0 * 30.3
     MIN_MINE_POINT = 60
 
     def __init__(
@@ -165,7 +165,7 @@ class CrabadaMineBot:
         now = time.time()
         if (
             self.time_since_last_alert
-            and now - self.time_since_last_alert < self.ALERT_THROTTLING_TIME
+            and now - self.time_since_last_alert > self.ALERT_THROTTLING_TIME
         ):
             return
 
