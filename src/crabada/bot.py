@@ -393,12 +393,12 @@ class CrabadaMineBot:
             if team["game_id"] is None and team["game_type"] != "mining":
                 continue
 
-            if not self._is_team_allowed_to_mine(team):
-                logger.print_warn(f"Skipping team {team['team_id']} for closing...")
-                continue
-
             mine = self.crabada_w2.get_mine(team["game_id"])
             if not self.crabada_w2.mine_is_finished(mine):
+                continue
+
+            if not self._is_team_allowed_to_mine(team):
+                logger.print_warn(f"Skipping team {team['team_id']} for closing...")
                 continue
 
             if self._is_gas_too_high(margin=0):

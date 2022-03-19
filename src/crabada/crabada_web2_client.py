@@ -221,8 +221,12 @@ class CrabadaWeb2Client:
         sorted_affordable_crabs = sorted(
             affordable_crabs, key=lambda c: (-c[lending_category], c.get("price", max_tus))
         )
-        nth_crab = int(math.ceil(self.N_CRAB_PERCENT / 100.0 * len(affordable_crabs)))
-        nth_crab += reinforcement_search_backoff
+        if len(affordable_crabs) < 10:
+            nth_crab = len(affordable_crabs)
+        else:
+            nth_crab = int(math.ceil(self.N_CRAB_PERCENT / 100.0 * len(affordable_crabs)))
+            nth_crab += reinforcement_search_backoff
+        nth_crab = min(len(affordable_crabs), nth_crab)
         logger.print_ok_blue(f"Crab list: {nth_crab}/{len(affordable_crabs)}")
         return n_or_better_or_none(nth_crab, sorted_affordable_crabs)
 
