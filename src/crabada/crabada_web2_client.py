@@ -39,6 +39,8 @@ class CrabadaWeb2Client:
         url = self.BASE_URL + "/mine/" + str(mine_id)
         try:
             return requests.request("GET", url, params=params, timeout=5.0).json()
+        except KeyboardInterrupt:
+            raise
         except:
             return {}
 
@@ -52,6 +54,8 @@ class CrabadaWeb2Client:
         res = self.list_mines_raw(params)
         try:
             return res["result"]["data"] or []
+        except KeyboardInterrupt:
+            raise
         except:
             return []
 
@@ -61,6 +65,8 @@ class CrabadaWeb2Client:
         res = self.list_can_join_game_raw(user_address, params)
         try:
             return [c for c in res["result"]["data"]] or []
+        except KeyboardInterrupt:
+            raise
         except:
             return []
 
@@ -74,6 +80,8 @@ class CrabadaWeb2Client:
         actual_params.update(params)
         try:
             return requests.request("GET", url, params=actual_params, timeout=5.0).json()
+        except KeyboardInterrupt:
+            raise
         except:
             return {}
 
@@ -90,6 +98,8 @@ class CrabadaWeb2Client:
         actual_params.update(params)
         try:
             return requests.request("GET", url, params=actual_params, timeout=5.0).json()
+        except KeyboardInterrupt:
+            raise
         except:
             return {}
 
@@ -134,6 +144,8 @@ class CrabadaWeb2Client:
         actual_params.update(params)
         try:
             return requests.request("GET", url, params=actual_params, timeout=5.0).json()
+        except KeyboardInterrupt:
+            raise
         except:
             return {}
 
@@ -152,6 +164,8 @@ class CrabadaWeb2Client:
         res = self.list_teams_raw(user_address, params)
         try:
             return res["result"]["data"] or []
+        except KeyboardInterrupt:
+            raise
         except:
             return []
 
@@ -171,6 +185,8 @@ class CrabadaWeb2Client:
         actual_params.update(params)
         try:
             return requests.request("GET", url, params=actual_params, timeout=5.0).json()
+        except KeyboardInterrupt:
+            raise
         except:
             return {}
 
@@ -203,6 +219,8 @@ class CrabadaWeb2Client:
         res = self.list_crabs_for_lending_raw(params)
         try:
             return res["result"]["data"] or []
+        except KeyboardInterrupt:
+            raise
         except:
             return []
 
@@ -275,6 +293,8 @@ class CrabadaWeb2Client:
         actual_params.update(params)
         try:
             return requests.request("GET", url, params=actual_params, timeout=5.0).json()
+        except KeyboardInterrupt:
+            raise
         except:
             return {}
 
@@ -286,6 +306,8 @@ class CrabadaWeb2Client:
         try:
             if mine.get("winner_team_id", -1) == mine["team_id"]:
                 return True
+        except KeyboardInterrupt:
+            raise
         except:
             return False
 

@@ -28,7 +28,12 @@ class TusWeb3Client(AvalancheCWeb3Client):
     abi = Web3Client._get_contract_abi_from_file(abi_dir)
 
     def get_balance(self) -> Tus:
-        balance = self.contract.functions.balanceOf(self.user_address).call()
+        try:
+            balance = self.contract.functions.balanceOf(self.user_address).call()
+        except KeyboardInterrupt:
+            raise
+        except:
+            return 0
         return wei_to_tus(balance)
 
     def transfer_tus(self, to_address: Address, tus: Tus) -> HexStr:

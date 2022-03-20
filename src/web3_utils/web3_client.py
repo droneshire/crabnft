@@ -152,6 +152,8 @@ class Web3Client:
             return {"status": 0}
         try:
             return self.w3.eth.wait_for_transaction_receipt(tx_hash)
+        except KeyboardInterrupt:
+            raise
         except:
             return {"status": 10}
 
@@ -236,6 +238,8 @@ class Web3Client:
         # Set the contract if possible, e.g. if the subclass defines address & ABI.
         try:
             self.set_contract(address=self.contract_address, abi=self.abi)
+        except KeyboardInterrupt:
+            raise
         except:
             pass
         return self

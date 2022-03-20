@@ -15,6 +15,8 @@ def first_or_none(l: T.List[T.Any]) -> T.Any:
     if 1) it is not set or 2) it is falsey"""
     try:
         return l[0]
+    except KeyboardInterrupt:
+        raise
     except:
         return None
 
@@ -24,6 +26,8 @@ def second_or_none(l: T.List[T.Any]) -> T.Any:
     if 1) it is not set or 2) it is falsey"""
     try:
         return l[1]
+    except KeyboardInterrupt:
+        raise
     except:
         return None
 
@@ -33,6 +37,8 @@ def third_or_none(l: T.List[T.Any]) -> T.Any:
     if 1) it is not set or 2) it is falsey"""
     try:
         return l[2]
+    except KeyboardInterrupt:
+        raise
     except:
         return None
 
@@ -50,6 +56,8 @@ def fourth_or_none(l: T.List[T.Any]) -> T.Any:
     if 1) it is not set or 2) it is falsey"""
     try:
         return l[3]
+    except KeyboardInterrupt:
+        raise
     except:
         return None
 

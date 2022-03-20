@@ -131,6 +131,8 @@ class CrabadaMineBot:
                     f"\U0001F980 Crabada Bot Update",
                     email_message,
                 )
+        except KeyboardInterrupt:
+            raise
         except:
             logger.print_fail("Failed to send email/sms alert")
 

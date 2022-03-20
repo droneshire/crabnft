@@ -14,6 +14,8 @@ def get_avax_price_usd(api_token: str) -> T.Optional[float]:
         try:
             raw = requests.get(api_url, timeout=5.0).json()
             price = price * float(raw["price"])
+        except KeyboardInterrupt:
+            raise
         except:
             return None
 
