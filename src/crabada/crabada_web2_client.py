@@ -23,9 +23,10 @@ class CrabadaWeb2Client:
     """
 
     BASE_URL = "https://idle-api.crabada.com/public/idle"
-    REINFORCE_TIME_WINDOW = 60 * (30 - 2)  # 30 minute window + 2 minute buffer
-    N_CRAB_PERCENT = 6.5
+    REINFORCE_TIME_WINDOW = 60 * (30 - 1)  # 30 minute window + 1 minute buffer
+    N_CRAB_PERCENT = 18.0
     TIME_PER_MINING_ACTION = 60.0 * 30
+    MIN_LOOT_GAME_TIME = 60.0 * 60.0 * 1
 
     def get_mine(self, mine_id: int, params: T.Dict[str, T.Any] = {}) -> IdleGame:
         """Get information from the given mine"""
@@ -239,8 +240,8 @@ class CrabadaWeb2Client:
         sorted_affordable_crabs = sorted(
             affordable_crabs, key=lambda c: (-c[lending_category], c.get("price", max_tus))
         )
-        if len(affordable_crabs) < 10:
-            nth_crab = len(affordable_crabs)
+        if len(affordable_crabs) < 20:
+            nth_crab = len(affordable_crabs) - 1
         else:
             nth_crab = int(math.ceil(self.N_CRAB_PERCENT / 100.0 * len(affordable_crabs)))
             nth_crab += reinforcement_search_backoff
@@ -299,6 +300,48 @@ class CrabadaWeb2Client:
             return {}
 
     @staticmethod
+    def _get_battle_points(mine: IdleGame) -> T.Tuple[int, int]:
+        user_address = mine["owner"]
+        team_id = mine["team_id"]
+        teams = CrabadaWeb2Client().list_teams(user_address)
+        team = [t for t in teams if t["team_id"] == team_id]
+        if len(team) < 1:
+            return (None, None)
+        defense_battle_point = get_faction_adjusted_battle_point(team[0], mine, verbose=False)
+
+        attack_address = mine["attack_team_owner"]
+        attack_team_id = mine["attack_team_id"]
+        attack_teams = CrabadaWeb2Client().list_teams(attack_address)
+        attack_team = [t for t in attack_teams if t["team_id"] == attack_team_id]
+        if len(attack_team) < 1:
+            return (defense_battle_point, None)
+        attack_battle_point = get_faction_adjusted_battle_point(attack_team[0], mine, verbose=False)
+
+        return (defense_battle_point, attack_battle_point)
+
+    @staticmethod
+    def loot_is_winning(mine: IdleGame) -> bool:
+        """
+        Determines if attack looter has won the battle
+        """
+        try:
+            if mine.get("winner_team_id", -1) == mine["attack_team_id"]:
+                return True
+        except KeyboardInterrupt:
+            raise
+        except:
+            return False
+        defense_battle_point, attack_battle_point = CrabadaWeb2Client()._get_battle_points(mine)
+
+        if defense_battle_point is None:
+            return True
+
+        if attack_battle_point is None:
+            return False
+
+        return attack_battle_point > defense_battle_point
+
+    @staticmethod
     def mine_is_winning(mine: IdleGame) -> bool:
         """
         Determines if defense miner has won the battle
@@ -310,22 +353,14 @@ class CrabadaWeb2Client:
             raise
         except:
             return False
+        defense_battle_point, attack_battle_point = CrabadaWeb2Client()._get_battle_points(mine)
 
-        user_address = mine["owner"]
-        team_id = mine["team_id"]
-        teams = CrabadaWeb2Client().list_teams(user_address)
-        team = [t for t in teams if t["team_id"] == team_id]
-        if len(team) < 1:
+        if defense_battle_point is None:
             return False
-        defense_battle_point = get_faction_adjusted_battle_point(team[0], mine, verbose=False)
 
-        attack_address = mine["attack_team_owner"]
-        attack_team_id = mine["attack_team_id"]
-        attack_teams = CrabadaWeb2Client().list_teams(attack_address)
-        attack_team = [t for t in attack_teams if t["team_id"] == attack_team_id]
-        if len(attack_team) < 1:
+        if attack_battle_point is None:
             return True
-        attack_battle_point = get_faction_adjusted_battle_point(attack_team[0], mine, verbose=False)
+
         return defense_battle_point >= attack_battle_point
 
     @staticmethod
@@ -375,6 +410,38 @@ class CrabadaWeb2Client:
         return time.time() - attack_start_time < CrabadaWeb2Client.REINFORCE_TIME_WINDOW
 
     @staticmethod
+    def loot_needs_reinforcement(mine: IdleGame) -> bool:
+        """
+        Return True if, in the given game, the looter (the offense) needs
+        to attack the mine of a miner
+        """
+        if not mine:
+            return False
+
+        if not CrabadaWeb2Client.mine_is_open(mine):
+            return False
+
+        if CrabadaWeb2Client.mine_is_finished(mine):
+            return False
+
+        if CrabadaWeb2Client.mine_is_settled(mine):
+            return False
+
+        process = mine["process"]
+        actions = [p["action"] for p in process]
+        if actions[-1] not in ["reinforce-defense"]:
+            return False
+
+        if actions.count("reinforce-attack") >= 2:
+            return False
+
+        if CrabadaWeb2Client.loot_is_winning(mine):
+            return False
+
+        defense_start_time = process[-1]["transaction_time"]
+        return time.time() - defense_start_time < CrabadaWeb2Client.REINFORCE_TIME_WINDOW
+
+    @staticmethod
     def mine_is_open(mine: IdleGame) -> bool:
         """
         Return True if the given game is open
@@ -403,6 +470,20 @@ class CrabadaWeb2Client:
         Return true if the given game is past its end_time
         """
         return CrabadaWeb2Client.get_remaining_time(mine) <= 0
+
+    @staticmethod
+    def loot_is_finished(mine: IdleGame) -> bool:
+        """
+        Return true if the given game is past its end_time
+        """
+        process = mine["process"]
+        actions = [p["action"] for p in process]
+        time_since_start = time.time() - mine["start_time"]
+
+        if time_since_start < CrabadaWeb2Client.MIN_LOOT_GAME_TIME:
+            return False
+
+        return not CrabadaWeb2Client.loot_needs_reinforcement(mine)
 
     @staticmethod
     def mine_is_closed(mine: IdleGame) -> bool:
