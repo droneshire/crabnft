@@ -24,7 +24,7 @@ class CrabadaWeb2Client:
 
     BASE_URL = "https://idle-api.crabada.com/public/idle"
     REINFORCE_TIME_WINDOW = 60 * (30 - 2)  # 30 minute window + 2 minute buffer
-    N_CRAB_PERCENT = 5.5
+    N_CRAB_PERCENT = 6.5
     TIME_PER_MINING_ACTION = 60.0 * 30
 
     def get_mine(self, mine_id: int, params: T.Dict[str, T.Any] = {}) -> IdleGame:
