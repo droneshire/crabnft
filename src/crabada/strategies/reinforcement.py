@@ -1,7 +1,7 @@
 import typing as T
 from eth_typing import Address
 
-from crabada.types import IdleGame, Team, TeamMember
+from crabada.types import CrabForLending, IdleGame, Team, TeamMember
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from utils import logger
 from utils.price import Tus
@@ -12,6 +12,7 @@ class ReinforcementStrategy:
         self,
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
+        crabada_w3_methods: T.Dict[str, T.Callable],
         reinforcing_crabs: T.List[TeamMember],
         max_reinforcement_price_tus: Tus,
     ) -> None:
@@ -19,6 +20,7 @@ class ReinforcementStrategy:
         self.max_reinforcement_price_tus = max_reinforcement_price_tus
         self.address = address
         self.crabada_w2 = crabada_w2_client
+        self.crabada_w3_methods = crabada_w3_methods
 
         self.reinforcement_search_backoff = 0
         self.time_since_last_attack = None  # T.Optional[float]
