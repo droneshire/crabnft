@@ -28,7 +28,8 @@ class UserConfig(T.TypedDict):
     max_reinforcement_price_tus: Tus
     max_reinforce_bp_delta: int
     reinforcing_crabs: T.List[CrabForLending]
-    reinforcement_strategy: ReinforcementStrategy
+    mining_reinforcement_strategy: ReinforcementStrategy
+    looting_reinforcement_strategy: ReinforcementStrategy
     commission_percent_per_mine: float
     sms_number: str
     email: str
