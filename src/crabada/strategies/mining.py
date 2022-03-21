@@ -19,7 +19,7 @@ class MiningStrategy(Strategy):
     """
 
     MAX_BP_DELTA = 3
-    MIN_MINE_POINT = 65
+    MIN_MINE_POINT = 66
 
     def __init__(
         self,

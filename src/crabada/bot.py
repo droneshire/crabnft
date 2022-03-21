@@ -4,11 +4,12 @@ import os
 import time
 import typing as T
 from twilio.rest import Client
-from web3.types import TxReceipt
+from web3.types import Address, TxReceipt
 
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
 from crabada.factional_advantage import get_faction_adjusted_battle_point
+from crabada.strategies.mining import PreferOwnMpCrabs, PreferOwnMpCrabsAndDelayReinforcement
 from crabada.strategies.strategy import Strategy
 from crabada.types import CrabForLending, IdleGame, Team
 from utils import logger
@@ -16,6 +17,7 @@ from utils.config_types import UserConfig, SmsConfig
 from utils.email import Email, send_email
 from utils.game_stats import GameStats, NULL_GAME_STATS
 from utils.game_stats import get_game_stats, get_lifetime_stats_file, write_game_stats
+from utils.general import get_pretty_seconds
 from utils.price import tus_to_wei, wei_to_tus, wei_to_cra_raw, wei_to_tus_raw
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.tus_web3_client import TusWeb3Client
@@ -25,8 +27,9 @@ from web3_utils.web3_client import web3_transaction
 class CrabadaMineBot:
     TIME_BETWEEN_TRANSACTIONS = 5.0
     TIME_BETWEEN_EACH_UPDATE = 2.0
-    ALERT_THROTTLING_TIME = 60.0 * 30.3
+    ALERT_THROTTLING_TIME = 60.0 * 30.0
     MIN_MINE_POINT = 60
+    MIN_TIME_BETWEEN_MINES = 60.0 * 30.0
 
     def __init__(
         self,
@@ -38,17 +41,17 @@ class CrabadaMineBot:
         log_dir: str,
         dry_run: bool,
     ) -> None:
-        self.user = user
-        self.config = config
-        self.from_sms_number = from_sms_number
-        self.sms = sms_client
-        self.email = email_account
-        self.log_dir = log_dir
-        self.dry_run = dry_run
+        self.user: str = user
+        self.config: UserConfig = config
+        self.from_sms_number: str = from_sms_number
+        self.sms: Client = sms_client
+        self.email: Email = email_account
+        self.log_dir: str = log_dir
+        self.dry_run: bool = dry_run
 
-        self.time_since_last_alert = None
+        self.time_since_last_alert: T.Optional[float] = None
 
-        self.crabada_w3 = T.cast(
+        self.crabada_w3: CrabadaWeb3Client = T.cast(
             CrabadaWeb3Client,
             (
                 CrabadaWeb3Client()
@@ -57,7 +60,7 @@ class CrabadaMineBot:
                 .set_dry_run(dry_run)
             ),
         )
-        self.tus_w3 = T.cast(
+        self.tus_w3: TusWeb3Client = T.cast(
             TusWeb3Client,
             (
                 TusWeb3Client()
@@ -66,12 +69,12 @@ class CrabadaMineBot:
                 .set_dry_run(dry_run)
             ),
         )
-        self.crabada_w2 = CrabadaWeb2Client()
+        self.crabada_w2: CrabadaWeb2Client = CrabadaWeb2Client()
 
-        self.address = self.config["address"]
-        self.game_stats = NULL_GAME_STATS
-        self.updated_game_stats = True
-        self.avax_price_usd = 0.0
+        self.address: Address = self.config["address"]
+        self.game_stats: GameStats = NULL_GAME_STATS
+        self.updated_game_stats: bool = True
+        self.avax_price_usd: float = 0.0
 
         self.mining_strategy = self.config["mining_strategy"](
             self.address,
@@ -87,7 +90,8 @@ class CrabadaMineBot:
             self.config["reinforcing_crabs"],
             self.config["max_reinforcement_price_tus"],
         )
-        self.reinforcement_search_backoff = 0
+        self.reinforcement_search_backoff: int = 0
+        self.last_mine_start: T.Optional[float] = None
 
         if not dry_run and not os.path.isfile(get_lifetime_stats_file(user, self.log_dir)):
             write_game_stats(self.user, self.log_dir, self.game_stats)
@@ -212,6 +216,10 @@ class CrabadaMineBot:
 
         formatted_date = time.strftime("%A, %Y-%m-%d %H:%M:%S", time.localtime(time.time()))
         logger.print_normal(f"Mines ({formatted_date})")
+        last_mine_start_formatted = get_pretty_seconds(
+            int(time.time() - self._get_last_mine_start_time())
+        )
+        logger.print_normal(f"Last Mine Start: {last_mine_start_formatted}")
 
         if not open_mines:
             logger.print_normal("NO MINES")
@@ -247,6 +255,15 @@ class CrabadaMineBot:
             )
 
         logger.print_normal("\n")
+
+    def _get_last_mine_start_time(self) -> float:
+        # TODO(ross): dedupe all these api calls
+        mines = self.crabada_w2.list_my_open_mines(self.address)
+        now = time.time()
+        last_mine_start = 0
+        for mine in mines:
+            last_mine_start = max(last_mine_start, mine.get("start_time", 0))
+        return last_mine_start
 
     def _is_gas_too_high(self, margin: int = 0) -> bool:
         gas_price_gwei = self.crabada_w3.get_gas_price_gwei()
@@ -452,6 +469,7 @@ class CrabadaMineBot:
 
     def _check_and_maybe_start_mines(self) -> None:
         available_teams = self.crabada_w2.list_available_teams(self.address)
+        last_mine_start = self._get_last_mine_start_time()
         for team in available_teams:
             if not self._is_team_allowed_to_mine(team):
                 logger.print_warn(f"Skipping team {team['team_id']} for mining...")
@@ -463,7 +481,20 @@ class CrabadaMineBot:
                 )
                 continue
 
-            self._start_mine(team)
+            now = time.time()
+            if (
+                isinstance(
+                    self.mining_strategy, (PreferOwnMpCrabs, PreferOwnMpCrabsAndDelayReinforcement)
+                )
+            ) and now - last_mine_start < self.MIN_TIME_BETWEEN_MINES:
+                time_before_start_formatted = get_pretty_seconds(
+                    int(last_mine_start + self.MIN_TIME_BETWEEN_MINES - now)
+                )
+                logger.print_normal(f"Waiting to start mine in {time_before_start_formatted}")
+                continue
+
+            if self._start_mine(team):
+                last_mine_start = now
 
     def _check_and_maybe_reinforce(self) -> None:
         if not self.config["should_reinforce"]:

@@ -11,6 +11,8 @@ from utils.price import Tus
 
 
 class Strategy:
+    DELAY_BEFORE_REINFORCING = 0.0
+
     def __init__(
         self,
         address: Address,
@@ -44,6 +46,9 @@ class Strategy:
 
     def reinforce(self, game_id: int, crabada_id: int, borrow_price: Wei) -> T.Any:
         raise NotImplementedError
+
+    def get_reinforcement_delay(self) -> float:
+        return self.DELAY_BEFORE_REINFORCING
 
     def _use_bp_reinforcement(
         self, mine: IdleGame, use_own_crabs: bool = False
