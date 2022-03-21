@@ -75,14 +75,14 @@ class CrabadaMineBot:
         self.updated_game_stats = True
         self.avax_price_usd = 0.0
 
-        self.mining_reinforcement_strategy = self.config["mining_reinforcement_strategy"](
+        self.mining_strategy = self.config["mining_strategy"](
             self.address,
             self.crabada_w2,
             self.crabada_w3,
             self.config["reinforcing_crabs"],
             self.config["max_reinforcement_price_tus"],
         )
-        self.looting_reinforcement_strategy = self.config["looting_reinforcement_strategy"](
+        self.looting_strategy = self.config["looting_strategy"](
             self.address,
             self.crabada_w2,
             self.crabada_w3,
@@ -262,10 +262,10 @@ class CrabadaMineBot:
         self,
         team: Team,
         mine: IdleGame,
-        reinforcement_strategy: Strategy,
+        strategy: Strategy,
         have_reinforced_once: bool,
     ) -> None:
-        if not reinforcement_strategy.should_reinforce(mine):
+        if not strategy.should_reinforce(mine):
             return
 
         reinforce_margin = 30 if have_reinforced_once else 0
@@ -276,14 +276,14 @@ class CrabadaMineBot:
             return
 
         for _ in range(2):
-            reinforcement_crab = reinforcement_strategy.get_reinforcement_crab(
+            reinforcement_crab = strategy.get_reinforcement_crab(
                 team, mine, self.reinforcement_search_backoff
             )
             if self._reinforce_with_crab(
                 team,
                 mine,
                 reinforcement_crab,
-                reinforcement_strategy,
+                strategy,
             ):
                 last_reinforcement_search_backoff = self.reinforcement_search_backoff
                 self.reinforcement_search_backoff = max(0, self.reinforcement_search_backoff - 1)
@@ -305,7 +305,7 @@ class CrabadaMineBot:
         team: Team,
         mine: IdleGame,
         reinforcement_crab: CrabForLending,
-        reinforcement_strategy: Strategy,
+        strategy: Strategy,
     ) -> bool:
         if reinforcement_crab is None:
             logger.print_warn(f"Mine[{mine['game_id']}: Unable to find suitable reinforcement...")
@@ -328,7 +328,7 @@ class CrabadaMineBot:
             return True
 
         with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
-            tx_hash = reinforcement_strategy.reinforce(
+            tx_hash = strategy.reinforce(
                 team["game_id"], crabada_id, reinforcement_crab["price"]
             )
             tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
@@ -349,7 +349,7 @@ class CrabadaMineBot:
 
         return False
 
-    def _close_mine(self, team: Team, mine: IdleGame, reinforcement_strategy: Strategy) -> None:
+    def _close_mine(self, team: Team, mine: IdleGame, strategy: Strategy) -> None:
         if self._is_gas_too_high(margin=0):
             logger.print_warn(
                 f"Skipping closing of Game[{mine.get('game_id', '')}] due to high gas cost"
@@ -359,7 +359,7 @@ class CrabadaMineBot:
         logger.print_normal(f"Attempting to close game {team['game_id']}")
 
         with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
-            tx_hash = reinforcement_strategy.close(team["game_id"])
+            tx_hash = strategy.close(team["game_id"])
             tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
 
             self._calculate_and_log_gas_price(tx_receipt)
@@ -368,7 +368,7 @@ class CrabadaMineBot:
                 logger.print_fail_arrow(
                     f"Error closing game {team['game_id']}: {tx_receipt['status']}"
                 )
-                return
+                return False
 
         outcome = (
             "won \U0001F389"
@@ -382,6 +382,8 @@ class CrabadaMineBot:
         self.time_since_last_alert = None
         self._update_bot_stats(team, mine)
         logger.print_ok_arrow(message)
+
+        return True
 
     def _start_mine(self, team: Team) -> None:
         logger.print_normal(f"Attemting to start new mine with team {team['team_id']}!")
@@ -420,7 +422,7 @@ class CrabadaMineBot:
         self._reinforce_loot_or_mine(
             team,
             mine,
-            self.looting_reinforcement_strategy,
+            self.looting_strategy,
             have_reinforced_mine_at_least_once(self.crabada_w2, team),
         )
 
@@ -435,7 +437,7 @@ class CrabadaMineBot:
         self._reinforce_loot_or_mine(
             team,
             mine,
-            self.mining_reinforcement_strategy,
+            self.mining_strategy,
             have_reinforced_mine_at_least_once(self.crabada_w2, team),
         )
 
@@ -447,7 +449,7 @@ class CrabadaMineBot:
             logger.print_warn(f"Skipping team {team['team_id']} for settling...")
             return
 
-        self._close_mine(team, mine, self.looting_reinforcement_strategy)
+        self._close_mine(team, mine, self.looting_strategy)
 
     def _check_and_maybe_close_mines(self, team: Team, mine: IdleGame) -> None:
         if not self.crabada_w2.mine_is_finished(mine):
@@ -457,7 +459,10 @@ class CrabadaMineBot:
             logger.print_warn(f"Skipping team {team['team_id']} for closing...")
             return
 
-        self._close_mine(team, mine, self.mining_reinforcement_strategy)
+        if self._close_mine(team, mine, self.mining_strategy):
+            message = f"\U0001F980 Crabada Bot Alert \U0001F980\n\n"
+            message += f"Closed up looting of mine {mine['game_id']}, let's start another!"
+            self._send_status_update(True, True, message)
 
     def _check_and_maybe_start_mines(self) -> None:
         available_teams = self.crabada_w2.list_available_teams(self.address)

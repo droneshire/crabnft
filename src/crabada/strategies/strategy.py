@@ -1,6 +1,7 @@
 import typing as T
 from eth_typing import Address
 from eth_typing.encoding import HexStr
+from web3.types import Wei
 
 from crabada.types import CrabForLending, IdleGame, Team, TeamMember
 from crabada.crabada_web2_client import CrabadaWeb2Client
@@ -35,10 +36,10 @@ class Strategy:
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:
         raise NotImplementedError
 
-    def close(self) -> T.Callable[[int], HexStr]:
+    def close(self, game_id: int) -> HexStr:
         raise NotImplementedError
 
-    def reinforce(self) -> T.Callable[[int, int, CrabForLending], HexStr]:
+    def reinforce(self, game_id: int, crabada_id: int, borrow_price: Wei) -> HexStr:
         raise NotImplementedError
 
     def _use_bp_reinforcement(

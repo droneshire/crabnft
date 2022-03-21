@@ -1,6 +1,7 @@
 import typing as T
 from eth_typing import Address
 from eth_typing.encoding import HexStr
+from web3.types import Wei
 
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
@@ -45,11 +46,11 @@ class MiningStrategy(Strategy):
             max_reinforcement_price_tus,
         )
 
-    def close(self) -> T.Callable[[int], HexStr]:
-        return self.crabada_w3.close_game
+    def close(self, game_id: int) -> HexStr:
+        return self.crabada_w3.close_game(game_id)
 
-    def reinforce(self) -> T.Callable[[int, int, CrabForLending], HexStr]:
-        return self.crabada_w3.reinforce_defense
+    def reinforce(self, game_id: int, crabada_id: int, borrow_price: Wei) -> HexStr:
+        return self.crabada_w3.reinforce_defense(game_id, crabada_id, borrow_price)
 
     def _get_best_mine_reinforcement(
         self, team: Team, mine: IdleGame, use_own_crabs: bool = False
