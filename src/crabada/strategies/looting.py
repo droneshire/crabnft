@@ -4,7 +4,7 @@ from eth_typing import Address
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
 from crabada.factional_advantage import get_faction_adjusted_battle_point
-from crabada.strategies.reinforcement import Strategy
+from crabada.strategies.strategy import Strategy
 from crabada.types import CrabForLending, IdleGame, Team, TeamMember
 from utils import logger
 from utils.general import get_pretty_seconds

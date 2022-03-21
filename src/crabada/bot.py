@@ -9,9 +9,9 @@ from web3.types import TxReceipt
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
 from crabada.factional_advantage import get_faction_adjusted_battle_point
-from crabada.strategies.looting_reinforcement import have_reinforced_loot_at_least_once
-from crabada.strategies.mining_reinforcement import have_reinforced_mine_at_least_once
-from crabada.strategies.reinforcement import Strategy
+from crabada.strategies.looting import have_reinforced_loot_at_least_once
+from crabada.strategies.mining import have_reinforced_mine_at_least_once
+from crabada.strategies.strategy import Strategy
 from crabada.types import CrabForLending, IdleGame, Team
 from utils import logger
 from utils.config_types import UserConfig, SmsConfig

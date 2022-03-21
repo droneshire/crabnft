@@ -2,7 +2,7 @@ import typing as T
 from eth_typing import Address
 
 from utils.price import Tus
-from crabada.strategies.reinforcement import Strategy
+from crabada.strategies.strategy import Strategy
 from crabada.types import CrabForLending
 
 
