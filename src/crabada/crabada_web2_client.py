@@ -23,10 +23,18 @@ class CrabadaWeb2Client:
     """
 
     BASE_URL = "https://idle-api.crabada.com/public/idle"
+
+    # reinforcement stuff
+    N_CRAB_PERCENT = 20.0
     REINFORCE_TIME_WINDOW = 60 * (30 - 1)  # 30 minute window + 1 minute buffer
-    N_CRAB_PERCENT = 18.0
+
+    # game facts
     TIME_PER_MINING_ACTION = 60.0 * 30
     MIN_LOOT_GAME_TIME = 60.0 * 60.0 * 1
+
+    # api request limits (scale with teams/crabs)
+    TEAM_AND_MINE_LIMIT = 20
+    CRAB_LIMIT = 50
 
     def get_mine(self, mine_id: int, params: T.Dict[str, T.Any] = {}) -> IdleGame:
         """Get information from the given mine"""
@@ -63,9 +71,9 @@ class CrabadaWeb2Client:
     def list_my_available_crabs_for_reinforcement(
         self, user_address: Address, params: T.Dict[str, T.Any] = {}
     ) -> T.List[Crab]:
-        res = self.list_can_join_game_raw(user_address, params)
+        res = self.list_crabs_in_game_raw(user_address, params)
         try:
-            return [c for c in res["result"]["data"]] or []
+            return [c for c in res["result"]["data"] if c.get("crabada_status", "") == "AVAILABLE"]
         except KeyboardInterrupt:
             raise
         except:
@@ -77,6 +85,8 @@ class CrabadaWeb2Client:
         url = self.BASE_URL + "/crabadas/can-join-team"
         actual_params = {
             "user_address": user_address,
+            "page": 1,
+            "limit": self.CRAB_LIMIT,
         }
         actual_params.update(params)
         try:
@@ -91,7 +101,7 @@ class CrabadaWeb2Client:
     ) -> T.Any:
         url = self.BASE_URL + "/crabadas/in-game"
         actual_params = {
-            "limit": 30,
+            "limit": self.CRAB_LIMIT,
             "page": 1,
             "user_address": user_address,
             "order": "desc",
@@ -139,7 +149,7 @@ class CrabadaWeb2Client:
     def list_mines_raw(self, params: T.Dict[str, T.Any] = {}) -> T.Any:
         url = self.BASE_URL + "/mines"
         actual_params = {
-            "limit": 15,
+            "limit": self.TEAM_AND_MINE_LIMIT,
             "page": 1,
         }
         actual_params.update(params)
@@ -182,7 +192,7 @@ class CrabadaWeb2Client:
 
     def list_teams_raw(self, user_address: Address, params: T.Dict[str, T.Any] = {}) -> T.Any:
         url = self.BASE_URL + "/teams"
-        actual_params = {"limit": 20, "page": 1, "user_address": user_address}
+        actual_params = {"limit": self.TEAM_AND_MINE_LIMIT, "page": 1, "user_address": user_address}
         actual_params.update(params)
         try:
             return requests.request("GET", url, params=actual_params, timeout=5.0).json()
@@ -240,7 +250,7 @@ class CrabadaWeb2Client:
         sorted_affordable_crabs = sorted(
             affordable_crabs, key=lambda c: (-c[lending_category], c.get("price", max_tus))
         )
-        if len(affordable_crabs) < 20:
+        if len(affordable_crabs) < 25:
             nth_crab = len(affordable_crabs) - 1
         else:
             nth_crab = int(math.ceil(self.N_CRAB_PERCENT / 100.0 * len(affordable_crabs)))
@@ -286,7 +296,7 @@ class CrabadaWeb2Client:
     def list_crabs_for_lending_raw(self, params: T.Dict[str, T.Any] = {}) -> T.Any:
         url = self.BASE_URL + "/crabadas/lending"
         actual_params = {
-            "limit": 100,
+            "limit": self.CRAB_LIMIT,
             "page": 1,
             "orderBy": "price",
             "order": "asc",

@@ -182,9 +182,9 @@ class Web3Client:
         https://ethereum.stackexchange.com/a/113373/89782)
         """
         latest_block = self.w3.eth.get_block("latest")
-        baseFeeInWei = latest_block["baseFeePerGas"]  # in wei
-        baseFeeInGwei = int(Web3.fromWei(baseFeeInWei, "gwei"))
-        return 2 * baseFeeInGwei + self.max_priority_fee_per_gas_in_gwei
+        base_fee_wei = latest_block["baseFeePerGas"]  # in wei
+        base_fee_gwei = int(Web3.fromWei(base_fee_wei, "gwei"))
+        return 2 * base_fee_gwei + self.max_priority_fee_per_gas_in_gwei
 
     def get_latest_block(self) -> BlockData:
         """

@@ -54,6 +54,8 @@ class Strategy:
         logger.print_normal(f"Mine[{mine['game_id']}]: using highest bp")
 
         if use_own_crabs:
+            allowed_crabs_str = ", ".join([str(c) for c in allowed_reinforcing_crabs])
+            logger.print_normal(f"Checking from approved reinforcements {allowed_crabs_str}")
             reinforcement_crab = self.crabada_w2.get_my_best_bp_crab_for_lending(self.address)
 
         if (
@@ -77,6 +79,8 @@ class Strategy:
         logger.print_normal(f"Mine[{mine['game_id']}]: using highest mp")
 
         if use_own_crabs:
+            allowed_crabs_str = ", ".join([str(c) for c in allowed_reinforcing_crabs])
+            logger.print_normal(f"Checking from approved reinforcements {allowed_crabs_str}")
             reinforcement_crab = self.crabada_w2.get_my_best_mp_crab_for_lending(self.address)
 
         if (
