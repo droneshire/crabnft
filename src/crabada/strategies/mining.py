@@ -46,11 +46,19 @@ class MiningStrategy(Strategy):
             max_reinforcement_price_tus,
         )
 
-    def close(self, game_id: int) -> HexStr:
-        return self.crabada_w3.close_game(game_id)
+    def start(self, team_id: int) -> T.Any:
+        tx_hash = self.crabada_w3.start_game(team_id)
+        return self.crabada_w3.get_transaction_receipt(tx_hash)
 
-    def reinforce(self, game_id: int, crabada_id: int, borrow_price: Wei) -> HexStr:
-        return self.crabada_w3.reinforce_defense(game_id, crabada_id, borrow_price)
+    def close(self, game_id: int) -> T.Any:
+        logger.print_bold(f"Mine[{game_id}]: Closing game")
+        tx_hash = self.crabada_w3.close_game(game_id)
+        return self.crabada_w3.get_transaction_receipt(tx_hash)
+
+    def reinforce(self, game_id: int, crabada_id: int, borrow_price: Wei) -> T.Any:
+        logger.print_bold(f"Mine[{game_id}]: reinforcing")
+        tx_hash = self.crabada_w3.reinforce_defense(game_id, crabada_id, borrow_price)
+        return self.crabada_w3.get_transaction_receipt(tx_hash)
 
     def _get_best_mine_reinforcement(
         self, team: Team, mine: IdleGame, use_own_crabs: bool = False

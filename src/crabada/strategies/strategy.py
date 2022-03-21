@@ -36,10 +36,13 @@ class Strategy:
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:
         raise NotImplementedError
 
-    def close(self, game_id: int) -> HexStr:
+    def start(self, team_id: int) -> T.Any:
         raise NotImplementedError
 
-    def reinforce(self, game_id: int, crabada_id: int, borrow_price: Wei) -> HexStr:
+    def close(self, game_id: int) -> T.Any:
+        raise NotImplementedError
+
+    def reinforce(self, game_id: int, crabada_id: int, borrow_price: Wei) -> T.Any:
         raise NotImplementedError
 
     def _use_bp_reinforcement(

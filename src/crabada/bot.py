@@ -208,7 +208,7 @@ class CrabadaMineBot:
         self.game_stats["avax_gas_usd"] += avax_gas_usd
         logger.print_bold(f"Paid {avax_gas} AVAX (${avax_gas_usd:.2f}) in gas")
 
-    def _print_mine_status(self) -> None:
+    def _print_mine_loot_status(self) -> None:
         open_mines = self.crabada_w2.list_my_open_mines(self.address)
         open_loots = self.crabada_w2.list_my_open_loots(self.address)
 
@@ -243,7 +243,7 @@ class CrabadaMineBot:
                     inx + 1,
                     loot["game_id"],
                     loot["round"],
-                    self.crabada_w2.get_remaining_time_formatted(loot),
+                    self.crabada_w2.get_remaining_time_for_action_formatted(loot),
                     "winning" if self.crabada_w2.loot_is_winning(loot_data) else "losing",
                 )
             )
@@ -328,10 +328,9 @@ class CrabadaMineBot:
             return True
 
         with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
-            tx_hash = strategy.reinforce(
+            tx_receipt = strategy.reinforce(
                 team["game_id"], crabada_id, reinforcement_crab["price"]
             )
-            tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
 
             self._calculate_and_log_gas_price(tx_receipt)
 
@@ -349,18 +348,15 @@ class CrabadaMineBot:
 
         return False
 
-    def _close_mine(self, team: Team, mine: IdleGame, strategy: Strategy) -> None:
+    def _close_mine(self, team: Team, mine: IdleGame, strategy: Strategy) -> bool:
         if self._is_gas_too_high(margin=0):
             logger.print_warn(
                 f"Skipping closing of Game[{mine.get('game_id', '')}] due to high gas cost"
             )
-            return
-
-        logger.print_normal(f"Attempting to close game {team['game_id']}")
+            return False
 
         with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
-            tx_hash = strategy.close(team["game_id"])
-            tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
+            tx_receipt = strategy.close(team["game_id"])
 
             self._calculate_and_log_gas_price(tx_receipt)
 
@@ -369,28 +365,18 @@ class CrabadaMineBot:
                     f"Error closing game {team['game_id']}: {tx_receipt['status']}"
                 )
                 return False
+            logger.print_normal(tx_receipt)
 
-        outcome = (
-            "won \U0001F389"
-            if mine.get("winner_team_id", -1) == team["team_id"]
-            else "lost \U0001F915"
-        )
-        message = f"Successfully closed mine {team['game_id']}, we {outcome}"
-        self._send_status_update(
-            self.config["get_sms_updates"], self.config["get_email_updates"], message
-        )
         self.time_since_last_alert = None
         self._update_bot_stats(team, mine)
-        logger.print_ok_arrow(message)
 
         return True
 
-    def _start_mine(self, team: Team) -> None:
+    def _start_mine(self, team: Team) -> bool:
         logger.print_normal(f"Attemting to start new mine with team {team['team_id']}!")
 
         with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
-            tx_hash = self.crabada_w3.start_game(team["team_id"])
-            tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
+            tx_receipt = self.mining_strategy.start(team["team_id"])
 
             self._calculate_and_log_gas_price(tx_receipt)
 
@@ -398,7 +384,9 @@ class CrabadaMineBot:
                 logger.print_fail(
                     f"Error starting mine for team {team['team_id']}: {tx_receipt['status']}"
                 )
-                return
+                return False
+
+        return True
 
         logger.print_ok_arrow(f"Successfully started mine for team {team['team_id']}")
         self.time_since_last_alert = None
@@ -449,7 +437,10 @@ class CrabadaMineBot:
             logger.print_warn(f"Skipping team {team['team_id']} for settling...")
             return
 
-        self._close_mine(team, mine, self.looting_strategy)
+        if self._close_mine(team, mine, self.looting_strategy):
+            message = f"\U0001F980 Crabada Bot Alert \U0001F980\n\n"
+            message += f"Closed up looting of mine {mine['game_id']}, let's start another!"
+            self._send_status_update(True, True, message)
 
     def _check_and_maybe_close_mines(self, team: Team, mine: IdleGame) -> None:
         if not self.crabada_w2.mine_is_finished(mine):
@@ -460,9 +451,16 @@ class CrabadaMineBot:
             return
 
         if self._close_mine(team, mine, self.mining_strategy):
-            message = f"\U0001F980 Crabada Bot Alert \U0001F980\n\n"
-            message += f"Closed up looting of mine {mine['game_id']}, let's start another!"
-            self._send_status_update(True, True, message)
+            outcome = (
+                "won \U0001F389"
+                if mine.get("winner_team_id", -1) == team["team_id"]
+                else "lost \U0001F915"
+            )
+            message = f"Successfully closed mine {team['game_id']}, we {outcome}"
+            self._send_status_update(
+                self.config["get_sms_updates"], self.config["get_email_updates"], message
+            )
+            logger.print_ok(message)
 
     def _check_and_maybe_start_mines(self) -> None:
         available_teams = self.crabada_w2.list_available_teams(self.address)
@@ -535,13 +533,11 @@ class CrabadaMineBot:
         gas_price_gwei = "UNKNOWN" if gas_price_gwei is None else gas_price_gwei
         logger.print_ok(f"AVAX/USD: ${self.avax_price_usd:.2f}, Gas: {gas_price_gwei:.2f}")
 
-        self._print_mine_status()
+        self._print_mine_loot_status()
         self._check_and_maybe_close()
-        print(".")
         self._check_and_maybe_start_mines()
-        print("*")
         self._check_and_maybe_reinforce()
-        print("@")
+
         if self.updated_game_stats:
             self.updated_game_stats = False
             self._print_bot_stats()

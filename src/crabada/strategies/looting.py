@@ -45,11 +45,18 @@ class LootingStrategy(Strategy):
             max_reinforcement_price_tus,
         )
 
-    def close(self, game_id: int) -> HexStr:
-        return self.crabada_w3.settle_game
+    def start(self, team_id: int) -> T.Dict[T.Any, T.Any]:
+        return {"status": 0}
 
-    def reinforce(self, game_id: int, crabada_id: int, borrow_price: Wei) -> HexStr:
-        return self.crabada_w3.reinforce_attack(game_id, crabada_id, borrow_price)
+    def close(self, game_id: int) -> T.Dict[T.Any, T.Any]:
+        logger.print_bold(f"Loot[{game_id}]: Settling game")
+        tx_hash = self.crabada_w3.settle_game(game_id)
+        return self.crabada_w3.get_transaction_receipt(tx_hash)
+
+    def reinforce(self, game_id: int, crabada_id: int, borrow_price: Wei) -> T.Dict[T.Any, T.Any]:
+        logger.print_bold(f"Loot[{game_id}]: reinforcing")
+        tx_hash = self.crabada_w3.reinforce_attack(game_id, crabada_id, borrow_price)
+        return self.crabada_w3.get_transaction_receipt(tx_hash)
 
     def _get_best_mine_reinforcement(
         self, team: Team, mine: IdleGame, use_own_crabs: bool = False

@@ -47,21 +47,19 @@ def get_faction_adjusted_battle_point(team: Team, game: IdleGame, verbose: bool 
     reinforce_points = total_points - team_points
 
     if verbose:
-        logger.print_normal(
-            f"\tGame[{game['game_id']}]: Theirs: {their_faction} Ours: {our_faction}"
-        )
+        logger.print_normal(f"Game[{game['game_id']}]: Theirs: {their_faction} Ours: {our_faction}")
 
     if our_faction in FACTIONAL_ADVANTAGE.get(their_faction, []):
         if verbose:
-            logger.print_normal(
-                f"\tGame[{game['game_id']}]: Battle point decrease of {(1 - FACTIONAL_ADVANTAGE_MULT) * 100.0:.2f}%"
+            logger.print_ok_blue_arrow(
+                f"Game[{game['game_id']}]: Battle point decrease of {(1 - FACTIONAL_ADVANTAGE_MULT) * 100.0:.2f}%"
             )
         return int(math.ceil(team_points * FACTIONAL_ADVANTAGE_MULT)) + reinforce_points
 
     if our_faction == Faction.NO_FACTION:
         if verbose:
-            logger.print_ok_arrow(
-                f"\tGame[{game['game_id']}]: Battle point decrease of {(1 - NEUTRAL_ADVANTAGE_MULT)* 100.0:.2f}%"
+            logger.print_ok_blue_arrow(
+                f"Game[{game['game_id']}]: Battle point decrease of {(1 - NEUTRAL_ADVANTAGE_MULT)* 100.0:.2f}%"
             )
         return int(math.ceil(team_points * NEUTRAL_ADVANTAGE_MULT)) + reinforce_points
 
