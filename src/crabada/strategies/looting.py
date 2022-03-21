@@ -167,6 +167,9 @@ class DelayReinforcementStrategy(LootingStrategy):
         )
 
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:
+        if self.crabada_w2.loot_past_settle_time(mine):
+            return True
+
         time_remaining = self.crabada_w2.get_remaining_time_for_action(mine)
         if time_remaining < self.MAX_TIME_REMAINING_DELTA:
             return True

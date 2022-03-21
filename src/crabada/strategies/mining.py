@@ -51,7 +51,7 @@ class MiningStrategy(Strategy):
         return self.crabada_w3.get_transaction_receipt(tx_hash)
 
     def close(self, game_id: int) -> T.Any:
-        logger.print_bold(f"Mine[{game_id}]: Closing game")
+        logger.print_normal(f"Mine[{game_id}]: Closing game")
         tx_hash = self.crabada_w3.close_game(game_id)
         return self.crabada_w3.get_transaction_receipt(tx_hash)
 

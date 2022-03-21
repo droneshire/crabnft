@@ -472,15 +472,17 @@ class CrabadaWeb2Client:
         return CrabadaWeb2Client.get_remaining_time(mine) <= 0
 
     @staticmethod
-    def loot_is_finished(mine: IdleGame) -> bool:
-        """
-        Return true if the given game is past its end_time
-        """
-        process = mine["process"]
-        actions = [p["action"] for p in process]
+    def loot_past_settle_time(mine: IdleGame) -> bool:
         time_since_start = time.time() - mine["start_time"]
 
-        if time_since_start < CrabadaWeb2Client.MIN_LOOT_GAME_TIME:
+        return time_since_start > CrabadaWeb2Client.MIN_LOOT_GAME_TIME
+
+    @staticmethod
+    def loot_is_able_to_be_settled(mine: IdleGame) -> bool:
+        """
+        Return true if the given loot is able to be settled
+        """
+        if not CrabadaWeb2Client.loot_past_settle_time(mine):
             return False
 
         return not CrabadaWeb2Client.loot_needs_reinforcement(mine)

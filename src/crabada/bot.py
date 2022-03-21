@@ -365,7 +365,6 @@ class CrabadaMineBot:
                     f"Error closing game {team['game_id']}: {tx_receipt['status']}"
                 )
                 return False
-            logger.print_normal(tx_receipt)
 
         self.time_since_last_alert = None
         self._update_bot_stats(team, mine)
@@ -430,7 +429,7 @@ class CrabadaMineBot:
         )
 
     def _check_and_maybe_close_loots(self, team: Team, mine: IdleGame) -> None:
-        if not self.crabada_w2.loot_is_finished(mine):
+        if not self.crabada_w2.loot_is_able_to_be_settled(mine):
             return
 
         if not self._is_team_allowed_to_loot(team):

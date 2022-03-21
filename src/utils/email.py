@@ -14,11 +14,13 @@ def send_email(
     to_addresses: T.List[str],
     subject: str,
     content: T.List[str],
+    verbose: bool = False,
 ) -> None:
     with yagmail.SMTP(email["address"], email["password"]) as email_sender:
         if isinstance(to_addresses, str):
             to_addresses = [to_addresses]
         email_sender.send(to_addresses, subject, content)
-        logger.print_ok(f"To: {', '.join(to_addresses)}\nFrom: {email['address']}")
-        logger.print_ok(f"Subject: {subject}")
-        logger.print_ok(f"{content}")
+        if verbose:
+            logger.print_ok(f"To: {', '.join(to_addresses)}\nFrom: {email['address']}")
+            logger.print_ok(f"Subject: {subject}")
+            logger.print_ok(f"{content}")
