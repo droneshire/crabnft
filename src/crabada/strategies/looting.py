@@ -13,15 +13,6 @@ from utils.general import get_pretty_seconds
 from utils.price import Tus
 
 
-def have_reinforced_loot_at_least_once(crabada_w2: CrabadaWeb2Client, team: Team) -> bool:
-    mine = crabada_w2.get_mine(team["game_id"])
-    if mine is None:
-        return False
-
-    process = mine.get("process", [])
-    return "reinforce-attack" in [p["action"] for p in process]
-
-
 class LootingStrategy(Strategy):
     """
     Base class for looting strategies
@@ -49,14 +40,25 @@ class LootingStrategy(Strategy):
         return {"status": 0}
 
     def close(self, game_id: int) -> T.Dict[T.Any, T.Any]:
-        logger.print_bold(f"Loot[{game_id}]: Settling game")
+        logger.print_normal(f"Loot[{game_id}]: Settling game")
         tx_hash = self.crabada_w3.settle_game(game_id)
         return self.crabada_w3.get_transaction_receipt(tx_hash)
 
     def reinforce(self, game_id: int, crabada_id: int, borrow_price: Wei) -> T.Dict[T.Any, T.Any]:
-        logger.print_bold(f"Loot[{game_id}]: reinforcing")
+        logger.print_normal(f"Loot[{game_id}]: reinforcing")
         tx_hash = self.crabada_w3.reinforce_attack(game_id, crabada_id, borrow_price)
         return self.crabada_w3.get_transaction_receipt(tx_hash)
+
+    def should_reinforce(self, mine) -> bool:
+        return self.crabada_w2.loot_needs_reinforcement(mine)
+
+    def _have_reinforced_at_least_once(self, mine: IdleGame) -> bool:
+        mine = self.crabada_w2.get_mine(mine.get("game_id", None))
+        if mine is None:
+            return False
+
+        process = mine.get("process", [])
+        return "reinforce-attack" in [p["action"] for p in process]
 
     def _get_best_mine_reinforcement(
         self, team: Team, mine: IdleGame, use_own_crabs: bool = False
@@ -81,7 +83,7 @@ class LootingStrategy(Strategy):
             return None
 
         if (
-            not have_reinforced_loot_at_least_once(self.crabada_w2, team)
+            not self._have_reinforced_at_least_once(mine)
             and reinforcement_crab["battle_point"] < self.MIN_LOOT_POINT
         ):
             logger.print_warn(
@@ -116,7 +118,7 @@ class PreferOtherMpCrabs(LootingStrategy):
         return super()._get_best_mine_reinforcement(team, mine, use_own_crabs=False)
 
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:
-        return True
+        return super().should_reinforce(mine)
 
 
 class PreferOwnMpCrabs(LootingStrategy):
@@ -143,12 +145,12 @@ class PreferOwnMpCrabs(LootingStrategy):
         return super()._get_best_mine_reinforcement(team, mine, use_own_crabs=True)
 
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:
-        return True
+        return super().should_reinforce(mine)
 
 
 class DelayReinforcementStrategy(LootingStrategy):
     MAX_TIME_REMAINING_DELTA = 60.0 * 3
-    DELAY_BEFORE_REINFORCING = 60.0 * 19
+    DELAY_BEFORE_REINFORCING = 60.0 * 3
 
     def __init__(
         self,
@@ -167,6 +169,9 @@ class DelayReinforcementStrategy(LootingStrategy):
         )
 
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:
+        if not super().should_reinforce(mine):
+            return False
+
         if self.crabada_w2.loot_past_settle_time(mine):
             return True
 
@@ -174,15 +179,20 @@ class DelayReinforcementStrategy(LootingStrategy):
         if time_remaining < self.MAX_TIME_REMAINING_DELTA:
             return True
 
+        if super()._have_reinforced_at_least_once(team):
+            return True
+
         time_since_last_action = self.crabada_w2.get_time_since_last_action(mine)
         if time_since_last_action > self.DELAY_BEFORE_REINFORCING:
             return True
 
-        time_till_action_pretty = get_pretty_seconds(
-            int(self.DELAY_BEFORE_REINFORCING - time_since_last_action)
-        )
+        time_till_action = self.DELAY_BEFORE_REINFORCING - time_since_last_action
+        time_till_end_loot = self.crabada_w2.get_remaining_loot_time(mine)
+
+        time_left_pretty = get_pretty_seconds(int(min(time_till_action, time_till_end_loot)))
+
         logger.print_warn(
-            f"Loot[{mine['game_id']}]:Not reinforcing for {time_till_action_pretty} due to delay strategy"
+            f"Loot[{mine['game_id']}]:Not reinforcing for {time_left_pretty} due to delay strategy"
         )
         return False
 

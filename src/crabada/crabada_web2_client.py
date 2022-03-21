@@ -504,6 +504,19 @@ class CrabadaWeb2Client:
         return int(game.get("end_time", now) - now)
 
     @staticmethod
+    def get_remaining_loot_time(game: IdleGame) -> int:
+        """
+        Seconds to the end of the given loot before can settle
+        """
+        now = time.time()
+        end_time = game.get("start_time", now) + CrabadaWeb2Client.MIN_LOOT_GAME_TIME
+        return int(end_time - now)
+
+    @staticmethod
+    def get_remaining_loot_time_formatted(game: IdleGame) -> str:
+        return get_pretty_seconds(CrabadaWeb2Client.get_remaining_loot_time(game))
+
+    @staticmethod
     def get_time_since_last_action(game: IdleGame) -> int:
         """
         Seconds since last game action

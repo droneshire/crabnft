@@ -9,8 +9,6 @@ from web3.types import TxReceipt
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
 from crabada.factional_advantage import get_faction_adjusted_battle_point
-from crabada.strategies.looting import have_reinforced_loot_at_least_once
-from crabada.strategies.mining import have_reinforced_mine_at_least_once
 from crabada.strategies.strategy import Strategy
 from crabada.types import CrabForLending, IdleGame, Team
 from utils import logger
@@ -243,7 +241,7 @@ class CrabadaMineBot:
                     inx + 1,
                     loot["game_id"],
                     loot["round"],
-                    self.crabada_w2.get_remaining_time_for_action_formatted(loot),
+                    self.crabada_w2.get_remaining_loot_time_formatted(loot),
                     "winning" if self.crabada_w2.loot_is_winning(loot_data) else "losing",
                 )
             )
@@ -263,12 +261,11 @@ class CrabadaMineBot:
         team: Team,
         mine: IdleGame,
         strategy: Strategy,
-        have_reinforced_once: bool,
     ) -> None:
         if not strategy.should_reinforce(mine):
             return
 
-        reinforce_margin = 30 if have_reinforced_once else 0
+        reinforce_margin = 30 if strategy._have_reinforced_at_least_once(team) else 0
         if self._is_gas_too_high(margin=reinforce_margin):
             logger.print_warn(
                 f"Skipping reinforcement of Mine[{mine['game_id']}] due to high gas cost"
@@ -399,9 +396,6 @@ class CrabadaMineBot:
         return team["team_id"] in teams_specified_to_loot
 
     def _check_and_maybe_reinforce_loots(self, team: Team, mine: IdleGame) -> None:
-        if not self.crabada_w2.loot_needs_reinforcement(mine):
-            return
-
         if not self._is_team_allowed_to_loot(team):
             logger.print_warn(f"Skipping team {team['team_id']} for loot reinforcing...")
             return
@@ -410,13 +404,9 @@ class CrabadaMineBot:
             team,
             mine,
             self.looting_strategy,
-            have_reinforced_mine_at_least_once(self.crabada_w2, team),
         )
 
     def _check_and_maybe_reinforce_mines(self, team: Team, mine: IdleGame) -> None:
-        if not self.crabada_w2.mine_needs_reinforcement(mine):
-            return
-
         if not self._is_team_allowed_to_mine(team):
             logger.print_warn(f"Skipping team {team['team_id']} for mine reinforcing...")
             return
@@ -425,7 +415,6 @@ class CrabadaMineBot:
             team,
             mine,
             self.mining_strategy,
-            have_reinforced_mine_at_least_once(self.crabada_w2, team),
         )
 
     def _check_and_maybe_close_loots(self, team: Team, mine: IdleGame) -> None:
@@ -509,10 +498,10 @@ class CrabadaMineBot:
             if mine is None:
                 continue
 
-            if mine["game_id"] in loots:
+            if mine.get("game_id", "") in loots:
                 self._check_and_maybe_close_loots(team, mine)
 
-            if mine["game_id"] in mines:
+            if mine.get("game_id", "") in mines:
                 self._check_and_maybe_close_mines(team, mine)
 
     def get_lifetime_stats(self) -> T.Dict[str, T.Any]:

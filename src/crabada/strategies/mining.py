@@ -13,15 +13,6 @@ from utils.general import get_pretty_seconds
 from utils.price import Tus
 
 
-def have_reinforced_mine_at_least_once(crabada_w2: CrabadaWeb2Client, team: Team) -> bool:
-    mine = crabada_w2.get_mine(team["game_id"])
-    if mine is None:
-        return False
-
-    process = mine.get("process", [])
-    return "reinforce-defense" in [p["action"] for p in process]
-
-
 class MiningStrategy(Strategy):
     """
     Base class for mining strategies
@@ -56,9 +47,17 @@ class MiningStrategy(Strategy):
         return self.crabada_w3.get_transaction_receipt(tx_hash)
 
     def reinforce(self, game_id: int, crabada_id: int, borrow_price: Wei) -> T.Any:
-        logger.print_bold(f"Mine[{game_id}]: reinforcing")
+        logger.print_normal(f"Mine[{game_id}]: reinforcing")
         tx_hash = self.crabada_w3.reinforce_defense(game_id, crabada_id, borrow_price)
         return self.crabada_w3.get_transaction_receipt(tx_hash)
+
+    def _have_reinforced_at_least_once(self, mine: IdleGame) -> bool:
+        mine = self.crabada_w2.get_mine(mine.get("game_id", None))
+        if mine is None:
+            return False
+
+        process = mine.get("process", [])
+        return "reinforce-defense" in [p["action"] for p in process]
 
     def _get_best_mine_reinforcement(
         self, team: Team, mine: IdleGame, use_own_crabs: bool = False
@@ -86,7 +85,7 @@ class MiningStrategy(Strategy):
             return None
 
         if (
-            not have_reinforced_mine_at_least_once(self.crabada_w2, team)
+            not self._have_reinforced_at_least_once(mine)
             and reinforcement_crab["mine_point"] < self.MIN_MINE_POINT
         ):
             logger.print_warn(
@@ -172,8 +171,14 @@ class DelayReinforcementStrategy(MiningStrategy):
         )
 
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:
+        if not self.crabada_w2.mine_needs_reinforcement(mine):
+            return
+
         time_remaining = self.crabada_w2.get_remaining_time_for_action(mine)
         if time_remaining < self.MAX_TIME_REMAINING_DELTA:
+            return True
+
+        if super()._have_reinforced_at_least_once(mine):
             return True
 
         time_since_last_action = self.crabada_w2.get_time_since_last_action(mine)
