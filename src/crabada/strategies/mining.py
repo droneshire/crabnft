@@ -1,5 +1,6 @@
 import typing as T
 from eth_typing import Address
+from eth_typing.encoding import HexStr
 
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
