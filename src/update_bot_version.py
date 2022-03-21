@@ -11,6 +11,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--new-version", help="new version number")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--change-list", help="Changelist")
     return parser.parse_args()
 
 
@@ -20,13 +21,18 @@ def main() -> None:
     if args.dry_run:
         logger.print_warn(f"DRY RUN ACTIVATED")
 
-    logger.print_ok(f"Updating bot version to {args.new_version}")
+    text = f"\U0001F980   \U0001F916 **Bot upgraded! Version {args.new_version}**\n"
 
-    if args.dry_run:
-        return
+    if args.change_list:
+        for line in args.change_list.splitlines():
+            if line.startswith("-"):
+                line = f"\U000027A1  {line[1:]} \n"
+            text += line
 
-    text = f"\U0001F980   \U0001F916 **Bot upgraded! Version {args.new_version}**"
-    discord.get_discord_hook().send(text)
+    logger.print_normal(text)
+
+    if not args.dry_run:
+        discord.get_discord_hook().send(text)
 
 
 if __name__ == "__main__":
