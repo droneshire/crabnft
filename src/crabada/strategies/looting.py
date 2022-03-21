@@ -179,7 +179,7 @@ class DelayReinforcementStrategy(LootingStrategy):
         if time_remaining < self.MAX_TIME_REMAINING_DELTA:
             return True
 
-        if super()._have_reinforced_at_least_once(team):
+        if super()._have_reinforced_at_least_once(mine):
             return True
 
         time_since_last_action = self.crabada_w2.get_time_since_last_action(mine)
