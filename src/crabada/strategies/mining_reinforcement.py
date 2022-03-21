@@ -2,8 +2,9 @@ import typing as T
 from eth_typing import Address
 
 from crabada.crabada_web2_client import CrabadaWeb2Client
+from crabada.crabada_web3_client import CrabadaWeb3Client
 from crabada.factional_advantage import get_faction_adjusted_battle_point
-from crabada.strategies.reinforcement import ReinforcementStrategy
+from crabada.strategies.reinforcement import Strategy
 from crabada.types import CrabForLending, IdleGame, Team, TeamMember
 from utils import logger
 from utils.general import get_pretty_seconds
@@ -19,7 +20,7 @@ def have_reinforced_mine_at_least_once(crabada_w2: CrabadaWeb2Client, team: Team
     return "reinforce-defense" in [p["action"] for p in process]
 
 
-class MiningStrategy(ReinforcementStrategy):
+class MiningStrategy(Strategy):
     """
     Base class for mining strategies
     """
@@ -31,17 +32,23 @@ class MiningStrategy(ReinforcementStrategy):
         self,
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
-        crabada_w3_methods: T.Dict[str, T.Callable],
+        crabada_w3_client: CrabadaWeb3Client,
         reinforcing_crabs: T.List[TeamMember],
         max_reinforcement_price_tus: Tus,
     ) -> None:
         super().__init__(
             address,
             crabada_w2_client,
-            crabada_w3_methods,
+            crabada_w3_client,
             reinforcing_crabs,
             max_reinforcement_price_tus,
         )
+
+    def close(self) -> T.Callable[[int], HexStr]:
+        return self.crabada_w3.close_game
+
+    def reinforce(self) -> T.Callable[[int, int, CrabForLending], HexStr]:
+        return self.crabada_w3.reinforce_defense
 
     def _get_best_mine_reinforcement(
         self, team: Team, mine: IdleGame, use_own_crabs: bool = False
@@ -85,14 +92,14 @@ class PreferOtherMpCrabs(MiningStrategy):
         self,
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
-        crabada_w3_methods: T.Dict[str, T.Callable],
+        crabada_w3_client: CrabadaWeb3Client,
         reinforcing_crabs: T.List[TeamMember],
         max_reinforcement_price_tus: Tus,
     ) -> None:
         super().__init__(
             address,
             crabada_w2_client,
-            crabada_w3_methods,
+            crabada_w3_client,
             reinforcing_crabs,
             max_reinforcement_price_tus,
         )
@@ -112,14 +119,14 @@ class PreferOwnMpCrabs(MiningStrategy):
         self,
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
-        crabada_w3_methods: T.Dict[str, T.Callable],
+        crabada_w3_client: CrabadaWeb3Client,
         reinforcing_crabs: T.List[TeamMember],
         max_reinforcement_price_tus: Tus,
     ) -> None:
         super().__init__(
             address,
             crabada_w2_client,
-            crabada_w3_methods,
+            crabada_w3_client,
             reinforcing_crabs,
             max_reinforcement_price_tus,
         )
@@ -142,14 +149,14 @@ class DelayReinforcementStrategy(MiningStrategy):
         self,
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
-        crabada_w3_methods: T.Dict[str, T.Callable],
+        crabada_w3_client: CrabadaWeb3Client,
         reinforcing_crabs: T.List[TeamMember],
         max_reinforcement_price_tus: Tus,
     ) -> None:
         super().__init__(
             address,
             crabada_w2_client,
-            crabada_w3_methods,
+            crabada_w3_client,
             reinforcing_crabs,
             max_reinforcement_price_tus,
         )
@@ -177,14 +184,14 @@ class PreferOtherMpCrabsAndDelayReinforcement(DelayReinforcementStrategy):
         self,
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
-        crabada_w3_methods: T.Dict[str, T.Callable],
+        crabada_w3_client: CrabadaWeb3Client,
         reinforcing_crabs: T.List[TeamMember],
         max_reinforcement_price_tus: Tus,
     ) -> None:
         super().__init__(
             address,
             crabada_w2_client,
-            crabada_w3_methods,
+            crabada_w3_client,
             reinforcing_crabs,
             max_reinforcement_price_tus,
         )
@@ -204,14 +211,14 @@ class PreferOwnMpCrabsAndDelayReinforcement(DelayReinforcementStrategy):
         self,
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
-        crabada_w3_methods: T.Dict[str, T.Callable],
+        crabada_w3_client: CrabadaWeb3Client,
         reinforcing_crabs: T.List[TeamMember],
         max_reinforcement_price_tus: Tus,
     ) -> None:
         super().__init__(
             address,
             crabada_w2_client,
-            crabada_w3_methods,
+            crabada_w3_client,
             reinforcing_crabs,
             max_reinforcement_price_tus,
         )

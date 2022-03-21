@@ -1,18 +1,20 @@
 import typing as T
 from eth_typing import Address
+from eth_typing.encoding import HexStr
 
 from crabada.types import CrabForLending, IdleGame, Team, TeamMember
 from crabada.crabada_web2_client import CrabadaWeb2Client
+from crabada.crabada_web3_client import CrabadaWeb3Client
 from utils import logger
 from utils.price import Tus
 
 
-class ReinforcementStrategy:
+class Strategy:
     def __init__(
         self,
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
-        crabada_w3_methods: T.Dict[str, T.Callable],
+        crabada_w3_client: CrabadaWeb3Client,
         reinforcing_crabs: T.List[TeamMember],
         max_reinforcement_price_tus: Tus,
     ) -> None:
@@ -20,7 +22,7 @@ class ReinforcementStrategy:
         self.max_reinforcement_price_tus = max_reinforcement_price_tus
         self.address = address
         self.crabada_w2 = crabada_w2_client
-        self.crabada_w3_methods = crabada_w3_methods
+        self.crabada_w3 = crabada_w3_client
 
         self.reinforcement_search_backoff = 0
         self.time_since_last_attack = None  # T.Optional[float]
@@ -31,6 +33,12 @@ class ReinforcementStrategy:
         raise NotImplementedError
 
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:
+        raise NotImplementedError
+
+    def close(self) -> T.Callable[[int], HexStr]:
+        raise NotImplementedError
+
+    def reinforce(self) -> T.Callable[[int, int, CrabForLending], HexStr]:
         raise NotImplementedError
 
     def _use_bp_reinforcement(

@@ -11,7 +11,7 @@ from crabada.crabada_web3_client import CrabadaWeb3Client
 from crabada.factional_advantage import get_faction_adjusted_battle_point
 from crabada.strategies.looting_reinforcement import have_reinforced_loot_at_least_once
 from crabada.strategies.mining_reinforcement import have_reinforced_mine_at_least_once
-from crabada.strategies.reinforcement import ReinforcementStrategy
+from crabada.strategies.reinforcement import Strategy
 from crabada.types import CrabForLending, IdleGame, Team
 from utils import logger
 from utils.config_types import UserConfig, SmsConfig
@@ -74,25 +74,18 @@ class CrabadaMineBot:
         self.game_stats = NULL_GAME_STATS
         self.updated_game_stats = True
         self.avax_price_usd = 0.0
-        looting_methods = {
-            "reinforce": self.crabada_w3.reinforce_attack,
-            "close": self.crabada_w3.settle_game,
-        }
-        mining_methods = {
-            "reinforce": self.crabada_w3.reinforce_defense,
-            "close": self.crabada_w3.close_game,
-        }
+
         self.mining_reinforcement_strategy = self.config["mining_reinforcement_strategy"](
             self.address,
             self.crabada_w2,
-            mining_methods,
+            self.crabada_w3,
             self.config["reinforcing_crabs"],
             self.config["max_reinforcement_price_tus"],
         )
         self.looting_reinforcement_strategy = self.config["looting_reinforcement_strategy"](
             self.address,
             self.crabada_w2,
-            looting_methods,
+            self.crabada_w3,
             self.config["reinforcing_crabs"],
             self.config["max_reinforcement_price_tus"],
         )
@@ -269,7 +262,7 @@ class CrabadaMineBot:
         self,
         team: Team,
         mine: IdleGame,
-        reinforcement_strategy: ReinforcementStrategy,
+        reinforcement_strategy: Strategy,
         have_reinforced_once: bool,
     ) -> None:
         if not reinforcement_strategy.should_reinforce(mine):
@@ -290,7 +283,7 @@ class CrabadaMineBot:
                 team,
                 mine,
                 reinforcement_crab,
-                reinforcement_strategy.crabada_w3_methods["reinforce"],
+                reinforcement_strategy,
             ):
                 last_reinforcement_search_backoff = self.reinforcement_search_backoff
                 self.reinforcement_search_backoff = max(0, self.reinforcement_search_backoff - 1)
@@ -312,7 +305,7 @@ class CrabadaMineBot:
         team: Team,
         mine: IdleGame,
         reinforcement_crab: CrabForLending,
-        w3_reinforce_method: T.Callable[[int, int, CrabForLending], None],
+        reinforcement_strategy: Strategy,
     ) -> bool:
         if reinforcement_crab is None:
             logger.print_warn(f"Mine[{mine['game_id']}: Unable to find suitable reinforcement...")
@@ -335,7 +328,9 @@ class CrabadaMineBot:
             return True
 
         with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
-            tx_hash = w3_reinforce_method(team["game_id"], crabada_id, reinforcement_crab["price"])
+            tx_hash = reinforcement_strategy.reinforce(
+                team["game_id"], crabada_id, reinforcement_crab["price"]
+            )
             tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
 
             self._calculate_and_log_gas_price(tx_receipt)
@@ -354,9 +349,7 @@ class CrabadaMineBot:
 
         return False
 
-    def _close_mine(
-        self, team: Team, mine: IdleGame, reinforcement_strategy: ReinforcementStrategy
-    ) -> None:
+    def _close_mine(self, team: Team, mine: IdleGame, reinforcement_strategy: Strategy) -> None:
         if self._is_gas_too_high(margin=0):
             logger.print_warn(
                 f"Skipping closing of Game[{mine.get('game_id', '')}] due to high gas cost"
@@ -366,7 +359,7 @@ class CrabadaMineBot:
         logger.print_normal(f"Attempting to close game {team['game_id']}")
 
         with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
-            tx_hash = reinforcement_strategy.crabada_w3_methods["close"](team["game_id"])
+            tx_hash = reinforcement_strategy.close(team["game_id"])
             tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
 
             self._calculate_and_log_gas_price(tx_receipt)
