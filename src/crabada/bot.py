@@ -239,7 +239,7 @@ class CrabadaMineBot:
                     str(mine["game_id"]),
                     mine["process"][-1]["action"],
                     self.crabada_w2.get_remaining_time_formatted(mine_data),
-                    f"reinforced {self.crabada_w2.get_num_loot_reinforcements(mine_data)}x",
+                    f"reinforced {self.crabada_w2.get_num_mine_reinforcements(mine_data)}x",
                     reinforments_used_str,
                     logger.format_ok("winning")
                     if self.crabada_w2.mine_is_winning(mine_data)
@@ -254,13 +254,23 @@ class CrabadaMineBot:
 
         for inx, loot in enumerate(open_loots):
             loot_data = self.crabada_w2.get_mine(loot["game_id"])
+            reinforments_used_str = logger.format_normal("[")
+            for crab in self.crabada_w2.get_reinforcement_crabs(loot_data):
+                if crab in [c["crabada_id"] for c in self.config["reinforcing_crabs"]]:
+                    reinforments_used_str += logger.format_ok_blue(f"{crab} ")
+                else:
+                    reinforments_used_str += logger.format_normal(f"{crab} ")
             logger.print_normal(
-                "#{}\t{}\t\tround {}\t\t{}\t[{}]".format(
-                    inx + 1,
-                    loot["game_id"],
-                    loot["round"],
+                "#{:3s}{:10s}{:25s}{:25s}{:25s}{:25s}\t\t{:15s}".format(
+                    str(inx + 1),
+                    str(loot["game_id"]),
+                    mine["process"][-1]["action"],
                     self.crabada_w2.get_remaining_loot_time_formatted(loot),
-                    "winning" if self.crabada_w2.loot_is_winning(loot_data) else "losing",
+                    f"reinforced {self.crabada_w2.get_num_loot_reinforcements(loot_data)}x",
+                    reinforments_used_str,
+                    logger.format_ok("winning")
+                    if self.crabada_w2.loot_is_winning(loot_data)
+                    else logger.format_fail("losing"),
                 )
             )
 
