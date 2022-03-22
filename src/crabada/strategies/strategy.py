@@ -12,6 +12,9 @@ from utils.price import Tus
 
 class Strategy:
     DELAY_BEFORE_REINFORCING = 0.0
+    # time window to make sure we don't attempt to reuse crabs
+    # before the api updates
+    REINFORCEMENT_REUSE_WINDOW = 20.0
 
     def __init__(
         self,
@@ -29,6 +32,8 @@ class Strategy:
 
         self.reinforcement_search_backoff = 0
         self.time_since_last_attack = None  # T.Optional[float]
+
+        self.reinforce_time_cache = {c["crabada_id"]: time.time() for c in reinforcing_crabs}
 
     def get_reinforcement_crab(
         self, team: Team, mine: IdleGame, reinforcement_search_backoff: int = 0
@@ -63,10 +68,14 @@ class Strategy:
             logger.print_normal(f"Checking from approved reinforcements {allowed_crabs_str}")
             reinforcement_crab = self.crabada_w2.get_my_best_bp_crab_for_lending(self.address)
 
+        now = time.time()
         if (
             reinforcement_crab is not None
             and reinforcement_crab["crabada_id"] in allowed_reinforcing_crabs
+            and now - self.reinforce_time_cache[reinforcement_crab["crabada_id"]]
+            > self.REINFORCEMENT_REUSE_WINDOW
         ):
+            self.reinforce_time_cache[reinforcement_crab["crabada_id"]] = now
             logger.print_bold(f"Mine[{mine['game_id']}]: using our own crab to reinforce!")
         else:
             reinforcement_crab = self.crabada_w2.get_best_high_bp_crab_for_lending(
@@ -88,10 +97,14 @@ class Strategy:
             logger.print_normal(f"Checking from approved reinforcements {allowed_crabs_str}")
             reinforcement_crab = self.crabada_w2.get_my_best_mp_crab_for_lending(self.address)
 
+        now = time.time()
         if (
             reinforcement_crab is not None
             and reinforcement_crab["crabada_id"] in allowed_reinforcing_crabs
+            and now - self.reinforce_time_cache[reinforcement_crab["crabada_id"]]
+            > self.REINFORCEMENT_REUSE_WINDOW
         ):
+            self.reinforce_time_cache[reinforcement_crab["crabada_id"]] = now
             logger.print_bold(f"Mine[{mine['game_id']}]: using our own crab to reinforce!")
         else:
             reinforcement_crab = self.crabada_w2.get_best_high_mp_crab_for_lending(
