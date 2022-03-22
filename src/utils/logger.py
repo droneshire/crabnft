@@ -29,7 +29,12 @@ def is_color_supported() -> bool:
     return hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
 
 
-def make_formatter_printer(color: Colors, log_level=logging.INFO, prefix=None) -> T.Callable:
+def make_formatter_printer(
+    color: Colors,
+    log_level: int = logging.INFO,
+    prefix: Prefixes = None,
+    return_formatter: bool = False,
+) -> T.Callable:
     game_logger = logging.getLogger(__name__)
 
     def formatter(message, *args, **kwargs):
@@ -56,23 +61,34 @@ def make_formatter_printer(color: Colors, log_level=logging.INFO, prefix=None) -
         print(formatter(message, *args, **kwargs))
         sys.stdout.flush()
 
-    return printer
+    if return_formatter:
+        return formatter
+    else:
+        return printer
 
 
 print_ok_blue = make_formatter_printer(Colors.OKBLUE)
-
 print_ok = make_formatter_printer(Colors.OKGREEN)
-
 print_warn = make_formatter_printer(Colors.WARNING)
-
 print_fail = make_formatter_printer(Colors.FAIL)
-
 print_bold = make_formatter_printer(Colors.BOLD)
-
 print_normal = make_formatter_printer(Colors.ENDC)
-
 print_ok_arrow = make_formatter_printer(Colors.OKGREEN, prefix=Prefixes.ARROW)
-
 print_ok_blue_arrow = make_formatter_printer(Colors.OKBLUE, prefix=Prefixes.ARROW)
-
 print_fail_arrow = make_formatter_printer(Colors.FAIL, prefix=Prefixes.ARROW)
+
+format_ok_blue = make_formatter_printer(Colors.OKBLUE, return_formatter=True)
+format_ok = make_formatter_printer(Colors.OKGREEN, return_formatter=True)
+format_warn = make_formatter_printer(Colors.WARNING, return_formatter=True)
+format_fail = make_formatter_printer(Colors.FAIL, return_formatter=True)
+format_bold = make_formatter_printer(Colors.BOLD, return_formatter=True)
+format_normal = make_formatter_printer(Colors.ENDC, return_formatter=True)
+format_ok_arrow = make_formatter_printer(
+    Colors.OKGREEN, prefix=Prefixes.ARROW, return_formatter=True
+)
+format_ok_blue_arrow = make_formatter_printer(
+    Colors.OKBLUE, prefix=Prefixes.ARROW, return_formatter=True
+)
+format_fail_arrow = make_formatter_printer(
+    Colors.FAIL, prefix=Prefixes.ARROW, return_formatter=True
+)
