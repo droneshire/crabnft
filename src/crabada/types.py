@@ -77,6 +77,7 @@ class IdleGame(T.TypedDict):
     defense_point: int
     defense_mine_point: int
     defense_team_members: T.List[TeamMember]
+    defense_team_info: T.List[TeamMember]
     defense_team_faction: Faction
     # Attack
     attack_team_id: int

@@ -235,6 +235,22 @@ class CrabadaWeb2Client:
         except:
             return []
 
+    def get_num_mine_reinforcements(self, mine: IdleGame) -> int:
+        mine = self.get_mine(mine.get("game_id", None))
+        if mine is None:
+            return 0
+
+        process = mine.get("process", [])
+        return len([p for p in process if p["action"] == "reinforce-defense"])
+
+    def get_num_loot_reinforcements(self, mine: IdleGame) -> int:
+        mine = self.get_mine(mine.get("game_id", None))
+        if mine is None:
+            return 0
+
+        process = mine.get("process", [])
+        return len([p for p in process if p["action"] == "reinforce-attack"])
+
     def get_cheapest_best_crab_from_list_for_lending(
         self,
         crabs: T.List[CrabForLending],
@@ -292,6 +308,9 @@ class CrabadaWeb2Client:
         best_crab = sorted_crabs[0]
         best_crab["price"] = 0
         return best_crab
+
+    def get_reinforcement_crabs(self, mine: IdleGame) -> T.List[int]:
+        return [m["crabada_id"] for m in mine.get("defense_team_info", [])][3:]
 
     def list_crabs_for_lending_raw(self, params: T.Dict[str, T.Any] = {}) -> T.Any:
         url = self.BASE_URL + "/crabadas/lending"

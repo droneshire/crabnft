@@ -227,12 +227,13 @@ class CrabadaMineBot:
         for inx, mine in enumerate(open_mines):
             mine_data = self.crabada_w2.get_mine(mine["game_id"])
             logger.print_normal(
-                "#{}\t{}\t\tround {}\t\t{}\t{}\t[{}]".format(
+                "#{}\t{:9d}\t{:18s}\t{:18s}\t{:14s}{:14s}\t{:10s}".format(
                     inx + 1,
                     mine["game_id"],
-                    mine["round"],
-                    self.crabada_w2.get_remaining_time_formatted(mine),
-                    "under attack" if mine.get("attack_team_id", "") else "safe",
+                    mine["process"][-1]["action"],
+                    self.crabada_w2.get_remaining_time_formatted(mine_data),
+                    f"reinforced {self.crabada_w2.get_num_loot_reinforcements(mine_data)}x",
+                    f"[{', '.join([str(c) for c in self.crabada_w2.get_reinforcement_crabs(mine_data)])}]",
                     "winning" if self.crabada_w2.mine_is_winning(mine_data) else "losing",
                 )
             )

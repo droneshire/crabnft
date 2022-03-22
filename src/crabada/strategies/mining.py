@@ -55,12 +55,7 @@ class MiningStrategy(Strategy):
         return self.crabada_w2.mine_needs_reinforcement(mine)
 
     def _have_reinforced_at_least_once(self, mine: IdleGame) -> bool:
-        mine = self.crabada_w2.get_mine(mine.get("game_id", None))
-        if mine is None:
-            return False
-
-        process = mine.get("process", [])
-        return "reinforce-defense" in [p["action"] for p in process]
+        return self.crabada_w2.get_num_mine_reinforcements(mine) > 1
 
     def _get_best_mine_reinforcement(
         self, team: Team, mine: IdleGame, use_own_crabs: bool = False
