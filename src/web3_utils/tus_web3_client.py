@@ -15,11 +15,7 @@ from web3_utils.web3_client import Web3Client
 
 class TusWeb3Client(AvalancheCWeb3Client):
     """
-    Interact with a smart contract of the game Crabada
-
-    The contract resides on the Avalanche blockchain; here's the
-    explorer URL:
-    https://snowtrace.io/address/0x82a85407bd612f52577909f4a58bfc6873f14da8#tokentxns
+    Interact with the TUS token
     """
 
     contract_address = T.cast(Address, "0xf693248f96fe03422fea95ac0afbbbc4a8fdd172")
