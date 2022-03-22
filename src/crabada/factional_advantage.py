@@ -1,7 +1,7 @@
 import math
 import typing as T
 
-from crabada.types import Faction, IdleGame, Team
+from crabada.types import Faction, IdleGame, Team, TeamMember
 from utils import logger
 
 FACTIONAL_ADVANTAGE_MULT = 0.93
@@ -18,6 +18,12 @@ FACTIONAL_ADVANTAGE = {
 }
 
 
+def get_bp_mp_from_crab(crab: TeamMember) -> T.Tuple[int, int]:
+    bp = crab["hp"] + crab["damage"] + crab["armor"]
+    mp = crab["speed"] + crab["critical"]
+    return (bp, mp)
+
+
 def get_attack_faction(game: IdleGame) -> Faction:
     return T.cast(Faction, game.get("attack_team_faction", ""))
 
@@ -26,13 +32,18 @@ def get_defense_faction(game: IdleGame) -> Faction:
     return T.cast(Faction, game.get("defense_team_faction", ""))
 
 
-def get_faction_adjusted_battle_point(team: Team, game: IdleGame, verbose: bool = False) -> int:
-    team_points = team["battle_point"]
+def get_faction_adjusted_battle_point(
+    game: IdleGame, is_looting: bool = False, verbose: bool = False
+) -> int:
+    team_points = 0
 
-    if game["attack_team_id"] == team["team_id"]:
+    if is_looting:
         # we're looting, so get attack_point
         if verbose:
             logger.print_normal("Getting attack point")
+        for crab in game["attack_team_members"]:
+            bp, _ = get_bp_mp_from_crab(crab)
+            team_points += bp
         total_points = game["attack_point"]
         their_faction = get_defense_faction(game)
         our_faction = get_attack_faction(game)
@@ -40,6 +51,9 @@ def get_faction_adjusted_battle_point(team: Team, game: IdleGame, verbose: bool 
         # we're mining, get defense_point
         if verbose:
             logger.print_normal("Getting defense point")
+        for crab in game["defense_team_members"]:
+            bp, _ = get_bp_mp_from_crab(crab)
+            team_points += bp
         total_points = game["defense_point"]
         their_faction = get_attack_faction(game)
         our_faction = get_defense_faction(game)

@@ -66,7 +66,9 @@ class MiningStrategy(Strategy):
             f"Mine[{mine['game_id']}]: using reinforcement strategy of {self.__class__.__name__}"
         )
 
-        defense_battle_point = get_faction_adjusted_battle_point(team, mine, verbose=True)
+        defense_battle_point = get_faction_adjusted_battle_point(
+            mine, is_looting=False, verbose=True
+        )
         if defense_battle_point >= mine["attack_point"]:
             logger.print_normal(
                 f"Mine[{mine['game_id']}]: not reinforcing since we've already won!"

@@ -1,3 +1,4 @@
+import time
 import typing as T
 from eth_typing import Address
 from eth_typing.encoding import HexStr
@@ -13,7 +14,8 @@ from utils.price import Tus
 class Strategy:
     DELAY_BEFORE_REINFORCING = 0.0
     # time window to make sure we don't attempt to reuse crabs
-    # before the api updates
+    # before the api updates. keep it small in case we fail to actually
+    # use as reinforcement due to blockchain failure
     REINFORCEMENT_REUSE_WINDOW = 20.0
 
     def __init__(

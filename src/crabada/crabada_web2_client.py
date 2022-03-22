@@ -33,7 +33,7 @@ class CrabadaWeb2Client:
     MIN_LOOT_GAME_TIME = 60.0 * 60.0 * 1
 
     # api request limits (scale with teams/crabs)
-    TEAM_AND_MINE_LIMIT = 20
+    TEAM_AND_MINE_LIMIT = 50
     CRAB_LIMIT = 50
 
     def get_mine(self, mine_id: int, params: T.Dict[str, T.Any] = {}) -> IdleGame:
@@ -330,21 +330,12 @@ class CrabadaWeb2Client:
 
     @staticmethod
     def _get_battle_points(mine: IdleGame) -> T.Tuple[int, int]:
-        user_address = mine["owner"]
-        team_id = mine["team_id"]
-        teams = CrabadaWeb2Client().list_teams(user_address)
-        team = [t for t in teams if t["team_id"] == team_id]
-        if len(team) < 1:
-            return (None, None)
-        defense_battle_point = get_faction_adjusted_battle_point(team[0], mine, verbose=False)
-
-        attack_address = mine["attack_team_owner"]
-        attack_team_id = mine["attack_team_id"]
-        attack_teams = CrabadaWeb2Client().list_teams(attack_address)
-        attack_team = [t for t in attack_teams if t["team_id"] == attack_team_id]
-        if len(attack_team) < 1:
-            return (defense_battle_point, None)
-        attack_battle_point = get_faction_adjusted_battle_point(attack_team[0], mine, verbose=False)
+        defense_battle_point = get_faction_adjusted_battle_point(
+            mine, is_looting=False, verbose=False
+        )
+        attack_battle_point = get_faction_adjusted_battle_point(
+            mine, is_looting=True, verbose=False
+        )
 
         return (defense_battle_point, attack_battle_point)
 
@@ -361,13 +352,6 @@ class CrabadaWeb2Client:
         except:
             return False
         defense_battle_point, attack_battle_point = CrabadaWeb2Client()._get_battle_points(mine)
-
-        if defense_battle_point is None:
-            return True
-
-        if attack_battle_point is None:
-            return False
-
         return attack_battle_point > defense_battle_point
 
     @staticmethod
