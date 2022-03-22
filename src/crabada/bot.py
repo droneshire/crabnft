@@ -234,16 +234,17 @@ class CrabadaMineBot:
                     reinforments_used_str += logger.format_normal(f"{crab} ")
             reinforments_used_str += logger.format_normal("]")
             logger.print_normal(
-                "#{:3s}{:10s}{:25s}{:25s}{:25s}{:25s}\t\t{:15s}".format(
+                "#{:3s}{:10s}{:10s}{:25s}{:15s}{:15s}{:15s}\t{:25s}".format(
                     str(inx + 1),
+                    str(mine["team_id"]),
                     str(mine["game_id"]),
                     mine["process"][-1]["action"],
                     self.crabada_w2.get_remaining_time_formatted(mine_data),
                     f"reinforced {self.crabada_w2.get_num_mine_reinforcements(mine_data)}x",
-                    reinforments_used_str,
                     logger.format_ok("winning")
                     if self.crabada_w2.mine_is_winning(mine_data)
                     else logger.format_fail("losing"),
+                    reinforments_used_str,
                 )
             )
 
@@ -261,16 +262,17 @@ class CrabadaMineBot:
                 else:
                     reinforments_used_str += logger.format_normal(f"{crab} ")
             logger.print_normal(
-                "#{:3s}{:10s}{:25s}{:25s}{:25s}{:25s}\t\t{:15s}".format(
+                "#{:3s}{:10s}{:10s}{:25s}{:15s}{:15s}{:15s}\t{:25s}".format(
                     str(inx + 1),
                     str(loot["game_id"]),
+                    str(mine["attack_team_id"]),
                     mine["process"][-1]["action"],
                     self.crabada_w2.get_remaining_loot_time_formatted(loot),
                     f"reinforced {self.crabada_w2.get_num_loot_reinforcements(loot_data)}x",
-                    reinforments_used_str,
                     logger.format_ok("winning")
                     if self.crabada_w2.loot_is_winning(loot_data)
                     else logger.format_fail("losing"),
+                    reinforments_used_str,
                 )
             )
 
