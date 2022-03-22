@@ -51,6 +51,9 @@ class MiningStrategy(Strategy):
         tx_hash = self.crabada_w3.reinforce_defense(game_id, crabada_id, borrow_price)
         return self.crabada_w3.get_transaction_receipt(tx_hash)
 
+    def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:
+        return self.crabada_w2.mine_needs_reinforcement(mine)
+
     def _have_reinforced_at_least_once(self, mine: IdleGame) -> bool:
         mine = self.crabada_w2.get_mine(mine.get("game_id", None))
         if mine is None:
@@ -120,7 +123,7 @@ class PreferOtherMpCrabs(MiningStrategy):
         return super()._get_best_mine_reinforcement(team, mine, use_own_crabs=False)
 
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:
-        return True
+        return super().should_reinforce(mine)
 
 
 class PreferOwnMpCrabs(MiningStrategy):
@@ -147,7 +150,7 @@ class PreferOwnMpCrabs(MiningStrategy):
         return super()._get_best_mine_reinforcement(team, mine, use_own_crabs=True)
 
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:
-        return True
+        return super().should_reinforce(mine)
 
 
 class DelayReinforcementStrategy(MiningStrategy):
@@ -172,7 +175,7 @@ class DelayReinforcementStrategy(MiningStrategy):
 
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:
         if not self.crabada_w2.mine_needs_reinforcement(mine):
-            return
+            return False
 
         time_remaining = self.crabada_w2.get_remaining_time_for_action(mine)
         if time_remaining < self.MAX_TIME_REMAINING_DELTA:

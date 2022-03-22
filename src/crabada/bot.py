@@ -29,7 +29,7 @@ class CrabadaMineBot:
     TIME_BETWEEN_EACH_UPDATE = 2.0
     ALERT_THROTTLING_TIME = 60.0 * 30.0
     MIN_MINE_POINT = 60
-    MIN_TIME_BETWEEN_MINES = 60.0 * 30.0
+    MIN_TIME_BETWEEN_MINES = 60.0 * 31.0
 
     def __init__(
         self,
@@ -300,14 +300,14 @@ class CrabadaMineBot:
                 strategy,
             ):
                 last_reinforcement_search_backoff = self.reinforcement_search_backoff
-                self.reinforcement_search_backoff = max(0, self.reinforcement_search_backoff - 1)
+                self.reinforcement_search_backoff = max(0, self.reinforcement_search_backoff - 2)
                 if last_reinforcement_search_backoff != self.reinforcement_search_backoff:
                     logger.print_ok_blue(
                         f"Reinforcement backoff: {last_reinforcement_search_backoff}->{self.reinforcement_search_backoff}"
                     )
                 return
 
-            self.reinforcement_search_backoff = min(self.reinforcement_search_backoff + 5, 20)
+            self.reinforcement_search_backoff = self.reinforcement_search_backoff + 5
             logger.print_ok_blue(
                 f"Adjusting reinforcement backoff to {self.reinforcement_search_backoff}"
             )
@@ -486,9 +486,14 @@ class CrabadaMineBot:
                 isinstance(
                     self.mining_strategy, (PreferOwnMpCrabs, PreferOwnMpCrabsAndDelayReinforcement)
                 )
-            ) and now - last_mine_start < self.MIN_TIME_BETWEEN_MINES:
+            ) and now - last_mine_start + self.mining_strategy.get_reinforcement_delay() < self.MIN_TIME_BETWEEN_MINES:
                 time_before_start_formatted = get_pretty_seconds(
-                    int(last_mine_start + self.MIN_TIME_BETWEEN_MINES - now)
+                    int(
+                        last_mine_start
+                        + self.MIN_TIME_BETWEEN_MINES
+                        - self.mining_strategy.get_reinforcement_delay()
+                        - now
+                    )
                 )
                 logger.print_normal(f"Waiting to start mine in {time_before_start_formatted}")
                 continue

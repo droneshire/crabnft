@@ -18,7 +18,7 @@ class LootingStrategy(Strategy):
     Base class for looting strategies
     """
 
-    MIN_LOOT_POINT = 60
+    MIN_LOOT_POINT = 230
 
     def __init__(
         self,
