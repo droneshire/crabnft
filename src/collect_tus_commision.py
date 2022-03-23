@@ -190,6 +190,10 @@ def collect_tus_commission(
                 send_sms_message(config["sms_number"], sms_message)
 
     logger.print_bold(f"Collected {total_commission_collected_tus} TUS in commission!!!")
+
+    if dry_run:
+        return
+
     stats_file = os.path.join(logger.get_logging_dir(), "commission_lifetime_bot_stats.json")
     stats = {"total_commission_tus": total_commission_collected_tus}
     if os.path.isfile(stats_file):

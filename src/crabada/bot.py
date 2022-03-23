@@ -504,21 +504,21 @@ class CrabadaMineBot:
                 continue
 
             now = time.time()
-            if (
-                isinstance(
-                    self.mining_strategy, (PreferOwnMpCrabs, PreferOwnMpCrabsAndDelayReinforcement)
-                )
-            ) and now - last_mine_start + self.mining_strategy.get_reinforcement_delay() < self.MIN_TIME_BETWEEN_MINES:
-                time_before_start_formatted = get_pretty_seconds(
-                    int(
-                        last_mine_start
-                        + self.MIN_TIME_BETWEEN_MINES
-                        - self.mining_strategy.get_reinforcement_delay()
-                        - now
-                    )
-                )
-                logger.print_normal(f"Waiting to start mine in {time_before_start_formatted}")
-                continue
+            # if (
+            #     isinstance(
+            #         self.mining_strategy, (PreferOwnMpCrabs, PreferOwnMpCrabsAndDelayReinforcement)
+            #     )
+            # ) and now - last_mine_start + self.mining_strategy.get_reinforcement_delay() < self.MIN_TIME_BETWEEN_MINES:
+            #     time_before_start_formatted = get_pretty_seconds(
+            #         int(
+            #             last_mine_start
+            #             + self.MIN_TIME_BETWEEN_MINES
+            #             - self.mining_strategy.get_reinforcement_delay()
+            #             - now
+            #         )
+            #     )
+            #     logger.print_normal(f"Waiting to start mine for {team['team_id']} in {time_before_start_formatted}")
+            #     continue
 
             if self._start_mine(team):
                 last_mine_start = now
