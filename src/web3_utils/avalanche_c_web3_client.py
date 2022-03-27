@@ -12,7 +12,7 @@ class AvalancheCWeb3Client(Web3Client):
     """
 
     chain_id: int = 43114
-    gas_limit: int = 400000  # sensible value for Avalanche
+    gas_limit: int = 390000  # sensible value for Avalanche
     max_priority_fee_per_gas_in_gwei: int = 2
     AVAX_NODE_URL = "https://api.avax.network/ext/bc/C/rpc"
 
