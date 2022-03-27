@@ -23,7 +23,7 @@ class Strategy:
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
         crabada_w3_client: CrabadaWeb3Client,
-        reinforcing_crabs: T.List[TeamMember],
+        reinforcing_crabs: T.Dict[int, int],
         max_reinforcement_price_tus: Tus,
     ) -> None:
         self.reinforcing_crabs = reinforcing_crabs
@@ -35,7 +35,7 @@ class Strategy:
         self.reinforcement_search_backoff = 0
         self.time_since_last_attack = None  # T.Optional[float]
 
-        self.reinforce_time_cache = {c["crabada_id"]: time.time() for c in reinforcing_crabs}
+        self.reinforce_time_cache = {c: time.time() for c in reinforcing_crabs.keys()}
 
     def get_reinforcement_crab(
         self, team: Team, mine: IdleGame, reinforcement_search_backoff: int = 0
@@ -61,7 +61,7 @@ class Strategy:
         self, mine: IdleGame, use_own_crabs: bool = False
     ) -> T.Optional[TeamMember]:
         reinforcement_crab = None
-        allowed_reinforcing_crabs = [c["crabada_id"] for c in self.reinforcing_crabs]
+        allowed_reinforcing_crabs = self.reinforcing_crabs.keys()
 
         logger.print_normal(f"Mine[{mine['game_id']}]: using highest bp")
 
@@ -90,7 +90,7 @@ class Strategy:
         self, mine: IdleGame, use_own_crabs: bool = False
     ) -> T.Optional[TeamMember]:
         reinforcement_crab = None
-        allowed_reinforcing_crabs = [c["crabada_id"] for c in self.reinforcing_crabs]
+        allowed_reinforcing_crabs = self.reinforcing_crabs.keys()
 
         logger.print_normal(f"Mine[{mine['game_id']}]: using highest mp")
 

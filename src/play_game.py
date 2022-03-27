@@ -126,7 +126,7 @@ def run_bot() -> None:
 
             if alerts_enabled and time.time() - last_discord_update > DISCORD_UPDATE_TIME:
                 last_discord_update = time.time()
-                webhook_text = f"\U0001F980\t**Total TUS mined by bots: {gross_tus:.2f} TUS**\n"
+                webhook_text = f"\U0001F980\t**Total TUS mined by bots: {int(gross_tus):,} TUS**\n"
                 win_percentage = float(wins) / (wins + losses) * 100.0
                 webhook_text += f"\U0001F916\t**Bot win percentage: {win_percentage:.2f}%**\n"
                 webhook.send(webhook_text)

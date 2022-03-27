@@ -19,13 +19,14 @@ class LootingStrategy(Strategy):
     """
 
     MIN_LOOT_POINT = 230
+    LOOTING_DURATION = 60.0 * 60.0
 
     def __init__(
         self,
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
         crabada_w3_client: CrabadaWeb3Client,
-        reinforcing_crabs: T.List[TeamMember],
+        reinforcing_crabs: T.Dict[int, int],
         max_reinforcement_price_tus: Tus,
     ) -> None:
         super().__init__(
@@ -95,7 +96,7 @@ class PreferOtherMpCrabs(LootingStrategy):
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
         crabada_w3_client: CrabadaWeb3Client,
-        reinforcing_crabs: T.List[TeamMember],
+        reinforcing_crabs: T.Dict[int, int],
         max_reinforcement_price_tus: Tus,
     ) -> None:
         super().__init__(
@@ -122,7 +123,7 @@ class PreferOwnMpCrabs(LootingStrategy):
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
         crabada_w3_client: CrabadaWeb3Client,
-        reinforcing_crabs: T.List[TeamMember],
+        reinforcing_crabs: T.Dict[int, int],
         max_reinforcement_price_tus: Tus,
     ) -> None:
         super().__init__(
@@ -152,7 +153,7 @@ class DelayReinforcementStrategy(LootingStrategy):
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
         crabada_w3_client: CrabadaWeb3Client,
-        reinforcing_crabs: T.List[TeamMember],
+        reinforcing_crabs: T.Dict[int, int],
         max_reinforcement_price_tus: Tus,
     ) -> None:
         super().__init__(
@@ -198,7 +199,7 @@ class PreferOtherMpCrabsAndDelayReinforcement(DelayReinforcementStrategy):
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
         crabada_w3_client: CrabadaWeb3Client,
-        reinforcing_crabs: T.List[TeamMember],
+        reinforcing_crabs: T.Dict[int, int],
         max_reinforcement_price_tus: Tus,
     ) -> None:
         super().__init__(
@@ -225,7 +226,7 @@ class PreferOwnMpCrabsAndDelayReinforcement(DelayReinforcementStrategy):
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
         crabada_w3_client: CrabadaWeb3Client,
-        reinforcing_crabs: T.List[TeamMember],
+        reinforcing_crabs: T.Dict[int, int],
         max_reinforcement_price_tus: Tus,
     ) -> None:
         super().__init__(

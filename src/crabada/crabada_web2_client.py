@@ -517,6 +517,17 @@ class CrabadaWeb2Client:
         return int(game.get("end_time", now) - now)
 
     @staticmethod
+    def get_total_mine_time(game: IdleGame) -> int:
+        """
+        Seconds total mine start to end
+        """
+        return int(game.get("end_time", 0) - game.get("start_time", 0))
+
+    @staticmethod
+    def get_total_mine_time_formatted(game: IdleGame) -> int:
+        return get_pretty_seconds(CrabadaWeb2Client.get_total_mine_time(game))
+
+    @staticmethod
     def get_remaining_loot_time(game: IdleGame) -> int:
         """
         Seconds to the end of the given loot before can settle

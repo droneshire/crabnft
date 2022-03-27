@@ -21,13 +21,14 @@ class SmsConfig(T.TypedDict):
 class UserConfig(T.TypedDict):
     private_key: str
     address: Address
-    mining_teams: T.List[MiningTeam]
+    mining_teams: T.Dict[int, int]
     looting_teams: T.List[MiningTeam]
     max_gas_price: int
     max_gas_price_gwei: int
     max_reinforcement_price_tus: Tus
     max_reinforce_bp_delta: int
-    reinforcing_crabs: T.List[CrabForLending]
+    reinforcing_crabs: T.Dict[int, int]
+    breed_crabs: T.List[CrabForLending]
     mining_strategy: Strategy
     looting_strategy: Strategy
     commission_percent_per_mine: float

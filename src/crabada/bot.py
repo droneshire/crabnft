@@ -1,5 +1,6 @@
 import json
 import logging
+import math
 import os
 import time
 import typing as T
@@ -211,71 +212,67 @@ class CrabadaMineBot:
         logger.print_bold(f"Paid {avax_gas} AVAX (${avax_gas_usd:.2f}) in gas")
 
     def _print_mine_loot_status(self) -> None:
-        open_mines = self.crabada_w2.list_my_open_mines(self.address)
-        open_loots = self.crabada_w2.list_my_open_loots(self.address)
+        self._print_stats(self.crabada_w2.list_my_open_mines(self.address), True)
+        self._print_stats(self.crabada_w2.list_my_open_loots(self.address), False)
 
+    def _print_stats(self, mines: T.List[IdleGame], is_mine: bool = True) -> None:
         formatted_date = time.strftime("%A, %Y-%m-%d %H:%M:%S", time.localtime(time.time()))
-        logger.print_normal(f"Mines ({formatted_date})")
-        last_mine_start_formatted = get_pretty_seconds(
-            int(time.time() - self._get_last_mine_start_time())
-        )
-        logger.print_normal(f"Last Mine Start: {last_mine_start_formatted}")
 
-        if not open_mines:
-            logger.print_normal("NO MINES")
+        if is_mine:
+            logger.print_normal(f"Mines ({formatted_date})")
+            last_mine_start_formatted = get_pretty_seconds(
+                int(time.time() - self._get_last_mine_start_time())
+            )
+            logger.print_normal(f"Last Mine Start: {last_mine_start_formatted}")
+        else:
+            logger.print_normal(f"Loots ({formatted_date})")
 
-        for inx, mine in enumerate(open_mines):
+        if not mines:
+            logger.print_normal(f"No {'mines' if is_mine else 'loots'}")
+
+
+        for inx, mine in enumerate(mines):
             mine_data = self.crabada_w2.get_mine(mine["game_id"])
+
+            if is_mine:
+                team_id = "team_id"
+                num_reinforcements = self.crabada_w2.get_num_mine_reinforcements(mine_data)
+                is_winning = self.crabada_w2.mine_is_winning(mine_data)
+                total_time = self.crabada_w2.get_total_mine_time(mine_data)
+            else:
+                team_id = "attack_team_id"
+                num_reinforcements = self.crabada_w2.get_num_loot_reinforcements(mine_data)
+                is_winning = self.crabada_w2.loot_is_winning(mine_data)
+                total_time = self.looting_strategy.LOOTING_DURATION
+
             reinforments_used_str = logger.format_normal("[")
             for crab in self.crabada_w2.get_reinforcement_crabs(mine_data):
-                if crab in [c["crabada_id"] for c in self.config["reinforcing_crabs"]]:
+                if crab in self.config["reinforcing_crabs"].keys():
                     reinforments_used_str += logger.format_ok_blue(f"{crab} ")
                 else:
                     reinforments_used_str += logger.format_normal(f"{crab} ")
             reinforments_used_str += logger.format_normal("]")
+
+            remaining_time = self.crabada_w2.get_remaining_time(mine_data)
+            percent_done = (total_time - remaining_time) / total_time
+            progress = math.ceil(percent_done * 20) if remaining_time > 0 else 20
+
             logger.print_normal(
-                "#{:3s}{:10s}{:10s}{:25s}{:15s}{:15s}{:15s}\t{:25s}".format(
+                "#{:3s}{:10s}{:4s}{:10s}{:23s}{:25s}{:15s}{:15s}{:15s}\t{:25s}".format(
                     str(inx + 1),
-                    str(mine["team_id"]),
+                    str(mine[team_id]),
+                    str(self.config["mining_teams"].get(mine[team_id])),
                     str(mine["game_id"]),
                     mine["process"][-1]["action"],
+                    "|{}{}|".format("#" * progress, " " * (20 - progress)),
                     self.crabada_w2.get_remaining_time_formatted(mine_data),
-                    f"reinforced {self.crabada_w2.get_num_mine_reinforcements(mine_data)}x",
+                    f"reinforced {num_reinforcements}x",
                     logger.format_ok("winning")
-                    if self.crabada_w2.mine_is_winning(mine_data)
+                    if is_winning
                     else logger.format_fail("losing"),
                     reinforments_used_str,
                 )
             )
-
-        logger.print_normal(f"Loots ({formatted_date})")
-
-        if not open_loots:
-            logger.print_normal("NO LOOTS")
-
-        for inx, loot in enumerate(open_loots):
-            loot_data = self.crabada_w2.get_mine(loot["game_id"])
-            reinforments_used_str = logger.format_normal("[")
-            for crab in self.crabada_w2.get_reinforcement_crabs(loot_data):
-                if crab in [c["crabada_id"] for c in self.config["reinforcing_crabs"]]:
-                    reinforments_used_str += logger.format_ok_blue(f"{crab} ")
-                else:
-                    reinforments_used_str += logger.format_normal(f"{crab} ")
-            logger.print_normal(
-                "#{:3s}{:10s}{:10s}{:25s}{:15s}{:15s}{:15s}\t{:25s}".format(
-                    str(inx + 1),
-                    str(loot["game_id"]),
-                    str(mine["attack_team_id"]),
-                    mine["process"][-1]["action"],
-                    self.crabada_w2.get_remaining_loot_time_formatted(loot),
-                    f"reinforced {self.crabada_w2.get_num_loot_reinforcements(loot_data)}x",
-                    logger.format_ok("winning")
-                    if self.crabada_w2.loot_is_winning(loot_data)
-                    else logger.format_fail("losing"),
-                    reinforments_used_str,
-                )
-            )
-
         logger.print_normal("\n")
 
     def _get_last_mine_start_time(self) -> float:
@@ -427,12 +424,10 @@ class CrabadaMineBot:
         self.time_since_last_alert = None
 
     def _is_team_allowed_to_mine(self, team: Team) -> bool:
-        teams_specified_to_mine = [m["team_id"] for m in self.config["mining_teams"]]
-        return team["team_id"] in teams_specified_to_mine
+        return team["team_id"] in self.config["mining_teams"].keys()
 
     def _is_team_allowed_to_loot(self, team: Team) -> bool:
-        teams_specified_to_loot = [m["team_id"] for m in self.config["looting_teams"]]
-        return team["team_id"] in teams_specified_to_loot
+        return team["team_id"] in self.config["looting_teams"]
 
     def _check_and_maybe_reinforce_loots(self, team: Team, mine: IdleGame) -> None:
         if not self._is_team_allowed_to_loot(team):
