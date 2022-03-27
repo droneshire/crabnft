@@ -263,7 +263,7 @@ class CrabadaMineBot:
                     str(self.config["mining_teams"].get(mine[team_id])),
                     str(mine["game_id"]),
                     mine["process"][-1]["action"],
-                    "|{}{}|".format(">" * progress, " " * (20 - progress)),
+                    "|{}{}|".format("#" * progress, " " * (20 - progress)),
                     self.crabada_w2.get_remaining_time_formatted(mine_data),
                     f"reinforced {num_reinforcements}x",
                     logger.format_ok("winning") if is_winning else logger.format_fail("losing"),
