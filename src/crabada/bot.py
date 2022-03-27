@@ -241,6 +241,7 @@ class CrabadaMineBot:
         else:
             logger.print_normal(f"No {'mines' if is_mine else 'loots'}")
 
+        PROGRESS_SLOTS = 20
         for inx, mine in enumerate(mines):
             mine_data = self.crabada_w2.get_mine(mine["game_id"])
 
@@ -248,12 +249,16 @@ class CrabadaMineBot:
                 team_id = "team_id"
                 num_reinforcements = self.crabada_w2.get_num_mine_reinforcements(mine_data)
                 is_winning = self.crabada_w2.mine_is_winning(mine_data)
-                total_time = self.crabada_w2.get_total_mine_time(mine_data)
+                total_time = self.crabada_w2.get_total_mine_time(mine_data) + 1
+                remaining_time = self.crabada_w2.get_remaining_time(mine_data)
+                percent_done = (total_time - remaining_time) / total_time
+                progress = math.ceil(percent_done * PROGRESS_SLOTS) if remaining_time > 0 else PROGRESS_SLOTS
             else:
                 team_id = "attack_team_id"
                 num_reinforcements = self.crabada_w2.get_num_loot_reinforcements(mine_data)
                 is_winning = self.crabada_w2.loot_is_winning(mine_data)
                 total_time = self.looting_strategy.LOOTING_DURATION
+                progress = PROGRESS_SLOTS
 
             reinforments_used_str = logger.format_normal("[")
             for crab in self.crabada_w2.get_reinforcement_crabs(mine_data):
@@ -263,10 +268,6 @@ class CrabadaMineBot:
                     reinforments_used_str += logger.format_normal(f"{crab} ")
             reinforments_used_str += logger.format_normal("]")
 
-            remaining_time = self.crabada_w2.get_remaining_time(mine_data)
-            percent_done = (total_time - remaining_time) / total_time
-            progress = math.ceil(percent_done * 20) if remaining_time > 0 else 20
-
             logger.print_normal(
                 "#{:3s}{:10s}{:6s}{:10s}{:20s}{:25s}{:15s}{:15s}{:20s}\t{:25s}".format(
                     str(inx + 1),
@@ -274,7 +275,7 @@ class CrabadaMineBot:
                     str(self.config["mining_teams"].get(mine[team_id])),
                     str(mine["game_id"]),
                     mine["process"][-1]["action"],
-                    "|{}{}|".format("#" * progress, " " * (20 - progress)),
+                    "|{}{}|".format("#" * progress, " " * (PROGRESS_SLOTS - progress)),
                     self.crabada_w2.get_remaining_time_formatted(mine_data),
                     f"reinforced {num_reinforcements}x",
                     logger.format_ok("winning") if is_winning else logger.format_fail("losing"),
@@ -311,11 +312,14 @@ class CrabadaMineBot:
             reinforcement_crab = strategy.get_reinforcement_crab(
                 team, mine, self.reinforcement_search_backoff
             )
-            if self._reinforce_with_crab(
-                team,
-                mine,
-                reinforcement_crab,
-                strategy,
+            if (
+                self._reinforce_with_crab(
+                    team,
+                    mine,
+                    reinforcement_crab,
+                    strategy,
+                )
+                and strategy == self.mining_strategy
             ):
                 last_reinforcement_search_backoff = self.reinforcement_search_backoff
                 self.reinforcement_search_backoff = max(0, self.reinforcement_search_backoff - 2)
