@@ -30,7 +30,6 @@ class CrabadaMineBot:
     TIME_BETWEEN_EACH_UPDATE = 2.0
     ALERT_THROTTLING_TIME = 60.0 * 30.0
     MIN_MINE_POINT = 60
-    MIN_TIME_BETWEEN_MINES = 60.0 * 31.0
 
     def __init__(
         self,
@@ -81,15 +80,13 @@ class CrabadaMineBot:
             self.address,
             self.crabada_w2,
             self.crabada_w3,
-            self.config["reinforcing_crabs"],
-            self.config["max_reinforcement_price_tus"],
+            self.config,
         )
         self.looting_strategy = self.config["looting_strategy"](
             self.address,
             self.crabada_w2,
             self.crabada_w3,
-            self.config["reinforcing_crabs"],
-            self.config["max_reinforcement_price_tus"],
+            self.config,
         )
         self.reinforcement_search_backoff: int = 0
         self.last_mine_start: T.Optional[float] = None
@@ -271,15 +268,6 @@ class CrabadaMineBot:
                 )
             )
         logger.print_normal("\n")
-
-    def _get_last_mine_start_time(self) -> float:
-        # TODO(ross): dedupe all these api calls
-        mines = self.crabada_w2.list_my_open_mines(self.address)
-        now = time.time()
-        last_mine_start = 0
-        for mine in mines:
-            last_mine_start = max(last_mine_start, mine.get("start_time", 0))
-        return last_mine_start
 
     def _is_gas_too_high(self, margin: int = 0) -> bool:
         gas_price_gwei = self.crabada_w3.get_gas_price_gwei()
@@ -483,7 +471,7 @@ class CrabadaMineBot:
 
     def _check_and_maybe_start_mines(self) -> None:
         available_teams = self.crabada_w2.list_available_teams(self.address)
-        last_mine_start = self._get_last_mine_start_time()
+
         for team in available_teams:
             if not self._is_team_allowed_to_mine(team):
                 logger.print_warn(f"Skipping team {team['team_id']} for mining...")
@@ -495,25 +483,10 @@ class CrabadaMineBot:
                 )
                 continue
 
-            now = time.time()
-            # if (
-            #     isinstance(
-            #         self.mining_strategy, (PreferOwnMpCrabs, PreferOwnMpCrabsAndDelayReinforcement)
-            #     )
-            # ) and now - last_mine_start + self.mining_strategy.get_reinforcement_delay() < self.MIN_TIME_BETWEEN_MINES:
-            #     time_before_start_formatted = get_pretty_seconds(
-            #         int(
-            #             last_mine_start
-            #             + self.MIN_TIME_BETWEEN_MINES
-            #             - self.mining_strategy.get_reinforcement_delay()
-            #             - now
-            #         )
-            #     )
-            #     logger.print_normal(f"Waiting to start mine for {team['team_id']} in {time_before_start_formatted}")
-            #     continue
+            if not self.mining_strategy.should_start(team):
+                continue
 
-            if self._start_mine(team):
-                last_mine_start = now
+            self._start_mine(team)
 
     def _check_and_maybe_reinforce(self) -> None:
         if not self.config["should_reinforce"]:

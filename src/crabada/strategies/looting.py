@@ -26,15 +26,13 @@ class LootingStrategy(Strategy):
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
         crabada_w3_client: CrabadaWeb3Client,
-        reinforcing_crabs: T.Dict[int, int],
-        max_reinforcement_price_tus: Tus,
+        config: UserConfig,
     ) -> None:
         super().__init__(
             address,
             crabada_w2_client,
             crabada_w3_client,
-            reinforcing_crabs,
-            max_reinforcement_price_tus,
+            config,
         )
 
     def start(self, team_id: int) -> T.Dict[T.Any, T.Any]:
@@ -96,19 +94,17 @@ class PreferOtherMpCrabs(LootingStrategy):
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
         crabada_w3_client: CrabadaWeb3Client,
-        reinforcing_crabs: T.Dict[int, int],
-        max_reinforcement_price_tus: Tus,
+        config: UserConfig,
     ) -> None:
         super().__init__(
             address,
             crabada_w2_client,
             crabada_w3_client,
-            reinforcing_crabs,
-            max_reinforcement_price_tus,
+            config,
         )
 
     def get_reinforcement_crab(
-        self, team: Team, mine: IdleGame(), reinforcement_search_backoff: int = 0
+        self, team: Team, mine: IdleGame, reinforcement_search_backoff: int = 0
     ) -> T.Optional[TeamMember]:
         self.reinforcement_search_backoff = reinforcement_search_backoff
         return super()._get_best_mine_reinforcement(team, mine, use_own_crabs=False)
@@ -123,19 +119,17 @@ class PreferOwnMpCrabs(LootingStrategy):
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
         crabada_w3_client: CrabadaWeb3Client,
-        reinforcing_crabs: T.Dict[int, int],
-        max_reinforcement_price_tus: Tus,
+        config: UserConfig,
     ) -> None:
         super().__init__(
             address,
             crabada_w2_client,
             crabada_w3_client,
-            reinforcing_crabs,
-            max_reinforcement_price_tus,
+            config,
         )
 
     def get_reinforcement_crab(
-        self, team: Team, mine: IdleGame(), reinforcement_search_backoff: int = 0
+        self, team: Team, mine: IdleGame, reinforcement_search_backoff: int = 0
     ) -> T.Optional[TeamMember]:
         self.reinforcement_search_backoff = reinforcement_search_backoff
         return super()._get_best_mine_reinforcement(team, mine, use_own_crabs=True)
@@ -153,15 +147,13 @@ class DelayReinforcementStrategy(LootingStrategy):
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
         crabada_w3_client: CrabadaWeb3Client,
-        reinforcing_crabs: T.Dict[int, int],
-        max_reinforcement_price_tus: Tus,
+        config: UserConfig,
     ) -> None:
         super().__init__(
             address,
             crabada_w2_client,
             crabada_w3_client,
-            reinforcing_crabs,
-            max_reinforcement_price_tus,
+            config,
         )
 
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:
@@ -199,19 +191,17 @@ class PreferOtherMpCrabsAndDelayReinforcement(DelayReinforcementStrategy):
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
         crabada_w3_client: CrabadaWeb3Client,
-        reinforcing_crabs: T.Dict[int, int],
-        max_reinforcement_price_tus: Tus,
+        config: UserConfig,
     ) -> None:
         super().__init__(
             address,
             crabada_w2_client,
             crabada_w3_client,
-            reinforcing_crabs,
-            max_reinforcement_price_tus,
+            config,
         )
 
     def get_reinforcement_crab(
-        self, team: Team, mine: IdleGame(), reinforcement_search_backoff: int = 0
+        self, team: Team, mine: IdleGame, reinforcement_search_backoff: int = 0
     ) -> T.Optional[TeamMember]:
         self.reinforcement_search_backoff = reinforcement_search_backoff
         return super()._get_best_mine_reinforcement(team, mine, use_own_crabs=False)
@@ -226,19 +216,17 @@ class PreferOwnMpCrabsAndDelayReinforcement(DelayReinforcementStrategy):
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
         crabada_w3_client: CrabadaWeb3Client,
-        reinforcing_crabs: T.Dict[int, int],
-        max_reinforcement_price_tus: Tus,
+        config: UserConfig,
     ) -> None:
         super().__init__(
             address,
             crabada_w2_client,
             crabada_w3_client,
-            reinforcing_crabs,
-            max_reinforcement_price_tus,
+            config,
         )
 
     def get_reinforcement_crab(
-        self, team: Team, mine: IdleGame(), reinforcement_search_backoff: int = 0
+        self, team: Team, mine: IdleGame, reinforcement_search_backoff: int = 0
     ) -> T.Optional[TeamMember]:
         self.reinforcement_search_backoff = reinforcement_search_backoff
         return super()._get_best_mine_reinforcement(team, mine, use_own_crabs=True)

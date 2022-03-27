@@ -12,7 +12,6 @@ from utils.price import Tus
 
 
 class Strategy:
-    DELAY_BEFORE_REINFORCING = 0.0
     # time window to make sure we don't attempt to reuse crabs
     # before the api updates. keep it small in case we fail to actually
     # use as reinforcement due to blockchain failure
@@ -23,15 +22,15 @@ class Strategy:
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
         crabada_w3_client: CrabadaWeb3Client,
-        reinforcing_crabs: T.Dict[int, int],
-        max_reinforcement_price_tus: Tus,
+        config: UserConfig,
     ) -> None:
-        self.reinforcing_crabs = reinforcing_crabs
-        self.max_reinforcement_price_tus = max_reinforcement_price_tus
+        self.config = config
         self.address = address
         self.crabada_w2 = crabada_w2_client
         self.crabada_w3 = crabada_w3_client
 
+        self.max_reinforcement_price_tus = self.config["max_reinforcement_price_tus"]
+        self.reinforcing_crabs = self.config["reinforcing_crabs"]
         self.reinforcement_search_backoff = 0
         self.time_since_last_attack = None  # T.Optional[float]
 
@@ -41,6 +40,9 @@ class Strategy:
         self, team: Team, mine: IdleGame, reinforcement_search_backoff: int = 0
     ) -> T.Optional[TeamMember]:
         raise NotImplementedError
+
+    def should_start(self, team: Team) -> bool:
+        return True
 
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:
         raise NotImplementedError
@@ -53,9 +55,6 @@ class Strategy:
 
     def reinforce(self, game_id: int, crabada_id: int, borrow_price: Wei) -> T.Any:
         raise NotImplementedError
-
-    def get_reinforcement_delay(self) -> float:
-        return self.DELAY_BEFORE_REINFORCING
 
     def _use_bp_reinforcement(
         self, mine: IdleGame, use_own_crabs: bool = False
