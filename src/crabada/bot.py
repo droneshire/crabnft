@@ -258,13 +258,13 @@ class CrabadaMineBot:
             progress = math.ceil(percent_done * 20) if remaining_time > 0 else 20
 
             logger.print_normal(
-                "#{:3s}{:10s}{:4s}{:10s}{:23s}{:25s}{:15s}{:15s}{:15s}\t{:25s}".format(
+                "#{:3s}{:10s}{:2s}{:10s}{:20s}{:25s}{:15s}{:15s}{:15s}\t{:25s}".format(
                     str(inx + 1),
                     str(mine[team_id]),
                     str(self.config["mining_teams"].get(mine[team_id])),
                     str(mine["game_id"]),
                     mine["process"][-1]["action"],
-                    "|{}{}|".format("#" * progress, " " * (20 - progress)),
+                    "|{}{}|".format(">" * progress, " " * (20 - progress)),
                     self.crabada_w2.get_remaining_time_formatted(mine_data),
                     f"reinforced {num_reinforcements}x",
                     logger.format_ok("winning")
