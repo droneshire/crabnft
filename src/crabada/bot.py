@@ -562,6 +562,12 @@ class CrabadaMineBot:
             return
         self.avax_price_usd = avax_price_usd
 
+    def set_backoff(self, reinforcement_backoff: int) -> None:
+        self.reinforcement_search_backoff = reinforcement_backoff
+
+    def get_backoff(self) -> int:
+        return self.reinforcement_search_backoff
+
     def run(self) -> None:
         logger.print_normal("=" * 60)
 

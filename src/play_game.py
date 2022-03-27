@@ -105,6 +105,7 @@ def run_bot() -> None:
     last_discord_update = time.time()
 
     alerts_enabled = not args.quiet and not args.dry_run
+    reinforcement_backoff = 0
     try:
         while True:
             gross_tus = 0.0
@@ -112,7 +113,9 @@ def run_bot() -> None:
             losses = 0
 
             for bot in bots:
+                bot.set_backoff(reinforcement_backoff)
                 bot.run()
+                reinforcement_backoff = bot.get_backoff()
 
                 bot_stats = bot.get_lifetime_stats()
                 gross_tus += bot_stats["tus_gross"]
