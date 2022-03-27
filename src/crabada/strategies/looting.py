@@ -87,7 +87,7 @@ class LootingStrategy(Strategy):
         return reinforcement_crab
 
 
-class PreferOtherMpCrabs(LootingStrategy):
+class PreferOtherBpCrabs(LootingStrategy):
     def __init__(
         self,
         address: Address,
@@ -112,7 +112,7 @@ class PreferOtherMpCrabs(LootingStrategy):
         return super().should_reinforce(mine)
 
 
-class PreferOwnMpCrabs(LootingStrategy):
+class PreferOwnBpCrabs(LootingStrategy):
     def __init__(
         self,
         address: Address,

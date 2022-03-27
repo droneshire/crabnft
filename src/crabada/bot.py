@@ -9,9 +9,8 @@ from web3.types import Address, TxReceipt
 
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
-from crabada.factional_advantage import get_faction_adjusted_battle_point
-from crabada.strategies.mining import PreferOwnMpCrabs, PreferOwnMpCrabsAndDelayReinforcement
 from crabada.strategies.strategy import Strategy
+from crabada.strategies.strategy_selection import STRATEGY_SELECTION
 from crabada.types import CrabForLending, IdleGame, Team
 from utils import logger
 from utils.config_types import UserConfig, SmsConfig
@@ -19,7 +18,7 @@ from utils.email import Email, send_email
 from utils.game_stats import GameStats, NULL_GAME_STATS
 from utils.game_stats import get_game_stats, get_lifetime_stats_file, write_game_stats
 from utils.general import get_pretty_seconds
-from utils.price import tus_to_wei, wei_to_tus, wei_to_cra_raw, wei_to_tus_raw
+from utils.price import wei_to_tus, wei_to_cra_raw, wei_to_tus_raw
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.tus_web3_client import TusWeb3Client
 from web3_utils.web3_client import web3_transaction
@@ -76,13 +75,13 @@ class CrabadaMineBot:
         self.updated_game_stats: bool = True
         self.avax_price_usd: float = 0.0
 
-        self.mining_strategy = self.config["mining_strategy"](
+        self.mining_strategy = STRATEGY_SELECTION[self.config["mining_strategy"]](
             self.address,
             self.crabada_w2,
             self.crabada_w3,
             self.config,
         )
-        self.looting_strategy = self.config["looting_strategy"](
+        self.looting_strategy = STRATEGY_SELECTION[self.config["looting_strategy"]](
             self.address,
             self.crabada_w2,
             self.crabada_w3,
@@ -218,7 +217,7 @@ class CrabadaMineBot:
         if is_mine:
             logger.print_normal(f"Mines ({formatted_date})")
             last_mine_start_formatted = get_pretty_seconds(
-                int(time.time() - self._get_last_mine_start_time())
+                int(time.time() - self.crabada_w2.get_last_mine_start_time(self.address))
             )
             logger.print_normal(f"Last Mine Start: {last_mine_start_formatted}")
         else:

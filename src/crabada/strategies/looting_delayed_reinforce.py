@@ -10,7 +10,7 @@ from utils.config_types import UserConfig
 from utils.general import get_pretty_seconds
 
 
-class DelayReinforcementStrategy(LootingStrategy):
+class LootingDelayReinforcementStrategy(LootingStrategy):
     MAX_TIME_REMAINING_DELTA = 60.0 * 3
     DELAY_BEFORE_REINFORCING = 60.0 * 3
 
@@ -57,7 +57,7 @@ class DelayReinforcementStrategy(LootingStrategy):
         return False
 
 
-class PreferOtherMpCrabsAndDelayReinforcement(DelayReinforcementStrategy):
+class PreferOtherBpCrabsAndDelayReinforcement(LootingDelayReinforcementStrategy):
     def __init__(
         self,
         address: Address,
@@ -82,7 +82,7 @@ class PreferOtherMpCrabsAndDelayReinforcement(DelayReinforcementStrategy):
         return super().should_reinforce(mine)
 
 
-class PreferOwnMpCrabsAndDelayReinforcement(DelayReinforcementStrategy):
+class PreferOwnBpCrabsAndDelayReinforcement(LootingDelayReinforcementStrategy):
     def __init__(
         self,
         address: Address,

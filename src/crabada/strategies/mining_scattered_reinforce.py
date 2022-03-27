@@ -1,3 +1,4 @@
+import time
 import typing as T
 from eth_typing import Address
 
@@ -34,7 +35,7 @@ class ScatteredReinforcement(MiningStrategy):
             return True
 
         mines = []
-        for open_mine in self.crabada_w2.list_my_open_mines(user_address):
+        for open_mine in self.crabada_w2.list_my_open_mines(self.config["address"]):
             group = self.config["mining_teams"].get(open_mine["team_id"], -1)
             if group == mine_group:
                 mines.append(open_mine)
@@ -54,7 +55,7 @@ class ScatteredReinforcement(MiningStrategy):
             int(last_mine_start + self.MIN_TIME_BETWEEN_MINES - now)
         )
         logger.print_normal(
-            f"Waiting to start mine for {team['team_id']} in {time_before_start_formatted}"
+            f"Waiting to start mine for {team['team_id']} (group {mine_group}) in {time_before_start_formatted}"
         )
         return False
 

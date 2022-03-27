@@ -586,3 +586,10 @@ class CrabadaWeb2Client:
         If a game is already finished, it won't be considered"""
         unfinished_games = [g for g in games if not mine_is_finished(g)]
         return first_or_none(sorted(unfinished_games, key=lambda g: g.get("end_time", 10e20)))
+
+    @staticmethod
+    def get_last_mine_start_time(user_address: Address) -> int:
+        last_mine_start = 0
+        for mine in CrabadaWeb2Client().list_my_open_mines(user_address):
+            last_mine_start = max(last_mine_start, mine.get("start_time", 0))
+        return last_mine_start

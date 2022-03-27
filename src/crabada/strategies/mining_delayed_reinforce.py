@@ -10,7 +10,7 @@ from utils.config_types import UserConfig
 from utils.general import get_pretty_seconds
 
 
-class DelayReinforcementStrategy(MiningStrategy):
+class MiningDelayReinforcementStrategy(MiningStrategy):
     MAX_TIME_REMAINING_DELTA = 60.0 * 3
     DELAY_BEFORE_REINFORCING = 60.0 * 19
 
@@ -52,7 +52,7 @@ class DelayReinforcementStrategy(MiningStrategy):
         return False
 
 
-class PreferOtherMpCrabsAndDelayReinforcement(DelayReinforcementStrategy):
+class PreferOtherMpCrabsAndDelayReinforcement(MiningDelayReinforcementStrategy):
     def __init__(
         self,
         address: Address,
@@ -74,7 +74,7 @@ class PreferOtherMpCrabsAndDelayReinforcement(DelayReinforcementStrategy):
         return super()._get_best_mine_reinforcement(team, mine, use_own_crabs=False)
 
 
-class PreferOwnMpCrabsAndDelayReinforcement(DelayReinforcementStrategy):
+class PreferOwnMpCrabsAndDelayReinforcement(MiningDelayReinforcementStrategy):
     def __init__(
         self,
         address: Address,

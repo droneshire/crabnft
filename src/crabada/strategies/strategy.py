@@ -34,7 +34,7 @@ class Strategy:
         self.reinforcement_search_backoff = 0
         self.time_since_last_attack = None  # T.Optional[float]
 
-        self.reinforce_time_cache = {c: time.time() for c in reinforcing_crabs.keys()}
+        self.reinforce_time_cache = {c: time.time() for c in self.reinforcing_crabs.keys()}
 
     def get_reinforcement_crab(
         self, team: Team, mine: IdleGame, reinforcement_search_backoff: int = 0
