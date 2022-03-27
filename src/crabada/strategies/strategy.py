@@ -57,10 +57,10 @@ class Strategy:
         raise NotImplementedError
 
     def _use_bp_reinforcement(
-        self, mine: IdleGame, use_own_crabs: bool = False
+        self, mine: IdleGame, group_id: int, use_own_crabs: bool = False
     ) -> T.Optional[TeamMember]:
         reinforcement_crab = None
-        allowed_reinforcing_crabs = self.reinforcing_crabs.keys()
+        allowed_reinforcing_crabs = [c for c, v in self.reinforcing_crabs.items() if v == group_id]
 
         logger.print_normal(f"Mine[{mine['game_id']}]: using highest bp")
 
@@ -86,10 +86,10 @@ class Strategy:
         return reinforcement_crab
 
     def _use_mp_reinforcement(
-        self, mine: IdleGame, use_own_crabs: bool = False
+        self, mine: IdleGame, group_id: int, use_own_crabs: bool = False
     ) -> T.Optional[TeamMember]:
         reinforcement_crab = None
-        allowed_reinforcing_crabs = self.reinforcing_crabs.keys()
+        allowed_reinforcing_crabs = [c for c, v in self.reinforcing_crabs.items() if v == group_id]
 
         logger.print_normal(f"Mine[{mine['game_id']}]: using highest mp")
 

@@ -71,10 +71,15 @@ class MiningStrategy(Strategy):
             )
             return None
 
+        group_id = self.config["mining_teams"].get(team["team_id"], -1)
         if mine["attack_point"] - defense_battle_point < self.MAX_BP_DELTA:
-            reinforcement_crab = super()._use_bp_reinforcement(mine, use_own_crabs=use_own_crabs)
+            reinforcement_crab = super()._use_bp_reinforcement(
+                mine, group_id, use_own_crabs=use_own_crabs
+            )
         else:
-            reinforcement_crab = super()._use_mp_reinforcement(mine, use_own_crabs=use_own_crabs)
+            reinforcement_crab = super()._use_mp_reinforcement(
+                mine, group_id, use_own_crabs=use_own_crabs
+            )
 
         if reinforcement_crab is None:
             logger.print_fail(f"Mine[{mine['game_id']}]: Could not find suitable reinforcement!")

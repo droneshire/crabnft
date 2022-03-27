@@ -213,6 +213,19 @@ class CrabadaMineBot:
 
     def _print_stats(self, mines: T.List[IdleGame], is_mine: bool = True) -> None:
         formatted_date = time.strftime("%A, %Y-%m-%d %H:%M:%S", time.localtime(time.time()))
+        header = "{:4s}{:10s}{:6s}{:10s}{:20s}{:25s}{:15s}{:15s}{:12s}\t{:25s}\n".format(
+            "#",
+            "Team",
+            "Group",
+            "Mine",
+            "Round",
+            "Progress",
+            "Time Left",
+            "Reinforce #",
+            "Status",
+            "Reinforcements",
+        )
+        header += len(header) * "_"
 
         if is_mine:
             logger.print_normal(f"Mines ({formatted_date})")
@@ -223,7 +236,9 @@ class CrabadaMineBot:
         else:
             logger.print_normal(f"Loots ({formatted_date})")
 
-        if not mines:
+        if mines:
+            logger.print_normal(header)
+        else:
             logger.print_normal(f"No {'mines' if is_mine else 'loots'}")
 
         for inx, mine in enumerate(mines):
@@ -253,7 +268,7 @@ class CrabadaMineBot:
             progress = math.ceil(percent_done * 20) if remaining_time > 0 else 20
 
             logger.print_normal(
-                "#{:3s}{:10s}{:2s}{:10s}{:20s}{:25s}{:15s}{:15s}{:15s}\t{:25s}".format(
+                "#{:3s}{:10s}{:6s}{:10s}{:20s}{:25s}{:15s}{:15s}{:20s}\t{:25s}".format(
                     str(inx + 1),
                     str(mine[team_id]),
                     str(self.config["mining_teams"].get(mine[team_id])),

@@ -69,7 +69,10 @@ class LootingStrategy(Strategy):
             )
             return None
 
-        reinforcement_crab = super()._use_bp_reinforcement(mine, use_own_crabs=use_own_crabs)
+        group_id = self.config["mining_teams"].get(team["team_id"], -1)
+        reinforcement_crab = super()._use_bp_reinforcement(
+            mine, group_id, use_own_crabs=use_own_crabs
+        )
 
         if reinforcement_crab is None:
             logger.print_fail(f"Loot[{mine['game_id']}]: Could not find suitable reinforcement!")
