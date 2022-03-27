@@ -149,6 +149,7 @@ class PreferOwnMpCrabs(MiningStrategy):
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:
         return super().should_reinforce(mine)
 
+
 class ScatteredReinforcement(MiningStrategy):
     def __init__(
         self,
@@ -174,6 +175,7 @@ class ScatteredReinforcement(MiningStrategy):
 
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:
         return super().should_reinforce(mine)
+
 
 class DelayReinforcementStrategy(MiningStrategy):
     MAX_TIME_REMAINING_DELTA = 60.0 * 3

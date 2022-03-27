@@ -230,7 +230,6 @@ class CrabadaMineBot:
         if not mines:
             logger.print_normal(f"No {'mines' if is_mine else 'loots'}")
 
-
         for inx, mine in enumerate(mines):
             mine_data = self.crabada_w2.get_mine(mine["game_id"])
 
@@ -267,9 +266,7 @@ class CrabadaMineBot:
                     "|{}{}|".format(">" * progress, " " * (20 - progress)),
                     self.crabada_w2.get_remaining_time_formatted(mine_data),
                     f"reinforced {num_reinforcements}x",
-                    logger.format_ok("winning")
-                    if is_winning
-                    else logger.format_fail("losing"),
+                    logger.format_ok("winning") if is_winning else logger.format_fail("losing"),
                     reinforments_used_str,
                 )
             )
