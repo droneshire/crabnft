@@ -1,13 +1,13 @@
 import time
 import typing as T
 from eth_typing import Address
-from eth_typing.encoding import HexStr
 from web3.types import Wei
 
-from crabada.types import CrabForLending, IdleGame, Team, TeamMember
+from crabada.types import IdleGame, Team, TeamMember
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
 from utils import logger
+from utils.config_types import UserConfig
 from utils.price import Tus
 
 
