@@ -12,7 +12,7 @@ from utils.general import get_pretty_seconds
 
 
 class ScatteredReinforcement(MiningStrategy):
-    MIN_TIME_BETWEEN_MINES = 60.0 * 30.5
+    MIN_TIME_BETWEEN_MINES = 60.0 * 31.0
 
     def __init__(
         self,

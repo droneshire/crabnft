@@ -251,14 +251,17 @@ class CrabadaMineBot:
                 is_winning = self.crabada_w2.mine_is_winning(mine_data)
                 total_time = self.crabada_w2.get_total_mine_time(mine_data) + 1
                 remaining_time = self.crabada_w2.get_remaining_time(mine_data)
-                percent_done = (total_time - remaining_time) / total_time
-                progress = math.ceil(percent_done * PROGRESS_SLOTS) if remaining_time > 0 else PROGRESS_SLOTS
             else:
                 team_id = "attack_team_id"
                 num_reinforcements = self.crabada_w2.get_num_loot_reinforcements(mine_data)
                 is_winning = self.crabada_w2.loot_is_winning(mine_data)
                 total_time = self.looting_strategy.LOOTING_DURATION
-                progress = PROGRESS_SLOTS
+                remaining_time = self.crabada_w2.get_remaining_loot_time(mine_data)
+
+            percent_done = (total_time - remaining_time) / total_time
+            progress = (
+                math.ceil(percent_done * PROGRESS_SLOTS) if remaining_time > 0 else PROGRESS_SLOTS
+            )
 
             reinforments_used_str = logger.format_normal("[")
             for crab in self.crabada_w2.get_reinforcement_crabs(mine_data):
@@ -276,7 +279,7 @@ class CrabadaMineBot:
                     str(mine["game_id"]),
                     mine["process"][-1]["action"],
                     "|{}{}|".format("#" * progress, " " * (PROGRESS_SLOTS - progress)),
-                    self.crabada_w2.get_remaining_time_formatted(mine_data),
+                    get_pretty_seconds(remaining_time),
                     f"reinforced {num_reinforcements}x",
                     logger.format_ok("winning") if is_winning else logger.format_fail("losing"),
                     reinforments_used_str,
@@ -421,10 +424,10 @@ class CrabadaMineBot:
                 )
                 return False
 
-        return True
-
         logger.print_ok_arrow(f"Successfully started mine for team {team['team_id']}")
         self.time_since_last_alert = None
+
+        return True
 
     def _is_team_allowed_to_mine(self, team: Team) -> bool:
         return team["team_id"] in self.config["mining_teams"].keys()
@@ -490,6 +493,8 @@ class CrabadaMineBot:
     def _check_and_maybe_start_mines(self) -> None:
         available_teams = self.crabada_w2.list_available_teams(self.address)
 
+        groups_started = set()
+
         for team in available_teams:
             if not self._is_team_allowed_to_mine(team):
                 logger.print_warn(f"Skipping team {team['team_id']} for mining...")
@@ -504,7 +509,14 @@ class CrabadaMineBot:
             if not self.mining_strategy.should_start(team):
                 continue
 
-            self._start_mine(team)
+            # only start one team from group at a time in case there's some staggering
+            # that needs to happen
+            team_group = self.config["mining_teams"].get(team["team_id"], -1)
+            if team_group in groups_started:
+                continue
+
+            if self._start_mine(team):
+                group_started.add(team_group)
 
     def _check_and_maybe_reinforce(self) -> None:
         if not self.config["should_reinforce"]:
