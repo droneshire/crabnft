@@ -193,6 +193,7 @@ class CrabadaMineBot:
 
         message = f"Unable to complete bot transaction due to insufficient gas \U000026FD!\n"
         message += f"Please add AVAX to your wallet ASAP to avoid delay in mining!\n"
+        logger.print_fail(message)
         self._send_status_update(True, True, message)
         self.time_since_last_alert = now
 
@@ -388,7 +389,7 @@ class CrabadaMineBot:
         return False
 
     def _close_mine(self, team: Team, mine: IdleGame, strategy: Strategy) -> bool:
-        if self._is_gas_too_high(margin=0):
+        if self._is_gas_too_high(margin=5):
             logger.print_warn(
                 f"Skipping closing of Game[{mine.get('game_id', '')}] due to high gas cost"
             )
@@ -493,7 +494,7 @@ class CrabadaMineBot:
     def _check_and_maybe_start_mines(self) -> None:
         available_teams = self.crabada_w2.list_available_teams(self.address)
 
-        groups_started = set()
+        groups_started = []
 
         for team in available_teams:
             if not self._is_team_allowed_to_mine(team):
@@ -516,7 +517,7 @@ class CrabadaMineBot:
                 continue
 
             if self._start_mine(team):
-                group_started.add(team_group)
+                groups_started.append(team_group)
 
     def _check_and_maybe_reinforce(self) -> None:
         if not self.config["should_reinforce"]:
