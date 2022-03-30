@@ -18,7 +18,7 @@ from utils import discord, email, logger, security
 from utils.game_stats import GameStats
 from utils.price import get_avax_price_usd
 
-AVAX_PRICE_UPDATE_TIME = 60.0
+AVAX_PRICE_UPDATE_TIME = 60.0 * 2
 DISCORD_UPDATE_TIME = 60.0 * 60.0 * 6
 
 

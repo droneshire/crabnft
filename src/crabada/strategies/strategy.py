@@ -56,6 +56,9 @@ class Strategy:
     def reinforce(self, game_id: int, crabada_id: int, borrow_price: Wei) -> T.Any:
         raise NotImplementedError
 
+    def get_gas_margin(self) -> int:
+        return 30
+
     def _use_bp_reinforcement(
         self, mine: IdleGame, group_id: int, use_own_crabs: bool = False
     ) -> T.Optional[TeamMember]:

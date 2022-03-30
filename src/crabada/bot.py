@@ -186,8 +186,8 @@ class CrabadaMineBot:
     def _send_out_of_gas_sms(self):
         now = time.time()
         if (
-            self.time_since_last_alert
-            and now - self.time_since_last_alert > self.ALERT_THROTTLING_TIME
+            self.time_since_last_alert is None
+            or now - self.time_since_last_alert > self.ALERT_THROTTLING_TIME
         ):
             return
 
@@ -389,7 +389,7 @@ class CrabadaMineBot:
         return False
 
     def _close_mine(self, team: Team, mine: IdleGame, strategy: Strategy) -> bool:
-        if self._is_gas_too_high(margin=5):
+        if self._is_gas_too_high(margin=strategy.get_gas_margin()):
             logger.print_warn(
                 f"Skipping closing of Game[{mine.get('game_id', '')}] due to high gas cost"
             )
@@ -501,7 +501,7 @@ class CrabadaMineBot:
                 logger.print_warn(f"Skipping team {team['team_id']} for mining...")
                 continue
 
-            if self._is_gas_too_high(margin=10):
+            if self._is_gas_too_high(margin=self.mining_strategy.get_gas_margin()):
                 logger.print_warn(
                     f"Skipping open of mine for team {team['team_id']} due to high gas cost"
                 )
