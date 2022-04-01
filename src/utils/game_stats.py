@@ -42,7 +42,7 @@ def get_lifetime_stats_file(user: str, log_dir: str) -> str:
 def get_game_stats(user: str, log_dir: str) -> T.Dict[str, T.Any]:
     game_stats_file = get_lifetime_stats_file(user, log_dir)
     if not os.path.isfile(game_stats_file):
-        return {}
+        return NULL_GAME_STATS
     with open(game_stats_file, "r") as infile:
         return json.load(infile)
 

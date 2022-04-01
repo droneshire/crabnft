@@ -10,8 +10,8 @@ from web3.types import Wei
 Tus = T.NewType("Tus", int)
 Cra = T.NewType("Cra", int)
 
-class Prices:
 
+class Prices:
     def __init__(self, avax_usd, tus_usd, cra_usd):
         self.avax_usd = avax_usd
         self.tus_usd = tus_usd
@@ -27,7 +27,7 @@ class Prices:
 
     def cra_to_tus(self, cra: Cra) -> float:
         try:
-            tus_per_cra =  self.cra_usd / self.tus_usd
+            tus_per_cra = self.cra_usd / self.tus_usd
             return tus_per_cra * cra
         except:
             return 0.0

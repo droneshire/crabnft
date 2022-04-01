@@ -88,7 +88,8 @@ def run_bot() -> None:
             )
         )
 
-    game_stats = GameStats()
+    total_commission_tus = 0.0
+    total_tus = 0.0
     for bot in bots:
         bot.update_prices(
             get_avax_price_usd(IEX_API_TOKEN),
@@ -98,14 +99,11 @@ def run_bot() -> None:
 
         logger.print_bold(f"Starting game bot for user {bot.user}...")
         bot_stats = bot.get_lifetime_stats()
-        game_stats["commission_tus"] = (
-            game_stats.get("commission_tus", 0.0) + bot_stats["commission_tus"]
-        )
-        game_stats["tus_gross"] = game_stats.get("tus_gross", 0.0) + bot_stats["tus_gross"]
+        for _, commission in bot_stats.get("commission_tus", {"", 0.0}).items():
+            total_commission_tus += commission
+        total_tus += +bot_stats["tus_gross"]
 
-    logger.print_bold(
-        f"Mined TUS: {game_stats['tus_gross']}TUS Commission TUS: {game_stats['commission_tus']}TUS"
-    )
+    logger.print_bold(f"Mined TUS: {total_tus}TUS Commission TUS: {total_commission_tus}TUS")
     logger.print_normal("\n")
 
     last_avax_price_update = 0.0

@@ -118,6 +118,9 @@ class CrabadaMineBot:
         content += f"Explorer: https://snowtrace.io/address/{self.config['address']}\n\n"
         content += "---\U0001F579  GAME STATS\U0001F579  ---\n"
         for k, v in self.game_stats.items():
+            if isinstance(v, dict):
+                v = sum([c for _, c in v.items()])
+
             if isinstance(v, float):
                 content += f"{k.upper()}: {v:.3f}\n"
             else:
@@ -590,7 +593,9 @@ class CrabadaMineBot:
 
         gas_price_gwei = self.crabada_w3.get_gas_price_gwei()
         gas_price_gwei = "UNKNOWN" if gas_price_gwei is None else gas_price_gwei
-        logger.print_ok(f"AVAX: ${self.prices.avax_usd:.2f}, TUS: ${self.prices.tus_usd:.2f}, CRA: ${self.prices.cra_usd:.2f}, Gas: {gas_price_gwei:.2f}")
+        logger.print_ok(
+            f"AVAX: ${self.prices.avax_usd:.2f}, TUS: ${self.prices.tus_usd:.2f}, CRA: ${self.prices.cra_usd:.2f}, Gas: {gas_price_gwei:.2f}"
+        )
 
         self._print_mine_loot_status()
         self._check_and_maybe_close()
