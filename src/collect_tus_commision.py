@@ -194,7 +194,7 @@ def collect_tus_commission(
                 logger.print_normal(
                     f"New TUS commission balance: {game_stats['commission_tus']} TUS"
                 )
-
+        new_commission = 0.0
         if not did_fail:
             new_commission = sum([c for _, c in game_stats["commission_tus"].items()])
             message = f"\U0001F980  Commission Collection: \U0001F980\n"
@@ -206,7 +206,7 @@ def collect_tus_commission(
                 send_sms_message(encrypt_password, config["email"], config["sms_number"], message)
 
     logger.print_bold(
-        f"Collected {sum([c for _, c in total_stats['total_commission_tus'].items()])} TUS in commission!!!"
+        f"Collected {new_commission} TUS in commission!!!"
     )
 
     if dry_run:
