@@ -62,7 +62,10 @@ def send_collection_notice(
             continue
 
         game_stats = get_game_stats(user, log_dir)
-        commission_tus = game_stats["commission_tus"]
+
+        commission_tus = 0.0
+        for address, commission in game_stats["commission_tus"].items():
+            commission_tus += commission
 
         private_key = (
             ""
@@ -103,7 +106,7 @@ def send_collection_notice(
             send_sms_message(config["sms_number"], sms_message)
 
     if not dry_run:
-        discord.get_discord_hook().send(DISCORD_TRANSFER_NOTICE)
+        discord.get_discord_hook("WHALES").send(DISCORD_TRANSFER_NOTICE)
 
 
 def collect_tus_commission(
@@ -113,7 +116,6 @@ def collect_tus_commission(
     encrypt_password: str = "",
     dry_run: bool = False,
 ) -> None:
-    to_address = USERS[to_user]["address"]
     total_commission_collected_tus = 0.0
 
     run_all_users = "ALL" in from_users
@@ -131,7 +133,6 @@ def collect_tus_commission(
         )
 
         game_stats = get_game_stats(user, log_dir)
-        commission_tus = float(game_stats["commission_tus"])
 
         from_address = config["address"]
 
@@ -145,6 +146,9 @@ def collect_tus_commission(
             ),
         )
 
+        commission_tus = 0.0
+        for _, commission in game_stats["commission_tus"].items():
+            commission_tus += commission
         available_tus = float(tus_w3.get_balance())
         logger.print_ok(
             f"{from_address} balance: {available_tus} TUS, commission: {commission_tus} TUS"
@@ -160,29 +164,32 @@ def collect_tus_commission(
             )
             continue
 
-        logger.print_bold(
-            f"Attempting to send commission of {commission_tus:.2f} TUS from {user} -> {to_user}..."
-        )
-        tx_hash = tus_w3.transfer_tus(to_address, commission_tus)
-        tx_receipt = tus_w3.get_transaction_receipt(tx_hash)
-
-        if tx_receipt["status"] != 1:
-            logger.print_fail_arrow(
-                f"Error in tx {commission_tus:.2f} TUS from {from_address}->{to_address}"
+        did_fail = False
+        for to_address, commission in game_stats["commission_tus"].items():
+            logger.print_bold(
+                f"Attempting to send commission of {commission_tus:.2f} TUS from {user} -> {to_user}..."
             )
-            continue
-        else:
-            logger.print_ok_arrow(
-                f"Successfully tx {commission_tus:.2f} TUS from {from_address}->{to_address}"
-            )
-            total_commission_collected_tus += commission_tus
-            game_stats["commission_tus"] -= commission_tus
-            if not dry_run:
-                write_game_stats(user, log_dir, game_stats)
-            logger.print_normal(f"New TUS commission balance: {game_stats['commission_tus']} TUS")
+            tx_hash = tus_w3.transfer_tus(to_address, commission_tus)
+            tx_receipt = tus_w3.get_transaction_receipt(tx_hash)
 
+            if tx_receipt["status"] != 1:
+                logger.print_fail_arrow(
+                    f"Error in tx {commission:.2f} TUS from {from_address}->{to_address}"
+                )
+                did_fail = True
+            else:
+                logger.print_ok_arrow(
+                    f"Successfully tx {commission:.2f} TUS from {from_address}->{to_address}"
+                )
+                total_commission_collected_tus += commission
+                game_stats["commission_tus"] -= commission
+                if not dry_run:
+                    write_game_stats(user, log_dir, game_stats)
+                logger.print_normal(f"New TUS commission balance: {game_stats['commission_tus']} TUS")
+
+        if not did_fail:
             sms_message = f"\U0001F980  Commission Collection: \U0001F980\n"
-            sms_message += f"Successful tx of {commission_tus:.2f} TUS from {user} to {to_user}\n"
+            sms_message += f"Successful tx of {commission_tus:.2f} TUS from {user}\n"
             sms_message += f"Explorer: https://snowtrace.io/address/{from_address}\n\n"
             sms_message += f"New TUS commission balance: {game_stats['commission_tus']} TUS\n"
             logger.print_ok_blue(sms_message)

@@ -2,7 +2,6 @@
 Update bot version using discord bot
 """
 import argparse
-import logging
 
 from utils import discord, logger
 
@@ -12,6 +11,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--new-version", help="new version number")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--change-list", help="Changelist")
+    parser.add_argument(
+        "--channel",
+        choices=discord.DISCORD_WEBHOOK_URL.keys(),
+        help="discord channels to send message",
+    )
     return parser.parse_args()
 
 
@@ -32,7 +36,7 @@ def main() -> None:
     logger.print_normal(text)
 
     if not args.dry_run:
-        discord.get_discord_hook().send(text)
+        discord.get_discord_hook(args.channel).send(text)
 
 
 if __name__ == "__main__":

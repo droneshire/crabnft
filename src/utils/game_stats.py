@@ -1,6 +1,7 @@
 import json
 import os
 import typing as T
+from eth_typing import Address
 
 from utils import logger
 
@@ -9,22 +10,26 @@ class GameStats(T.TypedDict):
     tus_gross: float
     cra_net: float
     tus_net: float
+    cra_gross: float
     game_wins: int
     game_losses: int
     game_win_percent: float
-    commission_tus: float
+    commission_tus: T.Dict[Address, float]
+    commission_cra: T.Dict[Address, float]
     tus_reinforcement: float
     avax_gas_usd: float
 
 
 NULL_GAME_STATS = GameStats(
+    cra_gross=0.0,
     tus_gross=0.0,
     cra_net=0.0,
     tus_net=0.0,
     game_wins=0,
     game_losses=0,
     game_win_percent=0.0,
-    commission_tus=0.0,
+    commission_tus=dict(),
+    commission_cra=dict(),
     tus_reinforcement=0.0,
     avax_gas_usd=0.0,
 )
