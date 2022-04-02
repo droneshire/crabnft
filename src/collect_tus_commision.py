@@ -11,8 +11,8 @@ import typing as T
 from eth_typing import Address
 from twilio.rest import Client
 
-from config import TWILIO_CONFIG, USERS
-from utils import discord, logger
+from config import GMAIL, TWILIO_CONFIG, USERS
+from utils import discord, email, logger
 from utils.game_stats import GameStats, get_game_stats, write_game_stats
 from utils.price import Tus
 from utils.security import decrypt
@@ -21,19 +21,26 @@ from web3_utils.tus_web3_client import TusWeb3Client
 
 MINIMUM_TUS_TO_TRANSFER = 25
 DISCORD_TRANSFER_NOTICE = """\U0000203C  **COURTESY NOTICE**  \U0000203C
-Collecting Crabada commission in 30 mins. Please ensure TUS are in wallet.
+Collecting Crabada commission at next low gas period. Please ensure TUS are in wallet.
 Confirmation will be sent after successful tx.
 snib snib \U0001F980\n"""
+COMMISSION_SUBJECT = """\U0001F980 Crabada Bot: Commission Collection"""
 
 
-def send_sms_message(to_number: str, message: str) -> None:
+def send_sms_message(encrypt_password: str, to_email: str, to_number: str, message: str) -> None:
     sms_client = Client(TWILIO_CONFIG["account_sid"], TWILIO_CONFIG["account_auth_token"])
 
-    message = sms_client.messages.create(
-        body=message,
-        from_=TWILIO_CONFIG["from_sms_number"],
-        to=to_number,
-    )
+    try:
+        sms_client.messages.create(
+            body=message,
+            from_=TWILIO_CONFIG["from_sms_number"],
+            to=to_number,
+        )
+        email_password = decrypt(str.encode(encrypt_password), GMAIL["password"]).decode()
+        email_account = email.Email(address=GMAIL["user"], password=email_password)
+        email.send_email(email_account, to_email, COMMISSION_SUBJECT, message)
+    except:
+        logger.print_fail(f"Failed to send message to {to_number}/{to_email}")
 
 
 def setup_log(log_level: str, log_dir: str) -> None:
@@ -91,22 +98,19 @@ def send_collection_notice(
             continue
 
         if commission_tus > available_tus:
-            logger.print_fail(
-                f"Skipping transfer of {commission_tus:.2f} from {user}: insufficient funds!"
-            )
-            continue
+            logger.print_fail(f"WARNING: {commission_tus:.2f} from {user}: insufficient funds!")
 
-        sms_message = f"\U0000203C  COURTESY NOTICE  \U0000203C\n"
-        sms_message += f"Hey {user}!\nCollecting Crabada commission in 30 mins.\n"
-        sms_message += f"Please ensure {commission_tus:.2f} TUS are in wallet.\n"
-        sms_message += f"Confirmation will be sent after successful tx\n"
-        sms_message += f"snib snib \U0001F980\n"
-        logger.print_ok_blue(sms_message)
+        message = f"\U0000203C  COURTESY NOTICE  \U0000203C\n"
+        message += f"Hey {user}!\nCollecting Crabada commission at next low gas period.\n"
+        message += f"Please ensure {commission_tus:.2f} TUS are in wallet.\n"
+        message += f"Confirmation will be sent after successful tx\n"
+        message += f"snib snib \U0001F980\n"
+        logger.print_ok_blue(message)
         if not dry_run:
-            send_sms_message(config["sms_number"], sms_message)
+            send_sms_message(encrypt_password, config["email"], config["sms_number"], message)
 
     if not dry_run:
-        discord.get_discord_hook("WHALES").send(DISCORD_TRANSFER_NOTICE)
+        discord.get_discord_hook("HOLDERS").send(DISCORD_TRANSFER_NOTICE)
 
 
 def collect_tus_commission(
@@ -193,13 +197,13 @@ def collect_tus_commission(
 
         if not did_fail:
             new_commission = sum([c for _, c in game_stats["commission_tus"].items()])
-            sms_message = f"\U0001F980  Commission Collection: \U0001F980\n"
-            sms_message += f"Successful tx of {commission_tus:.2f} TUS from {user}\n"
-            sms_message += f"Explorer: https://snowtrace.io/address/{from_address}\n\n"
-            sms_message += f"New TUS commission balance: {new_commission} TUS\n"
-            logger.print_ok_blue(sms_message)
+            message = f"\U0001F980  Commission Collection: \U0001F980\n"
+            message += f"Successful tx of {commission_tus:.2f} TUS from {user}\n"
+            message += f"Explorer: https://snowtrace.io/address/{from_address}\n\n"
+            message += f"New TUS commission balance: {new_commission} TUS\n"
+            logger.print_ok_blue(message)
             if not dry_run:
-                send_sms_message(config["sms_number"], sms_message)
+                send_sms_message(encrypt_password, config["email"], config["sms_number"], message)
 
     logger.print_bold(
         f"Collected {sum([c for _, c in total_stats['total_commission_tus'].items()])} TUS in commission!!!"
@@ -258,7 +262,7 @@ def main() -> None:
         encrypt_password = ""
 
     if args.send_notice:
-        logger.print_bold(f"Sending SMS notice that we're collecting in 60 mins!")
+        logger.print_bold(f"Sending SMS notice that we're collecting when gas is low!")
         send_collection_notice(from_users, args.log_dir, encrypt_password, args.dry_run)
         return
 
