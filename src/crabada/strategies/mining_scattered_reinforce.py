@@ -29,7 +29,7 @@ class ScatteredReinforcement(MiningStrategy):
         )
 
     def get_gas_margin(self) -> int:
-        return 60
+        return 50
 
     def should_start(self, team: Team) -> bool:
         mine_group = self.config["mining_teams"].get(team["team_id"], -1)
