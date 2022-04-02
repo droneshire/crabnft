@@ -205,9 +205,7 @@ def collect_tus_commission(
             if not dry_run:
                 send_sms_message(encrypt_password, config["email"], config["sms_number"], message)
 
-    logger.print_bold(
-        f"Collected {new_commission} TUS in commission!!!"
-    )
+    logger.print_bold(f"Collected {new_commission} TUS in commission!!!")
 
     if dry_run:
         return
