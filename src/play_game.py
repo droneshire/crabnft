@@ -18,8 +18,8 @@ from utils import discord, email, logger, security
 from utils.game_stats import GameStats
 from utils.price import get_avax_price_usd, get_token_price_usd
 
-PRICE_UPDATE_TIME = 30.0
-DISCORD_UPDATE_TIME = 60.0 * 60.0 * 6
+PRICE_UPDATE_TIME = 60.0 * 30.0
+DISCORD_UPDATE_TIME = 60.0 * 60.0 * 3
 
 
 def parse_args() -> argparse.Namespace:
@@ -55,8 +55,8 @@ def run_bot() -> None:
     sms_client = Client(TWILIO_CONFIG["account_sid"], TWILIO_CONFIG["account_auth_token"])
 
     webhooks = {
-        "WHALES": discord.get_discord_hook("WHALES"),
-        "CARTEL": discord.get_discord_hook("CARTEL"),
+        "HOLDERS": discord.get_discord_hook("HOLDERS"),
+        "UPDATES": discord.get_discord_hook("UPDATES"),
     }
 
     encrypt_password = ""
@@ -106,7 +106,7 @@ def run_bot() -> None:
     logger.print_bold(f"Mined TUS: {total_tus}TUS Commission TUS: {total_commission_tus}TUS")
     logger.print_normal("\n")
 
-    last_avax_price_update = 0.0
+    last_price_update = 0.0
     last_discord_update = time.time()
 
     alerts_enabled = not args.quiet and not args.dry_run
@@ -128,13 +128,13 @@ def run_bot() -> None:
                 losses += bot_stats["game_losses"]
 
                 now = time.time()
-                if now - last_avax_price_update > PRICE_UPDATE_TIME:
+                if now - last_price_update > PRICE_UPDATE_TIME:
                     bot.update_prices(
                         get_avax_price_usd(IEX_API_TOKEN),
                         get_token_price_usd(COINMARKETCAP_API_TOKEN, "TUS"),
                         get_token_price_usd(COINMARKETCAP_API_TOKEN, "CRA"),
                     )
-                    last_avax_price_update = now
+                    last_price_update = now
 
             if alerts_enabled and time.time() - last_discord_update > DISCORD_UPDATE_TIME:
                 last_discord_update = time.time()
@@ -142,7 +142,7 @@ def run_bot() -> None:
                 win_percentage = float(wins) / (wins + losses) * 100.0
                 webhook_text += f"\U0001F916\t**Bot win percentage: {win_percentage:.2f}%**\n"
                 for channel in webhook.keys():
-                    webhook[channel].send(webhook_text)
+                    webhook["UPDATES"].send(webhook_text)
 
     except KeyboardInterrupt:
         pass
@@ -159,7 +159,7 @@ def run_bot() -> None:
             )
         if alerts_enabled:
             stop_message += "Please manually attend your mines until we're back up"
-            webhook["WHALES"].send(stop_message)
+            webhook["HOLDERS"].send(stop_message)
         logger.print_fail(traceback.format_exc())
     finally:
         for bot in bots:

@@ -26,7 +26,7 @@ from web3_utils.web3_client import web3_transaction
 
 class CrabadaMineBot:
     TIME_BETWEEN_TRANSACTIONS = 5.0
-    TIME_BETWEEN_EACH_UPDATE = 2.0
+    TIME_BETWEEN_EACH_UPDATE = 0.0
     ALERT_THROTTLING_TIME = 60.0 * 30.0
     MIN_MINE_POINT = 60
 
@@ -164,17 +164,19 @@ class CrabadaMineBot:
         tus_reward = wei_to_tus_raw(mine["miner_tus_reward"])
         cra_reward = wei_to_cra_raw(mine["miner_cra_reward"])
 
-        self.game_stats["tus_gross"] += tus_reward
-        self.game_stats["cra_gross"] += cra_reward
-        self.game_stats["tus_net"] += tus_reward
-        self.game_stats["cra_net"] += cra_reward
+        self.game_stats["tus_gross"] = self.game_stats.get("tus_gross", 0.0) + tus_reward
+        self.game_stats["cra_gross"] = self.game_stats.get("cra_gross", 0.0) + cra_reward
+        self.game_stats["tus_net"] = self.game_stats.get("tus_net", 0.0) + tus_reward
+        self.game_stats["cra_net"] = self.game_stats.get("cra_net", 0.0) + cra_reward
 
         for address, commission in self.config["commission_percent_per_mine"].items():
             commission_tus = tus_reward * (commission / 100.0)
             commission_cra = cra_reward * (commission / 100.0)
             # convert cra -> tus and add to tus commission, we dont take direct cra commission
             commission_tus += self.prices.cra_to_tus(commission_cra)
-            self.game_stats["commission_tus"][address] += commission_tus
+            self.game_stats["commission_tus"][address] = (
+                self.game_stats["commission_tus"].get(address, 0.0) + commission_tus
+            )
 
             self.game_stats["tus_net"] -= commission_tus
             self.game_stats["cra_net"] -= commission_cra
