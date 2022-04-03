@@ -26,6 +26,7 @@ DISCORD_UPDATE_TIME = 60.0 * 60.0 * 3
 PROFITABILITY_UPDATE_TIME = 60.0 * 20.0
 GAS_DOWNSAMPLE_COUNT = 4
 
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     log_dir = logger.get_logging_dir()
@@ -154,7 +155,6 @@ def run_bot() -> None:
                 avg_gas_avax.get_avg(),
                 avg_reinforce_tus.get_avg(),
                 win_percentage,
-                verbose=True,
             )
 
             now = time.time()

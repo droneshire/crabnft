@@ -94,7 +94,9 @@ def get_profitability_message(
     message += f"**Avg Reinforce Cost \U0001F4B0**: {avg_reinforce_tus:.2f} TUS\n\n"
 
     message += f"**Prices**\n"
-    message += f"AVAX: ${prices.avax_usd:.3f}, TUS: ${prices.tus_usd:.3f}, CRA: ${prices.cra_usd:.3f}\n\n"
+    message += (
+        f"AVAX: ${prices.avax_usd:.3f}, TUS: ${prices.tus_usd:.3f}, CRA: ${prices.cra_usd:.3f}\n\n"
+    )
 
     for game in ["LOOT", "MINE"]:
         if game == "LOOT":
@@ -102,10 +104,10 @@ def get_profitability_message(
         else:
             win_percent = mine_win_percent
         profit_tus = get_expected_game_profit(
-            game, prices, avg_gas_avax, avg_reinforce_tus, win_percent, verbose=True
+            game, prices, avg_gas_avax, avg_reinforce_tus, win_percent
         )
         is_profitable = is_idle_game_transaction_profitable(
-            game, prices, avg_gas_avax, avg_reinforce_tus, win_percent, verbose=True
+            game, prices, avg_gas_avax, avg_reinforce_tus, win_percent
         )
         profit_emoji = "\U0001F4C8" if is_profitable else "\U0001F4C9"
         profit_usd = prices.tus_usd * profit_tus

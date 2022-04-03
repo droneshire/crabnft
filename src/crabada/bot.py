@@ -339,13 +339,11 @@ class CrabadaMineBot:
             reinforcement_crab = strategy.get_reinforcement_crab(
                 team, mine, self.reinforcement_search_backoff
             )
-            if (
-                self._reinforce_with_crab(
-                    team,
-                    mine,
-                    reinforcement_crab,
-                    strategy,
-                )
+            if self._reinforce_with_crab(
+                team,
+                mine,
+                reinforcement_crab,
+                strategy,
             ):
                 last_reinforcement_search_backoff = self.reinforcement_search_backoff
                 self.reinforcement_search_backoff = max(0, self.reinforcement_search_backoff - 2)
