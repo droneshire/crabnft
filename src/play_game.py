@@ -71,9 +71,9 @@ def check_to_see_if_profitable_and_post(
     PROFIT_HYSTERESIS = 10
 
     message = f"**Profitability Update**\n"
-    message += f"**Avg Tx Gas \U000026FD**: {avg_gas_avax} AVAX\n"
-    message += f"**Avg Win % \U0001F3C6**: {win_percent}%\n"
-    message += f"**Avg Reinforce Cost \U0001F4B0*: {avg_reinforce_tus} TUS\n"
+    message += f"**Avg Tx Gas \U000026FD**: {avg_gas_avax:.2f} AVAX\n"
+    message += f"**Avg Win % \U0001F3C6**: {win_percent:.2f}%\n"
+    message += f"**Avg Reinforce Cost \U0001F4B0*: {avg_reinforce_tus:2f} TUS\n"
 
     did_change = False
     for game in LAST_PROFIT_TUS.keys():
@@ -84,7 +84,7 @@ def check_to_see_if_profitable_and_post(
             game, prices, avg_gas_avax, avg_reinforce_tus, win_percent, verbose=True
         )
         profit_emoji = "\U0001F4C8" if is_profitable else "\U0001F4C9"
-        message += f"{game}: Expected Profit {profit_tus} TUS {profit_emoji}\n"
+        message += f"{game}: Expected Profit {profit_tus:.2f} TUS {profit_emoji:.2f}\n"
         if LAST_PROFIT_TUS[game] > 0 and profit_tus < 0:
             if verbose:
                 logger.print_fail_arrow(f"{game}ing just became unprofitable!")
@@ -203,7 +203,9 @@ def run_bot() -> None:
                 avg_gas_avax.get_avg(),
                 avg_reinforce_tus.get_avg(),
                 win_percentage,
-                args.dry_run,
+                dry_run=args.dry_run,
+                verbose=False,
+                force=False,
             )
 
             if alerts_enabled and time.time() - last_discord_update > DISCORD_UPDATE_TIME:
