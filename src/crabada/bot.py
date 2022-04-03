@@ -10,6 +10,7 @@ from web3.types import Address, TxReceipt
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
 from crabada.strategies.strategy import Strategy
+from crabada.strategies.looting import LootingStrategy
 from crabada.strategies.strategy_selection import STRATEGY_SELECTION
 from crabada.types import CrabForLending, IdleGame, Team
 from utils import logger
@@ -318,7 +319,12 @@ class CrabadaMineBot:
         if not strategy.should_reinforce(mine):
             return
 
-        reinforce_margin = 30 if strategy._have_reinforced_at_least_once(team) else 0
+        reinforce_margin = 0
+        if strategy._have_reinforced_at_least_once(team):
+            reinforce_margin = 30
+        if isinstance(strategy, LootingStrategy):
+            reinforce_margin = 50
+
         if self._is_gas_too_high(margin=reinforce_margin):
             logger.print_warn(
                 f"Skipping reinforcement of Mine[{mine['game_id']}] due to high gas cost"
