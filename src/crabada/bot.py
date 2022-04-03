@@ -76,7 +76,7 @@ class CrabadaMineBot:
         self.game_stats: GameStats = NULL_GAME_STATS
         self.updated_game_stats: bool = True
         self.prices: Prices = Prices(0.0, 0.0, 0.0)
-        self.avg_gas_avax: Average = Average()
+        self.avg_gas_avax: Average = Average(0.01)
 
         self.mining_strategy = STRATEGY_SELECTION[self.config["mining_strategy"]](
             self.address,
@@ -91,7 +91,7 @@ class CrabadaMineBot:
             self.config,
         )
         self.reinforcement_search_backoff: int = 0
-        self.avg_reinforce_tus: Average = Average()
+        self.avg_reinforce_tus: Average = Average(22.0)
         self.last_mine_start: T.Optional[float] = None
 
         if not dry_run and not os.path.isfile(get_lifetime_stats_file(user, self.log_dir)):

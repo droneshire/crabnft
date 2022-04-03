@@ -73,7 +73,7 @@ def check_to_see_if_profitable_and_post(
     message = f"**Profitability Update**\n"
     message += f"**Avg Tx Gas \U000026FD**: {avg_gas_avax:.2f} AVAX\n"
     message += f"**Avg Win % \U0001F3C6**: {win_percent:.2f}%\n"
-    message += f"**Avg Reinforce Cost \U0001F4B0*: {avg_reinforce_tus:2f} TUS\n"
+    message += f"**Avg Reinforce Cost \U0001F4B0**: {avg_reinforce_tus:2f} TUS\n"
 
     did_change = False
     for game in LAST_PROFIT_TUS.keys():

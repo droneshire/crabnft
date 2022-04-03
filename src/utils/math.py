@@ -2,8 +2,8 @@ import typing as T
 
 
 class Average:
-    def __init__(self):
-        self.total = 0.0
+    def __init__(self, value=0.0):
+        self.total = value
         self.count = 0
 
     def reset(self) -> None:
