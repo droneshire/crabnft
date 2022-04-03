@@ -17,7 +17,7 @@ class LootingStrategy(Strategy):
     Base class for looting strategies
     """
 
-    MIN_LOOT_POINT = 230
+    MIN_LOOT_POINT = 0
     LOOTING_DURATION = 60.0 * 60.0
 
     def __init__(

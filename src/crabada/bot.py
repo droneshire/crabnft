@@ -346,7 +346,6 @@ class CrabadaMineBot:
                     reinforcement_crab,
                     strategy,
                 )
-                and strategy == self.mining_strategy
             ):
                 last_reinforcement_search_backoff = self.reinforcement_search_backoff
                 self.reinforcement_search_backoff = max(0, self.reinforcement_search_backoff - 2)

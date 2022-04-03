@@ -93,6 +93,9 @@ def get_profitability_message(
     message += f"**Avg Mine Win % \U0001F3C6**: {mine_win_percent:.2f}%\n"
     message += f"**Avg Reinforce Cost \U0001F4B0**: {avg_reinforce_tus:.2f} TUS\n\n"
 
+    message += f"**Prices**\n"
+    message += f"AVAX: ${prices.avax_usd:.3f}, TUS: ${prices.tus_usd:.3f}, CRA: ${prices.cra_usd:.3f}\n\n"
+
     for game in ["LOOT", "MINE"]:
         if game == "LOOT":
             win_percent = 100.0 - mine_win_percent

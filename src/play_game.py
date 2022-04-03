@@ -24,7 +24,7 @@ from utils.price import get_avax_price_usd, get_token_price_usd
 PRICE_UPDATE_TIME = 60.0 * 30.0
 DISCORD_UPDATE_TIME = 60.0 * 60.0 * 3
 PROFITABILITY_UPDATE_TIME = 60.0 * 20.0
-
+GAS_DOWNSAMPLE_COUNT = 4
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -113,6 +113,7 @@ def run_bot() -> None:
     last_price_update = 0.0
     last_discord_update = time.time()
     last_profitability_update = time.time()
+    downsample_count = 0
     prices = price.Prices(0.0, 0.0, 0.0)
     avg_gas_avax = Average()
     avg_reinforce_tus = Average()
@@ -167,7 +168,10 @@ def run_bot() -> None:
                 webhook_text += f"\U0001F916\t**Bot win percentage: {win_percentage:.2f}%**\n"
                 webhooks["UPDATES"].send(webhook_text)
 
-            avg_gas_avax.reset()
+            downsample_count += 1
+            if downsample_count > GAS_DOWNSAMPLE_COUNT:
+                downsample_count = 0
+                avg_gas_avax.reset()
 
     except KeyboardInterrupt:
         pass
