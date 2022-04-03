@@ -10,12 +10,15 @@ import requests
 import sys
 import time
 import traceback
+from discord import Webhook
 from twilio.rest import Client
 
+from crabada.profitability import get_expected_game_profit, is_idle_game_transaction_profitable
 from config import COINMARKETCAP_API_TOKEN, GMAIL, IEX_API_TOKEN, TWILIO_CONFIG, USERS
 from crabada.bot import CrabadaMineBot
-from utils import discord, email, logger, security
+from utils import discord, email, logger, price, security
 from utils.game_stats import GameStats
+from utils.math import Average
 from utils.price import get_avax_price_usd, get_token_price_usd
 
 PRICE_UPDATE_TIME = 60.0 * 30.0
@@ -45,6 +48,57 @@ def setup_log(log_level: str, log_dir: str) -> None:
         datefmt="%Y-%m-%d %H:%M:%S",
         filemode="w",
     )
+
+
+LAST_PROFIT_TUS = {
+    "LOOT": -1.0,
+    "MINE": -1.0,
+}
+
+
+def check_to_see_if_profitable_and_post(
+    discord_webhook: Webhook,
+    prices: price.Prices,
+    avg_gas_avax: float,
+    avg_reinforce_tus: float,
+    win_percent: float,
+    dry_run: bool = False,
+    verbose: bool = False,
+    force: bool = False,
+) -> None:
+    global LAST_PROFIT_TUS
+
+    PROFIT_HYSTERESIS = 10
+
+    message = f"**Profitability Update**\n"
+    message += f"**Avg Tx Gas \U000026FD**: {avg_gas_avax} AVAX\n"
+    message += f"**Avg Win % \U0001F3C6**: {win_percent}%\n"
+    message += f"**Avg Reinforce Cost \U0001F4B0*: {avg_reinforce_tus} TUS\n"
+
+    did_change = False
+    for game in LAST_PROFIT_TUS.keys():
+        profit_tus = get_expected_game_profit(
+            game, prices, avg_gas_avax, avg_reinforce_tus, win_percent, verbose=True
+        )
+        is_profitable = is_idle_game_transaction_profitable(
+            game, prices, avg_gas_avax, avg_reinforce_tus, win_percent, verbose=True
+        )
+        profit_emoji = "\U0001F4C8" if is_profitable else "\U0001F4C9"
+        message += f"{game}: Expected Profit {profit_tus} TUS {profit_emoji}\n"
+        if LAST_PROFIT_TUS[game] > 0 and profit_tus < 0:
+            if verbose:
+                logger.print_fail_arrow(f"{game}ing just became unprofitable!")
+            did_change = True
+        if LAST_PROFIT_TUS[game] <= 0 and profit_tus > PROFIT_HYSTERESIS:
+            if verbose:
+                logger.print_ok_blue_arrow(f"{game}ing just became profitable")
+            did_change = True
+        LAST_PROFIT_TUS[game] = profit_tus
+
+    logger.print_normal(message)
+
+    if force or (not dry_run and did_change):
+        discord_webhook.send(message)
 
 
 def run_bot() -> None:
@@ -108,6 +162,9 @@ def run_bot() -> None:
 
     last_price_update = 0.0
     last_discord_update = time.time()
+    prices = price.Prices(0.0, 0.0, 0.0)
+    avg_gas_avax = Average()
+    avg_reinforce_tus = Average()
 
     alerts_enabled = not args.quiet and not args.dry_run
     reinforcement_backoff = 0
@@ -120,6 +177,8 @@ def run_bot() -> None:
             for bot in bots:
                 bot.set_backoff(reinforcement_backoff)
                 bot.run()
+                avg_gas_avax.update(bot.get_avg_gas_avax())
+                avg_reinforce_tus.update(bot.get_avg_reinforce_tus())
                 reinforcement_backoff = bot.get_backoff()
 
                 bot_stats = bot.get_lifetime_stats()
@@ -129,20 +188,29 @@ def run_bot() -> None:
 
                 now = time.time()
                 if now - last_price_update > PRICE_UPDATE_TIME:
-                    bot.update_prices(
+                    prices.update(
                         get_avax_price_usd(IEX_API_TOKEN),
                         get_token_price_usd(COINMARKETCAP_API_TOKEN, "TUS"),
                         get_token_price_usd(COINMARKETCAP_API_TOKEN, "CRA"),
                     )
+                    bot.update_prices(prices.avax_usd, prices.tus_usd, prices.cra_usd)
                     last_price_update = now
+
+            win_percentage = float(wins) / (wins + losses) * 100.0
+            check_to_see_if_profitable_and_post(
+                webhooks["UPDATES"],
+                prices,
+                avg_gas_avax.get_avg(),
+                avg_reinforce_tus.get_avg(),
+                win_percentage,
+                args.dry_run,
+            )
 
             if alerts_enabled and time.time() - last_discord_update > DISCORD_UPDATE_TIME:
                 last_discord_update = time.time()
                 webhook_text = f"\U0001F980\t**Total TUS mined by bot: {int(gross_tus):,} TUS**\n"
-                win_percentage = float(wins) / (wins + losses) * 100.0
                 webhook_text += f"\U0001F916\t**Bot win percentage: {win_percentage:.2f}%**\n"
-                for channel in webhook.keys():
-                    webhook["UPDATES"].send(webhook_text)
+                webhooks["UPDATES"].send(webhook_text)
 
     except KeyboardInterrupt:
         pass
@@ -159,7 +227,7 @@ def run_bot() -> None:
             )
         if alerts_enabled:
             stop_message += "Please manually attend your mines until we're back up"
-            webhook["HOLDERS"].send(stop_message)
+            webhooks["HOLDERS"].send(stop_message)
         logger.print_fail(traceback.format_exc())
     finally:
         for bot in bots:

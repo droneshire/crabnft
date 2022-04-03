@@ -19,6 +19,7 @@ from utils.email import Email, send_email
 from utils.game_stats import GameStats, NULL_GAME_STATS
 from utils.game_stats import get_game_stats, get_lifetime_stats_file, write_game_stats
 from utils.general import get_pretty_seconds
+from utils.math import Average
 from utils.price import wei_to_tus, wei_to_cra_raw, wei_to_tus_raw, Prices
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.tus_web3_client import TusWeb3Client
@@ -75,6 +76,7 @@ class CrabadaMineBot:
         self.game_stats: GameStats = NULL_GAME_STATS
         self.updated_game_stats: bool = True
         self.prices: Prices = Prices(0.0, 0.0, 0.0)
+        self.avg_gas_avax: Average = Average()
 
         self.mining_strategy = STRATEGY_SELECTION[self.config["mining_strategy"]](
             self.address,
@@ -89,6 +91,7 @@ class CrabadaMineBot:
             self.config,
         )
         self.reinforcement_search_backoff: int = 0
+        self.avg_reinforce_tus: Average = Average()
         self.last_mine_start: T.Optional[float] = None
 
         if not dry_run and not os.path.isfile(get_lifetime_stats_file(user, self.log_dir)):
@@ -220,6 +223,7 @@ class CrabadaMineBot:
         if not avax_gas_usd:
             return
         self.game_stats["avax_gas_usd"] += avax_gas_usd
+        self.avg_gas_avax.update(avax_gas)
         logger.print_bold(f"Paid {avax_gas} AVAX (${avax_gas_usd:.2f}) in gas")
 
     def _print_mine_loot_status(self) -> None:
@@ -378,6 +382,7 @@ class CrabadaMineBot:
         logger.print_normal(
             f"Mine[{mine['game_id']}]: Found reinforcement crabada {crabada_id} for {price_tus} Tus [BP {battle_points} | MP {mine_points}]"
         )
+        self.avg_reinforce_tus.update(price_tus)
 
         available_tus = float(self.tus_w3.get_balance())
         if available_tus < price_tus:
@@ -593,6 +598,12 @@ class CrabadaMineBot:
 
     def get_backoff(self) -> int:
         return self.reinforcement_search_backoff
+
+    def get_avg_gas_avax(self) -> float:
+        return self.avg_gas_avax.get_avg()
+
+    def get_avg_reinforce_tus(self) -> float:
+        return self.avg_reinforce_tus.get_avg()
 
     def run(self) -> None:
         logger.print_normal("=" * 60)

@@ -9,6 +9,7 @@ from web3.types import Wei
 
 Tus = T.NewType("Tus", int)
 Cra = T.NewType("Cra", int)
+Avax = T.NewType("Avax", int)
 
 
 class Prices:
@@ -25,10 +26,17 @@ class Prices:
         if cra_usd is not None:
             self.cra_usd = cra_usd
 
-    def cra_to_tus(self, cra: Cra) -> float:
+    def cra_to_tus(self, cra: float) -> float:
         try:
             tus_per_cra = self.cra_usd / self.tus_usd
             return tus_per_cra * cra
+        except:
+            return 0.0
+
+    def avax_to_tus(self, avax: float) -> float:
+        try:
+            tus_per_avax = self.avax_usd / self.tus_usd
+            return tus_per_avax * avax
         except:
             return 0.0
 
