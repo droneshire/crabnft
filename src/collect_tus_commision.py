@@ -121,6 +121,7 @@ def collect_tus_commission(
     dry_run: bool = False,
 ) -> None:
     total_stats = {"total_commission_tus": {}}
+    new_commission = 0.0
 
     run_all_users = "ALL" in from_users
     for user, config in USERS.items():
@@ -194,7 +195,7 @@ def collect_tus_commission(
                 logger.print_normal(
                     f"New TUS commission balance: {game_stats['commission_tus']} TUS"
                 )
-        new_commission = 0.0
+
         if not did_fail:
             new_commission = sum([c for _, c in game_stats["commission_tus"].items()])
             message = f"\U0001F980  Commission Collection: \U0001F980\n"
@@ -202,7 +203,7 @@ def collect_tus_commission(
             message += f"Explorer: https://snowtrace.io/address/{from_address}\n\n"
             message += f"New TUS commission balance: {new_commission} TUS\n"
             logger.print_ok_blue(message)
-            if not dry_run:
+            if False:
                 send_sms_message(encrypt_password, config["email"], config["sms_number"], message)
 
     logger.print_bold(f"Collected {new_commission} TUS in commission!!!")
@@ -216,7 +217,9 @@ def collect_tus_commission(
         with open(stats_file, "r") as infile:
             old_stats = json.load(infile)
         for address, commission in old_stats["total_commission_tus"].items():
-            total_stats["total_commission_tus"][address] += commission
+            total_stats["total_commission_tus"][address] = (
+                total_stats["total_commission_tus"].get(address, 0.0) + commission
+            )
     with open(stats_file, "w") as outfile:
         json.dump(
             total_stats,

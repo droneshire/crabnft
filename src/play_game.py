@@ -51,8 +51,8 @@ def setup_log(log_level: str, log_dir: str) -> None:
 
 
 LAST_PROFIT_TUS = {
-    "LOOT": -1.0,
-    "MINE": -1.0,
+    "LOOT": 1.0,
+    "MINE": 1.0,
 }
 
 
@@ -61,7 +61,7 @@ def check_to_see_if_profitable_and_post(
     prices: price.Prices,
     avg_gas_avax: float,
     avg_reinforce_tus: float,
-    win_percent: float,
+    mine_win_percent: float,
     dry_run: bool = False,
     verbose: bool = False,
     force: bool = False,
@@ -72,11 +72,15 @@ def check_to_see_if_profitable_and_post(
 
     message = f"**Profitability Update**\n"
     message += f"**Avg Tx Gas \U000026FD**: {avg_gas_avax:.2f} AVAX\n"
-    message += f"**Avg Win % \U0001F3C6**: {win_percent:.2f}%\n"
-    message += f"**Avg Reinforce Cost \U0001F4B0**: {avg_reinforce_tus:2f} TUS\n"
+    message += f"**Avg Mine Win % \U0001F3C6**: {mine_win_percent:.2f}%\n"
+    message += f"**Avg Reinforce Cost \U0001F4B0**: {avg_reinforce_tus:.2f} TUS\n"
 
     did_change = False
     for game in LAST_PROFIT_TUS.keys():
+        if game == "LOOT":
+            win_percent = 100.0 - mine_win_percent
+        else:
+            win_percent = mine_win_percent
         profit_tus = get_expected_game_profit(
             game, prices, avg_gas_avax, avg_reinforce_tus, win_percent, verbose=True
         )
@@ -84,17 +88,17 @@ def check_to_see_if_profitable_and_post(
             game, prices, avg_gas_avax, avg_reinforce_tus, win_percent, verbose=True
         )
         profit_emoji = "\U0001F4C8" if is_profitable else "\U0001F4C9"
-        message += f"{game}: Expected Profit {profit_tus:.2f} TUS {profit_emoji}\n"
+        message += f"\n- {game}: Expected Profit {profit_tus:.2f} TUS {profit_emoji}\n"
         if LAST_PROFIT_TUS[game] > 0 and profit_tus < 0:
             if verbose:
                 logger.print_fail_arrow(f"{game}ing just became unprofitable!")
-            message += f"{game}: Now unprofitable\n"
+            message += f"\t{game}: Now **unprofitable**\n"
             did_change = True
         if LAST_PROFIT_TUS[game] <= 0 and profit_tus > PROFIT_HYSTERESIS:
             if verbose:
                 logger.print_ok_blue_arrow(f"{game}ing just became profitable")
             did_change = True
-            message += f"{game}: Now profitable\n"
+            message += f"\t{game}: Now **profitable**\n"
         LAST_PROFIT_TUS[game] = profit_tus
 
     logger.print_normal(message)
@@ -159,7 +163,7 @@ def run_bot() -> None:
             total_commission_tus += commission
         total_tus += +bot_stats["tus_gross"]
 
-    logger.print_bold(f"Mined TUS: {total_tus}TUS Commission TUS: {total_commission_tus}TUS")
+    logger.print_bold(f"Mined TUS: {total_tus} TUS Commission TUS: {total_commission_tus} TUS")
     logger.print_normal("\n")
 
     last_price_update = 0.0
