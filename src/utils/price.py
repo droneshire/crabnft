@@ -18,11 +18,11 @@ class Prices:
         self.cra_usd = cra_usd
 
     def update(self, avax_usd, tus_usd, cra_usd):
-        if avax_usd:
+        if avax_usd is not None:
             self.avax_usd = avax_usd
-        if tus_usd:
+        if tus_usd is not None:
             self.tus_usd = tus_usd
-        if cra_usd:
+        if cra_usd is not None:
             self.cra_usd = cra_usd
 
     def cra_to_tus(self, cra: Cra) -> float:
