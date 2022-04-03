@@ -12,14 +12,14 @@ import time
 import traceback
 from twilio.rest import Client
 
-from config import GMAIL, IEX_API_TOKEN, TWILIO_CONFIG, USERS
+from config import COINMARKETCAP_API_TOKEN, GMAIL, IEX_API_TOKEN, TWILIO_CONFIG, USERS
 from crabada.bot import CrabadaMineBot
 from utils import discord, email, logger, security
 from utils.game_stats import GameStats
-from utils.price import get_avax_price_usd
+from utils.price import get_avax_price_usd, get_token_price_usd
 
-AVAX_PRICE_UPDATE_TIME = 60.0 * 2
-DISCORD_UPDATE_TIME = 60.0 * 60.0 * 6
+PRICE_UPDATE_TIME = 60.0 * 30.0
+DISCORD_UPDATE_TIME = 60.0 * 60.0 * 3
 
 
 def parse_args() -> argparse.Namespace:
@@ -54,7 +54,10 @@ def run_bot() -> None:
 
     sms_client = Client(TWILIO_CONFIG["account_sid"], TWILIO_CONFIG["account_auth_token"])
 
-    webhook = discord.get_discord_hook()
+    webhooks = {
+        "HOLDERS": discord.get_discord_hook("HOLDERS"),
+        "UPDATES": discord.get_discord_hook("UPDATES"),
+    }
 
     encrypt_password = ""
     email_password = ""
@@ -85,23 +88,25 @@ def run_bot() -> None:
             )
         )
 
-    game_stats = GameStats()
+    total_commission_tus = 0.0
+    total_tus = 0.0
     for bot in bots:
-        bot.update_avax_price(get_avax_price_usd(IEX_API_TOKEN))
+        bot.update_prices(
+            get_avax_price_usd(IEX_API_TOKEN),
+            get_token_price_usd(COINMARKETCAP_API_TOKEN, "TUS"),
+            get_token_price_usd(COINMARKETCAP_API_TOKEN, "CRA"),
+        )
 
         logger.print_bold(f"Starting game bot for user {bot.user}...")
         bot_stats = bot.get_lifetime_stats()
-        game_stats["commission_tus"] = (
-            game_stats.get("commission_tus", 0.0) + bot_stats["commission_tus"]
-        )
-        game_stats["tus_gross"] = game_stats.get("tus_gross", 0.0) + bot_stats["tus_gross"]
+        for _, commission in bot_stats.get("commission_tus", {"", 0.0}).items():
+            total_commission_tus += commission
+        total_tus += +bot_stats["tus_gross"]
 
-    logger.print_bold(
-        f"Mined TUS: {game_stats['tus_gross']}TUS Commission TUS: {game_stats['commission_tus']}TUS"
-    )
+    logger.print_bold(f"Mined TUS: {total_tus}TUS Commission TUS: {total_commission_tus}TUS")
     logger.print_normal("\n")
 
-    last_avax_price_update = 0.0
+    last_price_update = 0.0
     last_discord_update = time.time()
 
     alerts_enabled = not args.quiet and not args.dry_run
@@ -123,16 +128,21 @@ def run_bot() -> None:
                 losses += bot_stats["game_losses"]
 
                 now = time.time()
-                if now - last_avax_price_update > AVAX_PRICE_UPDATE_TIME:
-                    bot.update_avax_price(get_avax_price_usd(IEX_API_TOKEN))
-                    last_avax_price_update = now
+                if now - last_price_update > PRICE_UPDATE_TIME:
+                    bot.update_prices(
+                        get_avax_price_usd(IEX_API_TOKEN),
+                        get_token_price_usd(COINMARKETCAP_API_TOKEN, "TUS"),
+                        get_token_price_usd(COINMARKETCAP_API_TOKEN, "CRA"),
+                    )
+                    last_price_update = now
 
             if alerts_enabled and time.time() - last_discord_update > DISCORD_UPDATE_TIME:
                 last_discord_update = time.time()
-                webhook_text = f"\U0001F980\t**Total TUS mined by bots: {int(gross_tus):,} TUS**\n"
+                webhook_text = f"\U0001F980\t**Total TUS mined by bot: {int(gross_tus):,} TUS**\n"
                 win_percentage = float(wins) / (wins + losses) * 100.0
                 webhook_text += f"\U0001F916\t**Bot win percentage: {win_percentage:.2f}%**\n"
-                webhook.send(webhook_text)
+                for channel in webhook.keys():
+                    webhook["UPDATES"].send(webhook_text)
 
     except KeyboardInterrupt:
         pass
@@ -149,7 +159,7 @@ def run_bot() -> None:
             )
         if alerts_enabled:
             stop_message += "Please manually attend your mines until we're back up"
-            webhook.send(stop_message)
+            webhook["HOLDERS"].send(stop_message)
         logger.print_fail(traceback.format_exc())
     finally:
         for bot in bots:

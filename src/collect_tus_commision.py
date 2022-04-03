@@ -69,7 +69,10 @@ def send_collection_notice(
             continue
 
         game_stats = get_game_stats(user, log_dir)
-        commission_tus = game_stats["commission_tus"]
+
+        commission_tus = 0.0
+        for address, commission in game_stats["commission_tus"].items():
+            commission_tus += commission
 
         private_key = (
             ""
@@ -107,7 +110,7 @@ def send_collection_notice(
             send_sms_message(encrypt_password, config["email"], config["sms_number"], message)
 
     if not dry_run:
-        discord.get_discord_hook().send(DISCORD_TRANSFER_NOTICE)
+        discord.get_discord_hook("HOLDERS").send(DISCORD_TRANSFER_NOTICE)
 
 
 def collect_tus_commission(
@@ -117,8 +120,7 @@ def collect_tus_commission(
     encrypt_password: str = "",
     dry_run: bool = False,
 ) -> None:
-    to_address = USERS[to_user]["address"]
-    total_commission_collected_tus = 0.0
+    total_stats = {"total_commission_tus": {}}
 
     run_all_users = "ALL" in from_users
     for user, config in USERS.items():
@@ -135,7 +137,6 @@ def collect_tus_commission(
         )
 
         game_stats = get_game_stats(user, log_dir)
-        commission_tus = float(game_stats["commission_tus"])
 
         from_address = config["address"]
 
@@ -149,6 +150,9 @@ def collect_tus_commission(
             ),
         )
 
+        commission_tus = 0.0
+        for _, commission in game_stats["commission_tus"].items():
+            commission_tus += commission
         available_tus = float(tus_w3.get_balance())
         logger.print_ok(
             f"{from_address} balance: {available_tus} TUS, commission: {commission_tus} TUS"
@@ -164,49 +168,58 @@ def collect_tus_commission(
             )
             continue
 
-        logger.print_bold(
-            f"Attempting to send commission of {commission_tus:.2f} TUS from {user} -> {to_user}..."
-        )
-        tx_hash = tus_w3.transfer_tus(to_address, commission_tus)
-        tx_receipt = tus_w3.get_transaction_receipt(tx_hash)
-
-        if tx_receipt["status"] != 1:
-            logger.print_fail_arrow(
-                f"Error in tx {commission_tus:.2f} TUS from {from_address}->{to_address}"
+        did_fail = False
+        for to_address, commission in game_stats["commission_tus"].items():
+            logger.print_bold(
+                f"Attempting to send commission of {commission_tus:.2f} TUS from {user} -> {to_address}..."
             )
-            continue
-        else:
-            logger.print_ok_arrow(
-                f"Successfully tx {commission_tus:.2f} TUS from {from_address}->{to_address}"
-            )
-            total_commission_collected_tus += commission_tus
-            game_stats["commission_tus"] -= commission_tus
-            if not dry_run:
-                write_game_stats(user, log_dir, game_stats)
-            logger.print_normal(f"New TUS commission balance: {game_stats['commission_tus']} TUS")
+            tx_hash = tus_w3.transfer_tus(to_address, commission_tus)
+            tx_receipt = tus_w3.get_transaction_receipt(tx_hash)
 
+            if tx_receipt["status"] != 1:
+                logger.print_fail_arrow(
+                    f"Error in tx {commission:.2f} TUS from {from_address}->{to_address}"
+                )
+                did_fail = True
+            else:
+                logger.print_ok_arrow(
+                    f"Successfully tx {commission:.2f} TUS from {from_address}->{to_address}"
+                )
+                total_stats["total_commission_tus"][to_address] = (
+                    total_stats["total_commission_tus"].get(to_address, 0.0) + commission
+                )
+                game_stats["commission_tus"][to_address] -= commission
+                if not dry_run:
+                    write_game_stats(user, log_dir, game_stats)
+                logger.print_normal(
+                    f"New TUS commission balance: {game_stats['commission_tus']} TUS"
+                )
+        new_commission = 0.0
+        if not did_fail:
+            new_commission = sum([c for _, c in game_stats["commission_tus"].items()])
             message = f"\U0001F980  Commission Collection: \U0001F980\n"
-            message += f"Successful tx of {commission_tus:.2f} TUS from {user} to {to_user}\n"
+            message += f"Successful tx of {commission_tus:.2f} TUS from {user}\n"
             message += f"Explorer: https://snowtrace.io/address/{from_address}\n\n"
-            message += f"New TUS commission balance: {game_stats['commission_tus']} TUS\n"
+            message += f"New TUS commission balance: {new_commission} TUS\n"
             logger.print_ok_blue(message)
             if not dry_run:
                 send_sms_message(encrypt_password, config["email"], config["sms_number"], message)
 
-    logger.print_bold(f"Collected {total_commission_collected_tus} TUS in commission!!!")
+    logger.print_bold(f"Collected {new_commission} TUS in commission!!!")
 
     if dry_run:
         return
 
     stats_file = os.path.join(logger.get_logging_dir(), "commission_lifetime_bot_stats.json")
-    stats = {"total_commission_tus": total_commission_collected_tus}
+
     if os.path.isfile(stats_file):
         with open(stats_file, "r") as infile:
             old_stats = json.load(infile)
-        stats["total_commission_tus"] += old_stats["total_commission_tus"]
+        for address, commission in old_stats["total_commission_tus"].items():
+            total_stats["total_commission_tus"][address] += commission
     with open(stats_file, "w") as outfile:
         json.dump(
-            stats,
+            total_stats,
             outfile,
             indent=4,
             sort_keys=True,
@@ -247,11 +260,11 @@ def main() -> None:
         encrypt_password = ""
 
     if args.send_notice:
-        logger.print_bold(f"Sending SMS notice that we're collecting in 30 mins!")
+        logger.print_bold(f"Sending SMS notice that we're collecting when gas is low!")
         send_collection_notice(from_users, args.log_dir, encrypt_password, args.dry_run)
         return
 
-    logger.print_ok(f"Collecting TUS Commissions from {', '.join(from_users)} -> {args.to_user}")
+    logger.print_ok(f"Collecting TUS Commissions from {', '.join(from_users)}")
 
     collect_tus_commission(
         args.to_user, args.from_users, args.log_dir, encrypt_password, args.dry_run

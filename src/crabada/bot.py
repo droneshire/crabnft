@@ -10,6 +10,7 @@ from web3.types import Address, TxReceipt
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
 from crabada.strategies.strategy import Strategy
+from crabada.strategies.looting import LootingStrategy
 from crabada.strategies.strategy_selection import STRATEGY_SELECTION
 from crabada.types import CrabForLending, IdleGame, Team
 from utils import logger
@@ -18,7 +19,7 @@ from utils.email import Email, send_email
 from utils.game_stats import GameStats, NULL_GAME_STATS
 from utils.game_stats import get_game_stats, get_lifetime_stats_file, write_game_stats
 from utils.general import get_pretty_seconds
-from utils.price import wei_to_tus, wei_to_cra_raw, wei_to_tus_raw
+from utils.price import wei_to_tus, wei_to_cra_raw, wei_to_tus_raw, Prices
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.tus_web3_client import TusWeb3Client
 from web3_utils.web3_client import web3_transaction
@@ -26,7 +27,7 @@ from web3_utils.web3_client import web3_transaction
 
 class CrabadaMineBot:
     TIME_BETWEEN_TRANSACTIONS = 5.0
-    TIME_BETWEEN_EACH_UPDATE = 2.0
+    TIME_BETWEEN_EACH_UPDATE = 0.0
     ALERT_THROTTLING_TIME = 60.0 * 30.0
     MIN_MINE_POINT = 60
 
@@ -73,7 +74,7 @@ class CrabadaMineBot:
         self.address: Address = self.config["address"]
         self.game_stats: GameStats = NULL_GAME_STATS
         self.updated_game_stats: bool = True
-        self.avax_price_usd: float = 0.0
+        self.prices: Prices = Prices(0.0, 0.0, 0.0)
 
         self.mining_strategy = STRATEGY_SELECTION[self.config["mining_strategy"]](
             self.address,
@@ -118,6 +119,9 @@ class CrabadaMineBot:
         content += f"Explorer: https://snowtrace.io/address/{self.config['address']}\n\n"
         content += "---\U0001F579  GAME STATS\U0001F579  ---\n"
         for k, v in self.game_stats.items():
+            if isinstance(v, dict):
+                v = sum([c for _, c in v.items()])
+
             if isinstance(v, float):
                 content += f"{k.upper()}: {v:.3f}\n"
             else:
@@ -158,15 +162,25 @@ class CrabadaMineBot:
             / (self.game_stats["game_wins"] + self.game_stats["game_losses"])
         )
 
-        self.game_stats["tus_gross"] += wei_to_tus_raw(mine["miner_tus_reward"])
-        self.game_stats["cra_net"] += wei_to_cra_raw(mine["miner_cra_reward"])
-        self.game_stats["tus_net"] += wei_to_tus_raw(mine["miner_tus_reward"])
+        tus_reward = wei_to_tus_raw(mine["miner_tus_reward"])
+        cra_reward = wei_to_cra_raw(mine["miner_cra_reward"])
 
-        commission_tus = wei_to_tus_raw(mine["miner_tus_reward"]) * (
-            self.config["commission_percent_per_mine"] / 100.0
-        )
-        self.game_stats["commission_tus"] += commission_tus
-        self.game_stats["tus_net"] -= commission_tus
+        self.game_stats["tus_gross"] = self.game_stats.get("tus_gross", 0.0) + tus_reward
+        self.game_stats["cra_gross"] = self.game_stats.get("cra_gross", 0.0) + cra_reward
+        self.game_stats["tus_net"] = self.game_stats.get("tus_net", 0.0) + tus_reward
+        self.game_stats["cra_net"] = self.game_stats.get("cra_net", 0.0) + cra_reward
+
+        for address, commission in self.config["commission_percent_per_mine"].items():
+            commission_tus = tus_reward * (commission / 100.0)
+            commission_cra = cra_reward * (commission / 100.0)
+            # convert cra -> tus and add to tus commission, we dont take direct cra commission
+            commission_tus += self.prices.cra_to_tus(commission_cra)
+            self.game_stats["commission_tus"][address] = (
+                self.game_stats["commission_tus"].get(address, 0.0) + commission_tus
+            )
+
+            self.game_stats["tus_net"] -= commission_tus
+            self.game_stats["cra_net"] -= commission_cra
 
         if not self.dry_run:
             write_game_stats(self.user, self.log_dir, self.game_stats)
@@ -202,7 +216,7 @@ class CrabadaMineBot:
         if avax_gas is None:
             return
 
-        avax_gas_usd = self.avax_price_usd * avax_gas
+        avax_gas_usd = self.prices.avax_usd * avax_gas
         if not avax_gas_usd:
             return
         self.game_stats["avax_gas_usd"] += avax_gas_usd
@@ -305,7 +319,12 @@ class CrabadaMineBot:
         if not strategy.should_reinforce(mine):
             return
 
-        reinforce_margin = 30 if strategy._have_reinforced_at_least_once(team) else 0
+        reinforce_margin = 0
+        if strategy._have_reinforced_at_least_once(team):
+            reinforce_margin = 30
+        if isinstance(strategy, LootingStrategy):
+            reinforce_margin = 50
+
         if self._is_gas_too_high(margin=reinforce_margin):
             logger.print_warn(
                 f"Skipping reinforcement of Mine[{mine['game_id']}] due to high gas cost"
@@ -561,10 +580,13 @@ class CrabadaMineBot:
     def get_lifetime_stats(self) -> T.Dict[str, T.Any]:
         return self.game_stats
 
-    def update_avax_price(self, avax_price_usd: T.Optional[float]) -> None:
-        if avax_price_usd is None:
-            return
-        self.avax_price_usd = avax_price_usd
+    def update_prices(
+        self,
+        avax_usd: T.Optional[float],
+        tus_usd: T.Optional[float],
+        cra_usd: T.Optional[float],
+    ) -> None:
+        self.prices.update(avax_usd, tus_usd, cra_usd)
 
     def set_backoff(self, reinforcement_backoff: int) -> None:
         self.reinforcement_search_backoff = reinforcement_backoff
@@ -579,7 +601,9 @@ class CrabadaMineBot:
 
         gas_price_gwei = self.crabada_w3.get_gas_price_gwei()
         gas_price_gwei = "UNKNOWN" if gas_price_gwei is None else gas_price_gwei
-        logger.print_ok(f"AVAX/USD: ${self.avax_price_usd:.2f}, Gas: {gas_price_gwei:.2f}")
+        logger.print_ok(
+            f"AVAX: ${self.prices.avax_usd:.3f}, TUS: ${self.prices.tus_usd:.3f}, CRA: ${self.prices.cra_usd:.3f}, Gas: {gas_price_gwei:.2f}"
+        )
 
         self._print_mine_loot_status()
         self._check_and_maybe_close()

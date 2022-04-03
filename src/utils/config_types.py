@@ -30,7 +30,7 @@ class UserConfig(T.TypedDict):
     breed_crabs: T.List[CrabForLending]
     mining_strategy: str
     looting_strategy: str
-    commission_percent_per_mine: float
+    commission_percent_per_mine: T.Dict[Address, float]
     sms_number: str
     email: str
     get_sms_updates: bool
