@@ -84,15 +84,17 @@ def check_to_see_if_profitable_and_post(
             game, prices, avg_gas_avax, avg_reinforce_tus, win_percent, verbose=True
         )
         profit_emoji = "\U0001F4C8" if is_profitable else "\U0001F4C9"
-        message += f"{game}: Expected Profit {profit_tus:.2f} TUS {profit_emoji:.2f}\n"
+        message += f"{game}: Expected Profit {profit_tus:.2f} TUS {profit_emoji}\n"
         if LAST_PROFIT_TUS[game] > 0 and profit_tus < 0:
             if verbose:
                 logger.print_fail_arrow(f"{game}ing just became unprofitable!")
+            message += f"{game}: Now unprofitable\n"
             did_change = True
         if LAST_PROFIT_TUS[game] <= 0 and profit_tus > PROFIT_HYSTERESIS:
             if verbose:
                 logger.print_ok_blue_arrow(f"{game}ing just became profitable")
             did_change = True
+            message += f"{game}: Now profitable\n"
         LAST_PROFIT_TUS[game] = profit_tus
 
     logger.print_normal(message)
