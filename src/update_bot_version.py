@@ -30,7 +30,7 @@ def main() -> None:
     if args.change_list:
         for line in args.change_list.splitlines():
             if line.startswith("-"):
-                line = f"\U000027A1  {line[1:]} \n"
+                line = f"\n\U000027A1  {line[1:]} \n"
             text += line
 
     logger.print_normal(text)

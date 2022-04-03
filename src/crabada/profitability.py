@@ -5,22 +5,40 @@ from utils.price import Prices
 
 REWARDS_TUS: T.Dict[str, T.Dict[str, float]] = {
     "LOOT": {
-        "win": 221.8097276,
-        "lose": 27.29965878,
+        "win": {
+            "TUS": 221.7375,
+            "CRA": 2.7375,
+        },
+        "lose": {
+            "TUS": 24.3,
+            "CRA": 0.3,
+        },
     },
     "MINE": {
-        "win": 341.2457348,
-        "lose": 117.6237133,
+        "win": {
+            "TUS": 303.75,
+            "CRA": 3.75,
+        },
+        "lose": {
+            "TUS": 106.3125,
+            "CRA": 1.3125,
+        },
     },
 }
 TRANSACTION_PER_GAME: int = 4
 
 
-def get_expected_tus(game_type: str, win_percent: float) -> float:
+def get_expected_tus(game_type: str, prices: Prices, win_percent: float) -> float:
     win_decimal = win_percent / 100.0
-    return win_decimal * (REWARDS_TUS[game_type.upper()]["win"]) + (1 - win_decimal) * (
-        REWARDS_TUS[game_type.upper()]["lose"]
-    )
+    winnings_tus = REWARDS_TUS[game_type.upper()]["win"]["TUS"]
+    winnings_cra = REWARDS_TUS[game_type.upper()]["win"]["CRA"]
+    winnings_tus += prices.cra_to_tus(winnings_cra)
+
+    losings_tus = REWARDS_TUS[game_type.upper()]["lose"]["TUS"]
+    losings_cra = REWARDS_TUS[game_type.upper()]["lose"]["CRA"]
+    losings_tus += prices.cra_to_tus(losings_cra)
+
+    return win_decimal * winnings_tus + (1 - win_decimal) * losings_tus
 
 
 def get_expected_game_profit(
@@ -31,7 +49,7 @@ def get_expected_game_profit(
     win_percent: float,
     verbose: bool = False,
 ) -> float:
-    revenue_tus = get_expected_tus(game_type, win_percent)
+    revenue_tus = get_expected_tus(game_type, prices, win_percent)
     avg_gas_per_game_avax = avg_gas_price_avax * TRANSACTION_PER_GAME
     avg_gas_per_game_tus = prices.avax_to_tus(avg_gas_per_game_avax)
 
@@ -59,3 +77,40 @@ def is_idle_game_transaction_profitable(
         )
         > 0.0
     )
+
+
+def get_profitability_message(
+    prices: Prices,
+    avg_gas_avax: float,
+    avg_reinforce_tus: float,
+    mine_win_percent: float,
+    verbose: bool = False,
+) -> str:
+    PROFIT_HYSTERESIS = 10
+
+    message = f"**Profitability Update**\n"
+    message += f"**Avg Tx Gas \U000026FD**: {avg_gas_avax:.5f} AVAX\n"
+    message += f"**Avg Mine Win % \U0001F3C6**: {mine_win_percent:.2f}%\n"
+    message += f"**Avg Reinforce Cost \U0001F4B0**: {avg_reinforce_tus:.2f} TUS\n\n"
+
+    for game in ["LOOT", "MINE"]:
+        if game == "LOOT":
+            win_percent = 100.0 - mine_win_percent
+        else:
+            win_percent = mine_win_percent
+        profit_tus = get_expected_game_profit(
+            game, prices, avg_gas_avax, avg_reinforce_tus, win_percent, verbose=True
+        )
+        is_profitable = is_idle_game_transaction_profitable(
+            game, prices, avg_gas_avax, avg_reinforce_tus, win_percent, verbose=True
+        )
+        profit_emoji = "\U0001F4C8" if is_profitable else "\U0001F4C9"
+        profit_usd = prices.tus_usd * profit_tus
+        message += (
+            f"**{game}**: Expected Profit {profit_tus:.2f} TUS {profit_emoji} (${profit_usd:.2f})\n"
+        )
+
+    if verbose:
+        logger.print_normal(message)
+
+    return message
