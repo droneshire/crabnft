@@ -120,14 +120,12 @@ def get_profitability_message(
     PROFIT_HYSTERESIS = 10
 
     message = "**Profitability Update**\n"
-    message += "{:32s}{:10s}\n".format(f"**Avg Tx Gas \U000026FD**:", f"{avg_gas_avax:.5f} AVAX")
-    message += "{:32s}{:10s}\n".format(
-        f"**Avg Mining Win % \U0001F3C6**:", f"{mine_win_percent:.2f}%"
-    )
-    message += "{:32s}{:10s}\n".format(
+    message += "{}\t\t{}\n".format(f"**Avg Tx Gas \U000026FD**:", f"{avg_gas_avax:.5f} AVAX")
+    message += "{}\t{}\n".format(f"**Avg Mining Win % \U0001F3C6**:", f"{mine_win_percent:.2f}%")
+    message += "{}\t{}\n".format(
         f"**Avg Looting Win % \U0001F3F4**:", f"{(100.0 - mine_win_percent):.2f}%"
     )
-    message += "{:32s}{:10s}\n\n".format(
+    message += "{}\t{}\n\n".format(
         f"**Avg Reinforce Cost \U0001F4B0**:", f"{avg_reinforce_tus:.2f} TUS"
     )
 
@@ -149,7 +147,7 @@ def get_profitability_message(
         )
         profit_emoji = "\U0001F4C8" if profit_tus > 0.0 else "\U0001F4C9"
         profit_usd = prices.tus_usd * profit_tus
-        message += "{:32s}Expected Profit: {:8s}{:4s} ${:8s}\n".format(
+        message += "{}\tExpected Profit: {} {}\t${}\n".format(
             f"**{game}**:", f"{profit_tus:.2f}", f"{profit_emoji}", f"{profit_usd:.2f}"
         )
 
