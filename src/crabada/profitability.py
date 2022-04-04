@@ -14,7 +14,7 @@ REWARDS_TUS: T.Dict[str, T.Dict[str, float]] = {
             "CRA": 0.3,
         },
     },
-    "MINE": {
+    "MINE & REINFORCE": {
         "win": {
             "TUS": 303.75,
             "CRA": 3.75,
@@ -24,8 +24,37 @@ REWARDS_TUS: T.Dict[str, T.Dict[str, float]] = {
             "CRA": 1.3125,
         },
     },
+    "MINE +10% & REINFORCE": {
+        "win": {
+            "TUS": 334.125,
+            "CRA": 4.125,
+        },
+        "lose": {
+            "TUS": 136.6875,
+            "CRA": 1.6875,
+        },
+    },
+    "MINE & NO REINFORCE": {
+        "win": {
+            "TUS": 106.3125,
+            "CRA": 1.3125,
+        },
+        "lose": {
+            "TUS": 106.3125,
+            "CRA": 1.3125,
+        },
+    },
+    "MINE +10% & NO REINFORCE": {
+        "win": {
+            "TUS": 136.6875,
+            "CRA": 1.6875,
+        },
+        "lose": {
+            "TUS": 136.6875,
+            "CRA": 1.6875,
+        },
+    },
 }
-TRANSACTION_PER_GAME: int = 4
 
 
 def get_expected_tus(game_type: str, prices: Prices, win_percent: float) -> float:
@@ -47,13 +76,14 @@ def get_expected_game_profit(
     avg_gas_price_avax: float,
     avg_reinforce_tus: float,
     win_percent: float,
+    do_reinforce: bool,
     verbose: bool = False,
 ) -> float:
     revenue_tus = get_expected_tus(game_type, prices, win_percent)
-    avg_gas_per_game_avax = avg_gas_price_avax * TRANSACTION_PER_GAME
+    avg_gas_per_game_avax = avg_gas_price_avax * (4 if do_reinforce else 2)
     avg_gas_per_game_tus = prices.avax_to_tus(avg_gas_per_game_avax)
 
-    reinforcement_per_game_tus = 2 * avg_reinforce_tus
+    reinforcement_per_game_tus = 2.0 * avg_reinforce_tus if do_reinforce else 0.0
 
     profit_tus = revenue_tus - avg_gas_per_game_tus - reinforcement_per_game_tus
     if verbose:
@@ -69,11 +99,12 @@ def is_idle_game_transaction_profitable(
     avg_gas_price_avax: float,
     avg_reinforce_tus: float,
     win_percent: float,
+    do_reinforce: bool,
     verbose: bool = False,
 ) -> bool:
     return (
         get_expected_game_profit(
-            game_type, prices, avg_gas_price_avax, avg_reinforce_tus, win_percent
+            game_type, prices, avg_gas_price_avax, avg_reinforce_tus, win_percent, do_reinforce
         )
         > 0.0
     )
@@ -88,31 +119,38 @@ def get_profitability_message(
 ) -> str:
     PROFIT_HYSTERESIS = 10
 
-    message = f"**Profitability Update**\n"
-    message += f"**Avg Tx Gas \U000026FD**: {avg_gas_avax:.5f} AVAX\n"
-    message += f"**Avg Mine Win % \U0001F3C6**: {mine_win_percent:.2f}%\n"
-    message += f"**Avg Reinforce Cost \U0001F4B0**: {avg_reinforce_tus:.2f} TUS\n\n"
+    message = "**Profitability Update**\n"
+    message += "{:32s}{:10s}\n".format(f"**Avg Tx Gas \U000026FD**:", f"{avg_gas_avax:.5f} AVAX")
+    message += "{:32s}{:10s}\n".format(
+        f"**Avg Mining Win % \U0001F3C6**:", f"{mine_win_percent:.2f}%"
+    )
+    message += "{:32s}{:10s}\n".format(
+        f"**Avg Looting Win % \U0001F3F4**:", f"{(100.0 - mine_win_percent):.2f}%"
+    )
+    message += "{:32s}{:10s}\n\n".format(
+        f"**Avg Reinforce Cost \U0001F4B0**:", f"{avg_reinforce_tus:.2f} TUS"
+    )
 
     message += f"**Prices**\n"
     message += (
         f"AVAX: ${prices.avax_usd:.3f}, TUS: ${prices.tus_usd:.3f}, CRA: ${prices.cra_usd:.3f}\n\n"
     )
 
-    for game in ["LOOT", "MINE"]:
+    for game in REWARDS_TUS.keys():
         if game == "LOOT":
             win_percent = 100.0 - mine_win_percent
         else:
             win_percent = mine_win_percent
+
+        do_reinforce = False if "NO REINFORCE" in game else True
+
         profit_tus = get_expected_game_profit(
-            game, prices, avg_gas_avax, avg_reinforce_tus, win_percent
+            game, prices, avg_gas_avax, avg_reinforce_tus, win_percent, do_reinforce
         )
-        is_profitable = is_idle_game_transaction_profitable(
-            game, prices, avg_gas_avax, avg_reinforce_tus, win_percent
-        )
-        profit_emoji = "\U0001F4C8" if is_profitable else "\U0001F4C9"
+        profit_emoji = "\U0001F4C8" if profit_tus > 0.0 else "\U0001F4C9"
         profit_usd = prices.tus_usd * profit_tus
-        message += (
-            f"**{game}**: Expected Profit {profit_tus:.2f} TUS {profit_emoji} (${profit_usd:.2f})\n"
+        message += "{:32s}Expected Profit: {:8s}{:4s} ${:8s}\n".format(
+            f"**{game}**:", f"{profit_tus:.2f}", f"{profit_emoji}", f"{profit_usd:.2f}"
         )
 
     if verbose:
