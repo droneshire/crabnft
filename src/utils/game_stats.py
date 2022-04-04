@@ -15,7 +15,6 @@ class GameStats(T.TypedDict):
     game_losses: int
     game_win_percent: float
     commission_tus: T.Dict[Address, float]
-    commission_cra: T.Dict[Address, float]
     tus_reinforcement: float
     avax_gas_usd: float
 
@@ -29,7 +28,6 @@ NULL_GAME_STATS = GameStats(
     game_losses=0,
     game_win_percent=0.0,
     commission_tus=dict(),
-    commission_cra=dict(),
     tus_reinforcement=0.0,
     avax_gas_usd=0.0,
 )
