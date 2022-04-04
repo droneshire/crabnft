@@ -24,7 +24,7 @@ from utils.price import get_avax_price_usd, get_token_price_usd
 PRICE_UPDATE_TIME = 60.0 * 30.0
 DISCORD_UPDATE_TIME = 60.0 * 60.0 * 3
 PROFITABILITY_UPDATE_TIME = 60.0 * 20.0
-GAS_DOWNSAMPLE_COUNT = 4
+GAS_DOWNSAMPLE_COUNT = 5
 
 
 def parse_args() -> argparse.Namespace:
@@ -116,7 +116,7 @@ def run_bot() -> None:
     last_profitability_update = time.time()
     downsample_count = 0
     prices = price.Prices(0.0, 0.0, 0.0)
-    avg_gas_avax = Average()
+    avg_gas_avax = Average(0.015)
     avg_reinforce_tus = Average()
 
     alerts_enabled = not args.quiet and not args.dry_run

@@ -76,7 +76,7 @@ class CrabadaMineBot:
         self.game_stats: GameStats = NULL_GAME_STATS
         self.updated_game_stats: bool = True
         self.prices: Prices = Prices(0.0, 0.0, 0.0)
-        self.avg_gas_avax: Average = Average(0.01)
+        self.avg_gas_avax: Average = Average()
 
         self.mining_strategy = STRATEGY_SELECTION[self.config["mining_strategy"]](
             self.address,
@@ -91,7 +91,7 @@ class CrabadaMineBot:
             self.config,
         )
         self.reinforcement_search_backoff: int = 0
-        self.avg_reinforce_tus: Average = Average(22.0)
+        self.avg_reinforce_tus: Average = Average(20.0)
         self.last_mine_start: T.Optional[float] = None
 
         if not dry_run and not os.path.isfile(get_lifetime_stats_file(user, self.log_dir)):
@@ -139,6 +139,12 @@ class CrabadaMineBot:
                 message = self.sms.messages.create(
                     body=sms_message, from_=self.from_sms_number, to=self.config["sms_number"]
                 )
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail("Failed to send sms alert")
+
+        try:
             if do_send_email:
                 email_message = f"Hello {self.user}!\n"
                 email_message += content
@@ -151,7 +157,7 @@ class CrabadaMineBot:
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail("Failed to send email/sms alert")
+            logger.print_fail("Failed to send email alert")
 
     def _update_bot_stats(self, team: Team, mine: IdleGame) -> None:
         if mine.get("winner_team_id", "") == team["team_id"]:
@@ -428,6 +434,10 @@ class CrabadaMineBot:
                 return False
 
         self.time_since_last_alert = None
+        # TODO: tell win/loss from tx_receipt on loots, this is a hack
+        if isinstance(strategy, LootingStrategy):
+            time.sleep(5.0)
+            mine = self.crabada_w2.get_mine(mine)
         self._update_bot_stats(team, mine)
 
         return True
