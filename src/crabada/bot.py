@@ -171,13 +171,19 @@ class CrabadaMineBot:
             / (self.game_stats["game_wins"] + self.game_stats["game_losses"])
         )
 
-        tus_reward = wei_to_tus_raw(mine["miner_tus_reward"])
-        cra_reward = wei_to_cra_raw(mine["miner_cra_reward"])
+        if mine.get("winner_team_id", "") == team["team_id"]:
+            tus_reward = wei_to_tus_raw(mine.get("miner_tus_reward",0.0))
+            cra_reward = wei_to_cra_raw(mine.get("miner_cra_reward",0.0))
+            game_type = "MINE"
+        else:
+            tus_reward = wei_to_tus_raw(mine.get("looter_tus_reward",0.0))
+            cra_reward = wei_to_cra_raw(mine.get("looter_cra_reward",0.0))
+            game_type = "LOOT"
 
-        self.game_stats["tus_gross"] = self.game_stats.get("tus_gross", 0.0) + tus_reward
-        self.game_stats["cra_gross"] = self.game_stats.get("cra_gross", 0.0) + cra_reward
-        self.game_stats["tus_net"] = self.game_stats.get("tus_net", 0.0) + tus_reward
-        self.game_stats["cra_net"] = self.game_stats.get("cra_net", 0.0) + cra_reward
+        self.game_stats["tus_gross"][game_type] = self.game_stats["tus_gross"].get(game_type, 0.0) + tus_reward
+        self.game_stats["cra_gross"][game_type] = self.game_stats["cra_gross"].get(game_type, 0.0) + cra_reward
+        self.game_stats["tus_net"][game_type] = self.game_stats["tus_net"].get(game_type, 0.0) + tus_reward
+        self.game_stats["cra_net"][game_type] = self.game_stats["cra_net"].get(game_type, 0.0) + cra_reward
 
         for address, commission in self.config["commission_percent_per_mine"].items():
             commission_tus = tus_reward * (commission / 100.0)
@@ -188,8 +194,8 @@ class CrabadaMineBot:
                 self.game_stats["commission_tus"].get(address, 0.0) + commission_tus
             )
 
-            self.game_stats["tus_net"] -= commission_tus
-            self.game_stats["cra_net"] -= commission_cra
+            self.game_stats["tus_net"][game_type] -= commission_tus
+            self.game_stats["cra_net"][game_type] -= commission_cra
 
         if not self.dry_run:
             write_game_stats(self.user, self.log_dir, self.game_stats)
@@ -408,8 +414,9 @@ class CrabadaMineBot:
             else:
                 logger.print_ok_arrow(f"Successfully reinforced mine {team['game_id']}")
                 self.time_since_last_alert = None
-                self.game_stats["tus_net"] -= price_tus
-                self.game_stats["tus_reinforcement"] += price_tus
+                game_type = "LOOT" if isinstance(strategy, LootingStrategy) else "MINE"
+                self.game_stats["tus_net"][game_type] -= price_tus
+                self.game_stats["tus_reinforcement"][game_type] += price_tus
                 self.updated_game_stats = True
                 return True
 

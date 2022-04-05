@@ -106,7 +106,7 @@ def run_bot() -> None:
         bot_stats = bot.get_lifetime_stats()
         for _, commission in bot_stats.get("commission_tus", {"", 0.0}).items():
             total_commission_tus += commission
-        total_tus += +bot_stats["tus_gross"]
+        total_tus += bot_stats["tus_gross"]
 
     logger.print_bold(f"Mined TUS: {total_tus} TUS Commission TUS: {total_commission_tus} TUS")
     logger.print_normal("\n")
@@ -136,8 +136,9 @@ def run_bot() -> None:
 
                 bot_stats = bot.get_lifetime_stats()
                 gross_tus += bot_stats["tus_gross"]
-                wins += bot_stats["game_wins"]
-                losses += bot_stats["game_losses"]
+                if USERS[bot.user]["should_reinforce"]:
+                    wins += bot_stats["game_wins"]
+                    losses += bot_stats["game_losses"]
 
                 now = time.time()
                 if now - last_price_update > PRICE_UPDATE_TIME:

@@ -7,28 +7,51 @@ from utils import logger
 
 
 class GameStats(T.TypedDict):
-    tus_gross: float
-    cra_net: float
-    tus_net: float
-    cra_gross: float
-    game_wins: int
-    game_losses: int
-    game_win_percent: float
+    tus_gross: T.Dict[str, float]
+    cra_net: T.Dict[str, float]
+    tus_net: T.Dict[str, float]
+    cra_gross: T.Dict[str, float]
+    game_wins: T.Dict[str, float]
+    game_losses: T.Dict[str, float]
+    game_win_percent: T.Dict[str, float]
     commission_tus: T.Dict[Address, float]
-    tus_reinforcement: float
+    tus_reinforcement: T.Dict[str, float]
     avax_gas_usd: float
 
-
 NULL_GAME_STATS = GameStats(
-    cra_gross=0.0,
-    tus_gross=0.0,
-    cra_net=0.0,
-    tus_net=0.0,
-    game_wins=0,
-    game_losses=0,
-    game_win_percent=0.0,
+    cra_gross= {
+        "MINE": 0.0,
+        "LOOT": 0.0,
+    },
+    tus_gross={
+        "MINE": 0.0,
+        "LOOT": 0.0,
+    },
+    cra_net={
+        "MINE": 0.0,
+        "LOOT": 0.0,
+    },
+    tus_net={
+        "MINE": 0.0,
+        "LOOT": 0.0,
+    },
+    game_wins={
+        "MINE": 0.0,
+        "LOOT": 0.0,
+    },
+    game_losses={
+        "MINE": 0.0,
+        "LOOT": 0.0,
+    },
+    game_win_percent={
+        "MINE": 0.0,
+        "LOOT": 0.0,
+    },
     commission_tus=dict(),
-    tus_reinforcement=0.0,
+    tus_reinforcement={
+        "MINE": 0.0,
+        "LOOT": 0.0,
+    },
     avax_gas_usd=0.0,
 )
 
