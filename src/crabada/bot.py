@@ -209,8 +209,8 @@ class CrabadaMineBot:
     def _send_out_of_gas_sms(self):
         now = time.time()
         if (
-            self.time_since_last_alert is None
-            or now - self.time_since_last_alert > self.ALERT_THROTTLING_TIME
+            self.time_since_last_alert is not None
+            and now - self.time_since_last_alert < self.ALERT_THROTTLING_TIME
         ):
             return
 
