@@ -133,7 +133,7 @@ class CrabadaMineBot:
         content += "\n"
 
         try:
-            if do_send_sms:
+            if do_send_sms and self.from_sms_number:
                 sms_message = f"\U0001F980 Crabada Bot Alert \U0001F980\n\n"
                 sms_message += content
                 message = self.sms.messages.create(
@@ -145,7 +145,7 @@ class CrabadaMineBot:
             logger.print_fail("Failed to send sms alert")
 
         try:
-            if do_send_email:
+            if do_send_email and self.config["email"]:
                 email_message = f"Hello {self.user}!\n"
                 email_message += content
                 send_email(
@@ -171,8 +171,8 @@ class CrabadaMineBot:
             / (self.game_stats["game_wins"] + self.game_stats["game_losses"])
         )
 
-        tus_reward = wei_to_tus_raw(mine["miner_tus_reward"])
-        cra_reward = wei_to_cra_raw(mine["miner_cra_reward"])
+        tus_reward = wei_to_tus_raw(mine.get("miner_tus_reward", 0.0))
+        cra_reward = wei_to_cra_raw(mine.get("miner_cra_reward", 0.0))
 
         self.game_stats["tus_gross"] = self.game_stats.get("tus_gross", 0.0) + tus_reward
         self.game_stats["cra_gross"] = self.game_stats.get("cra_gross", 0.0) + cra_reward
