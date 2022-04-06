@@ -6,9 +6,9 @@ import time
 from eth_typing import Address
 
 from crabada.factional_advantage import get_faction_adjusted_battle_point
-from crabada.types import Crab, CrabForLending, IdleGame, LendingCategories, Team
-from utils.general import first_or_none, n_or_better_or_none, get_pretty_seconds
+from crabada.types import Crab, CrabadaClass, CrabForLending, IdleGame, LendingCategories, Team
 from utils import logger
+from utils.general import first_or_none, n_or_better_or_none, get_pretty_seconds
 from utils.price import wei_to_tus, Tus
 
 
@@ -34,7 +34,7 @@ class CrabadaWeb2Client:
 
     # api request limits (scale with teams/crabs)
     TEAM_AND_MINE_LIMIT = 50
-    CRAB_LIMIT = 50
+    CRAB_LIMIT = 75
 
     def get_mine(self, mine_id: int, params: T.Dict[str, T.Any] = {}) -> IdleGame:
         """Get information from the given mine"""
@@ -278,14 +278,23 @@ class CrabadaWeb2Client:
     def get_best_high_mp_crab_for_lending(
         self, max_tus: Tus, reinforcement_search_backoff: int
     ) -> T.Optional[CrabForLending]:
-        high_mp_crabs = self.list_high_mp_crabs_for_lending()
-        return self.get_cheapest_best_crab_from_list_for_lending(
-            high_mp_crabs, max_tus, reinforcement_search_backoff, "mine_point"
-        )
+        for class_id in [CrabadaClass.PRIME, CrabadaClass.CRABOID]:
+            params = {
+                "class_ids[]": class_id,
+            }
+            high_mp_crabs = self.list_high_mp_crabs_for_lending(params=params)
+            high_mp_crab = self.get_cheapest_best_crab_from_list_for_lending(
+                high_mp_crabs, max_tus, reinforcement_search_backoff, "mine_point"
+            )
+            if high_mp_crab is not None:
+                return high_mp_crab
 
     def get_best_high_bp_crab_for_lending(
         self, max_tus: Tus, reinforcement_search_backoff: int
     ) -> T.Optional[CrabForLending]:
+        params = {
+            "class_ids[]": 4, # bulks
+        }
         high_bp_crabs = self.list_high_bp_crabs_for_lending()
         return self.get_cheapest_best_crab_from_list_for_lending(
             high_bp_crabs, max_tus, reinforcement_search_backoff, "battle_point"
