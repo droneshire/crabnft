@@ -5,8 +5,24 @@ from eth_typing import Address
 
 from utils import logger
 
-
 class GameStats(T.TypedDict):
+    reinforce1 : float
+    reinforce2 : float
+    gas_start: float
+    gas_reinforce1: float
+    gas_reinforce2: float
+    gas_close: float
+    game_type: T.Literal["MINE", "LOOT"]
+    reward_tus: float
+    reward_cra: float
+    avax_usd: float
+    tus_usd: float
+    cra_usd: float
+    commission_tus: float
+    outcome: T.Literal["WIN", "LOSE"]
+
+
+class LifetimeGameStats(T.TypedDict):
     tus_gross: T.Dict[str, float]
     cra_net: T.Dict[str, float]
     tus_net: T.Dict[str, float]
@@ -18,7 +34,7 @@ class GameStats(T.TypedDict):
     tus_reinforcement: T.Dict[str, float]
     avax_gas_usd: float
 
-NULL_GAME_STATS = GameStats(
+NULL_GAME_STATS = LifetimeGameStats(
     cra_gross= {
         "MINE": 0.0,
         "LOOT": 0.0,
@@ -68,7 +84,7 @@ def get_game_stats(user: str, log_dir: str) -> T.Dict[str, T.Any]:
         return json.load(infile)
 
 
-def write_game_stats(user: str, log_dir: str, game_stats: GameStats) -> None:
+def write_game_stats(user: str, log_dir: str, game_stats: LifetimeGameStats) -> None:
     game_stats_file = get_lifetime_stats_file(user, log_dir)
     with open(game_stats_file, "w") as outfile:
         json.dump(

@@ -13,7 +13,7 @@ from twilio.rest import Client
 
 from config import GMAIL, TWILIO_CONFIG, USERS
 from utils import discord, email, logger
-from utils.game_stats import GameStats, get_game_stats, write_game_stats
+from utils.game_stats import LifetimeGameStats, get_game_stats, write_game_stats
 from utils.price import Tus
 from utils.security import decrypt
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client

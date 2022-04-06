@@ -17,7 +17,7 @@ from config import COINMARKETCAP_API_TOKEN, GMAIL, IEX_API_TOKEN, TWILIO_CONFIG,
 from crabada.bot import CrabadaMineBot
 from crabada.profitability import get_profitability_message
 from utils import discord, email, logger, price, security
-from utils.game_stats import GameStats
+from utils.game_stats import LifetimeGameStats
 from utils.math import Average
 from utils.price import get_avax_price_usd, get_token_price_usd
 
