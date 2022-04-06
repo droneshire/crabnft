@@ -203,8 +203,7 @@ def collect_tus_commission(
             message += f"Explorer: https://snowtrace.io/address/{from_address}\n\n"
             message += f"New TUS commission balance: {new_commission} TUS\n"
             logger.print_ok_blue(message)
-            if False:
-                send_sms_message(encrypt_password, config["email"], config["sms_number"], message)
+            send_sms_message(encrypt_password, config["email"], config["sms_number"], message)
 
     logger.print_bold(f"Collected {new_commission} TUS in commission!!!")
 
