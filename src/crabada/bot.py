@@ -189,6 +189,7 @@ class CrabadaMineBot:
             100.0 * float(stats["game_wins"]) / (stats["game_wins"] + stats["game_losses"])
         )
 
+
         stats["tus_gross"] = stats["tus_gross"] + tus_reward
         stats["cra_gross"] = stats["cra_gross"] + cra_reward
         stats["tus_net"] = stats["tus_net"] + tus_reward
