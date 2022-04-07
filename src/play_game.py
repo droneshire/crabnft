@@ -10,6 +10,7 @@ import requests
 import sys
 import time
 import traceback
+import typing as T
 from discord import Webhook
 from twilio.rest import Client
 
@@ -18,6 +19,7 @@ from crabada.bot import CrabadaMineBot
 from crabada.profitability import get_profitability_message
 from utils import discord, email, logger, price, security
 from utils.game_stats import LifetimeGameStats
+from utils.general import dict_sum
 from utils.math import Average
 from utils.price import get_avax_price_usd, get_token_price_usd
 
@@ -50,6 +52,14 @@ def setup_log(log_level: str, log_dir: str) -> None:
         datefmt="%Y-%m-%d %H:%M:%S",
         filemode="w",
     )
+
+
+def get_users_teams() -> T.Tuple[int, int]:
+    total_users = len(USERS.keys())
+    total_teams = sum(
+        [len(v["mining_teams"].keys()) + len(v["looting_teams"]) for _, v in USERS.items()]
+    )
+    return (total_users, total_teams)
 
 
 def run_bot() -> None:
@@ -95,27 +105,29 @@ def run_bot() -> None:
 
     total_commission_tus = 0.0
     total_tus = 0.0
-    for bot in bots:
-        bot.update_prices(
-            get_avax_price_usd(IEX_API_TOKEN),
-            get_token_price_usd(COINMARKETCAP_API_TOKEN, "TUS"),
-            get_token_price_usd(COINMARKETCAP_API_TOKEN, "CRA"),
-        )
+    prices = price.Prices(
+        get_avax_price_usd(IEX_API_TOKEN),
+        get_token_price_usd(COINMARKETCAP_API_TOKEN, "TUS"),
+        get_token_price_usd(COINMARKETCAP_API_TOKEN, "CRA"),
+    )
 
+    for bot in bots:
+        bot.update_prices(prices.avax_usd, prices.tus_usd, prices.cra_usd)
         logger.print_bold(f"Starting game bot for user {bot.user}...")
         bot_stats = bot.get_lifetime_stats()
-        for _, commission in bot_stats.get("commission_tus", {"", 0.0}).items():
-            total_commission_tus += commission
-        total_tus += bot_stats["tus_gross"]
+        total_commission_tus += dict_sum(bot_stats["commission_tus"])
+        for k in ["MINE", "LOOT"]:
+            total_tus += bot_stats[k]["tus_gross"]
 
     logger.print_bold(f"Mined TUS: {total_tus} TUS Commission TUS: {total_commission_tus} TUS")
+    total_users, total_teams = get_users_teams()
+    logger.print_bold(f"Users: {total_users}, Teams: {total_teams}")
     logger.print_normal("\n")
 
     last_price_update = 0.0
     last_discord_update = time.time()
     last_profitability_update = time.time()
     downsample_count = 0
-    prices = price.Prices(0.0, 0.0, 0.0)
     avg_gas_avax = Average(0.015)
     avg_reinforce_tus = Average()
 
@@ -135,10 +147,11 @@ def run_bot() -> None:
                 reinforcement_backoff = bot.get_backoff()
 
                 bot_stats = bot.get_lifetime_stats()
-                gross_tus += bot_stats["tus_gross"]
-                if USERS[bot.user]["should_reinforce"]:
-                    wins += bot_stats["game_wins"]
-                    losses += bot_stats["game_losses"]
+                for k in ["MINE", "LOOT"]:
+                    gross_tus += bot_stats[k]["tus_gross"]
+                    if USERS[bot.user]["should_reinforce"]:
+                        wins += bot_stats[k]["game_wins"]
+                        losses += bot_stats[k]["game_losses"]
 
                 now = time.time()
                 if now - last_price_update > PRICE_UPDATE_TIME:
@@ -168,6 +181,8 @@ def run_bot() -> None:
                 last_discord_update = now
                 webhook_text = f"\U0001F980\t**Total TUS mined by bot: {int(gross_tus):,} TUS**\n"
                 webhook_text += f"\U0001F916\t**Bot win percentage: {win_percentage:.2f}%**\n"
+                total_users, total_teams = get_users_teams()
+                webhook_text += f"**Users: {total_users} Teams: {total_teams}**\n"
                 webhooks["UPDATES"].send(webhook_text)
 
             downsample_count += 1

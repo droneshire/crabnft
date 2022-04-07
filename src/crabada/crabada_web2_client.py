@@ -293,7 +293,7 @@ class CrabadaWeb2Client:
         self, max_tus: Tus, reinforcement_search_backoff: int
     ) -> T.Optional[CrabForLending]:
         params = {
-            "class_ids[]": 4, # bulks
+            "class_ids[]": 4,  # bulks
         }
         high_bp_crabs = self.list_high_bp_crabs_for_lending()
         return self.get_cheapest_best_crab_from_list_for_lending(

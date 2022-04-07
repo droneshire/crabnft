@@ -17,8 +17,13 @@ from utils import logger
 from utils.config_types import UserConfig, SmsConfig
 from utils.email import Email, send_email
 from utils.game_stats import LifetimeGameStats, NULL_GAME_STATS
-from utils.game_stats import get_game_stats, get_lifetime_stats_file, write_game_stats
-from utils.general import get_pretty_seconds
+from utils.game_stats import (
+    get_game_stats,
+    get_lifetime_stats_file,
+    write_game_stats,
+    update_lifetime_stats_format,
+)
+from utils.general import dict_sum, get_pretty_seconds
 from utils.math import Average
 from utils.price import wei_to_tus, wei_to_cra_raw, wei_to_tus_raw, Prices
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
@@ -28,7 +33,6 @@ from web3_utils.web3_client import web3_transaction
 
 class CrabadaMineBot:
     TIME_BETWEEN_TRANSACTIONS = 5.0
-    TIME_BETWEEN_EACH_UPDATE = 0.0
     ALERT_THROTTLING_TIME = 60.0 * 30.0
     MIN_MINE_POINT = 60
 
@@ -73,7 +77,7 @@ class CrabadaMineBot:
         self.crabada_w2: CrabadaWeb2Client = CrabadaWeb2Client()
 
         self.address: Address = self.config["address"]
-        self.lifetime_game_stats: LifetimeGameStats = NULL_GAME_STATS
+        self.lifetime_stats: LifetimeGameStats = NULL_GAME_STATS
         self.updated_game_stats: bool = True
         self.prices: Prices = Prices(0.0, 0.0, 0.0)
         self.avg_gas_avax: Average = Average()
@@ -95,9 +99,11 @@ class CrabadaMineBot:
         self.last_mine_start: T.Optional[float] = None
 
         if not dry_run and not os.path.isfile(get_lifetime_stats_file(user, self.log_dir)):
-            write_game_stats(self.user, self.log_dir, self.lifetime_game_stats)
+            write_game_stats(self.user, self.log_dir, self.lifetime_stats)
         else:
-            self.lifetime_game_stats = get_game_stats(self.user, self.log_dir)
+            game_stats = get_game_stats(self.user, self.log_dir)
+            self.lifetime_stats = update_lifetime_stats_format(game_stats)
+            write_game_stats(self.user, self.log_dir, self.lifetime_stats)
         logger.print_ok_blue(f"Adding bot for user {self.user} with address {self.address}")
 
         self._print_out_config()
@@ -121,15 +127,17 @@ class CrabadaMineBot:
 
         content += f"Explorer: https://snowtrace.io/address/{self.config['address']}\n\n"
         content += "---\U0001F579  GAME STATS\U0001F579  ---\n"
-        for k, v in self.lifetime_game_stats.items():
-            if isinstance(v, dict):
-                v = sum([c for _, c in v.items()])
 
-            if isinstance(v, float):
-                content += f"{k.upper()}: {v:.3f}\n"
+        for k, v in self.lifetime_stats.items():
+            if k in ["MINE", "LOOT"]:
+                content += f"{k}:\n"
+                for s, n in self.lifetime_stats[k].items():
+                    content += f"\t{s.lower()}: {s:.3f}\n"
             else:
-                content += f"{k.upper()}: {v}\n"
-
+                if isinstance(v, dict):
+                    content += f"{' '.join(k.upper().split('_'))}: {dict_sum(v):.3f}\n"
+                else:
+                    content += f"{' '.join(k.upper().split('_'))}: {v:.3f}\n"
         content += "\n"
 
         try:
@@ -160,56 +168,60 @@ class CrabadaMineBot:
             logger.print_fail("Failed to send email alert")
 
     def _update_bot_stats(self, team: Team, mine: IdleGame) -> None:
-        if mine.get("winner_team_id", "") == team["team_id"]:
-            self.lifetime_game_stats["game_wins"] += 1
+        if mine.get("team_id", "") == team["team_id"]:
+            tus_reward = wei_to_tus_raw(mine.get("miner_tus_reward", 0.0))
+            cra_reward = wei_to_cra_raw(mine.get("miner_cra_reward", 0.0))
+            stats = self.lifetime_stats["MINE"]
+        elif mine.get("attack_team_id", "") == team["team_id"]:
+            tus_reward = wei_to_tus_raw(mine.get("looter_tus_reward", 0.0))
+            cra_reward = wei_to_cra_raw(mine.get("looter_cra_reward", 0.0))
+            stats = self.lifetime_stats["LOOT"]
         else:
-            self.lifetime_game_stats["game_losses"] += 1
+            logger.print_fail_arrow(f"Failed to detect win/loss for mine {mine['game_id']}")
+            return
 
-        self.lifetime_game_stats["game_win_percent"] = (
-            100.0
-            * float(self.lifetime_game_stats["game_wins"])
-            / (self.lifetime_game_stats["game_wins"] + self.lifetime_game_stats["game_losses"])
+        if mine.get("winner_team_id", "") == team["team_id"]:
+            stats["game_wins"] += 1
+        else:
+            stats["game_losses"] += 1
+
+        stats["game_win_percent"] = (
+            100.0 * float(stats["game_wins"]) / (stats["game_wins"] + stats["game_losses"])
         )
 
-        if mine.get("winner_team_id", "") == team["team_id"]:
-            tus_reward = wei_to_tus_raw(mine.get("miner_tus_reward",0.0))
-            cra_reward = wei_to_cra_raw(mine.get("miner_cra_reward",0.0))
-            game_type = "MINE"
-        else:
-            tus_reward = wei_to_tus_raw(mine.get("looter_tus_reward",0.0))
-            cra_reward = wei_to_cra_raw(mine.get("looter_cra_reward",0.0))
-            game_type = "LOOT"
-
-        self.lifetime_game_stats["tus_gross"][game_type] = self.lifetime_game_stats["tus_gross"].get(game_type, 0.0) + tus_reward
-        self.lifetime_game_stats["cra_gross"][game_type] = self.lifetime_game_stats["cra_gross"].get(game_type, 0.0) + cra_reward
-        self.lifetime_game_stats["tus_net"][game_type] = self.lifetime_game_stats["tus_net"].get(game_type, 0.0) + tus_reward
-        self.lifetime_game_stats["cra_net"][game_type] = self.lifetime_game_stats["cra_net"].get(game_type, 0.0) + cra_reward
+        stats["tus_gross"] = stats["tus_gross"] + tus_reward
+        stats["cra_gross"] = stats["cra_gross"] + cra_reward
+        stats["tus_net"] = stats["tus_net"] + tus_reward
+        stats["cra_net"] = stats["cra_net"] + cra_reward
 
         for address, commission in self.config["commission_percent_per_mine"].items():
             commission_tus = tus_reward * (commission / 100.0)
             commission_cra = cra_reward * (commission / 100.0)
             # convert cra -> tus and add to tus commission, we dont take direct cra commission
             commission_tus += self.prices.cra_to_tus(commission_cra)
-            self.lifetime_game_stats["commission_tus"][address] = (
-                self.lifetime_game_stats["commission_tus"].get(address, 0.0) + commission_tus
+            self.lifetime_stats["commission_tus"][address] = (
+                self.lifetime_stats["commission_tus"].get(address, 0.0) + commission_tus
             )
 
-            self.lifetime_game_stats["tus_net"][game_type] -= commission_tus
-            self.lifetime_game_stats["cra_net"][game_type] -= commission_cra
+            stats["tus_net"] -= commission_tus
+            stats["cra_net"] -= commission_cra
 
         if not self.dry_run:
-            write_game_stats(self.user, self.log_dir, self.lifetime_game_stats)
+            write_game_stats(self.user, self.log_dir, self.lifetime_stats)
         self.updated_game_stats = True
 
     def _print_bot_stats(self) -> None:
         logger.print_normal("\n")
         logger.print_bold("--------\U0001F579  GAME STATS\U0001F579  ------")
         logger.print_normal(f"Explorer: https://snowtrace.io/address/{self.config['address']}\n\n")
-        for k, v in self.lifetime_game_stats.items():
-            if isinstance(v, float):
-                logger.print_ok_blue(f"{k.upper()}: {v:.3f}")
+        for k, v in self.lifetime_stats.items():
+            if k in ["MINE", "LOOT"]:
+                logger.print_ok_blue(f"{k}:")
+                for s, n in self.lifetime_stats[k].items():
+                    logger.print_ok_blue(f"  {' '.join(s.lower().split('_'))}: {n:.3f}")
             else:
-                logger.print_ok_blue(f"{k.upper()}: {v}")
+                logger.print_ok_blue(f"{' '.join(k.upper().split('_'))}: {v}")
+        logger.print_ok_blue("\n")
         logger.print_bold("------------------------------\n")
 
     def _send_out_of_gas_sms(self):
@@ -234,7 +246,7 @@ class CrabadaMineBot:
         avax_gas_usd = self.prices.avax_usd * avax_gas
         if not avax_gas_usd:
             return
-        self.lifetime_game_stats["avax_gas_usd"] += avax_gas_usd
+        self.lifetime_stats["avax_gas_usd"] += avax_gas_usd
         self.avg_gas_avax.update(avax_gas)
         logger.print_bold(f"Paid {avax_gas} AVAX (${avax_gas_usd:.2f}) in gas")
 
@@ -415,8 +427,8 @@ class CrabadaMineBot:
                 logger.print_ok_arrow(f"Successfully reinforced mine {team['game_id']}")
                 self.time_since_last_alert = None
                 game_type = "LOOT" if isinstance(strategy, LootingStrategy) else "MINE"
-                self.lifetime_game_stats["tus_net"][game_type] -= price_tus
-                self.lifetime_game_stats["tus_reinforcement"][game_type] += price_tus
+                self.lifetime_stats[game_type]["tus_net"] -= price_tus
+                self.lifetime_stats[game_type]["tus_reinforcement"] += price_tus
                 self.updated_game_stats = True
                 return True
 
@@ -441,12 +453,6 @@ class CrabadaMineBot:
                 return False
 
         self.time_since_last_alert = None
-        # TODO: tell win/loss from tx_receipt on loots, this is a hack
-        if isinstance(strategy, LootingStrategy):
-            time.sleep(5.0)
-            mine = self.crabada_w2.get_mine(mine)
-        self._update_bot_stats(team, mine)
-
         return True
 
     def _start_mine(self, team: Team) -> bool:
@@ -508,6 +514,11 @@ class CrabadaMineBot:
             message = f"\U0001F980 Crabada Bot Alert \U0001F980\n\n"
             message += f"Closed up looting of mine {mine['game_id']}, let's start another!"
             self._send_status_update(True, True, message)
+            logger.print_ok(f"Closed up looting of mine {mine['game_id']}, let's start another!")
+
+            time.sleep(5.0)
+            mine = self.crabada_w2.get_mine(mine)
+            self._update_bot_stats(team, mine)
 
     def _check_and_maybe_close_mines(self, team: Team, mine: IdleGame) -> None:
         if not self.crabada_w2.mine_is_finished(mine):
@@ -528,6 +539,7 @@ class CrabadaMineBot:
                 self.config["get_sms_updates"], self.config["get_email_updates"], message
             )
             logger.print_ok(message)
+            self._update_bot_stats(team, mine)
 
     def _check_and_maybe_start_mines(self) -> None:
         available_teams = self.crabada_w2.list_available_teams(self.address)
@@ -597,7 +609,7 @@ class CrabadaMineBot:
                 self._check_and_maybe_close_mines(team, mine)
 
     def get_lifetime_stats(self) -> T.Dict[str, T.Any]:
-        return self.lifetime_game_stats
+        return self.lifetime_stats
 
     def update_prices(
         self,
@@ -639,10 +651,8 @@ class CrabadaMineBot:
             self.updated_game_stats = False
             self._print_bot_stats()
 
-        time.sleep(self.TIME_BETWEEN_EACH_UPDATE)
-
     def end(self) -> None:
         logger.print_fail(f"Exiting bot for {self.user}...")
         if not self.dry_run:
-            write_game_stats(self.user, self.log_dir, self.lifetime_game_stats)
+            write_game_stats(self.user, self.log_dir, self.lifetime_stats)
         self._print_bot_stats()

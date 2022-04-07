@@ -1,5 +1,6 @@
 import typing as T
 
+
 def dict_sum(d: T.Dict[T.Any, T.Any]) -> float:
     sum = 0.0
     for _, v in d.items():
