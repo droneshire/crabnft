@@ -1,6 +1,16 @@
 import typing as T
 
 
+def dict_sum(d: T.Dict[T.Any, T.Any]) -> float:
+    sum = 0.0
+    for _, v in d.items():
+        if isinstance(v, T.Dict):
+            sum += dict_sum(v)
+        else:
+            sum += v
+    return sum
+
+
 def get_pretty_seconds(s: int) -> str:
     """Given an amount of seconds, return a formatted string with
     hours, minutes and seconds; taken from
