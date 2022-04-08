@@ -151,7 +151,8 @@ def get_profitability_message(
             f"**{game}**:", f"{profit_tus:.2f}", f"{profit_emoji}", f"{profit_usd:.2f}"
         )
 
-    profit_tus = avg_reinforce_tus * 3 - prices.avax_to_tus(avg_gas_per_game_avax) / 6
+    profit_tus = avg_reinforce_tus * 3 - prices.avax_to_tus(avg_gas_avax) / 6
+    profit_emoji = "\U0001F4C8" if profit_tus > 0.0 else "\U0001F4C9"
     profit_usd = prices.tus_usd * profit_tus
     message += "{}\tExpected Profit: {} {}\t${}\n".format(
         f"**TAVERN 3 MP CRABS**:", f"{profit_tus:.2f}", f"{profit_emoji}", f"{profit_usd:.2f}"

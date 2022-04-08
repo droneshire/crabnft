@@ -132,7 +132,7 @@ class CrabadaMineBot:
             if k in ["MINE", "LOOT"]:
                 content += f"{k}:\n"
                 for s, n in self.lifetime_stats[k].items():
-                    content += f"\t{s.lower()}: {s:.3f}\n"
+                    content += f"\t{s.lower()}: {n:.3f}\n"
             else:
                 if isinstance(v, dict):
                     content += f"{' '.join(k.upper().split('_'))}: {dict_sum(v):.3f}\n"
@@ -177,7 +177,7 @@ class CrabadaMineBot:
             cra_reward = wei_to_cra_raw(mine.get("looter_cra_reward", 0.0))
             stats = self.lifetime_stats["LOOT"]
         else:
-            logger.print_fail_arrow(f"Failed to detect win/loss for mine {mine['game_id']}")
+            logger.print_fail_arrow(f"Failed to detect win/loss for mine {mine.get('game_id', '')}")
             return
 
         if mine.get("winner_team_id", "") == team["team_id"]:
@@ -188,7 +188,6 @@ class CrabadaMineBot:
         stats["game_win_percent"] = (
             100.0 * float(stats["game_wins"]) / (stats["game_wins"] + stats["game_losses"])
         )
-
 
         stats["tus_gross"] = stats["tus_gross"] + tus_reward
         stats["cra_gross"] = stats["cra_gross"] + cra_reward
@@ -518,7 +517,7 @@ class CrabadaMineBot:
             logger.print_ok(f"Closed up looting of mine {mine['game_id']}, let's start another!")
 
             time.sleep(5.0)
-            mine = self.crabada_w2.get_mine(mine)
+            mine = self.crabada_w2.get_mine(mine["game_id"])
             self._update_bot_stats(team, mine)
 
     def _check_and_maybe_close_mines(self, team: Team, mine: IdleGame) -> None:
