@@ -146,13 +146,14 @@ class CrabadaMineBot:
             if k in ["MINE", "LOOT"]:
                 content += f"{k}:\n"
                 for s, n in self.lifetime_stats[k].items():
-                    content += f"\t{s.lower()}: {n:.3f}\n"
+                    content += f"\t{' '.join(s.lower().split('_'))}: {n:.3f}\n"
+                content += "\n"
             else:
                 if isinstance(v, dict):
                     content += f"{' '.join(k.upper().split('_'))}: {dict_sum(v):.3f}\n"
                 else:
                     content += f"{' '.join(k.upper().split('_'))}: {v:.3f}\n"
-        content += "\n"
+                content += "\n"
 
         try:
             if do_send_sms and self.from_sms_number:

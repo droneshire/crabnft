@@ -3,6 +3,8 @@ import typing as T
 from utils import logger
 from utils.price import Prices
 
+NORMALIZED_TIME = 4.0
+
 REWARDS_TUS: T.Dict[str, T.Dict[str, float]] = {
     "LOOT": {
         "win": {
@@ -13,6 +15,7 @@ REWARDS_TUS: T.Dict[str, T.Dict[str, float]] = {
             "TUS": 24.3,
             "CRA": 0.3,
         },
+        "time_normalized": 1.0,
     },
     "MINE & REINFORCE": {
         "win": {
@@ -23,6 +26,7 @@ REWARDS_TUS: T.Dict[str, T.Dict[str, float]] = {
             "TUS": 106.3125,
             "CRA": 1.3125,
         },
+        "time_normalized": 4.0,
     },
     "MINE +10% & REINFORCE": {
         "win": {
@@ -33,6 +37,7 @@ REWARDS_TUS: T.Dict[str, T.Dict[str, float]] = {
             "TUS": 136.6875,
             "CRA": 1.6875,
         },
+        "time_normalized": 4.0,
     },
     "MINE & NO REINFORCE": {
         "win": {
@@ -43,6 +48,7 @@ REWARDS_TUS: T.Dict[str, T.Dict[str, float]] = {
             "TUS": 106.3125,
             "CRA": 1.3125,
         },
+        "time_normalized": 4.0,
     },
     "MINE +10% & NO REINFORCE": {
         "win": {
@@ -53,6 +59,18 @@ REWARDS_TUS: T.Dict[str, T.Dict[str, float]] = {
             "TUS": 136.6875,
             "CRA": 1.6875,
         },
+        "time_normalized": 4.0,
+    },
+    "TAVERN 3 MP CRABS": {
+        "win": {
+            "TUS": 0.0,
+            "CRA": 0.0,
+        },
+        "lose": {
+            "TUS": 0.0,
+            "CRA": 0.0,
+        },
+        "time_normalized": 2.0,
     },
 }
 
@@ -134,29 +152,31 @@ def get_profitability_message(
         f"AVAX: ${prices.avax_usd:.3f}, TUS: ${prices.tus_usd:.3f}, CRA: ${prices.cra_usd:.3f}\n\n"
     )
 
+    message += f"**Strategies**\n"
+    message += f"*(normalized over a 4 hour window)*\n"
+
     for game in REWARDS_TUS.keys():
         if game == "LOOT":
             win_percent = 100.0 - mine_win_percent
         else:
             win_percent = mine_win_percent
 
-        do_reinforce = False if "NO REINFORCE" in game else True
+        if game == "TAVERN 3 MP CRABS":
+            profit_tus = avg_reinforce_tus * 3 - prices.avax_to_tus(avg_gas_avax) / 6
+        else:
+            do_reinforce = False if "NO REINFORCE" in game else True
 
-        profit_tus = get_expected_game_profit(
-            game, prices, avg_gas_avax, avg_reinforce_tus, win_percent, do_reinforce
-        )
-        profit_emoji = "\U0001F4C8" if profit_tus > 0.0 else "\U0001F4C9"
-        profit_usd = prices.tus_usd * profit_tus
+            profit_tus = get_expected_game_profit(
+                game, prices, avg_gas_avax, avg_reinforce_tus, win_percent, do_reinforce
+            )
+
+        profit_tus_4_hrs = profit_tus * NORMALIZED_TIME / REWARDS_TUS[game]["time_normalized"]
+        profit_usd_4_hrs = prices.tus_usd * profit_tus_4_hrs
+        profit_emoji = "\U0001F4C8" if profit_tus_4_hrs > 0.0 else "\U0001F4C9"
+
         message += "{}\tExpected Profit: {} {}\t${}\n".format(
-            f"**{game}**:", f"{profit_tus:.2f}", f"{profit_emoji}", f"{profit_usd:.2f}"
+            f"**{game}**:", f"{profit_tus_4_hrs:.2f}", f"{profit_emoji}", f"{profit_usd_4_hrs:.2f}"
         )
-
-    profit_tus = avg_reinforce_tus * 3 - prices.avax_to_tus(avg_gas_avax) / 6
-    profit_emoji = "\U0001F4C8" if profit_tus > 0.0 else "\U0001F4C9"
-    profit_usd = prices.tus_usd * profit_tus
-    message += "{}\tExpected Profit: {} {}\t${}\n".format(
-        f"**TAVERN 3 MP CRABS**:", f"{profit_tus:.2f}", f"{profit_emoji}", f"{profit_usd:.2f}"
-    )
 
     if verbose:
         logger.print_normal(message)
