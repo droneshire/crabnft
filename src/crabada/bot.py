@@ -146,7 +146,7 @@ class CrabadaMineBot:
             if k in ["MINE", "LOOT"]:
                 content += f"{k}:\n"
                 for s, n in self.lifetime_stats[k].items():
-                    content += f"\t{s.lower()}: {s:.3f}\n"
+                    content += f"\t{s.lower()}: {n:.3f}\n"
             else:
                 if isinstance(v, dict):
                     content += f"{' '.join(k.upper().split('_'))}: {dict_sum(v):.3f}\n"
@@ -471,8 +471,8 @@ class CrabadaMineBot:
                 )
                 return False
 
-            if team["team_id"] in self.game_stats:
-                self.game_stats[team["team_id"]]["gas_start"] = gas_avax
+            self.game_stats[team["team_id"]] = NULL_STATS
+            self.game_stats[team["team_id"]]["gas_start"] = gas_avax
 
         logger.print_ok_arrow(f"Successfully started mine for team {team['team_id']}")
         self.time_since_last_alert = None
