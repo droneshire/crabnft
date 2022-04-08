@@ -41,7 +41,10 @@ class Prices:
             return 0.0
 
 
-def get_avax_price_usd(api_token: str) -> T.Optional[float]:
+def get_avax_price_usd(api_token: str, dry_run: bool = False) -> T.Optional[float]:
+    if dry_run:
+        return 1.0
+
     price = 1.0
     for symbol in ["btcusd", "avaxbtc"]:
         api_url = f"https://cloud.iexapis.com/stable/crypto/{symbol}/price?token={api_token}"
@@ -56,7 +59,7 @@ def get_avax_price_usd(api_token: str) -> T.Optional[float]:
     return price
 
 
-def get_token_price_usd(api_token: str, symbol: str) -> T.Optional[float]:
+def get_token_price_usd(api_token: str, symbol: str, dry_run: bool = False) -> T.Optional[float]:
     try:
         data = CoinMarketCapAPI(api_key=api_token).cryptocurrency_info(symbol=symbol).data
         description = data[symbol]["description"]

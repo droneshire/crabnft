@@ -106,9 +106,9 @@ def run_bot() -> None:
     total_commission_tus = 0.0
     total_tus = 0.0
     prices = price.Prices(
-        get_avax_price_usd(IEX_API_TOKEN),
-        get_token_price_usd(COINMARKETCAP_API_TOKEN, "TUS"),
-        get_token_price_usd(COINMARKETCAP_API_TOKEN, "CRA"),
+        get_avax_price_usd(IEX_API_TOKEN, dry_run=args.dry_run),
+        get_token_price_usd(COINMARKETCAP_API_TOKEN, "TUS", dry_run=args.dry_run),
+        get_token_price_usd(COINMARKETCAP_API_TOKEN, "CRA", dry_run=args.dry_run),
     )
 
     for bot in bots:

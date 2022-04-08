@@ -50,7 +50,7 @@ class LootingStrategy(Strategy):
     def should_reinforce(self, mine) -> bool:
         return self.crabada_w2.loot_needs_reinforcement(mine)
 
-    def _have_reinforced_at_least_once(self, mine: IdleGame) -> bool:
+    def have_reinforced_at_least_once(self, mine: IdleGame) -> bool:
         return self.crabada_w2.get_num_loot_reinforcements(mine) >= 1
 
     def _get_best_mine_reinforcement(
@@ -79,7 +79,7 @@ class LootingStrategy(Strategy):
             return None
 
         if (
-            not self._have_reinforced_at_least_once(mine)
+            not self.have_reinforced_at_least_once(mine)
             and reinforcement_crab["battle_point"] < self.MIN_LOOT_POINT
         ):
             logger.print_warn(
