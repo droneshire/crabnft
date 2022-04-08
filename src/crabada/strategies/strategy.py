@@ -59,6 +59,9 @@ class Strategy:
     def get_gas_margin(self) -> int:
         return 0
 
+    def have_reinforced_at_least_once(self, mine: IdleGame) -> bool:
+        raise NotImplementedError
+
     def _use_bp_reinforcement(
         self, mine: IdleGame, group_id: int, use_own_crabs: bool = False
     ) -> T.Optional[TeamMember]:
