@@ -471,8 +471,8 @@ class CrabadaMineBot:
                 )
                 return False
 
-            if team["team_id"] in self.game_stats:
-                self.game_stats[team["team_id"]]["gas_start"] = gas_avax
+            self.game_stats[team["team_id"]] = NULL_STATS
+            self.game_stats[team["team_id"]]["gas_start"] = gas_avax
 
         logger.print_ok_arrow(f"Successfully started mine for team {team['team_id']}")
         self.time_since_last_alert = None
