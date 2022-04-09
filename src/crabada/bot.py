@@ -36,7 +36,7 @@ from web3_utils.web3_client import web3_transaction
 
 class CrabadaMineBot:
     TIME_BETWEEN_TRANSACTIONS = 5.0
-    ALERT_THROTTLING_TIME = 60.0 * 30.0
+    ALERT_THROTTLING_TIME = 60.0 * 60.0
     MIN_MINE_POINT = 60
 
     def __init__(
@@ -419,11 +419,7 @@ class CrabadaMineBot:
                     "gas_reinforce2" if have_reinforced else "gas_reinforce1"
                 ] = gas_avax
 
-            if tx_receipt["status"] != 1:
-                logger.print_fail_arrow(
-                    f"Error reinforcing mine {team['game_id']}: {tx_receipt['status']}"
-                )
-            else:
+            if tx_receipt["status"] == 1:
                 logger.print_ok_arrow(f"Successfully reinforced mine {team['game_id']}")
                 self.time_since_last_alert = None
                 game_type = "LOOT" if isinstance(strategy, LootingStrategy) else "MINE"
@@ -432,6 +428,7 @@ class CrabadaMineBot:
                 self.updated_game_stats = True
                 return True
 
+        logger.print_fail_arrow(f"Error reinforcing mine {team['game_id']}: {tx_receipt['status']}")
         return False
 
     def _close_mine(self, team: Team, mine: IdleGame, strategy: Strategy) -> bool:
@@ -446,17 +443,15 @@ class CrabadaMineBot:
 
             gas_avax = self._calculate_and_log_gas_price(tx_receipt)
 
-            if tx_receipt["status"] != 1:
-                logger.print_fail_arrow(
-                    f"Error closing game {team['game_id']}: {tx_receipt['status']}"
-                )
-                return False
+            if tx_receipt["status"] == 1:
+                self.time_since_last_alert = None
+                return True
 
             if team["team_id"] in self.game_stats:
                 self.game_stats[team["team_id"]]["gas_close"] = gas_avax
 
-        self.time_since_last_alert = None
-        return True
+        logger.print_fail_arrow(f"Error closing game {team['game_id']}: {tx_receipt['status']}")
+        return False
 
     def _start_mine(self, team: Team) -> bool:
         logger.print_normal(f"Attemting to start new mine with team {team['team_id']}!")
@@ -466,19 +461,15 @@ class CrabadaMineBot:
 
             gas_avax = self._calculate_and_log_gas_price(tx_receipt)
 
-            if tx_receipt["status"] != 1:
-                logger.print_fail(
-                    f"Error starting mine for team {team['team_id']}: {tx_receipt['status']}"
-                )
-                return False
+            if tx_receipt["status"] == 1:
+                self.time_since_last_alert = None
+                self.game_stats[team["team_id"]] = NULL_STATS
+                self.game_stats[team["team_id"]]["gas_start"] = gas_avax
+                logger.print_ok_arrow(f"Successfully started mine for team {team['team_id']}")
+                return True
 
-            self.game_stats[team["team_id"]] = NULL_STATS
-            self.game_stats[team["team_id"]]["gas_start"] = gas_avax
-
-        logger.print_ok_arrow(f"Successfully started mine for team {team['team_id']}")
-        self.time_since_last_alert = None
-
-        return True
+        logger.print_fail(f"Error starting mine for team {team['team_id']}: {tx_receipt['status']}")
+        return False
 
     def _is_team_allowed_to_mine(self, team: Team) -> bool:
         return team["team_id"] in self.config["mining_teams"].keys()
@@ -522,8 +513,14 @@ class CrabadaMineBot:
             self._send_status_update(True, True, message)
             logger.print_ok(f"Closed up looting of mine {mine['game_id']}, let's start another!")
 
-            time.sleep(5.0)
+            time.sleep(10.0)
             mine = self.crabada_w2.get_mine(mine["game_id"])
+            outcome = (
+                "won \U0001F389"
+                if mine.get("winner_team_id", -1) == team["team_id"]
+                else "lost \U0001F915"
+            )
+            logger.print_ok(f"Successfully closed loot {team['game_id']}, we {outcome}")
             if team["team_id"] in self.game_stats:
                 # we don't do gas start for loots, so we don't track it
                 self.game_stats[team["team_id"]]["gas_start"] = 0.0

@@ -18,7 +18,7 @@ def web3_transaction(err_string_compare: str, handler: T.Callable) -> T.Iterator
     try:
         yield
     except ValueError as e:
-        logger.print_fail(e.args[0]["message"])
+        logger.print_fail(f"{e.args[0]['message']} COMPARE: {err_string_compare}")
         if err_string_compare in e.args[0]["message"]:
             handler()
         else:
@@ -121,14 +121,16 @@ class Web3Client:
         if self.dry_run:
             return ""
 
-        def fail_handler() -> None:
-            self.nonce += 1
-
         hex_tx_hash = ""
-        with web3_transaction("nonce too low:", fail_handler):
+        try:
             tx_hash = self.w3.eth.send_raw_transaction(signed_tx.rawTransaction)
             self.nonce = self.get_nonce()
             hex_tx_hash = self.w3.toHex(tx_hash)
+        except ValueError as e:
+            if "nonce too low:" in e.args[0]["message"]:
+                self.nonce += 1
+            else:
+                raise e
         return hex_tx_hash
 
     def sign_and_send_transaction(self, tx: TxParams) -> HexStr:
