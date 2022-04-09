@@ -213,7 +213,9 @@ def collect_tus_commission(
             if not dry_run:
                 send_sms_message(encrypt_password, config["email"], config["sms_number"], message)
 
-    logger.print_bold(f"Collected {sum([c for _, c in total_stats['total_commission_tus'].items()])} TUS in commission!!!")
+    logger.print_bold(
+        f"Collected {sum([c for _, c in total_stats['total_commission_tus'].items()])} TUS in commission!!!"
+    )
 
     if dry_run:
         return
