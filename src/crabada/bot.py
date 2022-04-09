@@ -337,10 +337,12 @@ class CrabadaMineBot:
             return
 
         reinforce_margin = 0
+        backoff_margin = 0
         if strategy.have_reinforced_at_least_once(team):
             reinforce_margin = 30
         if isinstance(strategy, LootingStrategy):
             reinforce_margin = 50
+            backoff_margin = 15
 
         if self._is_gas_too_high(margin=reinforce_margin):
             logger.print_warn(
@@ -350,7 +352,7 @@ class CrabadaMineBot:
 
         for _ in range(2):
             reinforcement_crab = strategy.get_reinforcement_crab(
-                team, mine, self.reinforcement_search_backoff
+                team, mine, self.reinforcement_search_backoff + backoff_margin
             )
             if self._reinforce_with_crab(
                 team,
