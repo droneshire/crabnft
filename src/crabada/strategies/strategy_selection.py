@@ -16,4 +16,5 @@ STRATEGY_SELECTION: T.Dict[str, Strategy] = {
     "PreferOtherMpCrabsAndDelayReinforcement": mining_delayed_reinforce.PreferOtherMpCrabsAndDelayReinforcement,
     "PreferOwnMpCrabsAndDelayReinforcement": mining_delayed_reinforce.PreferOwnMpCrabsAndDelayReinforcement,
     "ScatteredReinforcement": mining_scattered_reinforce.ScatteredReinforcement,
+    "ScatteredDelayReinforcement": mining_scattered_reinforce.ScatteredDelayReinforcement,
 }
