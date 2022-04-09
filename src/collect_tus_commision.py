@@ -21,7 +21,7 @@ from web3_utils.tus_web3_client import TusWeb3Client
 
 MINIMUM_TUS_TO_TRANSFER = 25
 DISCORD_TRANSFER_NOTICE = """\U0000203C  **COURTESY NOTICE**  \U0000203C
-Collecting Crabada commission at next low gas period. Please ensure TUS are in wallet.
+@here, collecting Crabada commission at next low gas period. Please ensure TUS are in wallet.
 Confirmation will be sent after successful tx.
 snib snib \U0001F980\n"""
 COMMISSION_SUBJECT = """\U0001F980 Crabada Bot: Commission Collection"""
@@ -36,11 +36,15 @@ def send_sms_message(encrypt_password: str, to_email: str, to_number: str, messa
             from_=TWILIO_CONFIG["from_sms_number"],
             to=to_number,
         )
+    except:
+        logger.print_warn(f"Failed to send message to {to_number}")
+
+    try:
         email_password = decrypt(str.encode(encrypt_password), GMAIL["password"]).decode()
         email_account = email.Email(address=GMAIL["user"], password=email_password)
         email.send_email(email_account, to_email, COMMISSION_SUBJECT, message)
     except:
-        logger.print_fail(f"Failed to send message to {to_number}/{to_email}")
+        logger.print_warn(f"Failed to send message to {to_email}")
 
 
 def setup_log(log_level: str, log_dir: str) -> None:
@@ -121,7 +125,6 @@ def collect_tus_commission(
     dry_run: bool = False,
 ) -> None:
     total_stats = {"total_commission_tus": {}}
-    new_commission = 0.0
 
     run_all_users = "ALL" in from_users
     for user, config in USERS.items():
@@ -174,8 +177,12 @@ def collect_tus_commission(
             logger.print_bold(
                 f"Attempting to send commission of {commission_tus:.2f} TUS from {user} -> {to_address}..."
             )
-            tx_hash = tus_w3.transfer_tus(to_address, commission_tus)
-            tx_receipt = tus_w3.get_transaction_receipt(tx_hash)
+            try:
+                tx_hash = tus_w3.transfer_tus(to_address, commission_tus)
+                tx_receipt = tus_w3.get_transaction_receipt(tx_hash)
+            except:
+                logger.print_fail(f"Failed to collect from {user}")
+                continue
 
             if tx_receipt["status"] != 1:
                 logger.print_fail_arrow(
@@ -206,7 +213,7 @@ def collect_tus_commission(
             if not dry_run:
                 send_sms_message(encrypt_password, config["email"], config["sms_number"], message)
 
-    logger.print_bold(f"Collected {new_commission} TUS in commission!!!")
+    logger.print_bold(f"Collected {sum([c for _, c in total_stats['total_commission_tus'].items()])} TUS in commission!!!")
 
     if dry_run:
         return
