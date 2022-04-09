@@ -152,7 +152,7 @@ def get_profitability_message(
         f"AVAX: ${prices.avax_usd:.3f}, TUS: ${prices.tus_usd:.3f}, CRA: ${prices.cra_usd:.3f}\n\n"
     )
 
-    message += f"**Strategies**\n"
+    message += f"**Expected Profit (EP)**\n"
     message += f"*(normalized over a 4 hour window)*\n"
 
     for game in REWARDS_TUS.keys():
@@ -174,7 +174,7 @@ def get_profitability_message(
         profit_usd_4_hrs = prices.tus_usd * profit_tus_4_hrs
         profit_emoji = "\U0001F4C8" if profit_tus_4_hrs > 0.0 else "\U0001F4C9"
 
-        message += "{}\tExpected Profit: {} {}\t${}\n".format(
+        message += "{}\tEP {} {}\t${}\n".format(
             f"**{game}**:", f"{profit_tus_4_hrs:.2f}", f"{profit_emoji}", f"{profit_usd_4_hrs:.2f}"
         )
 

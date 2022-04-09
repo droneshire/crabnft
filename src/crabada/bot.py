@@ -428,7 +428,7 @@ class CrabadaMineBot:
                 self.updated_game_stats = True
                 return True
 
-        logger.print_fail_arrow(f"Error reinforcing mine {team['game_id']}: {tx_receipt['status']}")
+        logger.print_fail_arrow(f"Error reinforcing mine {team['game_id']}")
         return False
 
     def _close_mine(self, team: Team, mine: IdleGame, strategy: Strategy) -> bool:
@@ -450,7 +450,7 @@ class CrabadaMineBot:
             if team["team_id"] in self.game_stats:
                 self.game_stats[team["team_id"]]["gas_close"] = gas_avax
 
-        logger.print_fail_arrow(f"Error closing game {team['game_id']}: {tx_receipt['status']}")
+        logger.print_fail_arrow(f"Error closing game {team['game_id']}")
         return False
 
     def _start_mine(self, team: Team) -> bool:
@@ -468,7 +468,7 @@ class CrabadaMineBot:
                 logger.print_ok_arrow(f"Successfully started mine for team {team['team_id']}")
                 return True
 
-        logger.print_fail(f"Error starting mine for team {team['team_id']}: {tx_receipt['status']}")
+        logger.print_fail(f"Error starting mine for team {team['team_id']}")
         return False
 
     def _is_team_allowed_to_mine(self, team: Team) -> bool:
