@@ -53,7 +53,10 @@ class MiningStrategy(Strategy):
 
         avax_gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         tus, cra = self._get_rewards_from_tx_receipt(tx_receipt)
-        result = "WIN" if tus >= REWARDS_TUS["MINE & REINFORCE"]["win"]["TUS"] else "LOSE"
+        if tus is not None:
+            result = "WIN" if tus >= REWARDS_TUS["MINE & REINFORCE"]["win"]["TUS"] else "LOSE"
+        else:
+            result = "UNKNOWN"
         return CrabadaTransaction("MINE", tus, cra, tx_receipt["status"] == 1, result, avax_gas)
 
     def reinforce(self, game_id: int, crabada_id: int, borrow_price: Wei) -> CrabadaTransaction:

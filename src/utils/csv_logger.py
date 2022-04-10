@@ -17,8 +17,8 @@ class CsvLogger:
     def open(self) -> None:
         if self.file_obj is not None:
             raise Exception("opening already open csv file")
-        mode = "a" if os.path.isfile(self.csv_file) else "w"
         self._write_header_if_needed()
+        mode = "a" if os.path.isfile(self.csv_file) else "w"
         self.file_obj = open(self.csv_file, mode)
         self.csv_writer = csv.writer(self.file_obj)
 
@@ -41,20 +41,19 @@ class CsvLogger:
         self.csv_writer.writerow(row)
 
     def _write_header_if_needed(self) -> None:
-        if self.file_obj:
-            raise Exception("attempting to open already open file")
-
-        with open(self.csv_file) as infile:
-            reader = list(csv.reader(infile))
-
-        if len(reader) == 0:
-            self.csv_writer.writerow(self.header)
-            return
-
-        if len([i for i in reader[0] if i in self.header]) != len(self.header):
-            reader.insert(0, self.header)
+        reader = []
+        if os.path.isfile(self.csv_file):
+            with open(self.csv_file) as infile:
+                reader = list(csv.reader(infile))
 
         with open(self.csv_file, "w") as outfile:
-            writer = csv.writer(self.csv_file)
-            for row in reader:
-                writer.writerow(row)
+            writer = csv.writer(outfile)
+
+            if len(reader) == 0:
+                writer.writerow(self.header)
+                return
+
+            if len([i for i in reader[0] if i in self.header]) != len(self.header):
+                reader.insert(0, self.header)
+                for row in reader:
+                    writer.writerow(row)
