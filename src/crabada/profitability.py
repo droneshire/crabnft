@@ -190,7 +190,8 @@ def get_profitability_message(
                 game, prices, avg_gas_avax, avg_reinforce_tus, win_percent, do_reinforce
             )
 
-        profit_tus_4_hrs = profit_tus * NORMALIZED_TIME / REWARDS_TUS[game]["time_normalized"]
+        games_per_4_hrs = NORMALIZED_TIME / REWARDS_TUS[game]["time_normalized"]
+        profit_tus_4_hrs = profit_tus * games_per_4_hrs
         profit_usd_4_hrs = prices.tus_usd * profit_tus_4_hrs
         profit_emoji = "\U0001F4C8" if profit_tus_4_hrs > 0.0 else "\U0001F4C9"
 
