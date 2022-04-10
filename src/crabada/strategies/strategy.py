@@ -8,7 +8,7 @@ from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
 from utils import logger
 from utils.config_types import UserConfig
-from utils.price import Tus
+from utils.price import Tus, wei_to_cra_raw, wei_to_tus_raw
 
 
 class CrabadaTransaction:
@@ -88,10 +88,9 @@ class Strategy:
 
         for log in tx_receipt.get("logs", []):
             if log.get("address", "") == CrabadaWeb3Client.TUS_CONTRACT_ADDRESS:
-                tus_rewards = wei_to_tus_raw(log["data"])
+                tus_rewards = wei_to_tus_raw(int(log["data"], 16))
             elif log.get("address", "") == CrabadaWeb3Client.CRA_CONTRACT_ADDRESS:
-                cra_rewards = wei_to_cra_raw(log["data"])
-
+                cra_rewards = wei_to_cra_raw(int(log["data"], 16))
         return (tus_rewards, cra_rewards)
 
     def _use_bp_reinforcement(

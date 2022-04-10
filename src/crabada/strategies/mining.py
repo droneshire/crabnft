@@ -10,7 +10,7 @@ from crabada.strategies.strategy import CrabadaTransaction, Strategy
 from crabada.types import CrabForLending, IdleGame, Team, TeamMember
 from utils import logger
 from utils.config_types import UserConfig
-from utils.price import wei_to_cra_raw, wei_to_tus_raw
+from utils.price import wei_to_tus_raw
 
 
 class MiningStrategy(Strategy):
@@ -42,9 +42,7 @@ class MiningStrategy(Strategy):
         tx_hash = self.crabada_w3.start_game(team_id)
         tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
 
-        avax_gas = wei_to_tus_raw(
-            self.crabada_w3_client.get_gas_cost_of_transaction_wei(tx_receipt)
-        )
+        avax_gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         tus, cra = self._get_rewards_from_tx_receipt(tx_receipt)
         return CrabadaTransaction("MINE", tus, cra, tx_receipt["status"] == 1, None, avax_gas)
 
@@ -53,11 +51,9 @@ class MiningStrategy(Strategy):
         tx_hash = self.crabada_w3.close_game(game_id)
         tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
 
-        avax_gas = wei_to_tus_raw(
-            self.crabada_w3_client.get_gas_cost_of_transaction_wei(tx_receipt)
-        )
+        avax_gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         tus, cra = self._get_rewards_from_tx_receipt(tx_receipt)
-        result = "WIN" if tus >= REWARDS_TUS["MINE & REINFORCE"]["win"] else "LOSE"
+        result = "WIN" if tus >= REWARDS_TUS["MINE & REINFORCE"]["win"]["TUS"] else "LOSE"
         return CrabadaTransaction("MINE", tus, cra, tx_receipt["status"] == 1, result, avax_gas)
 
     def reinforce(self, game_id: int, crabada_id: int, borrow_price: Wei) -> CrabadaTransaction:
@@ -65,9 +61,7 @@ class MiningStrategy(Strategy):
         tx_hash = self.crabada_w3.reinforce_defense(game_id, crabada_id, borrow_price)
         tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
 
-        avax_gas = wei_to_tus_raw(
-            self.crabada_w3_client.get_gas_cost_of_transaction_wei(tx_receipt)
-        )
+        avax_gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         tus, cra = self._get_rewards_from_tx_receipt(tx_receipt)
         return CrabadaTransaction("MINE", tus, cra, tx_receipt["status"] == 1, None, avax_gas)
 

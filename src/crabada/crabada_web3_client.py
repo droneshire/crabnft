@@ -8,9 +8,6 @@ from web3.types import TxParams, Wei
 from web3_utils.web3_client import Web3Client
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 
-TUS_CONTRACT_ADDRESS = Address("0xf693248F96Fe03422FEa95aC0aFbBBc4a8FdD172")
-CRA_CONTRACT_ADDRESS = Address("0xA32608e873F9DdEF944B24798db69d80Bbb4d1ed")
-
 
 class CrabadaWeb3Client(AvalancheCWeb3Client):
     """
@@ -20,6 +17,9 @@ class CrabadaWeb3Client(AvalancheCWeb3Client):
     explorer URL:
     https://snowtrace.io/address/0x82a85407bd612f52577909f4a58bfc6873f14da8#tokentxns
     """
+
+    TUS_CONTRACT_ADDRESS = Address("0xf693248F96Fe03422FEa95aC0aFbBBc4a8FdD172")
+    CRA_CONTRACT_ADDRESS = Address("0xA32608e873F9DdEF944B24798db69d80Bbb4d1ed")
 
     contract_address = T.cast(Address, "0x82a85407bd612f52577909f4a58bfc6873f14da8")
     this_dir = os.path.dirname(os.path.realpath(__file__))
