@@ -522,6 +522,7 @@ class CrabadaMineBot:
                 self.game_stats[team["team_id"]]["gas_start"] = 0.0
                 now = datetime.datetime.now()
                 self.game_stats[team["team_id"]]["timestamp"] = now.strftime("%m/%d/%Y %H:%M:%S")
+            self._update_bot_stats(team, mine)
 
     def _check_and_maybe_close_mines(self, team: Team, mine: IdleGame) -> None:
         if not self.crabada_w2.mine_is_finished(mine):
