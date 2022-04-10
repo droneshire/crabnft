@@ -183,6 +183,7 @@ def get_profitability_message(
             do_reinforce = game in [
                 Scenarios.MineAndReinforce,
                 Scenarios.MineTenPercentAndReinforce,
+                Scenarios.Loot,
             ]
 
             profit_tus = get_expected_game_profit(
