@@ -41,7 +41,9 @@ class MiningStrategy(Strategy):
 
         avax_gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         tus, cra = self._get_rewards_from_tx_receipt(tx_receipt)
-        return CrabadaTransaction("MINE", tus, cra, tx_receipt["status"] == 1, None, avax_gas)
+        return CrabadaTransaction(
+            tx_hash, "MINE", tus, cra, tx_receipt["status"] == 1, None, avax_gas
+        )
 
     def close(self, game_id: int) -> CrabadaTransaction:
         logger.print_normal(f"Mine[{game_id}]: Closing game")
@@ -54,7 +56,9 @@ class MiningStrategy(Strategy):
             result = Result.WIN if self._did_win_game("MINE", tus) else Result.LOSE
         else:
             result = Result.UNKNOWN
-        return CrabadaTransaction("MINE", tus, cra, tx_receipt["status"] == 1, result, avax_gas)
+        return CrabadaTransaction(
+            tx_hash, "MINE", tus, cra, tx_receipt["status"] == 1, result, avax_gas
+        )
 
     def reinforce(self, game_id: int, crabada_id: int, borrow_price: Wei) -> CrabadaTransaction:
         logger.print_normal(f"Mine[{game_id}]: reinforcing")
@@ -63,7 +67,9 @@ class MiningStrategy(Strategy):
 
         avax_gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         tus, cra = self._get_rewards_from_tx_receipt(tx_receipt)
-        return CrabadaTransaction("MINE", tus, cra, tx_receipt["status"] == 1, None, avax_gas)
+        return CrabadaTransaction(
+            tx_hash, "MINE", tus, cra, tx_receipt["status"] == 1, None, avax_gas
+        )
 
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:
         return self.crabada_w2.mine_needs_reinforcement(mine)

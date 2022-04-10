@@ -129,7 +129,11 @@ class CrabadaMineBot:
         logger.print_normal("")
 
     def _send_status_update(
-        self, do_send_sms: bool, do_send_email: bool, custom_message: str
+        self,
+        do_send_sms: bool,
+        do_send_email: bool,
+        custom_message: str,
+        tx_hash: str = None,
     ) -> None:
 
         if self.dry_run:
@@ -137,7 +141,10 @@ class CrabadaMineBot:
 
         content = f"Action: {custom_message}\n\n"
 
-        content += f"Explorer: https://snowtrace.io/address/{self.config['address']}\n\n"
+        if tx_hash is None:
+            content += f"Explorer: https://snowtrace.io/address/{self.config['address']}\n\n"
+        else:
+            content += f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n"
         content += "---\U0001F579  GAME STATS\U0001F579  ---\n"
 
         for k, v in self.lifetime_stats.items():
@@ -194,7 +201,10 @@ class CrabadaMineBot:
         outcome = "won \U0001F389" if tx.result == Result else "lost \U0001F915"
         message = f"Successfully closed {tx.game_type} {team['game_id']}, we {outcome}"
         self._send_status_update(
-            self.config["get_sms_updates"], self.config["get_email_updates"], message
+            self.config["get_sms_updates"],
+            self.config["get_email_updates"],
+            message,
+            tx_hash=tx.tx_hash,
         )
         logger.print_ok(message)
 

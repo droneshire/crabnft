@@ -21,6 +21,7 @@ class GameStage:
 class CrabadaTransaction:
     def __init__(
         self,
+        tx_hash: str,
         game_type: T.Literal["LOOT", "MINE"],
         tus: float,
         cra: float,
@@ -28,6 +29,7 @@ class CrabadaTransaction:
         result: str,
         gas: float,
     ):
+        self.tx_hash = tx_hash
         self.tus_rewards = tus
         self.cra_rewards = cra
         self.did_succeed = did_succeed
