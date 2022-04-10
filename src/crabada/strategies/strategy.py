@@ -12,6 +12,12 @@ from utils.config_types import UserConfig
 from utils.price import Tus, wei_to_cra_raw, wei_to_tus_raw
 
 
+class GameStage:
+    START = "START"
+    CLOSE = "CLOSE"
+    REINFORCE = "REINFORCE"
+
+
 class CrabadaTransaction:
     def __init__(
         self,
@@ -75,8 +81,18 @@ class Strategy:
     def reinforce(self, game_id: int, crabada_id: int, borrow_price: Wei) -> CrabadaTransaction:
         raise NotImplementedError
 
-    def get_gas_margin(self) -> int:
+    def get_backoff_margin(self) -> int:
         return 0
+
+    def get_gas_margin(self, game_stage: GameStage, mine: T.Optional[IdleGame] = None) -> int:
+        if game_stage == GameStage.START:
+            return 10
+        elif game_stage == GameStage.CLOSE:
+            return 10
+        elif game_stage == GameStage.REINFORCE:
+            return 30 if self.have_reinforced_at_least_once(mine) else 0
+        else:
+            return 0
 
     def have_reinforced_at_least_once(self, mine: IdleGame) -> bool:
         raise NotImplementedError

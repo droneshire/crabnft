@@ -6,7 +6,7 @@ from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
 from crabada.factional_advantage import get_faction_adjusted_battle_point
 from crabada.profitability import REWARDS_TUS, Result
-from crabada.strategies.strategy import CrabadaTransaction, Strategy
+from crabada.strategies.strategy import CrabadaTransaction, GameStage, Strategy
 from crabada.types import IdleGame, Team, TeamMember
 from utils import logger
 from utils.config_types import UserConfig
@@ -65,6 +65,22 @@ class LootingStrategy(Strategy):
 
     def have_reinforced_at_least_once(self, mine: IdleGame) -> bool:
         return self.crabada_w2.get_num_loot_reinforcements(mine) >= 1
+
+    def get_backoff_margin(self) -> int:
+        return 15
+
+    def get_gas_margin(self, game_stage: GameStage, mine: T.Optional[IdleGame] = None) -> int:
+        if game_stage == GameStage.START:
+            return 10
+        elif game_stage == GameStage.CLOSE:
+            return 10
+        elif game_stage == GameStage.REINFORCE:
+            if mine is None:
+                return 0
+            else:
+                return 50 if self.have_reinforced_at_least_once(mine) else 0
+        else:
+            return 0
 
     def _get_best_mine_reinforcement(
         self, team: Team, mine: IdleGame, use_own_crabs: bool = False

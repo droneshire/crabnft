@@ -6,6 +6,7 @@ from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
 from crabada.strategies.mining import MiningStrategy
 from crabada.strategies.mining_delayed_reinforce import MiningDelayReinforcementStrategy
+from crabada.strategies.strategy import GameStage
 from crabada.types import IdleGame, Team, TeamMember
 from utils import logger
 from utils.config_types import UserConfig
@@ -29,8 +30,18 @@ class ScatteredReinforcement(MiningStrategy):
             config,
         )
 
-    def get_gas_margin(self) -> int:
-        return 50
+    def get_gas_margin(self, game_stage: GameStage, mine: T.Optional[IdleGame] = None) -> int:
+        if game_stage == GameStage.START:
+            return 40
+        elif game_stage == GameStage.CLOSE:
+            return 40
+        elif game_stage == GameStage.REINFORCE:
+            if mine is None:
+                return 0
+            else:
+                return 30 if self.have_reinforced_at_least_once(mine) else 0
+        else:
+            return 0
 
     def should_start(self, team: Team) -> bool:
         mine_group = self.config["mining_teams"].get(team["team_id"], -1)
@@ -70,9 +81,7 @@ class ScatteredReinforcement(MiningStrategy):
         return super()._get_best_mine_reinforcement(team, mine, use_own_crabs=True)
 
 
-class ScatteredDelayReinforcement(MiningDelayReinforcementStrategy):
-    MIN_TIME_BETWEEN_MINES = 60.0 * 31.0
-
+class ScatteredDelayReinforcement(ScatteredReinforcement):
     def __init__(
         self,
         address: Address,
@@ -86,9 +95,6 @@ class ScatteredDelayReinforcement(MiningDelayReinforcementStrategy):
             crabada_w3_client,
             config,
         )
-
-    def get_gas_margin(self) -> int:
-        return 50
 
     def should_start(self, team: Team) -> bool:
         mine_group = self.config["mining_teams"].get(team["team_id"], -1)
@@ -120,9 +126,3 @@ class ScatteredDelayReinforcement(MiningDelayReinforcementStrategy):
             f"Waiting to start mine for {team['team_id']} (group {mine_group}) in {time_before_start_formatted}"
         )
         return False
-
-    def get_reinforcement_crab(
-        self, team: Team, mine: IdleGame, reinforcement_search_backoff: int = 0
-    ) -> T.Optional[TeamMember]:
-        self.reinforcement_search_backoff = reinforcement_search_backoff
-        return super()._get_best_mine_reinforcement(team, mine, use_own_crabs=True)

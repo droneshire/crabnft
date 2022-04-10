@@ -35,9 +35,6 @@ class MiningStrategy(Strategy):
             config,
         )
 
-    def get_gas_margin(self) -> int:
-        return 20
-
     def start(self, team_id: int) -> CrabadaTransaction:
         tx_hash = self.crabada_w3.start_game(team_id)
         tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
