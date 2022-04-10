@@ -226,8 +226,7 @@ class CrabadaMineBot:
         self._send_status_update(True, True, message)
         self.time_since_last_alert = now
 
-    def _calculate_and_log_gas_price(self, tx_receipt: TxReceipt) -> float:
-        avax_gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+    def _calculate_and_log_gas_price(self, avax_gas: float) -> float:
         if avax_gas is None:
             return 0.0
 
@@ -410,23 +409,22 @@ class CrabadaMineBot:
             return True
 
         with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
-            tx_receipt = strategy.reinforce(
+            tx = strategy.reinforce(
                 team["game_id"], crabada_id, reinforcement_crab["price"]
             )
 
             have_reinforced = strategy.have_reinforced_at_least_once(mine)
-            gas_avax = self._calculate_and_log_gas_price(tx_receipt)
+            gas_avax = self._calculate_and_log_gas_price(tx.gas)
             if team["team_id"] in self.game_stats:
                 self.game_stats[team["team_id"]][
                     "gas_reinforce2" if have_reinforced else "gas_reinforce1"
                 ] = gas_avax
 
-            if tx_receipt["status"] == 1:
+            if tx.did_succeed:
                 logger.print_ok_arrow(f"Successfully reinforced mine {team['game_id']}")
                 self.time_since_last_alert = None
-                game_type = "LOOT" if isinstance(strategy, LootingStrategy) else "MINE"
-                self.lifetime_stats[game_type]["tus_net"] -= price_tus
-                self.lifetime_stats[game_type]["tus_reinforcement"] += price_tus
+                self.lifetime_stats[tx.game_type]["tus_net"] -= price_tus
+                self.lifetime_stats[tx.game_type]["tus_reinforcement"] += price_tus
                 self.updated_game_stats = True
                 return True
 
@@ -441,11 +439,11 @@ class CrabadaMineBot:
             return False
 
         with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
-            tx_receipt = strategy.close(team["game_id"])
+            tx = strategy.close(team["game_id"])
 
-            gas_avax = self._calculate_and_log_gas_price(tx_receipt)
+            gas_avax = self._calculate_and_log_gas_price(tx.gas)
 
-            if tx_receipt["status"] == 1:
+            if tx.did_succeed:
                 self.time_since_last_alert = None
                 return True
 
@@ -459,11 +457,11 @@ class CrabadaMineBot:
         logger.print_normal(f"Attemting to start new mine with team {team['team_id']}!")
 
         with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
-            tx_receipt = self.mining_strategy.start(team["team_id"])
+            tx = self.mining_strategy.start(team["team_id"])
 
-            gas_avax = self._calculate_and_log_gas_price(tx_receipt)
+            gas_avax = self._calculate_and_log_gas_price(tx.gas)
 
-            if tx_receipt["status"] == 1:
+            if tx.did_succeed:
                 self.time_since_last_alert = None
                 self.game_stats[team["team_id"]] = NULL_STATS
                 self.game_stats[team["team_id"]]["gas_start"] = gas_avax

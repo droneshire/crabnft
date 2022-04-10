@@ -174,7 +174,7 @@ def get_profitability_message(
         profit_usd_4_hrs = prices.tus_usd * profit_tus_4_hrs
         profit_emoji = "\U0001F4C8" if profit_tus_4_hrs > 0.0 else "\U0001F4C9"
 
-        message += "{}\t{} $TUS\t${}\n".format(
+        message += "{}\n\t{} $TUS\t${}\n".format(
             f"**{game}**:", f"{profit_tus_4_hrs:.2f}", f"{profit_usd_4_hrs:.2f}"
         )
 

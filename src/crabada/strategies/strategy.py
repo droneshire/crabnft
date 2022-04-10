@@ -11,6 +11,16 @@ from utils.config_types import UserConfig
 from utils.price import Tus
 
 
+class CrabadaTransaction:
+
+    def __init__(self, game_type: T.Literal["LOOT", "MINE"], tus: float, cra: float, did_succeed: bool, result: str, gas: float):
+        self.tus_rewards = tus
+        self.cra_rewards = cra
+        self.did_succeed = did_succeed
+        self.result = result
+        self.gas = gas
+        self.game_type = game_type
+
 class Strategy:
     # time window to make sure we don't attempt to reuse crabs
     # before the api updates. keep it small in case we fail to actually
@@ -47,13 +57,13 @@ class Strategy:
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:
         raise NotImplementedError
 
-    def start(self, team_id: int) -> T.Any:
+    def start(self, team_id: int) -> CrabadaTransaction:
         raise NotImplementedError
 
-    def close(self, game_id: int) -> T.Any:
+    def close(self, game_id: int) -> CrabadaTransaction:
         raise NotImplementedError
 
-    def reinforce(self, game_id: int, crabada_id: int, borrow_price: Wei) -> T.Any:
+    def reinforce(self, game_id: int, crabada_id: int, borrow_price: Wei) -> CrabadaTransaction:
         raise NotImplementedError
 
     def get_gas_margin(self) -> int:
@@ -61,6 +71,18 @@ class Strategy:
 
     def have_reinforced_at_least_once(self, mine: IdleGame) -> bool:
         raise NotImplementedError
+
+    def _get_rewards_from_tx_receipt(self, tx_receipt: T.Any) -> T.Tuple[T.Optional[float], T.Optional[float]]:
+        tus_rewards = None
+        cra_rewards = None
+
+        for log in tx_receipt.get("logs", []):
+            if log.get("address", "") == CrabadaWeb3Client.TUS_CONTRACT_ADDRESS:
+                tus_rewards = wei_to_tus_raw(log["data"])
+            elif log.get("address", "") == CrabadaWeb3Client.CRA_CONTRACT_ADDRESS:
+                cra_rewards = wei_to_cra_raw(log["data"])
+
+        return (tus_rewards, cra_rewards)
 
     def _use_bp_reinforcement(
         self, mine: IdleGame, group_id: int, use_own_crabs: bool = False

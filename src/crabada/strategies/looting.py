@@ -5,7 +5,8 @@ from web3.types import Wei
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
 from crabada.factional_advantage import get_faction_adjusted_battle_point
-from crabada.strategies.strategy import Strategy
+from crabada.profitability import REWARDS_TUS
+from crabada.strategies.strategy import CrabadaTransaction, Strategy
 from crabada.types import IdleGame, Team, TeamMember
 from utils import logger
 from utils.config_types import UserConfig
@@ -34,18 +35,27 @@ class LootingStrategy(Strategy):
             config,
         )
 
-    def start(self, team_id: int) -> T.Dict[T.Any, T.Any]:
-        return {"status": 0}
+    def start(self, team_id: int) -> CrabadaTransaction:
+        return CrabadaTransaction("LOOT", None, None, False, None, 0.0)
 
     def close(self, game_id: int) -> T.Dict[T.Any, T.Any]:
         logger.print_normal(f"Loot[{game_id}]: Settling game")
         tx_hash = self.crabada_w3.settle_game(game_id)
-        return self.crabada_w3.get_transaction_receipt(tx_hash)
+        tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
+
+        avax_gas = wei_to_tus_raw(self.crabada_w3_client.get_gas_cost_of_transaction_wei(tx_receipt))
+        tus, cra = self._get_rewards_from_tx_receipt(tx_receipt)
+        result = "WIN" if tus >= REWARDS_TUS["LOOT"]["win"] else "LOSE"
+        return CrabadaTransaction("LOOT",tus, cra, tx_receipt["status"] == 1, result, avax_gas)
 
     def reinforce(self, game_id: int, crabada_id: int, borrow_price: Wei) -> T.Dict[T.Any, T.Any]:
         logger.print_normal(f"Loot[{game_id}]: reinforcing")
         tx_hash = self.crabada_w3.reinforce_attack(game_id, crabada_id, borrow_price)
-        return self.crabada_w3.get_transaction_receipt(tx_hash)
+        tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
+
+        avax_gas = wei_to_tus_raw(self.crabada_w3_client.get_gas_cost_of_transaction_wei(tx_receipt))
+        tus, cra = self._get_rewards_from_tx_receipt(tx_receipt)
+        return CrabadaTransaction("LOOT", tus, cra, tx_receipt["status"] == 1, None, avax_gas)
 
     def should_reinforce(self, mine) -> bool:
         return self.crabada_w2.loot_needs_reinforcement(mine)

@@ -8,6 +8,8 @@ from web3.types import TxParams, Wei
 from web3_utils.web3_client import Web3Client
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 
+TUS_CONTRACT_ADDRESS = Address("0xf693248F96Fe03422FEa95aC0aFbBBc4a8FdD172")
+CRA_CONTRACT_ADDRESS = Address("0xA32608e873F9DdEF944B24798db69d80Bbb4d1ed")
 
 class CrabadaWeb3Client(AvalancheCWeb3Client):
     """
