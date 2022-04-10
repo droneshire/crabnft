@@ -128,6 +128,7 @@ class Web3Client:
             hex_tx_hash = self.w3.toHex(tx_hash)
         except ValueError as e:
             if "nonce too low:" in e.args[0]["message"]:
+                logger.print_warn(f"Nonce too low! Incrementing nonce")
                 self.nonce += 1
             else:
                 raise e

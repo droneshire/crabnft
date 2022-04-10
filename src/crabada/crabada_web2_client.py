@@ -523,7 +523,11 @@ class CrabadaWeb2Client:
             return False
 
         actions = [p["action"] for p in mine["process"]]
-        if actions.count("reinforce-attack") < 2:
+
+        if actions.count("reinforce-attack") >= 2:
+            return True
+
+        if actions[-1] in ["attack", "reinforce-attack"]:
             margin = 60.0 * 3
             return (
                 CrabadaWeb2Client.get_time_since_last_action(mine)
