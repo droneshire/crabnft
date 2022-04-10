@@ -409,9 +409,7 @@ class CrabadaMineBot:
             return True
 
         with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
-            tx = strategy.reinforce(
-                team["game_id"], crabada_id, reinforcement_crab["price"]
-            )
+            tx = strategy.reinforce(team["game_id"], crabada_id, reinforcement_crab["price"])
 
             have_reinforced = strategy.have_reinforced_at_least_once(mine)
             gas_avax = self._calculate_and_log_gas_price(tx.gas)

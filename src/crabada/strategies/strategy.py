@@ -12,14 +12,22 @@ from utils.price import Tus
 
 
 class CrabadaTransaction:
-
-    def __init__(self, game_type: T.Literal["LOOT", "MINE"], tus: float, cra: float, did_succeed: bool, result: str, gas: float):
+    def __init__(
+        self,
+        game_type: T.Literal["LOOT", "MINE"],
+        tus: float,
+        cra: float,
+        did_succeed: bool,
+        result: str,
+        gas: float,
+    ):
         self.tus_rewards = tus
         self.cra_rewards = cra
         self.did_succeed = did_succeed
         self.result = result
         self.gas = gas
         self.game_type = game_type
+
 
 class Strategy:
     # time window to make sure we don't attempt to reuse crabs
@@ -72,7 +80,9 @@ class Strategy:
     def have_reinforced_at_least_once(self, mine: IdleGame) -> bool:
         raise NotImplementedError
 
-    def _get_rewards_from_tx_receipt(self, tx_receipt: T.Any) -> T.Tuple[T.Optional[float], T.Optional[float]]:
+    def _get_rewards_from_tx_receipt(
+        self, tx_receipt: T.Any
+    ) -> T.Tuple[T.Optional[float], T.Optional[float]]:
         tus_rewards = None
         cra_rewards = None
 
