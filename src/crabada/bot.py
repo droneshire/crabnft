@@ -10,7 +10,7 @@ from web3.types import Address, TxReceipt
 
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
-from crabada.strategies.strategy import Strategy
+from crabada.strategies.strategy import CrabadaTransaction, Strategy
 from crabada.strategies.looting import LootingStrategy
 from crabada.strategies.strategy_selection import STRATEGY_SELECTION
 from crabada.types import CrabForLending, IdleGame, Team
@@ -87,7 +87,7 @@ class CrabadaMineBot:
         csv_header = ["timestamp"] + [k for k in NULL_STATS.keys()]
         csv_file = get_lifetime_stats_file(user, self.log_dir).split(".")[0] + ".csv"
         logger.print_normal(f"Saving csv to {csv_file}")
-        self.csv = CsvLogger(csv_file, csv_header)
+        self.csv = CsvLogger(csv_file, csv_header, dry_run)
         self.csv.open()
 
         self.prices: Prices = Prices(0.0, 0.0, 0.0)
@@ -180,8 +180,9 @@ class CrabadaMineBot:
         except:
             logger.print_fail("Failed to send email alert")
 
-    def _update_bot_stats(self, team: Team, mine: IdleGame) -> None:
+    def _update_bot_stats(self, tx: CrabadaTransaction, team: Team, mine: IdleGame) -> None:
         update_game_stats_after_close(
+            tx,
             team,
             mine,
             self.lifetime_stats,
@@ -441,6 +442,7 @@ class CrabadaMineBot:
 
             if tx.did_succeed:
                 self.time_since_last_alert = None
+                self._update_bot_stats(tx, team, mine)
                 return True
 
             if team["team_id"] in self.game_stats:
@@ -522,7 +524,6 @@ class CrabadaMineBot:
                 self.game_stats[team["team_id"]]["gas_start"] = 0.0
                 now = datetime.datetime.now()
                 self.game_stats[team["team_id"]]["timestamp"] = now.strftime("%m/%d/%Y %H:%M:%S")
-            self._update_bot_stats(team, mine)
 
     def _check_and_maybe_close_mines(self, team: Team, mine: IdleGame) -> None:
         if not self.crabada_w2.mine_is_finished(mine):
@@ -543,7 +544,6 @@ class CrabadaMineBot:
                 self.config["get_sms_updates"], self.config["get_email_updates"], message
             )
             logger.print_ok(message)
-            self._update_bot_stats(team, mine)
 
     def _check_and_maybe_start_mines(self) -> None:
         available_teams = self.crabada_w2.list_available_teams(self.address)

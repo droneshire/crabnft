@@ -5,68 +5,84 @@ from utils.price import Prices
 
 NORMALIZED_TIME = 4.0
 
+
+class Result:
+    WIN = "WIN"
+    LOSE = "LOSE"
+    UNKNOWN = "UNKNOWN"
+
+
+class Scenarios:
+    Loot = "LOOT"
+    MineAndReinforce = "MINE & REINFORCE"
+    MineTenPercentAndReinforce = "MINE +10% & REINFORCE"
+    MineAndNoReinforce = "MINE & NO REINFORCE"
+    MineTenPercentAndNoReinforce = "MINE +10% & NO REINFORCE"
+    TavernThreeMpCrabs = "TAVERN 3 MP CRABS"
+
+
 REWARDS_TUS: T.Dict[str, T.Dict[str, float]] = {
-    "LOOT": {
-        "win": {
+    Scenarios.Loot: {
+        Result.WIN: {
             "TUS": 221.7375,
             "CRA": 2.7375,
         },
-        "lose": {
+        Result.LOSE: {
             "TUS": 24.3,
             "CRA": 0.3,
         },
         "time_normalized": 1.0,
     },
-    "MINE & REINFORCE": {
-        "win": {
+    Scenarios.MineAndReinforce: {
+        Result.WIN: {
             "TUS": 303.75,
             "CRA": 3.75,
         },
-        "lose": {
+        Result.LOSE: {
             "TUS": 106.3125,
             "CRA": 1.3125,
         },
         "time_normalized": 4.0,
     },
-    "MINE +10% & REINFORCE": {
-        "win": {
+    Scenarios.MineTenPercentAndReinforce: {
+        Result.WIN: {
             "TUS": 334.125,
             "CRA": 4.125,
         },
-        "lose": {
+        Result.LOSE: {
             "TUS": 136.6875,
             "CRA": 1.6875,
         },
         "time_normalized": 4.0,
     },
-    "MINE & NO REINFORCE": {
-        "win": {
+    Scenarios.MineAndNoReinforce: {
+        Result.WIN: {
             "TUS": 106.3125,
             "CRA": 1.3125,
         },
-        "lose": {
+        Result.LOSE: {
             "TUS": 106.3125,
             "CRA": 1.3125,
         },
         "time_normalized": 4.0,
     },
-    "MINE +10% & NO REINFORCE": {
-        "win": {
+    Scenarios.MineTenPercentAndNoReinforce: {
+        Result.WIN: {
             "TUS": 136.6875,
             "CRA": 1.6875,
         },
-        "lose": {
+        Result.LOSE: {
             "TUS": 136.6875,
             "CRA": 1.6875,
         },
         "time_normalized": 4.0,
     },
-    "TAVERN 3 MP CRABS": {
-        "win": {
+    Scenarios.TavernThreeMpCrabs: {
+        Result.WIN: {
             "TUS": 0.0,
             "CRA": 0.0,
         },
-        "lose": {
+        Result.LOSE: {
             "TUS": 0.0,
             "CRA": 0.0,
         },
@@ -77,12 +93,12 @@ REWARDS_TUS: T.Dict[str, T.Dict[str, float]] = {
 
 def get_expected_tus(game_type: str, prices: Prices, win_percent: float) -> float:
     win_decimal = win_percent / 100.0
-    winnings_tus = REWARDS_TUS[game_type.upper()]["win"]["TUS"]
-    winnings_cra = REWARDS_TUS[game_type.upper()]["win"]["CRA"]
+    winnings_tus = REWARDS_TUS[game_type.upper()][Result.WIN]["TUS"]
+    winnings_cra = REWARDS_TUS[game_type.upper()][Result.WIN]["CRA"]
     winnings_tus += prices.cra_to_tus(winnings_cra)
 
-    losings_tus = REWARDS_TUS[game_type.upper()]["lose"]["TUS"]
-    losings_cra = REWARDS_TUS[game_type.upper()]["lose"]["CRA"]
+    losings_tus = REWARDS_TUS[game_type.upper()][Result.LOSE]["TUS"]
+    losings_cra = REWARDS_TUS[game_type.upper()][Result.LOSE]["CRA"]
     losings_tus += prices.cra_to_tus(losings_cra)
 
     return win_decimal * winnings_tus + (1 - win_decimal) * losings_tus
@@ -156,15 +172,18 @@ def get_profitability_message(
     message += f"*(normalized over a 4 hour window)*\n"
 
     for game in REWARDS_TUS.keys():
-        if game == "LOOT":
+        if game == Scenarios.Loot:
             win_percent = 100.0 - mine_win_percent
         else:
             win_percent = mine_win_percent
 
-        if game == "TAVERN 3 MP CRABS":
+        if game == Scenarios.TavernThreeMpCrabs:
             profit_tus = avg_reinforce_tus * 3 - prices.avax_to_tus(avg_gas_avax) / 6
         else:
-            do_reinforce = False if "NO REINFORCE" in game else True
+            do_reinforce = game in [
+                Scenarios.MineAndReinforce,
+                Scenarios.MineTenPercentAndReinforce,
+            ]
 
             profit_tus = get_expected_game_profit(
                 game, prices, avg_gas_avax, avg_reinforce_tus, win_percent, do_reinforce

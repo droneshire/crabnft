@@ -7,14 +7,18 @@ import typing as T
 
 
 class CsvLogger:
-    def __init__(self, csv_file: str, header: T.List[str]) -> None:
+    def __init__(self, csv_file: str, header: T.List[str], dry_run=False) -> None:
         self.csv_file = csv_file
         self.file_obj = None
         self.csv_writer = None
         self.header = header
         self.col_map = {col.lower(): i for i, col in enumerate(header)}
+        self.dry_run = dry_run
 
     def open(self) -> None:
+        if self.dry_run:
+            return
+
         if self.file_obj is not None:
             raise Exception("opening already open csv file")
         self._write_header_if_needed()
@@ -23,12 +27,18 @@ class CsvLogger:
         self.csv_writer = csv.writer(self.file_obj)
 
     def close(self) -> None:
+        if self.dry_run:
+            return
+
         if self.file_obj is None:
             raise Exception("closing already closed csv file")
         self.file_obj.close()
         self.file_obj = None
 
     def write(self, data: T.Dict[str, T.Any]) -> None:
+        if self.dry_run:
+            return
+
         if self.file_obj is None:
             raise Exception("attempting to write unopened csv file")
 
@@ -41,6 +51,9 @@ class CsvLogger:
         self.csv_writer.writerow(row)
 
     def _write_header_if_needed(self) -> None:
+        if self.dry_run:
+            return
+
         reader = []
         if os.path.isfile(self.csv_file):
             with open(self.csv_file) as infile:

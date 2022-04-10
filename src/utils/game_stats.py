@@ -6,6 +6,8 @@ from eth_typing import Address
 
 from utils import logger
 from utils.price import Prices, wei_to_cra_raw, wei_to_tus_raw
+from crabada.profitability import Result
+from crabada.strategies.strategy import CrabadaTransaction
 from crabada.types import IdleGame, Team
 
 
@@ -89,6 +91,7 @@ NULL_GAME_STATS = LifetimeGameStats(
 
 
 def update_game_stats_after_close(
+    tx: CrabadaTransaction,
     team: Team,
     mine: IdleGame,
     lifetime_stats: LifetimeGameStats,
@@ -96,51 +99,44 @@ def update_game_stats_after_close(
     prices: Prices,
     commission: T.Dict[Address, float],
 ) -> None:
-    if mine.get("team_id", "") == team["team_id"]:
-        game_type = "MINE"
-        tus_reward = wei_to_tus_raw(mine.get("miner_tus_reward", 0.0))
-        cra_reward = wei_to_cra_raw(mine.get("miner_cra_reward", 0.0))
-        stats = lifetime_stats[game_type]
-    elif mine.get("attack_team_id", "") == team["team_id"]:
-        game_type = "LOOT"
-        tus_reward = wei_to_tus_raw(mine.get("looter_tus_reward", 0.0))
-        cra_reward = wei_to_cra_raw(mine.get("looter_cra_reward", 0.0))
-        stats = lifetime_stats[game_type]
-    else:
-        logger.print_fail_arrow(f"Failed to detect win/loss for mine {mine['game_id']}")
-        return
+    tus_rewards = 0.0 if tx.tus_rewards is None else tx.tus_rewards
+    cra_rewards = 0.0 if tx.cra_rewards is None else tx.cra_rewards
 
     team_id = team["team_id"]
-    if team["team_id"] in game_stats:
-        game_stats[team_id]["reward_tus"] = tus_reward
-        game_stats[team_id]["reward_cra"] = cra_reward
-        game_stats[team_id]["game_type"] = game_type
+    if team_id in game_stats:
+        game_stats[team_id]["reward_tus"] = tus_rewards
+        game_stats[team_id]["reward_cra"] = cra_rewards
+        game_stats[team_id]["game_type"] = tx.game_type
 
-    if mine.get("winner_team_id", "") == team["team_id"]:
+    stats = lifetime_stats[tx.game_type]
+
+    if tx.result == Result.WIN or mine.get("winner_team_id", "") == team_id:
         stats["game_wins"] += 1
-        if team["team_id"] in game_stats:
-            game_stats[team_id]["outcome"] = "WIN"
+        if team_id in game_stats:
+            game_stats[team_id]["outcome"] = Result.WIN
     else:
         stats["game_losses"] += 1
-        if team["team_id"] in game_stats:
-            game_stats[team_id]["outcome"] = "LOSE"
+        if team_id in game_stats:
+            game_stats[team_id]["outcome"] = Result.LOSE
 
     stats["game_win_percent"] = (
         100.0 * float(stats["game_wins"]) / (stats["game_wins"] + stats["game_losses"])
     )
 
-    stats["tus_gross"] = stats["tus_gross"] + tus_reward
-    stats["cra_gross"] = stats["cra_gross"] + cra_reward
-    stats["tus_net"] = stats["tus_net"] + tus_reward
-    stats["cra_net"] = stats["cra_net"] + cra_reward
+    stats["tus_gross"] = stats["tus_gross"] + tus_rewards
+    stats["cra_gross"] = stats["cra_gross"] + cra_rewards
+    stats["tus_net"] = stats["tus_net"] + tus_rewards
+    stats["cra_net"] = stats["cra_net"] + cra_rewards
 
     for address, commission in commission.items():
-        commission_tus = tus_reward * (commission / 100.0)
-        commission_cra = cra_reward * (commission / 100.0)
+        commission_tus = tus_rewards * (commission / 100.0)
+        commission_cra = cra_rewards * (commission / 100.0)
         # convert cra -> tus and add to tus commission, we dont take direct cra commission
         commission_tus += prices.cra_to_tus(commission_cra)
 
-        if team["team_id"] in game_stats:
+        logger.print_ok_arrow(f"Collected {commission_tus} TUS for {address} in commission!")
+
+        if team_id in game_stats:
             game_stats[team_id]["commission_tus"] = commission_tus
 
         lifetime_stats["commission_tus"][address] = (
@@ -150,12 +146,15 @@ def update_game_stats_after_close(
         stats["tus_net"] -= commission_tus
         stats["cra_net"] -= commission_cra
 
-    if team["team_id"] in game_stats:
+    if team_id in game_stats:
         game_stats[team_id]["avax_usd"] = prices.avax_usd
         game_stats[team_id]["tus_usd"] = prices.tus_usd
         game_stats[team_id]["cra_usd"] = prices.cra_usd
 
-    lifetime_stats[game_type] = copy.deepcopy(stats)
+    print(stats)
+    print("*" * 100)
+    lifetime_stats[tx.game_type] = copy.deepcopy(stats)
+    print(lifetime_stats)
 
 
 def update_lifetime_stats_format(game_stats: LifetimeGameStats) -> LifetimeGameStats:

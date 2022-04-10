@@ -5,7 +5,7 @@ from web3.types import Wei
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
 from crabada.factional_advantage import get_faction_adjusted_battle_point
-from crabada.profitability import REWARDS_TUS
+from crabada.profitability import REWARDS_TUS, Result
 from crabada.strategies.strategy import CrabadaTransaction, Strategy
 from crabada.types import IdleGame, Team, TeamMember
 from utils import logger
@@ -46,9 +46,9 @@ class LootingStrategy(Strategy):
         avax_gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         tus, cra = self._get_rewards_from_tx_receipt(tx_receipt)
         if tus is not None:
-            result = "WIN" if tus >= REWARDS_TUS["LOOT"]["win"]["TUS"] else "LOSE"
+            result = Result.WIN if self._did_win_game("LOOT", tus) else Result.LOSE
         else:
-            result = "UNKNOWN"
+            result = Result.UNKNOWN
         return CrabadaTransaction("LOOT", tus, cra, tx_receipt["status"] == 1, result, avax_gas)
 
     def reinforce(self, game_id: int, crabada_id: int, borrow_price: Wei) -> T.Dict[T.Any, T.Any]:

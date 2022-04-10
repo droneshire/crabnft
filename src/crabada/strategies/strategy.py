@@ -3,9 +3,10 @@ import typing as T
 from eth_typing import Address
 from web3.types import Wei
 
-from crabada.types import IdleGame, Team, TeamMember
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
+from crabada.profitability import REWARDS_TUS, Result, Scenarios
+from crabada.types import IdleGame, Team, TeamMember
 from utils import logger
 from utils.config_types import UserConfig
 from utils.price import Tus, wei_to_cra_raw, wei_to_tus_raw
@@ -150,3 +151,8 @@ class Strategy:
             )
 
         return reinforcement_crab
+
+    @staticmethod
+    def _did_win_game(game_type: str, tus: float) -> bool:
+        key = Scenarios.Loot if game_type == "LOOT" else Scenarios.MineAndReinforce
+        return tus >= REWARDS_TUS[key][Result.WIN]["TUS"]
