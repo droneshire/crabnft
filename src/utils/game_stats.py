@@ -123,6 +123,8 @@ def update_game_stats_after_close(
         100.0 * float(stats["game_wins"]) / (stats["game_wins"] + stats["game_losses"])
     )
 
+    logger.print_normal(f"Earned {tus_rewards} TUS, {cra_rewards} CRA")
+
     stats["tus_gross"] = stats["tus_gross"] + tus_rewards
     stats["cra_gross"] = stats["cra_gross"] + cra_rewards
     stats["tus_net"] = stats["tus_net"] + tus_rewards
@@ -134,7 +136,9 @@ def update_game_stats_after_close(
         # convert cra -> tus and add to tus commission, we dont take direct cra commission
         commission_tus += prices.cra_to_tus(commission_cra)
 
-        logger.print_ok_arrow(f"Collected {commission_tus} TUS for {address} in commission!")
+        logger.print_ok_arrow(
+            f"Added {commission_tus} TUS for {address} in commission ({commission}%)!"
+        )
 
         if team_id in game_stats:
             game_stats[team_id]["commission_tus"] = commission_tus
@@ -151,10 +155,7 @@ def update_game_stats_after_close(
         game_stats[team_id]["tus_usd"] = prices.tus_usd
         game_stats[team_id]["cra_usd"] = prices.cra_usd
 
-    print(stats)
-    print("*" * 100)
     lifetime_stats[tx.game_type] = copy.deepcopy(stats)
-    print(lifetime_stats)
 
 
 def update_lifetime_stats_format(game_stats: LifetimeGameStats) -> LifetimeGameStats:
