@@ -543,6 +543,7 @@ class CrabadaMineBot:
                 self.config["get_sms_updates"], self.config["get_email_updates"], message
             )
             logger.print_ok(message)
+            self._update_bot_stats(team, mine)
 
     def _check_and_maybe_start_mines(self) -> None:
         available_teams = self.crabada_w2.list_available_teams(self.address)

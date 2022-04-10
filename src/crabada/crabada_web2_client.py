@@ -36,6 +36,8 @@ class CrabadaWeb2Client:
     TEAM_AND_MINE_LIMIT = 50
     CRAB_LIMIT = 75
 
+    MAX_BP_NORMAL_CRAB = 237
+
     def get_mine(self, mine_id: int, params: T.Dict[str, T.Any] = {}) -> IdleGame:
         """Get information from the given mine"""
         res = self.get_mine_raw(mine_id, params)
@@ -349,6 +351,11 @@ class CrabadaWeb2Client:
         return (defense_battle_point, attack_battle_point)
 
     @staticmethod
+    def _can_loot_reinforcement_win(mine: IdleGame) -> bool:
+        defense_battle_point, attack_battle_point = CrabadaWeb2Client()._get_battle_points(mine)
+        return attack_battle_point + CrabadaWeb2Client.MAX_BP_NORMAL_CRAB > defense_battle_point
+
+    @staticmethod
     def loot_is_winning(mine: IdleGame) -> bool:
         """
         Determines if attack looter has won the battle
@@ -458,6 +465,11 @@ class CrabadaWeb2Client:
             return False
 
         if CrabadaWeb2Client.loot_is_winning(mine):
+            return False
+
+        # make sure we don't reinforce to a legendary when we can't win
+        if not CrabadaWeb2Client._can_loot_reinforcement_win(mine):
+            logger.print_warn(f"Not reinforcing due to LEGENDARY reinforcement")
             return False
 
         defense_start_time = process[-1]["transaction_time"]
