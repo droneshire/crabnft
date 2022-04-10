@@ -1,4 +1,4 @@
-import copy
+import datetime
 import json
 import logging
 import math
@@ -89,8 +89,6 @@ class CrabadaMineBot:
         logger.print_normal(f"Saving csv to {csv_file}")
         self.csv = CsvLogger(csv_file, csv_header)
         self.csv.open()
-        if not os.path.isfile(csv_file):
-            self.csv.write_header()
 
         self.prices: Prices = Prices(0.0, 0.0, 0.0)
         self.avg_gas_avax: Average = Average()
@@ -522,7 +520,8 @@ class CrabadaMineBot:
             if team["team_id"] in self.game_stats:
                 # we don't do gas start for loots, so we don't track it
                 self.game_stats[team["team_id"]]["gas_start"] = 0.0
-            self._update_bot_stats(team, mine)
+                now = datetime.datetime.now()
+                self.game_stats[team["team_id"]]["timestamp"] = now.strftime("%m/%d/%Y %H:%M:%S")
 
     def _check_and_maybe_close_mines(self, team: Team, mine: IdleGame) -> None:
         if not self.crabada_w2.mine_is_finished(mine):
@@ -543,7 +542,6 @@ class CrabadaMineBot:
                 self.config["get_sms_updates"], self.config["get_email_updates"], message
             )
             logger.print_ok(message)
-            self._update_bot_stats(team, mine)
 
     def _check_and_maybe_start_mines(self) -> None:
         available_teams = self.crabada_w2.list_available_teams(self.address)
