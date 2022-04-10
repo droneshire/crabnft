@@ -110,7 +110,9 @@ def update_game_stats_after_close(
 
     stats = lifetime_stats[tx.game_type]
 
-    if tx.result == Result.WIN or mine.get("winner_team_id", "") == team_id:
+    did_win = tx.result == Result.WIN or mine.get("winner_team_id", "") == team_id
+
+    if did_win:
         stats["game_wins"] += 1
         if team_id in game_stats:
             game_stats[team_id]["outcome"] = Result.WIN

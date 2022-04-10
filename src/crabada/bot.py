@@ -18,7 +18,7 @@ from utils import logger
 from utils.config_types import UserConfig, SmsConfig
 from utils.csv_logger import CsvLogger
 from utils.email import Email, send_email
-from utils.game_stats import GameStats, LifetimeGameStats, NULL_STATS, NULL_GAME_STATS
+from utils.game_stats import GameStats, LifetimeGameStats, NULL_STATS, NULL_GAME_STATS, Result
 from utils.game_stats import (
     get_game_stats,
     get_lifetime_stats_file,
@@ -190,6 +190,13 @@ class CrabadaMineBot:
             self.prices,
             self.config["commission_percent_per_mine"],
         )
+
+        outcome = "won \U0001F389" if tx.result == Result else "lost \U0001F915"
+        message = f"Successfully closed {tx.game_type} {team['game_id']}, we {outcome}"
+        self._send_status_update(
+            self.config["get_sms_updates"], self.config["get_email_updates"], message
+        )
+        logger.print_ok(message)
 
         write_game_stats(self.user, self.log_dir, self.lifetime_stats, dry_run=self.dry_run)
         if team["team_id"] in self.game_stats:
@@ -503,23 +510,11 @@ class CrabadaMineBot:
             logger.print_warn(f"Skipping team {team['team_id']} for settling...")
             return
 
-        if self._close_mine(team, mine, self.looting_strategy):
-            message = f"\U0001F980 Crabada Bot Alert \U0001F980\n\n"
-            message += f"Closed up looting of mine {mine['game_id']}, let's start another!"
-            self._send_status_update(True, True, message)
-            logger.print_ok(f"Closed up looting of mine {mine['game_id']}, let's start another!")
+        if team["team_id"] in self.game_stats:
+            # we don't do gas start for loots, so we don't track it
+            self.game_stats[team["team_id"]]["gas_start"] = 0.0
 
-            time.sleep(10.0)
-            mine = self.crabada_w2.get_mine(mine["game_id"])
-            outcome = (
-                "won \U0001F389"
-                if mine.get("winner_team_id", -1) == team["team_id"]
-                else "lost \U0001F915"
-            )
-            logger.print_ok(f"Successfully closed loot {team['game_id']}, we {outcome}")
-            if team["team_id"] in self.game_stats:
-                # we don't do gas start for loots, so we don't track it
-                self.game_stats[team["team_id"]]["gas_start"] = 0.0
+        self._close_mine(team, mine, self.looting_strategy)
 
     def _check_and_maybe_close_mines(self, team: Team, mine: IdleGame) -> None:
         if not self.crabada_w2.mine_is_finished(mine):
@@ -529,17 +524,7 @@ class CrabadaMineBot:
             logger.print_warn(f"Skipping team {team['team_id']} for closing...")
             return
 
-        if self._close_mine(team, mine, self.mining_strategy):
-            outcome = (
-                "won \U0001F389"
-                if mine.get("winner_team_id", -1) == team["team_id"]
-                else "lost \U0001F915"
-            )
-            message = f"Successfully closed mine {team['game_id']}, we {outcome}"
-            self._send_status_update(
-                self.config["get_sms_updates"], self.config["get_email_updates"], message
-            )
-            logger.print_ok(message)
+        self._close_mine(team, mine, self.mining_strategy)
 
     def _check_and_maybe_start_mines(self) -> None:
         available_teams = self.crabada_w2.list_available_teams(self.address)
