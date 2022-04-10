@@ -43,17 +43,21 @@ class ScatteredReinforcement(MiningStrategy):
         else:
             return 0
 
+    def _get_mine_per_group(self, mine_group: int) -> T.List[IdleGame]:
+        mines = []
+        for open_mine in self.crabada_w2.list_my_open_mines(self.config["address"]):
+            group = self.config["mining_teams"].get(open_mine["team_id"], -1)
+            if group == mine_group:
+                mines.append(open_mine)
+        return mines
+
     def should_start(self, team: Team) -> bool:
         mine_group = self.config["mining_teams"].get(team["team_id"], -1)
 
         if mine_group == -1:
             return True
 
-        mines = []
-        for open_mine in self.crabada_w2.list_my_open_mines(self.config["address"]):
-            group = self.config["mining_teams"].get(open_mine["team_id"], -1)
-            if group == mine_group:
-                mines.append(open_mine)
+        mines = self._get_mine_per_group(mine_group)
 
         if not mines:
             return True
@@ -102,11 +106,7 @@ class ScatteredDelayReinforcement(ScatteredReinforcement):
         if mine_group == -1:
             return True
 
-        mines = []
-        for open_mine in self.crabada_w2.list_my_open_mines(self.config["address"]):
-            group = self.config["mining_teams"].get(open_mine["team_id"], -1)
-            if group == mine_group:
-                mines.append(open_mine)
+        mines = self._get_mine_per_group(mine_group)
 
         if not mines:
             return True
@@ -116,11 +116,20 @@ class ScatteredDelayReinforcement(ScatteredReinforcement):
         for mine in mines:
             last_mine_start = max(last_mine_start, mine.get("start_time", now))
 
-        if now - last_mine_start > self.MIN_TIME_BETWEEN_MINES - self.DELAY_BEFORE_REINFORCING:
+        if (
+            now - last_mine_start
+            > self.MIN_TIME_BETWEEN_MINES
+            - MiningDelayReinforcementStrategy.DELAY_BEFORE_REINFORCING
+        ):
             return True
 
         time_before_start_formatted = get_pretty_seconds(
-            int(last_mine_start + self.MIN_TIME_BETWEEN_MINES - self.DELAY_BEFORE_REINFORCING - now)
+            int(
+                last_mine_start
+                + self.MIN_TIME_BETWEEN_MINES
+                - MiningDelayReinforcementStrategy.DELAY_BEFORE_REINFORCING
+                - now
+            )
         )
         logger.print_normal(
             f"Waiting to start mine for {team['team_id']} (group {mine_group}) in {time_before_start_formatted}"

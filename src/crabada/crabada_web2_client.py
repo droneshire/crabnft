@@ -519,7 +519,18 @@ class CrabadaWeb2Client:
         if not CrabadaWeb2Client.loot_past_settle_time(mine):
             return False
 
-        return not CrabadaWeb2Client.loot_needs_reinforcement(mine)
+        if CrabadaWeb2Client.loot_needs_reinforcement(mine):
+            return False
+
+        actions = [p["action"] for p in mine["process"]]
+        if actions.count("reinforce-attack") < 2:
+            margin = 60.0 * 3
+            return (
+                CrabadaWeb2Client.get_time_since_last_action(mine)
+                > CrabadaWeb2Client.TIME_PER_MINING_ACTION + margin
+            )
+
+        return True
 
     @staticmethod
     def mine_is_closed(mine: IdleGame) -> bool:
