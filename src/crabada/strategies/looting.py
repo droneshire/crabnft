@@ -82,7 +82,7 @@ class LootingStrategy(Strategy):
             if mine is None:
                 return 0
             else:
-                return 50 if self.have_reinforced_at_least_once(mine) else 0
+                return 50
         else:
             return 0
 

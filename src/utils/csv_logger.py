@@ -22,8 +22,7 @@ class CsvLogger:
         if self.file_obj is not None:
             raise Exception("opening already open csv file")
         self._write_header_if_needed()
-        mode = "a" if os.path.isfile(self.csv_file) else "w"
-        self.file_obj = open(self.csv_file, mode)
+        self.file_obj = open(self.csv_file, "a")
         self.csv_writer = csv.writer(self.file_obj)
 
     def close(self) -> None:
