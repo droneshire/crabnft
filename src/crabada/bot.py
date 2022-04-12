@@ -142,9 +142,15 @@ class CrabadaMineBot:
         content = f"Action: {custom_message}\n\n"
 
         if tx_hash is None:
-            content += f"Explorer: https://snowtrace.io/address/{self.config['address']}\n\n"
+            explorer_content = (
+                f"Explorer: https://snowtrace.io/address/{self.config['address']}\n\n"
+            )
         else:
-            content += f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n"
+            explorer_content = f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n"
+
+        logger.print_normal(explorer_content)
+
+        content += explorer_content
         content += "---\U0001F579  GAME STATS\U0001F579  ---\n"
 
         for k, v in self.lifetime_stats.items():
@@ -198,15 +204,17 @@ class CrabadaMineBot:
             self.config["commission_percent_per_mine"],
         )
 
-        outcome = "won \U0001F389" if tx.result == Result else "lost \U0001F915"
-        message = f"Successfully closed {tx.game_type} {team['game_id']}, we {outcome}"
+        outcome_emoji = "\U0001F389" if tx.result == Result.WIN else "\U0001F915"
+        message = (
+            f"Successfully closed {tx.game_type} {team['game_id']}, we {tx.result} {outcome_emoji}"
+        )
+        logger.print_ok_arrow(message)
         self._send_status_update(
             self.config["get_sms_updates"],
             self.config["get_email_updates"],
             message,
             tx_hash=tx.tx_hash,
         )
-        logger.print_ok(message)
 
         write_game_stats(self.user, self.log_dir, self.lifetime_stats, dry_run=self.dry_run)
         if team["team_id"] in self.game_stats:

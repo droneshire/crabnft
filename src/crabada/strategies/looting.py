@@ -46,7 +46,7 @@ class LootingStrategy(Strategy):
         avax_gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         tus, cra = self._get_rewards_from_tx_receipt(tx_receipt)
         if tus is not None:
-            result = Result.WIN if self._did_win_game("LOOT", tus) else Result.LOSE
+            result = self._get_game_result(tus)
         else:
             result = Result.UNKNOWN
         return CrabadaTransaction(

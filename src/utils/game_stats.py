@@ -138,9 +138,7 @@ def update_game_stats_after_close(
         # convert cra -> tus and add to tus commission, we dont take direct cra commission
         commission_tus += prices.cra_to_tus(commission_cra)
 
-        logger.print_ok_arrow(
-            f"Added {commission_tus} TUS for {address} in commission ({commission}%)!"
-        )
+        logger.print_ok(f"Added {commission_tus} TUS for {address} in commission ({commission}%)!")
 
         if team_id in game_stats:
             game_stats[team_id]["commission_tus"] = commission_tus

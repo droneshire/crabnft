@@ -1,3 +1,4 @@
+import math
 import time
 import typing as T
 from eth_typing import Address
@@ -171,6 +172,10 @@ class Strategy:
         return reinforcement_crab
 
     @staticmethod
-    def _did_win_game(game_type: str, tus: float) -> bool:
-        key = Scenarios.Loot if game_type == "LOOT" else Scenarios.MineAndReinforce
-        return tus >= REWARDS_TUS[key][Result.WIN]["TUS"]
+    def _get_game_result(tus: float) -> Result:
+        for reward_type, scenario in REWARDS_TUS.items():
+            logger.print_normal(f"{reward_type}: {scenario[Result.WIN]['TUS']}, got {tus}")
+            if math.isclose(scenario[Result.WIN]["TUS"], tus, abs_tol=1.0):
+                logger.print_normal(f"Detected WIN result for {reward_type}")
+                return Result.WIN
+        return Result.LOSE
