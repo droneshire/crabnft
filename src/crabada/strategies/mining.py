@@ -50,7 +50,6 @@ class MiningStrategy(Strategy):
             None,
             avax_gas,
             tx_receipt.get("gasUsed", 0.0),
-            tx_receipt.get("effectiveGasPrice", 0.0),
         )
 
     def close(self, game_id: int) -> CrabadaTransaction:
@@ -73,7 +72,6 @@ class MiningStrategy(Strategy):
             result,
             avax_gas,
             tx_receipt.get("gasUsed", 0.0),
-            tx_receipt.get("effectiveGasPrice", 0.0),
         )
 
     def reinforce(self, game_id: int, crabada_id: int, borrow_price: Wei) -> CrabadaTransaction:
@@ -92,7 +90,6 @@ class MiningStrategy(Strategy):
             None,
             avax_gas,
             tx_receipt.get("gasUsed", 0.0),
-            tx_receipt.get("effectiveGasPrice", 0.0),
         )
 
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:

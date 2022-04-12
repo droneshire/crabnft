@@ -58,7 +58,6 @@ class LootingStrategy(Strategy):
             result,
             avax_gas,
             tx_receipt.get("gasUsed", 0.0),
-            tx_receipt.get("effectiveGasPrice", 0.0)
         )
 
     def reinforce(self, game_id: int, crabada_id: int, borrow_price: Wei) -> T.Dict[T.Any, T.Any]:
@@ -77,7 +76,6 @@ class LootingStrategy(Strategy):
             None,
             avax_gas,
             tx_receipt.get("gasUsed", 0.0),
-            tx_receipt.get("effectiveGasPrice", 0.0)
         )
 
     def should_reinforce(self, mine) -> bool:

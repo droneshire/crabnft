@@ -120,7 +120,6 @@ class CrabadaMineBot:
         logger.print_ok_blue(f"Adding bot for user {self.user} with address {self.address}")
 
         self._print_out_config()
-        self._send_email_config()
 
     def _print_out_config(self) -> None:
         logger.print_bold(f"{self.user} Configuration\n")
@@ -671,13 +670,17 @@ class CrabadaMineBot:
     def get_backoff(self) -> int:
         return self.reinforcement_search_backoff
 
-    def get_avg_gas_avax(self) -> float:
-        return self.avg_gas_avax.get_avg()
+    def get_avg_gas_avax(self) -> T.Optional[float]:
+        gas_price_wei = self.crabada_w3.get_gas_price("wei")
+        gas_used = self.avg_gas_used.get_avg()
+        if gas_used is None or gas_price_wei is None:
+            return None
+        return wei_to_tus_raw(gas_price_wei * gas_used)
 
-    def get_avg_reinforce_tus(self) -> float:
+    def get_avg_reinforce_tus(self) -> T.Optional[float]:
         return self.avg_reinforce_tus.get_avg()
 
-    def get_avg_gas_gwei(self) -> float:
+    def get_avg_gas_gwei(self) -> T.Optional[float]:
         return self.avg_gas_gwei.get_avg()
 
     def run(self) -> None:
