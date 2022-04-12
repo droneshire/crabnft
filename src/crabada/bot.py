@@ -195,7 +195,7 @@ class CrabadaMineBot:
     def _send_email_config_if_needed(self) -> None:
         content = self._get_email_config()
 
-        if self.dry_run or self._did_config_change():
+        if self.dry_run or not self._did_config_change():
             return
 
         logger.print_warn(f"Config changed for {self.user}, sending config email...")
