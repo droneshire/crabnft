@@ -203,7 +203,7 @@ class CrabadaMineBot:
         email_message = f"Hello {self.user}!\n"
         email_message += "Here is your updated bot configuration:\n\n"
         email_message += content
-        return
+
         send_email(
             self.email,
             self.config["email"],
