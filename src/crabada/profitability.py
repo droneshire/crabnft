@@ -183,7 +183,7 @@ def get_profitability_message(
     message += "{}\t\t{}\n".format(f"**Avg Gas Price \U000026FD**:", f"{gas_price_gwei:.6f} gwei")
     message += "{}\t{}\n".format(f"**Avg Mining Win % \U0001F3C6**:", f"{mine_win_percent:.2f}%")
     message += "{}\t{}\n".format(
-        f"**Avg Looting Win % \U0001F3F4**:", f"{(100.0 - mine_win_percent):.2f}%"
+        f"**Avg Looting Win % \U0001F480**:", f"{(100.0 - mine_win_percent):.2f}%"
     )
     message += "{}\t{}\n\n".format(
         f"**Avg Reinforce Cost \U0001F4B0**:", f"{avg_reinforce_tus:.2f} TUS"
