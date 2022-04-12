@@ -28,7 +28,7 @@ from utils.game_stats import (
 )
 from utils.general import dict_sum, get_pretty_seconds
 from utils.math import Average
-from utils.price import wei_to_tus, wei_to_cra_raw, wei_to_tus_raw, Prices
+from utils.price import Prices, wei_to_tus, wei_to_cra_raw, wei_to_tus_raw
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.tus_web3_client import TusWeb3Client
 from web3_utils.web3_client import web3_transaction
@@ -91,7 +91,7 @@ class CrabadaMineBot:
         self.csv.open()
 
         self.prices: Prices = Prices(0.0, 0.0, 0.0)
-        self.avg_gas_avax: Average = Average()
+        self.avg_gas_used: Average = Average()
 
         self.mining_strategy = STRATEGY_SELECTION[self.config["mining_strategy"]](
             self.address,
@@ -106,7 +106,8 @@ class CrabadaMineBot:
             self.config,
         )
         self.reinforcement_search_backoff: int = 0
-        self.avg_reinforce_tus: Average = Average(20.0)
+        self.avg_reinforce_tus: Average = Average()
+        self.avg_gas_gwei: Average = Average()
         self.last_mine_start: T.Optional[float] = None
 
         if not os.path.isfile(get_lifetime_stats_file(user, self.log_dir)):
@@ -119,6 +120,7 @@ class CrabadaMineBot:
         logger.print_ok_blue(f"Adding bot for user {self.user} with address {self.address}")
 
         self._print_out_config()
+        self._send_email_config()
 
     def _print_out_config(self) -> None:
         logger.print_bold(f"{self.user} Configuration\n")
@@ -127,6 +129,45 @@ class CrabadaMineBot:
                 continue
             logger.print_normal(f"\t{config_item}: {value}")
         logger.print_normal("")
+
+    def _send_email_config(self) -> None:
+        content = ""
+        for config_key, value in self.config.items():
+            if config_key in [
+                "private_key",
+                "address",
+                "commission_percent_per_mine",
+                "discord_handle",
+            ]:
+                continue
+
+            new_value = value
+
+            if isinstance(value, T.List):
+                new_value = "\n\t".join([str(v) for v in value])
+
+            if isinstance(value, T.Dict):
+                new_value = ""
+                for k, v in value.items():
+                    new_value += f"{k}: {str(v)}\n"
+
+            if isinstance(value, bool):
+                new_value = str(value)
+
+            content += f"{config_key.upper()}:\n{new_value}\n\n"
+
+        if self.dry_run:
+            logger.print_normal(content)
+        else:
+            email_message = f"Hello {self.user}!\n"
+            email_message += "Here is your bot configuration:\n\n"
+            email_message += content
+            send_email(
+                self.email,
+                self.config["email"],
+                f"\U0001F980 Crabada Bot Configuration",
+                email_message,
+            )
 
     def _send_status_update(
         self,
@@ -252,17 +293,17 @@ class CrabadaMineBot:
         self._send_status_update(True, True, message)
         self.time_since_last_alert = now
 
-    def _calculate_and_log_gas_price(self, avax_gas: float) -> float:
-        if avax_gas is None:
+    def _calculate_and_log_gas_price(self, tx: CrabadaTransaction) -> float:
+        if tx.gas is None or self.prices.avax_usd is None:
             return 0.0
 
-        avax_gas_usd = self.prices.avax_usd * avax_gas
-        if not avax_gas_usd:
-            return 0.0
+        self.avg_gas_used.update(tx.tx_gas_used)
+
+        avax_gas_usd = self.prices.avax_usd * tx.gas
+
         self.lifetime_stats["avax_gas_usd"] += avax_gas_usd
-        self.avg_gas_avax.update(avax_gas)
-        logger.print_bold(f"Paid {avax_gas} AVAX (${avax_gas_usd:.2f}) in gas")
-        return avax_gas
+        logger.print_bold(f"Paid {tx.gas} AVAX (${avax_gas_usd:.2f}) in gas")
+        return tx.gas
 
     def _print_mine_loot_status(self) -> None:
         self._print_stats(self.crabada_w2.list_my_open_mines(self.address), True)
@@ -345,7 +386,7 @@ class CrabadaMineBot:
         logger.print_normal("\n")
 
     def _is_gas_too_high(self, margin: int = 0) -> bool:
-        gas_price_gwei = self.crabada_w3.get_gas_price_gwei()
+        gas_price_gwei = self.crabada_w3.get_gas_price()
         gas_price_limit = self.config["max_gas_price_gwei"] + margin
         if gas_price_gwei is not None and (int(gas_price_gwei) > int(gas_price_limit)):
             logger.print_warn(f"Warning: High Gas ({gas_price_gwei}) > {gas_price_limit}!")
@@ -432,7 +473,7 @@ class CrabadaMineBot:
             tx = strategy.reinforce(team["game_id"], crabada_id, reinforcement_crab["price"])
 
             have_reinforced = strategy.have_reinforced_at_least_once(mine)
-            gas_avax = self._calculate_and_log_gas_price(tx.gas)
+            gas_avax = self._calculate_and_log_gas_price(tx)
             if team["team_id"] in self.game_stats:
                 self.game_stats[team["team_id"]][
                     "gas_reinforce2" if have_reinforced else "gas_reinforce1"
@@ -461,7 +502,7 @@ class CrabadaMineBot:
         with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
             tx = strategy.close(team["game_id"])
 
-            gas_avax = self._calculate_and_log_gas_price(tx.gas)
+            gas_avax = self._calculate_and_log_gas_price(tx)
 
             if tx.did_succeed:
                 self.time_since_last_alert = None
@@ -480,7 +521,7 @@ class CrabadaMineBot:
         with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
             tx = self.mining_strategy.start(team["team_id"])
 
-            gas_avax = self._calculate_and_log_gas_price(tx.gas)
+            gas_avax = self._calculate_and_log_gas_price(tx)
 
             if tx.did_succeed:
                 self.time_since_last_alert = None
@@ -636,13 +677,16 @@ class CrabadaMineBot:
     def get_avg_reinforce_tus(self) -> float:
         return self.avg_reinforce_tus.get_avg()
 
+    def get_avg_gas_gwei(self) -> float:
+        return self.avg_gas_gwei.get_avg()
+
     def run(self) -> None:
         logger.print_normal("=" * 60)
 
         logger.print_ok(f"User: {self.user.upper()}")
 
-        gas_price_gwei = self.crabada_w3.get_gas_price_gwei()
-        gas_price_gwei = "UNKNOWN" if gas_price_gwei is None else gas_price_gwei
+        gas_price_gwei = self.crabada_w3.get_gas_price()
+        self.avg_gas_gwei.update(gas_price_gwei)
         logger.print_ok(
             f"AVAX: ${self.prices.avax_usd:.3f}, TUS: ${self.prices.tus_usd:.3f}, CRA: ${self.prices.cra_usd:.3f}, Gas: {gas_price_gwei:.2f}"
         )
