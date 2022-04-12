@@ -63,7 +63,7 @@ class CrabadaMineBot:
             CrabadaWeb3Client,
             (
                 CrabadaWeb3Client()
-                .set_credentials(config["address"], config["private_key"])
+                .set_credentials(config["address"], config["crabada_key"])
                 .set_node_uri(AvalancheCWeb3Client.AVAX_NODE_URL)
                 .set_dry_run(dry_run)
             ),
@@ -72,7 +72,7 @@ class CrabadaMineBot:
             TusWeb3Client,
             (
                 TusWeb3Client()
-                .set_credentials(self.config["address"], config["private_key"])
+                .set_credentials(self.config["address"], config["crabada_key"])
                 .set_node_uri(AvalancheCWeb3Client.AVAX_NODE_URL)
                 .set_dry_run(dry_run)
             ),
@@ -459,7 +459,9 @@ class CrabadaMineBot:
         logger.print_normal(
             f"Mine[{mine['game_id']}]: Found reinforcement crabada {crabada_id} for {price_tus} Tus [BP {battle_points} | MP {mine_points}]"
         )
-        self.avg_reinforce_tus.update(price_tus)
+
+        if not math.isclose(price_tus, 0.0):
+            self.avg_reinforce_tus.update(price_tus)
 
         available_tus = float(self.tus_w3.get_balance())
         if available_tus < price_tus:

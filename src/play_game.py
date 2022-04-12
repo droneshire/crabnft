@@ -84,12 +84,12 @@ def run_bot() -> None:
 
     bots = []
     for user, config in USERS.items():
-        private_key = (
+        crabada_key = (
             ""
             if not encrypt_password
-            else security.decrypt(str.encode(encrypt_password), config["private_key"]).decode()
+            else security.decrypt(str.encode(encrypt_password), config["crabada_key"]).decode()
         )
-        config["private_key"] = private_key
+        config["crabada_key"] = crabada_key
 
         bots.append(
             CrabadaMineBot(

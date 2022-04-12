@@ -18,7 +18,7 @@ class SmsConfig(T.TypedDict):
 
 
 class UserConfig(T.TypedDict):
-    private_key: str
+    crabada_key: str
     address: Address
     mining_teams: T.Dict[int, int]
     looting_teams: T.List[int]

@@ -78,17 +78,17 @@ def send_collection_notice(
         for address, commission in game_stats["commission_tus"].items():
             commission_tus += commission
 
-        private_key = (
+        crabada_key = (
             ""
             if not encrypt_password
-            else decrypt(str.encode(encrypt_password), config["private_key"]).decode()
+            else decrypt(str.encode(encrypt_password), config["crabada_key"]).decode()
         )
 
         tus_w3 = T.cast(
             TusWeb3Client,
             (
                 TusWeb3Client()
-                .set_credentials(config["address"], config["private_key"])
+                .set_credentials(config["address"], config["crabada_key"])
                 .set_node_uri(AvalancheCWeb3Client.AVAX_NODE_URL)
                 .set_dry_run(dry_run)
             ),
@@ -134,10 +134,10 @@ def collect_tus_commission(
         if user == to_user:
             continue
 
-        private_key = (
+        crabada_key = (
             ""
             if not encrypt_password
-            else decrypt(str.encode(encrypt_password), config["private_key"]).decode()
+            else decrypt(str.encode(encrypt_password), config["crabada_key"]).decode()
         )
 
         game_stats = get_game_stats(user, log_dir)
@@ -148,7 +148,7 @@ def collect_tus_commission(
             TusWeb3Client,
             (
                 TusWeb3Client()
-                .set_credentials(from_address, private_key)
+                .set_credentials(from_address, crabada_key)
                 .set_node_uri(AvalancheCWeb3Client.AVAX_NODE_URL)
                 .set_dry_run(dry_run)
             ),
