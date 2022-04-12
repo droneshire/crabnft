@@ -176,7 +176,6 @@ class Strategy:
     @staticmethod
     def _get_game_result(tus: float) -> Result:
         for reward_type, scenario in REWARDS_TUS.items():
-            logger.print_normal(f"{reward_type}: {scenario[Result.WIN]['TUS']}, got {tus}")
             # auto lose/no reinforce the win == lose, skip these for saying its a win
             if math.isclose(scenario[Result.WIN]["TUS"], scenario[Result.LOSE]["TUS"], abs_tol=1.0):
                 continue
