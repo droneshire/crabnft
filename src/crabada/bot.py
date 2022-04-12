@@ -1,4 +1,6 @@
+import copy
 import datetime
+import deepdiff
 import json
 import logging
 import math
@@ -120,26 +122,42 @@ class CrabadaMineBot:
         logger.print_ok_blue(f"Adding bot for user {self.user} with address {self.address}")
 
         self._print_out_config()
+        self._send_email_config_if_needed()
+        self._save_config()
 
-    def _print_out_config(self) -> None:
-        logger.print_bold(f"{self.user} Configuration\n")
-        for config_item, value in self.config.items():
-            if config_item == "private_key":
-                continue
-            logger.print_normal(f"\t{config_item}: {value}")
-        logger.print_normal("")
+    def _get_save_config(self) -> T.Dict[T.Any, T.Any]:
+        save_config = copy.deepcopy(self.config)
+        for dont_save_key in [
+            "crabada_key",
+            "address",
+            "commission_percent_per_mine",
+            "discord_handle",
+        ]:
+            del save_config[dont_save_key]
+        return json.loads(json.dumps(save_config))
 
-    def _send_email_config(self) -> None:
+    def _save_config(self) -> None:
+        if self.dry_run:
+            return
+
+        config = self._get_save_config()
+        log_dir = logger.get_logging_dir()
+        config_file = os.path.join(logger.get_logging_dir(), f"{self.user.lower()}_config.json")
+        with open(config_file, "w") as outfile:
+            json.dump(config, outfile, indent=4)
+
+    def _load_config(self) -> T.Dict[T.Any, T.Any]:
+        log_dir = logger.get_logging_dir()
+        config_file = os.path.join(logger.get_logging_dir(), f"{self.user.lower()}_config.json")
+        try:
+            with open(config_file, "r") as infile:
+                return json.load(infile)
+        except:
+            return {}
+
+    def _get_email_config(self) -> str:
         content = ""
-        for config_key, value in self.config.items():
-            if config_key in [
-                "private_key",
-                "address",
-                "commission_percent_per_mine",
-                "discord_handle",
-            ]:
-                continue
-
+        for config_key, value in self._get_save_config().items():
             new_value = value
 
             if isinstance(value, T.List):
@@ -154,19 +172,44 @@ class CrabadaMineBot:
                 new_value = str(value)
 
             content += f"{config_key.upper()}:\n{new_value}\n\n"
+        return content
 
-        if self.dry_run:
-            logger.print_normal(content)
-        else:
-            email_message = f"Hello {self.user}!\n"
-            email_message += "Here is your bot configuration:\n\n"
-            email_message += content
-            send_email(
-                self.email,
-                self.config["email"],
-                f"\U0001F980 Crabada Bot Configuration",
-                email_message,
-            )
+    def _did_config_change(self) -> bool:
+        current = self._get_save_config()
+        old = self._load_config()
+
+        diff = deepdiff.DeepDiff(current, old)
+        if diff:
+            logger.print_normal(f"{diff}")
+            return True
+        return False
+
+    def _print_out_config(self) -> None:
+        logger.print_bold(f"{self.user} Configuration\n")
+        for config_item, value in self.config.items():
+            if config_item == "crabada_key":
+                continue
+            logger.print_normal(f"\t{config_item}: {value}")
+        logger.print_normal("")
+
+    def _send_email_config_if_needed(self) -> None:
+        content = self._get_email_config()
+
+        if self.dry_run or self._did_config_change():
+            return
+
+        logger.print_warn(f"Config changed for {self.user}, sending config email...")
+
+        email_message = f"Hello {self.user}!\n"
+        email_message += "Here is your updated bot configuration:\n\n"
+        email_message += content
+        return
+        send_email(
+            self.email,
+            self.config["email"],
+            f"\U0001F980 Crabada Bot Configuration",
+            email_message,
+        )
 
     def _send_status_update(
         self,
