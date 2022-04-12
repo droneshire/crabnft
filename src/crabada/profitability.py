@@ -16,7 +16,9 @@ class Scenarios:
     Loot = "LOOT"
     MineAndReinforce = "MINE & REINFORCE"
     MineTenPercentAndReinforce = "MINE +10% & REINFORCE"
+    MineTenPercentAndReinforceScattered = "MINE +10% & REINFORCE SCATTERED"
     MineAndNoReinforce = "MINE & NO REINFORCE"
+    MineAndReinforceScattered = "MINE & REINFORCE SCATTERED"
     MineTenPercentAndNoReinforce = "MINE +10% & NO REINFORCE"
     TavernThreeMpCrabs = "TAVERN 3 MP CRABS"
 
@@ -44,7 +46,29 @@ REWARDS_TUS: T.Dict[str, T.Dict[str, float]] = {
         },
         "time_normalized": 4.0,
     },
+    Scenarios.MineAndReinforceScattered: {
+        Result.WIN: {
+            "TUS": 303.75,
+            "CRA": 3.75,
+        },
+        Result.LOSE: {
+            "TUS": 106.3125,
+            "CRA": 1.3125,
+        },
+        "time_normalized": 4.0,
+    },
     Scenarios.MineTenPercentAndReinforce: {
+        Result.WIN: {
+            "TUS": 334.125,
+            "CRA": 4.125,
+        },
+        Result.LOSE: {
+            "TUS": 136.6875,
+            "CRA": 1.6875,
+        },
+        "time_normalized": 4.0,
+    },
+    Scenarios.MineTenPercentAndReinforceScattered: {
         Result.WIN: {
             "TUS": 334.125,
             "CRA": 4.125,
@@ -147,6 +171,7 @@ def is_idle_game_transaction_profitable(
 def get_profitability_message(
     prices: Prices,
     avg_gas_avax: float,
+    gas_price_gwei: float,
     avg_reinforce_tus: float,
     mine_win_percent: float,
     verbose: bool = False,
@@ -155,6 +180,7 @@ def get_profitability_message(
 
     message = "**Profitability Update**\n"
     message += "{}\t\t{}\n".format(f"**Avg Tx Gas \U000026FD**:", f"{avg_gas_avax:.5f} AVAX")
+    message += "{}\t\t{}\n".format(f"**Avg Gas Price \U000026FD**:", f"{gas_price_gwei:.6f} gwei")
     message += "{}\t{}\n".format(f"**Avg Mining Win % \U0001F3C6**:", f"{mine_win_percent:.2f}%")
     message += "{}\t{}\n".format(
         f"**Avg Looting Win % \U0001F3F4**:", f"{(100.0 - mine_win_percent):.2f}%"

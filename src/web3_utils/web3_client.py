@@ -174,8 +174,11 @@ class Web3Client:
     def get_nonce(self) -> Nonce:
         return self.w3.eth.get_transaction_count(self.user_address)
 
-    def get_gas_price_gwei(self) -> int:
-        return self.w3.fromWei(self.w3.eth.gas_price, "gwei")
+    def get_gas_price(self, unit: str = "gwei") -> int:
+        if unit == "wei":
+            return self.w3.eth.gas_price
+        else:
+            return self.w3.fromWei(self.w3.eth.gas_price, unit)
 
     def estimate_max_fee_per_gas_in_gwei(self) -> int:
         """
@@ -203,6 +206,11 @@ class Web3Client:
 
     def get_gas_cost_of_transaction_wei(self, tx_receipt: TxReceipt) -> Wei:
         return tx_receipt.get("effectiveGasPrice", 0.0) * tx_receipt.get("gasUsed", 0.0)
+
+    def get_gas_cost_of_transaction_wei_from_gas_used(
+        self, gas_used_wei: float, gas_price_wei: T.Optional[float] = None
+    ) -> Wei:
+        return gas_used_wei * gas_price_wei if gas_price_wei is not None else self.w3.eth.gas_price
 
     ####################
     # Setters

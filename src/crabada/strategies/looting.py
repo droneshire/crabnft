@@ -36,7 +36,7 @@ class LootingStrategy(Strategy):
         )
 
     def start(self, team_id: int) -> CrabadaTransaction:
-        return CrabadaTransaction(None, "LOOT", None, None, False, None, 0.0)
+        return CrabadaTransaction(None, "LOOT", None, None, False, None, 0.0, 0.0, 0.0)
 
     def close(self, game_id: int) -> T.Dict[T.Any, T.Any]:
         logger.print_normal(f"Loot[{game_id}]: Settling game")
@@ -50,7 +50,15 @@ class LootingStrategy(Strategy):
         else:
             result = Result.UNKNOWN
         return CrabadaTransaction(
-            tx_hash, "LOOT", tus, cra, tx_receipt["status"] == 1, result, avax_gas
+            tx_hash,
+            "LOOT",
+            tus,
+            cra,
+            tx_receipt["status"] == 1,
+            result,
+            avax_gas,
+            tx_receipt.get("gasUsed", 0.0),
+            tx_receipt.get("effectiveGasPrice", 0.0)
         )
 
     def reinforce(self, game_id: int, crabada_id: int, borrow_price: Wei) -> T.Dict[T.Any, T.Any]:
@@ -61,7 +69,15 @@ class LootingStrategy(Strategy):
         avax_gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         tus, cra = self._get_rewards_from_tx_receipt(tx_receipt)
         return CrabadaTransaction(
-            tx_hash, "LOOT", tus, cra, tx_receipt["status"] == 1, None, avax_gas
+            tx_hash,
+            "LOOT",
+            tus,
+            cra,
+            tx_receipt["status"] == 1,
+            None,
+            avax_gas,
+            tx_receipt.get("gasUsed", 0.0),
+            tx_receipt.get("effectiveGasPrice", 0.0)
         )
 
     def should_reinforce(self, mine) -> bool:

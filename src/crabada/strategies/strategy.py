@@ -29,6 +29,8 @@ class CrabadaTransaction:
         did_succeed: bool,
         result: str,
         gas: float,
+        tx_gas_used: float,
+        tx_effective_cost: float,
     ):
         self.tx_hash = tx_hash
         self.tus_rewards = tus
@@ -37,6 +39,8 @@ class CrabadaTransaction:
         self.result = result
         self.gas = gas
         self.game_type = game_type
+        self.tx_gas_used = tx_gas_used
+        self.tx_effective_cost = tx_effective_cost
 
 
 class Strategy:

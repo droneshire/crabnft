@@ -42,7 +42,15 @@ class MiningStrategy(Strategy):
         avax_gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         tus, cra = self._get_rewards_from_tx_receipt(tx_receipt)
         return CrabadaTransaction(
-            tx_hash, "MINE", tus, cra, tx_receipt["status"] == 1, None, avax_gas
+            tx_hash,
+            "MINE",
+            tus,
+            cra,
+            tx_receipt["status"] == 1,
+            None,
+            avax_gas,
+            tx_receipt.get("gasUsed", 0.0),
+            tx_receipt.get("effectiveGasPrice", 0.0),
         )
 
     def close(self, game_id: int) -> CrabadaTransaction:
@@ -57,7 +65,15 @@ class MiningStrategy(Strategy):
         else:
             result = Result.UNKNOWN
         return CrabadaTransaction(
-            tx_hash, "MINE", tus, cra, tx_receipt["status"] == 1, result, avax_gas
+            tx_hash,
+            "MINE",
+            tus,
+            cra,
+            tx_receipt["status"] == 1,
+            result,
+            avax_gas,
+            tx_receipt.get("gasUsed", 0.0),
+            tx_receipt.get("effectiveGasPrice", 0.0),
         )
 
     def reinforce(self, game_id: int, crabada_id: int, borrow_price: Wei) -> CrabadaTransaction:
@@ -68,7 +84,15 @@ class MiningStrategy(Strategy):
         avax_gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         tus, cra = self._get_rewards_from_tx_receipt(tx_receipt)
         return CrabadaTransaction(
-            tx_hash, "MINE", tus, cra, tx_receipt["status"] == 1, None, avax_gas
+            tx_hash,
+            "MINE",
+            tus,
+            cra,
+            tx_receipt["status"] == 1,
+            None,
+            avax_gas,
+            tx_receipt.get("gasUsed", 0.0),
+            tx_receipt.get("effectiveGasPrice", 0.0),
         )
 
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:

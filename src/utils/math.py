@@ -14,7 +14,7 @@ class Average:
     def update(self, value: T.Optional[T.Any]) -> None:
         if value is None:
             return
-        self.total += value
+        self.total += float(value)
         self.count += 1
 
     def get_avg(self) -> T.Optional[float]:

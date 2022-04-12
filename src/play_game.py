@@ -128,8 +128,9 @@ def run_bot() -> None:
     last_discord_update = time.time()
     last_profitability_update = time.time()
     downsample_count = 0
-    avg_gas_avax = Average(0.015)
-    avg_reinforce_tus = Average()
+    avg_gas_avax = Average(0.1)
+    avg_reinforce_tus = Average(17.0)
+    avg_gas_gwei = Average(100.0)
 
     alerts_enabled = not args.quiet and not args.dry_run
     reinforcement_backoff = 0
@@ -144,6 +145,7 @@ def run_bot() -> None:
                 bot.run()
                 avg_gas_avax.update(bot.get_avg_gas_avax())
                 avg_reinforce_tus.update(bot.get_avg_reinforce_tus())
+                avg_gas_gwei.update(bot.get_avg_gas_gwei())
                 reinforcement_backoff = bot.get_backoff()
 
                 bot_stats = bot.get_lifetime_stats()
@@ -167,6 +169,7 @@ def run_bot() -> None:
             profitability_message = get_profitability_message(
                 prices,
                 avg_gas_avax.get_avg(),
+                avg_gas_gwei.get_avg(),
                 avg_reinforce_tus.get_avg(),
                 win_percentage,
                 verbose=True,

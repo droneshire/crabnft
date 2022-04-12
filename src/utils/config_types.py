@@ -21,13 +21,13 @@ class UserConfig(T.TypedDict):
     private_key: str
     address: Address
     mining_teams: T.Dict[int, int]
-    looting_teams: T.List[MiningTeam]
+    looting_teams: T.List[int]
     max_gas_price: int
     max_gas_price_gwei: int
     max_reinforcement_price_tus: Tus
     max_reinforce_bp_delta: int
     reinforcing_crabs: T.Dict[int, int]
-    breed_crabs: T.List[CrabForLending]
+    breed_crabs: T.List[int]
     mining_strategy: str
     looting_strategy: str
     commission_percent_per_mine: T.Dict[Address, float]
