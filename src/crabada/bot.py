@@ -295,7 +295,7 @@ class CrabadaMineBot:
         )
         logger.print_ok_arrow(message)
 
-        send_sms = (tx.game_type == "MINE" and self.config["get_sms_updates_loots"]) or self.config[
+        send_sms = (tx.game_type == "LOOT" and self.config["get_sms_updates_loots"]) or self.config[
             "get_sms_updates"
         ]
 
