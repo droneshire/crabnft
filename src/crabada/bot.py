@@ -581,7 +581,7 @@ class CrabadaMineBot:
         return team["team_id"] in self.config["mining_teams"].keys()
 
     def _is_team_allowed_to_loot(self, team: Team) -> bool:
-        return team["team_id"] in self.config["looting_teams"]
+        return team["team_id"] in self.config["looting_teams"].keys()
 
     def _check_and_maybe_reinforce_loots(self, team: Team, mine: IdleGame) -> None:
         if not self._is_team_allowed_to_loot(team):

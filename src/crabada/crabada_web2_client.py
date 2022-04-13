@@ -461,7 +461,8 @@ class CrabadaWeb2Client:
         if actions[-1] not in ["reinforce-defense"]:
             return False
 
-        if actions.count("reinforce-attack") >= 2:
+        num_reinforcements = len([a for a in actions if "reinforce-attack" in a])
+        if num_reinforcements >= 2:
             return False
 
         if CrabadaWeb2Client.loot_is_winning(mine):

@@ -110,14 +110,15 @@ class MiningStrategy(Strategy):
         defense_battle_point = get_faction_adjusted_battle_point(
             mine, is_looting=False, verbose=True
         )
-        if defense_battle_point >= mine["attack_point"]:
-            logger.print_normal(
-                f"Mine[{mine['game_id']}]: not reinforcing since we've already won!"
-            )
+        attack_battle_point = get_faction_adjusted_battle_point(
+            mine, is_looting=True, verbose=True
+        )
+        if defense_battle_point >= attack_battle_point:
+            logger.print_normal(f"Mine[{mine['game_id']}]: not reinforcing since we're winning!")
             return None
 
         group_id = self.config["mining_teams"].get(team["team_id"], -1)
-        if mine["attack_point"] - defense_battle_point < self.MAX_BP_DELTA:
+        if attack_battle_point - defense_battle_point < self.MAX_BP_DELTA:
             reinforcement_crab = super()._use_bp_reinforcement(
                 mine, group_id, use_own_crabs=use_own_crabs
             )
