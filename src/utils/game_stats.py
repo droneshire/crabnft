@@ -103,10 +103,10 @@ def update_game_stats_after_close(
     cra_rewards = 0.0 if tx.cra_rewards is None else tx.cra_rewards
 
     team_id = team["team_id"]
-    if team_id in game_stats:
-        game_stats[team_id]["reward_tus"] = tus_rewards
-        game_stats[team_id]["reward_cra"] = cra_rewards
-        game_stats[team_id]["game_type"] = tx.game_type
+
+    game_stats[team_id]["reward_tus"] = tus_rewards
+    game_stats[team_id]["reward_cra"] = cra_rewards
+    game_stats[team_id]["game_type"] = tx.game_type
 
     stats = lifetime_stats[tx.game_type]
 
@@ -114,12 +114,10 @@ def update_game_stats_after_close(
 
     if did_win:
         stats["game_wins"] += 1
-        if team_id in game_stats:
-            game_stats[team_id]["outcome"] = Result.WIN
+        game_stats[team_id]["outcome"] = Result.WIN
     else:
         stats["game_losses"] += 1
-        if team_id in game_stats:
-            game_stats[team_id]["outcome"] = Result.LOSE
+        game_stats[team_id]["outcome"] = Result.LOSE
 
     stats["game_win_percent"] = (
         100.0 * float(stats["game_wins"]) / (stats["game_wins"] + stats["game_losses"])
@@ -140,8 +138,7 @@ def update_game_stats_after_close(
 
         logger.print_ok(f"Added {commission_tus} TUS for {address} in commission ({commission}%)!")
 
-        if team_id in game_stats:
-            game_stats[team_id]["commission_tus"] = commission_tus
+        game_stats[team_id]["commission_tus"] = commission_tus
 
         lifetime_stats["commission_tus"][address] = (
             lifetime_stats["commission_tus"].get(address, 0.0) + commission_tus
@@ -150,10 +147,9 @@ def update_game_stats_after_close(
         stats["tus_net"] -= commission_tus
         stats["cra_net"] -= commission_cra
 
-    if team_id in game_stats:
-        game_stats[team_id]["avax_usd"] = prices.avax_usd
-        game_stats[team_id]["tus_usd"] = prices.tus_usd
-        game_stats[team_id]["cra_usd"] = prices.cra_usd
+    game_stats[team_id]["avax_usd"] = prices.avax_usd
+    game_stats[team_id]["tus_usd"] = prices.tus_usd
+    game_stats[team_id]["cra_usd"] = prices.cra_usd
 
     lifetime_stats[tx.game_type] = copy.deepcopy(stats)
 

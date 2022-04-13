@@ -14,17 +14,49 @@ class Result:
 
 class Scenarios:
     Loot = "LOOT"
+    LootAndSelfReinforce = "LOOT & SELF REINFORCE"
     MineAndReinforce = "MINE & REINFORCE"
     MineTenPercentAndReinforce = "MINE +10% & REINFORCE"
-    MineTenPercentAndReinforceScattered = "MINE +10% & REINFORCE SCATTERED"
+    MineTenPercentAndSelfReinforce = "MINE +10% & SELF REINFORCE"
     MineAndNoReinforce = "MINE & NO REINFORCE"
-    MineAndReinforceScattered = "MINE & REINFORCE SCATTERED"
+    MineAndSelfReinforce = "MINE & SELF REINFORCE"
     MineTenPercentAndNoReinforce = "MINE +10% & NO REINFORCE"
     TavernThreeMpCrabs = "TAVERN 3 MP CRABS"
 
 
+REINFORCE_SCENARIOS = [
+    Scenarios.MineAndReinforce,
+    Scenarios.MineTenPercentAndReinforce,
+    Scenarios.Loot,
+    Scenarios.LootAndSelfReinforce,
+    Scenarios.MineTenPercentAndSelfReinforce,
+    Scenarios.MineAndSelfReinforce,
+]
+
+LOOT_SCENARIOS = [
+    Scenarios.Loot,
+    Scenarios.LootAndSelfReinforce,
+]
+
+SELF_REINFORCE_SCENARIOS = [
+    Scenarios.LootAndSelfReinforce,
+    Scenarios.MineTenPercentAndSelfReinforce,
+    Scenarios.MineAndSelfReinforce,
+]
+
 REWARDS_TUS: T.Dict[str, T.Dict[str, float]] = {
     Scenarios.Loot: {
+        Result.WIN: {
+            "TUS": 221.7375,
+            "CRA": 2.7375,
+        },
+        Result.LOSE: {
+            "TUS": 24.3,
+            "CRA": 0.3,
+        },
+        "time_normalized": 1.0,
+    },
+    Scenarios.LootAndSelfReinforce: {
         Result.WIN: {
             "TUS": 221.7375,
             "CRA": 2.7375,
@@ -46,7 +78,7 @@ REWARDS_TUS: T.Dict[str, T.Dict[str, float]] = {
         },
         "time_normalized": 4.0,
     },
-    Scenarios.MineAndReinforceScattered: {
+    Scenarios.MineAndSelfReinforce: {
         Result.WIN: {
             "TUS": 303.75,
             "CRA": 3.75,
@@ -68,7 +100,7 @@ REWARDS_TUS: T.Dict[str, T.Dict[str, float]] = {
         },
         "time_normalized": 4.0,
     },
-    Scenarios.MineTenPercentAndReinforceScattered: {
+    Scenarios.MineTenPercentAndSelfReinforce: {
         Result.WIN: {
             "TUS": 334.125,
             "CRA": 4.125,
@@ -198,7 +230,7 @@ def get_profitability_message(
     message += f"*(normalized over a 4 hour window)*\n"
 
     for game in REWARDS_TUS.keys():
-        if game == Scenarios.Loot:
+        if game in LOOT_SCENARIOS:
             win_percent = 100.0 - mine_win_percent
         else:
             win_percent = mine_win_percent
@@ -206,14 +238,10 @@ def get_profitability_message(
         if game == Scenarios.TavernThreeMpCrabs:
             profit_tus = avg_reinforce_tus * 3 - prices.avax_to_tus(avg_gas_avax) / 6
         else:
-            do_reinforce = game in [
-                Scenarios.MineAndReinforce,
-                Scenarios.MineTenPercentAndReinforce,
-                Scenarios.Loot,
-            ]
-
+            do_reinforce = game in REINFORCE_SCENARIOS
+            reinforce_tus = avg_reinforce_tus if game not in SELF_REINFORCE_SCENARIOS else 0.0
             profit_tus = get_expected_game_profit(
-                game, prices, avg_gas_avax, avg_reinforce_tus, win_percent, do_reinforce
+                game, prices, avg_gas_avax, reinforce_tus, win_percent, do_reinforce
             )
 
         games_per_4_hrs = NORMALIZED_TIME / REWARDS_TUS[game]["time_normalized"]

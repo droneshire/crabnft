@@ -90,7 +90,6 @@ class CrabadaMineBot:
         csv_file = get_lifetime_stats_file(user, self.log_dir).split(".")[0] + ".csv"
         logger.print_normal(f"Saving csv to {csv_file}")
         self.csv = CsvLogger(csv_file, csv_header, dry_run)
-        self.csv.open()
 
         self.prices: Prices = Prices(0.0, 0.0, 0.0)
         self.avg_gas_used: Average = Average()
@@ -277,6 +276,9 @@ class CrabadaMineBot:
             logger.print_fail("Failed to send email alert")
 
     def _update_bot_stats(self, tx: CrabadaTransaction, team: Team, mine: IdleGame) -> None:
+        if team["team_id"] not in self.game_stats:
+            self.game_stats[team["team_id"]] = NULL_STATS
+
         update_game_stats_after_close(
             tx,
             team,
@@ -292,19 +294,24 @@ class CrabadaMineBot:
             f"Successfully closed {tx.game_type} {team['game_id']}, we {tx.result} {outcome_emoji}"
         )
         logger.print_ok_arrow(message)
+
+        send_sms = (tx.game_type == "MINE" and self.config["get_sms_updates_loots"]) or self.config[
+            "get_sms_updates"
+        ]
+
         self._send_status_update(
-            self.config["get_sms_updates"],
+            send_sms,
             self.config["get_email_updates"],
             message,
             tx_hash=tx.tx_hash,
         )
 
         write_game_stats(self.user, self.log_dir, self.lifetime_stats, dry_run=self.dry_run)
-        if team["team_id"] in self.game_stats:
-            now = datetime.datetime.now()
-            self.game_stats[team["team_id"]]["timestamp"] = now.strftime("%m/%d/%Y %H:%M:%S")
-            self.csv.write(self.game_stats[team["team_id"]])
-            self.game_stats.pop(team["team_id"])
+
+        now = datetime.datetime.now()
+        self.game_stats[team["team_id"]]["timestamp"] = now.strftime("%m/%d/%Y %H:%M:%S")
+        self.csv.write(self.game_stats[team["team_id"]])
+        self.game_stats.pop(team["team_id"])
         self.updated_game_stats = True
 
     def _print_bot_stats(self) -> None:
@@ -494,10 +501,12 @@ class CrabadaMineBot:
         crabada_id = reinforcement_crab["crabada_id"]
 
         have_reinforced = strategy.have_reinforced_at_least_once(mine)
-        if team["team_id"] in self.game_stats:
-            self.game_stats[team["team_id"]][
-                "reinforce2" if have_reinforced else "reinforce1"
-            ] = price_tus
+        if team["team_id"] not in self.game_stats:
+            self.game_stats[team["team_id"]] = NULL_STATS
+
+        self.game_stats[team["team_id"]][
+            "reinforce2" if have_reinforced else "reinforce1"
+        ] = price_tus
 
         logger.print_normal(
             f"Mine[{mine['game_id']}]: Found reinforcement crabada {crabada_id} for {price_tus} Tus [BP {battle_points} | MP {mine_points}]"
@@ -518,10 +527,9 @@ class CrabadaMineBot:
 
             have_reinforced = strategy.have_reinforced_at_least_once(mine)
             gas_avax = self._calculate_and_log_gas_price(tx)
-            if team["team_id"] in self.game_stats:
-                self.game_stats[team["team_id"]][
-                    "gas_reinforce2" if have_reinforced else "gas_reinforce1"
-                ] = gas_avax
+            self.game_stats[team["team_id"]][
+                "gas_reinforce2" if have_reinforced else "gas_reinforce1"
+            ] = gas_avax
 
             if tx.did_succeed:
                 logger.print_ok_arrow(f"Successfully reinforced mine {team['game_id']}")
@@ -553,8 +561,9 @@ class CrabadaMineBot:
                 self._update_bot_stats(tx, team, mine)
                 return True
 
-            if team["team_id"] in self.game_stats:
-                self.game_stats[team["team_id"]]["gas_close"] = gas_avax
+            if team["team_id"] not in self.game_stats:
+                self.game_stats[team["team_id"]] = NULL_STATS
+            self.game_stats[team["team_id"]]["gas_close"] = gas_avax
 
         logger.print_fail_arrow(f"Error closing game {team['game_id']}")
         return False
@@ -752,4 +761,3 @@ class CrabadaMineBot:
         logger.print_fail(f"Exiting bot for {self.user}...")
         write_game_stats(self.user, self.log_dir, self.lifetime_stats, dry_run=self.dry_run)
         self._print_bot_stats()
-        self.csv.close()
