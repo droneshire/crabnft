@@ -471,7 +471,7 @@ class CrabadaMineBot:
                 strategy,
             ):
                 last_reinforcement_search_backoff = self.reinforcement_search_backoff
-                self.reinforcement_search_backoff = max(0, self.reinforcement_search_backoff - 2)
+                self.reinforcement_search_backoff = max(0, self.reinforcement_search_backoff - 1)
                 if last_reinforcement_search_backoff != self.reinforcement_search_backoff:
                     logger.print_ok_blue(
                         f"Reinforcement backoff: {last_reinforcement_search_backoff}->{self.reinforcement_search_backoff}"

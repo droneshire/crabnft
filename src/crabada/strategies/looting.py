@@ -111,7 +111,7 @@ class LootingStrategy(Strategy):
 
         attack_battle_point = get_faction_adjusted_battle_point(mine, is_looting=True, verbose=True)
         defense_battle_point = get_faction_adjusted_battle_point(
-            mine, is_looting=False, verbose=True
+            mine, is_looting=False, verbose=False
         )
         if attack_battle_point >= defense_battle_point:
             logger.print_normal(f"Loot[{mine['game_id']}]: not reinforcing since we're winning!")
