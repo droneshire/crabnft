@@ -197,7 +197,7 @@ def run_bot() -> None:
         pass
     except Exception as e:
         stop_message = f"\U0001F980 Crabada Bot Alert \U0001F980\n\n"
-        stop_message += f"Crabada Bot Stopped \U0000203C\n"
+        stop_message += f"@Cashflow: Crabada Bot Stopped \U0000203C\n"
         if alerts_enabled and TWILIO_CONFIG["enable_admin_sms"]:
             stop_message = f"\U0001F980 Crabada Bot Alert \U0001F980\n\n"
             stop_message += f"Crabada Bot Stopped \U0000203C\n"

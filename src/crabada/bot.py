@@ -86,7 +86,7 @@ class CrabadaMineBot:
         self.game_stats: T.Dict[int, GameStat] = dict()
         self.updated_game_stats: bool = True
 
-        csv_header = ["timestamp"] + [k for k in NULL_STATS.keys()]
+        csv_header = ["timestamp"] + [k for k in NULL_STATS.keys()] + ["team_id"]
         csv_file = get_lifetime_stats_file(user, self.log_dir).split(".")[0] + ".csv"
         logger.print_normal(f"Saving csv to {csv_file}")
         self.csv = CsvLogger(csv_file, csv_header, dry_run)
@@ -310,6 +310,7 @@ class CrabadaMineBot:
 
         now = datetime.datetime.now()
         self.game_stats[team["team_id"]]["timestamp"] = now.strftime("%m/%d/%Y %H:%M:%S")
+        self.game_stats[team["team_id"]]["team_id"] = team["team_id"]
         self.csv.write(self.game_stats[team["team_id"]])
         self.game_stats.pop(team["team_id"])
         self.updated_game_stats = True
@@ -760,4 +761,7 @@ class CrabadaMineBot:
     def end(self) -> None:
         logger.print_fail(f"Exiting bot for {self.user}...")
         write_game_stats(self.user, self.log_dir, self.lifetime_stats, dry_run=self.dry_run)
+        for team in self.game_stats.keys():
+            self.game_stats[team]["team_id"] = team
+        self.csv.write(self.game_stats)
         self._print_bot_stats()

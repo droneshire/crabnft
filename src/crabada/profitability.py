@@ -1,6 +1,8 @@
+import datetime
+import os
 import typing as T
 
-from utils import logger
+from utils import csv_logger, logger
 from utils.price import Prices
 
 NORMALIZED_TIME = 4.0
@@ -210,6 +212,17 @@ def get_profitability_message(
 ) -> str:
     PROFIT_HYSTERESIS = 10
 
+    data_points = {
+        "avg_tx_gas_avax": avg_gas_avax,
+        "avg_gas_price_gwei": gas_price_gwei,
+        "avg_mining_win": mine_win_percent,
+        "avg_loot_win": 100.0 - mine_win_percent,
+        "avg_reinforce_cost_tus": avg_reinforce_tus,
+        "avax_usd": prices.avax_usd,
+        "tus_usd": prices.tus_usd,
+        "cra_usd": prices.cra_usd,
+    }
+
     message = "**Profitability Update**\n"
     message += "{}\t\t{}\n".format(f"**Avg Tx Gas \U000026FD**:", f"{avg_gas_avax:.5f} AVAX")
     message += "{}\t\t{}\n".format(f"**Avg Gas Price \U000026FD**:", f"{gas_price_gwei:.6f} gwei")
@@ -229,6 +242,18 @@ def get_profitability_message(
     message += f"**Expected Profit (EP)**\n"
     message += f"*(normalized over a 4 hour window)*\n"
 
+    csv_file = os.path.join(
+        logger.get_logging_dir(),
+        "profitability_stats.csv",
+    )
+
+    profit_headers = []
+    for scenario in REWARDS_TUS.keys():
+        profit_headers.append(f"{scenario.lower()}_4hr_profit_tus")
+        profit_headers.append(f"{scenario.lower()}_4hr_profit_usd")
+
+    header = ["timestamp"] + list(data_points.keys()) + profit_headers
+    csv = csv_logger.CsvLogger(csv_file, header)
     for game in REWARDS_TUS.keys():
         if game in LOOT_SCENARIOS:
             win_percent = 100.0 - mine_win_percent
@@ -248,10 +273,15 @@ def get_profitability_message(
         profit_tus_4_hrs = profit_tus * games_per_4_hrs
         profit_usd_4_hrs = prices.tus_usd * profit_tus_4_hrs
         profit_emoji = "\U0001F4C8" if profit_tus_4_hrs > 0.0 else "\U0001F4C9"
-
+        data_points[f"{game.lower()}_4hr_profit_tus"] = profit_tus_4_hrs
+        data_points[f"{game.lower()}_4hr_profit_usd"] = profit_usd_4_hrs
         message += "{}\n    {} $TUS,    ${}\n".format(
             f"**{game}**:", f"{profit_tus_4_hrs:.2f}", f"{profit_usd_4_hrs:.2f}"
         )
+
+    now = datetime.datetime.now()
+    data_points["timestamp"] = now.strftime("%m/%d/%Y %H:%M:%S")
+    csv.write(data_points)
 
     if verbose:
         logger.print_normal(message)

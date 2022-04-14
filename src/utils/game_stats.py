@@ -26,6 +26,7 @@ class GameStats(T.TypedDict):
     cra_usd: float
     commission_tus: float
     outcome: T.Literal["WIN", "LOSE"]
+    team_id: int
 
 
 NULL_STATS = GameStats(
@@ -43,6 +44,7 @@ NULL_STATS = GameStats(
     cra_usd=0.0,
     commission_tus=0.0,
     outcome="WIN",
+    team_id=0,
 )
 
 
