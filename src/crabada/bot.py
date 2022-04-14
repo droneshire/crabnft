@@ -399,12 +399,14 @@ class CrabadaMineBot:
                 is_winning = self.crabada_w2.mine_is_winning(mine_data)
                 total_time = self.crabada_w2.get_total_mine_time(mine_data) + 1
                 remaining_time = self.crabada_w2.get_remaining_time(mine_data)
+                group = self.config["mining_teams"].get(mine[team_id])
             else:
                 team_id = "attack_team_id"
                 num_reinforcements = self.crabada_w2.get_num_loot_reinforcements(mine_data)
                 is_winning = self.crabada_w2.loot_is_winning(mine_data)
                 total_time = self.looting_strategy.LOOTING_DURATION
                 remaining_time = self.crabada_w2.get_remaining_loot_time(mine_data)
+                group = self.config["looting_teams"].get(mine[team_id])
 
             percent_done = (total_time - remaining_time) / total_time
             progress = (
@@ -423,7 +425,7 @@ class CrabadaMineBot:
                 "#{:3s}{:10s}{:6s}{:10s}{:20s}{:25s}{:15s}{:15s}{:20s}\t{:25s}".format(
                     str(inx + 1),
                     str(mine[team_id]),
-                    str(self.config["mining_teams"].get(mine[team_id])),
+                    str(group),
                     str(mine["game_id"]),
                     mine["process"][-1]["action"],
                     "|{}{}|".format("#" * progress, " " * (PROGRESS_SLOTS - progress)),
