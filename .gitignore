@@ -133,3 +133,6 @@ config.py*
 
 # logs dir
 logs/
+
+# google sheet api
+credentials.json
