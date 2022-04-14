@@ -619,10 +619,6 @@ class CrabadaMineBot:
         if not self.crabada_w2.loot_is_able_to_be_settled(mine):
             return
 
-        if not self._is_team_allowed_to_loot(team):
-            logger.print_warn(f"Skipping team {team['team_id']} for settling...")
-            return
-
         if team["team_id"] in self.game_stats:
             # we don't do gas start for loots, so we don't track it
             self.game_stats[team["team_id"]]["gas_start"] = 0.0
@@ -631,10 +627,6 @@ class CrabadaMineBot:
 
     def _check_and_maybe_close_mines(self, team: Team, mine: IdleGame) -> None:
         if not self.crabada_w2.mine_is_finished(mine):
-            return
-
-        if not self._is_team_allowed_to_mine(team):
-            logger.print_warn(f"Skipping team {team['team_id']} for closing...")
             return
 
         self._close_mine(team, mine, self.mining_strategy)
