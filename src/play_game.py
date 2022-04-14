@@ -137,8 +137,7 @@ def run_bot() -> None:
     try:
         while True:
             gross_tus = 0.0
-            wins = 0
-            losses = 0
+            totals = {"MINE": {"wins": 0, "losses": 0}, "LOOT": {"wins": 0, "losses": 0}}
 
             for bot in bots:
                 bot.set_backoff(reinforcement_backoff)
@@ -149,11 +148,11 @@ def run_bot() -> None:
                 reinforcement_backoff = bot.get_backoff()
 
                 bot_stats = bot.get_lifetime_stats()
-                for k in ["MINE", "LOOT"]:
+                for k in totals.keys():
                     gross_tus += bot_stats[k]["tus_gross"]
                     if USERS[bot.user]["should_reinforce"]:
-                        wins += bot_stats[k]["game_wins"]
-                        losses += bot_stats[k]["game_losses"]
+                        totals[k]["wins"] += bot_stats[k]["game_wins"]
+                        totals[k]["losses"] += bot_stats[k]["game_losses"]
 
                 now = time.time()
                 if now - last_price_update > PRICE_UPDATE_TIME:
@@ -165,13 +164,17 @@ def run_bot() -> None:
                     bot.update_prices(prices.avax_usd, prices.tus_usd, prices.cra_usd)
                     last_price_update = now
 
-            win_percentage = float(wins) / (wins + losses) * 100.0
+            win_percentages = {}
+            for k in totals.key():
+                win_percentages[k] = (
+                    float(totals[k]["wins"]) / (totals[k]["wins"] + totals[k]["losses"]) * 100.0
+                )
             profitability_message = get_profitability_message(
                 prices,
                 avg_gas_avax.get_avg(),
                 avg_gas_gwei.get_avg(),
                 avg_reinforce_tus.get_avg(),
-                win_percentage,
+                win_percentages,
                 verbose=True,
             )
 
@@ -183,7 +186,8 @@ def run_bot() -> None:
             if alerts_enabled and now - last_discord_update > DISCORD_UPDATE_TIME:
                 last_discord_update = now
                 webhook_text = f"\U0001F980\t**Total TUS mined by bot: {int(gross_tus):,} TUS**\n"
-                webhook_text += f"\U0001F916\t**Bot win percentage: {win_percentage:.2f}%**\n"
+                for k in totals.keys():
+                    webhook_text += f"\U0001F916\t**Bot {k.lower()} win percentage: {win_percentages[k]:.2f}%**\n"
                 total_users, total_teams = get_users_teams()
                 webhook_text += f"**Users: {total_users} Teams: {total_teams}**\n"
                 webhooks["HOLDERS"].send(webhook_text)

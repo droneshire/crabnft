@@ -207,7 +207,7 @@ def get_profitability_message(
     avg_gas_avax: float,
     gas_price_gwei: float,
     avg_reinforce_tus: float,
-    mine_win_percent: float,
+    win_percentages: T.Dict[str, float],
     verbose: bool = False,
 ) -> str:
     PROFIT_HYSTERESIS = 10
@@ -215,8 +215,8 @@ def get_profitability_message(
     data_points = {
         "avg_tx_gas_avax": avg_gas_avax,
         "avg_gas_price_gwei": gas_price_gwei,
-        "avg_mining_win": mine_win_percent,
-        "avg_loot_win": 100.0 - mine_win_percent,
+        "avg_mining_win": win_percentages["MINE"],
+        "avg_loot_win": win_percentages["LOOT"],
         "avg_reinforce_cost_tus": avg_reinforce_tus,
         "avax_usd": prices.avax_usd,
         "tus_usd": prices.tus_usd,
@@ -226,9 +226,11 @@ def get_profitability_message(
     message = "**Profitability Update**\n"
     message += "{}\t\t{}\n".format(f"**Avg Tx Gas \U000026FD**:", f"{avg_gas_avax:.5f} AVAX")
     message += "{}\t\t{}\n".format(f"**Avg Gas Price \U000026FD**:", f"{gas_price_gwei:.6f} gwei")
-    message += "{}\t{}\n".format(f"**Avg Mining Win % \U0001F3C6**:", f"{mine_win_percent:.2f}%")
     message += "{}\t{}\n".format(
-        f"**Avg Looting Win % \U0001F480**:", f"{(100.0 - mine_win_percent):.2f}%"
+        f"**Avg Mining Win % \U0001F3C6**:", f"{win_percentages['MINE']:.2f}%"
+    )
+    message += "{}\t{}\n".format(
+        f"**Avg Looting Win % \U0001F480**:", f"{win_percentages['LOOT']:.2f}%"
     )
     message += "{}\t{}\n\n".format(
         f"**Avg Reinforce Cost \U0001F4B0**:", f"{avg_reinforce_tus:.2f} TUS"
@@ -256,9 +258,9 @@ def get_profitability_message(
     csv = csv_logger.CsvLogger(csv_file, header)
     for game in REWARDS_TUS.keys():
         if game in LOOT_SCENARIOS:
-            win_percent = 100.0 - mine_win_percent
+            win_percent = win_percentages["LOOT"]
         else:
-            win_percent = mine_win_percent
+            win_percent = win_percentages["MINE"]
 
         if game == Scenarios.TavernThreeMpCrabs:
             profit_tus = avg_reinforce_tus * 3 - prices.avax_to_tus(avg_gas_avax) / 6
