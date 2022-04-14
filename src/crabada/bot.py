@@ -594,10 +594,6 @@ class CrabadaMineBot:
         return team["team_id"] in self.config["looting_teams"].keys()
 
     def _check_and_maybe_reinforce_loots(self, team: Team, mine: IdleGame) -> None:
-        if not self._is_team_allowed_to_loot(team):
-            logger.print_warn(f"Skipping team {team['team_id']} for loot reinforcing...")
-            return
-
         self._reinforce_loot_or_mine(
             team,
             mine,
@@ -605,10 +601,6 @@ class CrabadaMineBot:
         )
 
     def _check_and_maybe_reinforce_mines(self, team: Team, mine: IdleGame) -> None:
-        if not self._is_team_allowed_to_mine(team):
-            logger.print_warn(f"Skipping team {team['team_id']} for mine reinforcing...")
-            return
-
         self._reinforce_loot_or_mine(
             team,
             mine,
