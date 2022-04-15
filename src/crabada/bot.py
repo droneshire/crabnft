@@ -13,6 +13,7 @@ from web3.types import Address, TxReceipt
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
 from crabada.profitability import GameStats, NULL_STATS
+from crabada.profitability import get_actual_game_profit
 from crabada.strategies.strategy import CrabadaTransaction, GameStage, Strategy
 from crabada.strategies.looting import LootingStrategy
 from crabada.strategies.strategy_selection import STRATEGY_SELECTION

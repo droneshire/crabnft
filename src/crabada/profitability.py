@@ -13,6 +13,7 @@ class Result:
     LOSE = "LOSE"
     UNKNOWN = "UNKNOWN"
 
+
 class GameStats(T.TypedDict):
     reinforce1: float
     reinforce2: float
@@ -50,6 +51,7 @@ NULL_STATS = GameStats(
     team_id=0,
     profit_usd=0.0,
 )
+
 
 class Scenarios:
     Loot = "LOOT"
@@ -221,6 +223,7 @@ def get_expected_game_profit(
         )
     return profit_tus
 
+
 def get_actual_game_profit(
     game_stats: GameStats,
     verbose: bool = False,
@@ -228,7 +231,9 @@ def get_actual_game_profit(
     prices = Prices(game_stats["avax_usd"], game_stats["tus_usd"], game_stats["cra_usd"])
     revenue_tus += game_stats["reward_tus"] + prices.cra_to_tus(game_stats["reward_cra"])
 
-    gas_used_avax = sum([game_stats[g] for g in ["gas_close", "gas_start", "gas_reinforce1", "gas_reinforce2"]])
+    gas_used_avax = sum(
+        [game_stats[g] for g in ["gas_close", "gas_start", "gas_reinforce1", "gas_reinforce2"]]
+    )
     gas_used_tus = prices.avax_to_tus(gas_used_avax)
 
     reinforcement_used_tus = game_stats["reinforce1"] + game_stats["reinforce2"]
@@ -240,6 +245,7 @@ def get_actual_game_profit(
             f"[{game_type}]: Revenue: {revenue_tus}, Gas: {gas_used_tus}, Reinforce: {reinforcement_used_tus}, Profit: {profit_tus} TUS, Profit: ${profit_usd:.2f}"
         )
     return profit_tus, profit_usd
+
 
 def is_idle_game_transaction_profitable(
     game_type: str,
@@ -345,4 +351,3 @@ def get_profitability_message(
         logger.print_normal(message)
 
     return message
-
