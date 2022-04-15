@@ -278,8 +278,9 @@ class CrabadaMineBot:
             logger.print_fail("Failed to send email alert")
 
     def _update_bot_stats(self, tx: CrabadaTransaction, team: Team, mine: IdleGame) -> None:
-        if team["team_id"] not in self.game_stats:
-            self.game_stats[team["team_id"]] = NULL_STATS
+        team_id = team["team_id"]
+        if team_id not in self.game_stats:
+            self.game_stats[team_id] = NULL_STATS
 
         update_game_stats_after_close(
             tx,
@@ -292,13 +293,22 @@ class CrabadaMineBot:
         )
 
         outcome_emoji = "\U0001F389" if tx.result == Result.WIN else "\U0001F915"
-        self.game_stats["profit_usd"] = get_actual_game_profit(self.game_stats)
+
+        profit_tus, profit_usd = get_actual_game_profit(
+            self.game_stats[team_id], with_commission=False
+        )
+        self.game_stats[team_id]["profit_tus"] = profit_tus
+        self.game_stats[team_id]["profit_usd"] = profit_usd
+        logger.print_bold(f"Profits: {profit_tus:.2f} TUS (${profit_usd:.2f})")
+        profit_tus, profit_usd = get_actual_game_profit(
+            self.game_stats[team_id], with_commission=True
+        )
+        logger.print_bold(f"Profits w/ commission: {profit_tus:.2f} TUS (${profit_usd:.2f})")
 
         message = (
             f"Successfully closed {tx.game_type} {team['game_id']}, we {tx.result} {outcome_emoji}"
         )
         logger.print_ok_arrow(message)
-        logger.print_bold(f"We made ${self.game_stats['profit_usd']:.2f}")
 
         send_sms = (tx.game_type == "LOOT" and self.config["get_sms_updates_loots"]) or self.config[
             "get_sms_updates"

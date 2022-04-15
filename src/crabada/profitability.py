@@ -226,10 +226,11 @@ def get_expected_game_profit(
 
 def get_actual_game_profit(
     game_stats: GameStats,
+    with_commission: bool,
     verbose: bool = False,
 ) -> T.Tuple[float, float]:
     prices = Prices(game_stats["avax_usd"], game_stats["tus_usd"], game_stats["cra_usd"])
-    revenue_tus += game_stats["reward_tus"] + prices.cra_to_tus(game_stats["reward_cra"])
+    revenue_tus = game_stats["reward_tus"] + prices.cra_to_tus(game_stats["reward_cra"])
 
     gas_used_avax = sum(
         [game_stats[g] for g in ["gas_close", "gas_start", "gas_reinforce1", "gas_reinforce2"]]
@@ -238,8 +239,12 @@ def get_actual_game_profit(
 
     reinforcement_used_tus = game_stats["reinforce1"] + game_stats["reinforce2"]
 
-    profit_tus = revenue_tus - gas_used_tus - reinforcement_used_tus
-    profit_usd = prices.tus_usd(profit_tus)
+    commission_tus = game_stats["commission_tus"]
+    if not with_commission:
+        commission_tus = 0.0
+
+    profit_tus = revenue_tus - gas_used_tus - reinforcement_used_tus - commission_tus
+    profit_usd = prices.tus_usd * profit_tus
     if verbose:
         logger.print_normal(
             f"[{game_type}]: Revenue: {revenue_tus}, Gas: {gas_used_tus}, Reinforce: {reinforcement_used_tus}, Profit: {profit_tus} TUS, Profit: ${profit_usd:.2f}"
