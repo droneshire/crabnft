@@ -299,16 +299,19 @@ class CrabadaMineBot:
         )
         self.game_stats[team_id]["profit_tus"] = profit_tus
         self.game_stats[team_id]["profit_usd"] = profit_usd
+
         logger.print_bold(f"Profits: {profit_tus:.2f} TUS (${profit_usd:.2f})")
+
         profit_tus, profit_usd = get_actual_game_profit(
             self.game_stats[team_id], with_commission=True
         )
+
         logger.print_bold(f"Profits w/ commission: {profit_tus:.2f} TUS (${profit_usd:.2f})")
 
-        message = (
-            f"Successfully closed {tx.game_type} {team['game_id']}, we {tx.result} {outcome_emoji}"
-        )
+        message = f"Successfully closed {tx.game_type} {team['game_id']}, we {tx.result} {outcome_emoji}.\n"
         logger.print_ok_arrow(message)
+
+        message += f"Profits: {profit_tus:.2f} TUS [${profit_usd:.2f}]\n"
 
         send_sms = (tx.game_type == "LOOT" and self.config["get_sms_updates_loots"]) or self.config[
             "get_sms_updates"
