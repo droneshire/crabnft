@@ -6,46 +6,9 @@ from eth_typing import Address
 
 from utils import logger
 from utils.price import Prices, wei_to_cra_raw, wei_to_tus_raw
-from crabada.profitability import Result
+from crabada.profitability import GameStats, Result, NULL_STATS
 from crabada.strategies.strategy import CrabadaTransaction
 from crabada.types import IdleGame, Team
-
-
-class GameStats(T.TypedDict):
-    reinforce1: float
-    reinforce2: float
-    gas_start: float
-    gas_reinforce1: float
-    gas_reinforce2: float
-    gas_close: float
-    game_type: T.Literal["MINE", "LOOT"]
-    reward_tus: float
-    reward_cra: float
-    avax_usd: float
-    tus_usd: float
-    cra_usd: float
-    commission_tus: float
-    outcome: T.Literal["WIN", "LOSE"]
-    team_id: int
-
-
-NULL_STATS = GameStats(
-    reinforce1=0.0,
-    reinforce2=0.0,
-    gas_start=0.0,
-    gas_reinforce1=0.0,
-    gas_reinforce2=0.0,
-    gas_close=0.0,
-    game_type="MINE",
-    reward_tus=0.0,
-    reward_cra=0.0,
-    avax_usd=0.0,
-    tus_usd=0.0,
-    cra_usd=0.0,
-    commission_tus=0.0,
-    outcome="WIN",
-    team_id=0,
-)
 
 
 class MineLootGameStats(T.TypedDict):

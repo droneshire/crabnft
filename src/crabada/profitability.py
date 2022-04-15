@@ -13,6 +13,43 @@ class Result:
     LOSE = "LOSE"
     UNKNOWN = "UNKNOWN"
 
+class GameStats(T.TypedDict):
+    reinforce1: float
+    reinforce2: float
+    gas_start: float
+    gas_reinforce1: float
+    gas_reinforce2: float
+    gas_close: float
+    game_type: T.Literal["MINE", "LOOT"]
+    reward_tus: float
+    reward_cra: float
+    avax_usd: float
+    tus_usd: float
+    cra_usd: float
+    commission_tus: float
+    outcome: T.Literal[Result.WIN, Result.LOSE]
+    team_id: int
+    profit_usd: float
+
+
+NULL_STATS = GameStats(
+    reinforce1=0.0,
+    reinforce2=0.0,
+    gas_start=0.0,
+    gas_reinforce1=0.0,
+    gas_reinforce2=0.0,
+    gas_close=0.0,
+    game_type="MINE",
+    reward_tus=0.0,
+    reward_cra=0.0,
+    avax_usd=0.0,
+    tus_usd=0.0,
+    cra_usd=0.0,
+    commission_tus=0.0,
+    outcome=Result.UNKNOWN,
+    team_id=0,
+    profit_usd=0.0,
+)
 
 class Scenarios:
     Loot = "LOOT"
@@ -184,6 +221,25 @@ def get_expected_game_profit(
         )
     return profit_tus
 
+def get_actual_game_profit(
+    game_stats: GameStats,
+    verbose: bool = False,
+) -> T.Tuple[float, float]:
+    prices = Prices(game_stats["avax_usd"], game_stats["tus_usd"], game_stats["cra_usd"])
+    revenue_tus += game_stats["reward_tus"] + prices.cra_to_tus(game_stats["reward_cra"])
+
+    gas_used_avax = sum([game_stats[g] for g in ["gas_close", "gas_start", "gas_reinforce1", "gas_reinforce2"]])
+    gas_used_tus = prices.avax_to_tus(gas_used_avax)
+
+    reinforcement_used_tus = game_stats["reinforce1"] + game_stats["reinforce2"]
+
+    profit_tus = revenue_tus - gas_used_tus - reinforcement_used_tus
+    profit_usd = prices.tus_usd(profit_tus)
+    if verbose:
+        logger.print_normal(
+            f"[{game_type}]: Revenue: {revenue_tus}, Gas: {gas_used_tus}, Reinforce: {reinforcement_used_tus}, Profit: {profit_tus} TUS, Profit: ${profit_usd:.2f}"
+        )
+    return profit_tus, profit_usd
 
 def is_idle_game_transaction_profitable(
     game_type: str,
@@ -289,3 +345,4 @@ def get_profitability_message(
         logger.print_normal(message)
 
     return message
+

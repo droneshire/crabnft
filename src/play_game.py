@@ -165,7 +165,7 @@ def run_bot() -> None:
                     last_price_update = now
 
             win_percentages = {}
-            for k in totals.key():
+            for k in totals.keys():
                 win_percentages[k] = (
                     float(totals[k]["wins"]) / (totals[k]["wins"] + totals[k]["losses"]) * 100.0
                 )

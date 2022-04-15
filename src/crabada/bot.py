@@ -12,6 +12,7 @@ from web3.types import Address, TxReceipt
 
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
+from crabada.profitability import GameStats, NULL_STATS
 from crabada.strategies.strategy import CrabadaTransaction, GameStage, Strategy
 from crabada.strategies.looting import LootingStrategy
 from crabada.strategies.strategy_selection import STRATEGY_SELECTION
@@ -20,7 +21,7 @@ from utils import logger
 from utils.config_types import UserConfig, SmsConfig
 from utils.csv_logger import CsvLogger
 from utils.email import Email, send_email
-from utils.game_stats import GameStats, LifetimeGameStats, NULL_STATS, NULL_GAME_STATS, Result
+from utils.game_stats import LifetimeGameStats, NULL_GAME_STATS, Result
 from utils.game_stats import (
     get_game_stats,
     get_lifetime_stats_file,
@@ -290,10 +291,13 @@ class CrabadaMineBot:
         )
 
         outcome_emoji = "\U0001F389" if tx.result == Result.WIN else "\U0001F915"
+        self.game_stats["profit_usd"] = get_actual_game_profit(self.game_stats)
+
         message = (
             f"Successfully closed {tx.game_type} {team['game_id']}, we {tx.result} {outcome_emoji}"
         )
         logger.print_ok_arrow(message)
+        logger.print_bold(f"We made ${self.game_stats['profit_usd']:.2f}")
 
         send_sms = (tx.game_type == "LOOT" and self.config["get_sms_updates_loots"]) or self.config[
             "get_sms_updates"

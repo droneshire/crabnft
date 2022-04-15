@@ -27,7 +27,7 @@ class CrabadaTransaction:
         tus: float,
         cra: float,
         did_succeed: bool,
-        result: str,
+        result: Result,
         gas: float,
         tx_gas_used: float,
     ):
