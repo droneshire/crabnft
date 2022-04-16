@@ -180,7 +180,7 @@ class CrabadaMineBot:
         current = self._get_save_config()
         old = self._load_config()
 
-        diff = deepdiff.DeepDiff(current, old)
+        diff = deepdiff.DeepDiff(old, current)
         if diff:
             logger.print_normal(f"{diff}")
             return True
