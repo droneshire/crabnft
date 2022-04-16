@@ -32,7 +32,8 @@ from utils.game_stats import (
 )
 from utils.general import dict_sum, get_pretty_seconds
 from utils.math import Average
-from utils.price import Prices, wei_to_tus, wei_to_cra_raw, wei_to_tus_raw
+from utils.price import Prices
+from utils.price import is_gas_too_high, wei_to_tus, wei_to_cra_raw, wei_to_tus_raw
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.tus_web3_client import TusWeb3Client
 from web3_utils.web3_client import web3_transaction
@@ -455,14 +456,6 @@ class CrabadaMineBot:
             )
         logger.print_normal("\n")
 
-    def _is_gas_too_high(self, margin: int = 0) -> bool:
-        gas_price_gwei = self.crabada_w3.get_gas_price()
-        gas_price_limit = self.config["max_gas_price_gwei"] + margin
-        if gas_price_gwei is not None and (int(gas_price_gwei) > int(gas_price_limit)):
-            logger.print_warn(f"Warning: High Gas ({gas_price_gwei}) > {gas_price_limit}!")
-            return True
-        return False
-
     def _reinforce_loot_or_mine(
         self,
         team: Team,
@@ -472,8 +465,10 @@ class CrabadaMineBot:
         if not strategy.should_reinforce(mine):
             return
 
-        if self._is_gas_too_high(
-            margin=strategy.get_gas_margin(game_stage=GameStage.REINFORCE, mine=mine)
+        if is_gas_too_high(
+            gas_price_gwei=self.crabada_w3.get_gas_price(),
+            max_price_gwei=self.config["max_gas_price_gwei"],
+            margin=strategy.get_gas_margin(game_stage=GameStage.REINFORCE, mine=mine),
         ):
             logger.print_warn(
                 f"Skipping reinforcement of Mine[{mine['game_id']}] due to high gas cost"
@@ -564,8 +559,10 @@ class CrabadaMineBot:
         return False
 
     def _close_mine(self, team: Team, mine: IdleGame, strategy: Strategy) -> bool:
-        if self._is_gas_too_high(
-            margin=strategy.get_gas_margin(game_stage=GameStage.CLOSE, mine=None)
+        if is_gas_too_high(
+            gas_price_gwei=self.crabada_w3.get_gas_price(),
+            max_price_gwei=self.config["max_gas_price_gwei"],
+            margin=strategy.get_gas_margin(game_stage=GameStage.CLOSE, mine=None),
         ):
             logger.print_warn(
                 f"Skipping closing of Game[{mine.get('game_id', '')}] due to high gas cost"
@@ -653,8 +650,10 @@ class CrabadaMineBot:
                 logger.print_warn(f"Skipping team {team['team_id']} for mining...")
                 continue
 
-            if self._is_gas_too_high(
-                margin=self.mining_strategy.get_gas_margin(game_stage=GameStage.START, mine=None)
+            if is_gas_too_high(
+                gas_price_gwei=self.crabada_w3.get_gas_price(),
+                max_price_gwei=self.config["max_gas_price_gwei"],
+                margin=self.mining_strategy.get_gas_margin(game_stage=GameStage.START, mine=None),
             ):
                 logger.print_warn(
                     f"Skipping open of mine for team {team['team_id']} due to high gas cost"

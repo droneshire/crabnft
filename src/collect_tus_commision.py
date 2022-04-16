@@ -14,11 +14,13 @@ from twilio.rest import Client
 from config import GMAIL, TWILIO_CONFIG, USERS
 from utils import discord, email, logger
 from utils.game_stats import LifetimeGameStats, get_game_stats, write_game_stats
+from utils.price import is_gas_too_high
 from utils.price import Tus
 from utils.security import decrypt
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.tus_web3_client import TusWeb3Client
 
+MAX_COLLECTION_GAS_GWEI = 65
 MINIMUM_TUS_TO_TRANSFER = 25
 DISCORD_TRANSFER_NOTICE = """\U0000203C  **COURTESY NOTICE**  \U0000203C
 @here, collecting Crabada commission at next low gas period. Please ensure TUS are in wallet.
@@ -153,6 +155,12 @@ def collect_tus_commission(
                 .set_dry_run(dry_run)
             ),
         )
+
+        if is_gas_too_high(
+            gas_price_gwei=tus_w3.get_gas_price(), max_price_gwei=MAX_COLLECTION_GAS_GWEI
+        ):
+            logger.print_fail_arrow(f"Skipping collection, gas too high!!!")
+            continue
 
         commission_tus = 0.0
         for _, commission in game_stats["commission_tus"].items():
