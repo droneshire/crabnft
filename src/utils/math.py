@@ -7,9 +7,16 @@ class Average:
         self.total = 0.0 if value is None else value
         self.count = 0 if value is None else 1
 
-    def reset(self) -> None:
-        self.total = 0.0 if self.init is None else self.init
-        self.count = 0
+    def reset(self, value: T.Optional[T.Any] = None) -> None:
+        if value:
+            self.total = value
+            self.count = 1
+        elif self.init:
+            self.total = self.init
+            self.count = 1
+        else:
+            self.total = 0.0
+            self.count = 0
 
     def update(self, value: T.Optional[T.Any]) -> None:
         if value is None:
@@ -19,6 +26,8 @@ class Average:
 
     def get_avg(self) -> T.Optional[float]:
         if self.init is None and self.count == 0:
+            return None
+        if self.count == 0:
             return None
         return self.total / self.count if self.count > 0 else self.total
 
@@ -54,3 +63,23 @@ if __name__ == "__main__":
 
     assert a.get_avg() == 1.5, "avg incorrect"
     assert a.count == len(test_sequence) + 2, "count wrong"
+
+    a.reset(2)
+    assert a.get_avg() == 2, "avg incorrect"
+
+    a.update(1)
+    for i in test_sequence:
+        a.update(i)
+
+    assert a.get_avg() == 1.5, "avg incorrect"
+    assert a.count == len(test_sequence) + 2, "count wrong"
+
+    a.reset()
+    assert a.get_avg() ==2, "avg incorrect"
+
+    a = Average(2)
+    assert a.get_avg() == 2, "avg incorrect"
+    assert a.count == 1, "count wrong"
+
+    a.reset(3)
+    assert a.get_avg() == 3 , "avg incorrect"

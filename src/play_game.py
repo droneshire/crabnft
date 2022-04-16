@@ -195,8 +195,8 @@ def run_bot() -> None:
             downsample_count += 1
             if downsample_count > GAS_DOWNSAMPLE_COUNT:
                 downsample_count = 0
-                avg_gas_avax.reset()
-                avg_gas_gwei.reset()
+                avg_gas_avax.reset(avg_gas_avax.get_avg())
+                avg_gas_gwei.reset(avg_gas_gwei.get_avg())
 
     except KeyboardInterrupt:
         pass
