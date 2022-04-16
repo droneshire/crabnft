@@ -75,11 +75,11 @@ if __name__ == "__main__":
     assert a.count == len(test_sequence) + 2, "count wrong"
 
     a.reset()
-    assert a.get_avg() ==2, "avg incorrect"
+    assert a.get_avg() == 2, "avg incorrect"
 
     a = Average(2)
     assert a.get_avg() == 2, "avg incorrect"
     assert a.count == 1, "count wrong"
 
     a.reset(3)
-    assert a.get_avg() == 3 , "avg incorrect"
+    assert a.get_avg() == 3, "avg incorrect"

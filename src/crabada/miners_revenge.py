@@ -10,6 +10,7 @@ BASE_CHANCE = 7.0
 MP_MODIFIER = 1.25
 CN_MODIFIER = 20.0
 
+
 def calc_miners_revenge(mine: IdleGame) -> float:
     defense_point = get_faction_adjusted_battle_point(mine, is_looting=False)
     attack_point = get_faction_adjusted_battle_point(mine, is_looting=True)
