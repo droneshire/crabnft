@@ -39,6 +39,12 @@ class MiningStrategy(Strategy):
         tx_hash = self.crabada_w3.start_game(team_id)
         tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
 
+        if tx_receipt["status"] != 1:
+            try:
+                logger.print_fail(tx_receipt)
+            except:
+                pass
+
         avax_gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         tus, cra = self._get_rewards_from_tx_receipt(tx_receipt)
         return CrabadaTransaction(
@@ -56,6 +62,12 @@ class MiningStrategy(Strategy):
         logger.print_normal(f"Mine[{game_id}]: Closing game")
         tx_hash = self.crabada_w3.close_game(game_id)
         tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
+
+        if tx_receipt["status"] != 1:
+            try:
+                logger.print_fail(tx_receipt)
+            except:
+                pass
 
         avax_gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         tus, cra = self._get_rewards_from_tx_receipt(tx_receipt)
@@ -79,8 +91,15 @@ class MiningStrategy(Strategy):
         tx_hash = self.crabada_w3.reinforce_defense(game_id, crabada_id, borrow_price)
         tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
 
+        if tx_receipt["status"] != 1:
+            try:
+                logger.print_fail(tx_receipt)
+            except:
+                pass
+
         avax_gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         tus, cra = self._get_rewards_from_tx_receipt(tx_receipt)
+
         return CrabadaTransaction(
             tx_hash,
             "MINE",

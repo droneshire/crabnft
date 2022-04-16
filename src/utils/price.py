@@ -7,6 +7,8 @@ from coinmarketcapapi import CoinMarketCapAPI, CoinMarketCapAPIError
 from web3 import Web3
 from web3.types import Wei
 
+from utils import logger
+
 Tus = T.NewType("Tus", int)
 Cra = T.NewType("Cra", int)
 Avax = T.NewType("Avax", int)

@@ -166,9 +166,12 @@ def run_bot() -> None:
 
             win_percentages = {}
             for k in totals.keys():
-                win_percentages[k] = (
-                    float(totals[k]["wins"]) / (totals[k]["wins"] + totals[k]["losses"]) * 100.0
-                )
+                if totals[k].get("wins", 0) == 0 and totals[k].get("losses", 0) == 0:
+                    win_percentages[k] = 0.0
+                else:
+                    win_percentages[k] = (
+                        float(totals[k]["wins"]) / (totals[k]["wins"] + totals[k]["losses"]) * 100.0
+                    )
             profitability_message = get_profitability_message(
                 prices,
                 avg_gas_avax.get_avg(),
@@ -202,7 +205,7 @@ def run_bot() -> None:
         pass
     except Exception as e:
         stop_message = f"\U0001F980 Crabada Bot Alert \U0001F980\n\n"
-        stop_message += f"@Cashflow: Crabada Bot Stopped \U0000203C\n"
+        stop_message += f"@Cashflow Crabada Bot Stopped \U0000203C\n"
         if alerts_enabled and TWILIO_CONFIG["enable_admin_sms"]:
             stop_message = f"\U0001F980 Crabada Bot Alert \U0001F980\n\n"
             stop_message += f"Crabada Bot Stopped \U0000203C\n"

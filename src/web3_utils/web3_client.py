@@ -259,7 +259,7 @@ class Web3Client:
         """
         Set credentials, must be set before set_node_uri
         """
-        self.user_address = user_address
+        self.user_address = Web3.toChecksumAddress(user_address)
         self.private_key = private_key
         return self
 
