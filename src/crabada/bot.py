@@ -12,6 +12,7 @@ from web3.types import Address, TxReceipt
 
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
+from crabada.miners_revenge import calc_miners_revenge
 from crabada.profitability import GameStats, NULL_STATS
 from crabada.profitability import get_actual_game_profit
 from crabada.strategies.strategy import CrabadaTransaction, GameStage, Strategy
@@ -328,10 +329,11 @@ class CrabadaMineBot:
         write_game_stats(self.user, self.log_dir, self.lifetime_stats, dry_run=self.dry_run)
 
         now = datetime.datetime.now()
-        self.game_stats[team["team_id"]]["timestamp"] = now.strftime("%m/%d/%Y %H:%M:%S")
-        self.game_stats[team["team_id"]]["team_id"] = team["team_id"]
-        self.csv.write(self.game_stats[team["team_id"]])
-        self.game_stats.pop(team["team_id"])
+        self.game_stats[team_id]["timestamp"] = now.strftime("%m/%d/%Y %H:%M:%S")
+        self.game_stats[team_id]["team_id"] = team_id
+        self.game_stats[team_id]["miners_revenge"] = calc_miners_revenge(mine)
+        self.csv.write(self.game_stats[team_id])
+        self.game_stats.pop(team_id)
         self.updated_game_stats = True
 
     def _print_bot_stats(self) -> None:
