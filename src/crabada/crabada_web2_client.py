@@ -25,7 +25,7 @@ class CrabadaWeb2Client:
     BASE_URL = "https://idle-api.crabada.com/public/idle"
 
     # reinforcement stuff
-    N_CRAB_PERCENT = 30.0
+    N_CRAB_PERCENT = 37.0
     REINFORCE_TIME_WINDOW = 60 * (30 - 1)  # 30 minute window + 1 minute buffer
 
     # game facts
@@ -147,6 +147,19 @@ class CrabadaWeb2Client:
         params["looter_address"] = looter_address
         params["status"] = "open"
         return self.list_mines(params)
+
+    def list_available_loots(
+        self,
+        user_address: Address,
+        params: T.Dict[str, T.Any] = {},
+    ) -> T.List[IdleGame]:
+        actual_params = {
+            "can_loot": 1,
+            "looter_address": user_address,
+            "status": "open",
+        }
+        actual_params.update(params)
+        return self.list_mines(params=actual_params)
 
     def list_mines_raw(self, params: T.Dict[str, T.Any] = {}) -> T.Any:
         url = self.BASE_URL + "/mines"

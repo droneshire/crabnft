@@ -771,4 +771,3 @@ class CrabadaMineBot:
         for team in self.game_stats.keys():
             self.game_stats[team]["team_id"] = team
         self.csv.write(self.game_stats)
-        self._print_bot_stats()

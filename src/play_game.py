@@ -2,6 +2,7 @@
 Starts bots for interacting with the Crabada Dapp P2E game
 """
 import argparse
+import copy
 import getpass
 import json
 import logging
@@ -16,6 +17,7 @@ from twilio.rest import Client
 
 from config import COINMARKETCAP_API_TOKEN, GMAIL, IEX_API_TOKEN, TWILIO_CONFIG, USERS
 from crabada.bot import CrabadaMineBot
+from crabada.loot_sniping import LootSnipes
 from crabada.profitability import get_profitability_message
 from utils import discord, email, logger, price, security
 from utils.game_stats import LifetimeGameStats
@@ -72,6 +74,7 @@ def run_bot() -> None:
     webhooks = {
         "HOLDERS": discord.get_discord_hook("HOLDERS"),
         "UPDATES": discord.get_discord_hook("UPDATES"),
+        "LOOT_SNIPE": discord.get_discord_hook("LOOT_SNIPE"),
     }
 
     encrypt_password = ""
@@ -134,6 +137,9 @@ def run_bot() -> None:
 
     alerts_enabled = not args.quiet and not args.dry_run
     reinforcement_backoff = 0
+
+    loot_snipe = LootSnipes(webhooks, args.dry_run)
+
     try:
         while True:
             gross_tus = 0.0
@@ -146,6 +152,8 @@ def run_bot() -> None:
                 avg_reinforce_tus.update(bot.get_avg_reinforce_tus())
                 avg_gas_gwei.update(bot.get_avg_gas_gwei())
                 reinforcement_backoff = bot.get_backoff()
+
+                loot_snipe.check_and_alert(bot.get_config()["address"])
 
                 bot_stats = bot.get_lifetime_stats()
                 for k in totals.keys():
