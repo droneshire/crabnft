@@ -23,7 +23,7 @@ from utils import logger
 from utils.config_types import UserConfig, SmsConfig
 from utils.csv_logger import CsvLogger
 from utils.email import Email, send_email
-from utils.game_stats import LifetimeGameStats, NULL_GAME_STATS, Result
+from utils.game_stats import LifetimeGameStatsLogger, NULL_GAME_STATS, Result
 from utils.game_stats import (
     get_game_stats,
     get_lifetime_stats_file,
@@ -35,6 +35,7 @@ from utils.general import dict_sum, get_pretty_seconds
 from utils.math import Average
 from utils.price import Prices
 from utils.price import is_gas_too_high, wei_to_tus, wei_to_cra_raw, wei_to_tus_raw
+from utils.user import get_alias_from_user
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.tus_web3_client import TusWeb3Client
 from web3_utils.web3_client import web3_transaction
@@ -62,8 +63,7 @@ class CrabadaMineBot:
         self.email: Email = email_account
         self.log_dir: str = log_dir
         self.dry_run: bool = dry_run
-
-        self.time_since_last_alert: T.Optional[float] = None
+        self.address: Address = self.config["address"]
 
         self.crabada_w3: CrabadaWeb3Client = T.cast(
             CrabadaWeb3Client,
@@ -85,18 +85,16 @@ class CrabadaMineBot:
         )
         self.crabada_w2: CrabadaWeb2Client = CrabadaWeb2Client()
 
-        self.address: Address = self.config["address"]
-        self.lifetime_stats: LifetimeGameStats = NULL_GAME_STATS
         self.game_stats: T.Dict[int, GameStat] = dict()
         self.updated_game_stats: bool = True
-
-        csv_header = ["timestamp"] + [k for k in NULL_STATS.keys()] + ["team_id"]
-        csv_file = get_lifetime_stats_file(user, self.log_dir).split(".")[0] + ".csv"
-        logger.print_normal(f"Saving csv to {csv_file}")
-        self.csv = CsvLogger(csv_file, csv_header, dry_run)
+        self.reinforcement_search_backoff: int = 0
+        self.last_mine_start: T.Optional[float] = None
+        self.time_since_last_alert: T.Optional[float] = None
 
         self.prices: Prices = Prices(0.0, 0.0, 0.0)
         self.avg_gas_used: Average = Average()
+        self.avg_reinforce_tus: Average = Average()
+        self.avg_gas_gwei: Average = Average()
 
         self.mining_strategy = STRATEGY_SELECTION[self.config["mining_strategy"]](
             self.address,
@@ -110,19 +108,16 @@ class CrabadaMineBot:
             self.crabada_w3,
             self.config,
         )
-        self.reinforcement_search_backoff: int = 0
-        self.avg_reinforce_tus: Average = Average()
-        self.avg_gas_gwei: Average = Average()
-        self.last_mine_start: T.Optional[float] = None
 
-        if not os.path.isfile(get_lifetime_stats_file(user, self.log_dir)):
-            write_game_stats(self.user, self.log_dir, self.lifetime_stats, dry_run=dry_run)
-        else:
-            game_stats = get_game_stats(self.user, self.log_dir)
-            self.lifetime_stats = update_lifetime_stats_format(game_stats)
-            write_game_stats(self.user, self.log_dir, self.lifetime_stats, dry_run=dry_run)
+        self.alias = get_alias_from_user(self.user)
+        csv_header = ["timestamp"] + [k for k in NULL_STATS.keys()] + ["team_id"]
+        csv_file = get_lifetime_stats_file(self.alias, self.log_dir).split(".")[0] + ".csv"
+        self.csv = CsvLogger(csv_file, csv_header, dry_run)
+        self.stats_logger = LifetimeGameStatsLogger(
+            self.alias, self.log_dir, self.dry_run, verbose=True
+        )
 
-        logger.print_ok_blue(f"Adding bot for user {self.user} with address {self.address}")
+        logger.print_ok_blue(f"Adding bot for user {self.alias} with address {self.address}")
 
         self._print_out_config()
         self._send_email_config_if_needed()
@@ -201,9 +196,9 @@ class CrabadaMineBot:
         if self.dry_run or not self._did_config_change():
             return
 
-        logger.print_warn(f"Config changed for {self.user}, sending config email...")
+        logger.print_warn(f"Config changed for {self.alias}, sending config email...")
 
-        email_message = f"Hello {self.user}!\n"
+        email_message = f"Hello {self.alias}!\n"
         email_message += "Here is your updated bot configuration:\n\n"
         email_message += content
 
@@ -239,10 +234,10 @@ class CrabadaMineBot:
         content += explorer_content
         content += "---\U0001F579  GAME STATS\U0001F579  ---\n"
 
-        for k, v in self.lifetime_stats.items():
+        for k, v in self.stats_logger.lifetime_stats.items():
             if k in ["MINE", "LOOT"]:
                 content += f"{k}:\n"
-                for s, n in self.lifetime_stats[k].items():
+                for s, n in self.stats_logger.lifetime_stats[k].items():
                     content += f"\t{' '.join(s.lower().split('_'))}: {n:.3f}\n"
                 content += "\n"
             else:
@@ -266,7 +261,7 @@ class CrabadaMineBot:
 
         try:
             if do_send_email and self.config["email"]:
-                email_message = f"Hello {self.user}!\n"
+                email_message = f"Hello {self.alias}!\n"
                 email_message += content
                 send_email(
                     self.email,
@@ -288,7 +283,7 @@ class CrabadaMineBot:
             tx,
             team,
             mine,
-            self.lifetime_stats,
+            self.stats_logger.lifetime_stats,
             self.game_stats,
             self.prices,
             self.config["commission_percent_per_mine"],
@@ -326,7 +321,7 @@ class CrabadaMineBot:
             tx_hash=tx.tx_hash,
         )
 
-        write_game_stats(self.user, self.log_dir, self.lifetime_stats, dry_run=self.dry_run)
+        self.stats_logger.write()
 
         now = datetime.datetime.now()
         self.game_stats[team_id]["timestamp"] = now.strftime("%m/%d/%Y %H:%M:%S")
@@ -340,10 +335,10 @@ class CrabadaMineBot:
         logger.print_normal("\n")
         logger.print_bold("--------\U0001F579  GAME STATS\U0001F579  ------")
         logger.print_normal(f"Explorer: https://snowtrace.io/address/{self.config['address']}\n\n")
-        for k, v in self.lifetime_stats.items():
+        for k, v in self.stats_logger.lifetime_stats.items():
             if k in ["MINE", "LOOT"]:
                 logger.print_ok_blue(f"{k}:")
-                for s, n in self.lifetime_stats[k].items():
+                for s, n in self.stats_logger.lifetime_stats[k].items():
                     logger.print_ok_blue(f"  {' '.join(s.lower().split('_'))}: {n:.3f}")
             else:
                 logger.print_ok_blue(f"{' '.join(k.upper().split('_'))}: {v}")
@@ -372,7 +367,7 @@ class CrabadaMineBot:
 
         avax_gas_usd = self.prices.avax_usd * tx.gas
 
-        self.lifetime_stats["avax_gas_usd"] += avax_gas_usd
+        self.stats_logger.lifetime_stats["avax_gas_usd"] += avax_gas_usd
         logger.print_bold(f"Paid {tx.gas} AVAX (${avax_gas_usd:.2f}) in gas")
         return tx.gas
 
@@ -552,8 +547,8 @@ class CrabadaMineBot:
             if tx.did_succeed:
                 logger.print_ok_arrow(f"Successfully reinforced mine {team['game_id']}")
                 self.time_since_last_alert = None
-                self.lifetime_stats[tx.game_type]["tus_net"] -= price_tus
-                self.lifetime_stats[tx.game_type]["tus_reinforcement"] += price_tus
+                self.stats_logger.lifetime_stats[tx.game_type]["tus_net"] -= price_tus
+                self.stats_logger.lifetime_stats[tx.game_type]["tus_reinforcement"] += price_tus
                 self.updated_game_stats = True
                 return True
 
@@ -714,7 +709,7 @@ class CrabadaMineBot:
                 self._check_and_maybe_close_mines(team, mine)
 
     def get_lifetime_stats(self) -> T.Dict[str, T.Any]:
-        return self.lifetime_stats
+        return self.stats_logger.lifetime_stats
 
     def update_prices(
         self,
@@ -743,10 +738,13 @@ class CrabadaMineBot:
     def get_avg_gas_gwei(self) -> T.Optional[float]:
         return self.avg_gas_gwei.get_avg()
 
+    def get_config(self) -> UserConfig:
+        return self.config
+
     def run(self) -> None:
         logger.print_normal("=" * 60)
 
-        logger.print_ok(f"User: {self.user.upper()}")
+        logger.print_ok(f"User: {self.alias.upper()}")
 
         gas_price_gwei = self.crabada_w3.get_gas_price()
         self.avg_gas_gwei.update(gas_price_gwei)
@@ -763,9 +761,13 @@ class CrabadaMineBot:
             self.updated_game_stats = False
             self._print_bot_stats()
 
+        self.stats_logger.write()
+
     def end(self) -> None:
         logger.print_fail(f"Exiting bot for {self.user}...")
-        write_game_stats(self.user, self.log_dir, self.lifetime_stats, dry_run=self.dry_run)
+
+        self.stats_logger.write()
+
         for team in self.game_stats.keys():
             self.game_stats[team]["team_id"] = team
         self.csv.write(self.game_stats)

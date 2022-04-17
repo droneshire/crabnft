@@ -1,4 +1,5 @@
 import copy
+import deepdiff
 import json
 import os
 import typing as T
@@ -6,6 +7,7 @@ from eth_typing import Address
 
 from utils import logger
 from utils.price import Prices, wei_to_cra_raw, wei_to_tus_raw
+from utils.user import get_alias_from_user
 from crabada.profitability import GameStats, Result, NULL_STATS
 from crabada.strategies.strategy import CrabadaTransaction
 from crabada.types import IdleGame, Team
@@ -166,3 +168,109 @@ def write_game_stats(user: str, log_dir: str, game_stats: LifetimeGameStats, dry
             indent=4,
             sort_keys=True,
         )
+
+
+def delta_game_stats(
+    user_a_stats: LifetimeGameStats, user_b_stats: LifetimeGameStats, verbose: bool = False
+) -> LifetimeGameStats:
+    diff = deepdiff.DeepDiff(user_a_stats, user_b_stats)
+    if not diff:
+        return NULL_GAME_STATS
+
+    diffed_stats = copy.deepcopy(NULL_GAME_STATS)
+
+    for item in ["avax_gas_usd"]:
+        diffed_stats[item] = user_a_stats[item] - user_b_stats[item]
+
+    for item in ["commission_tus"]:
+        for k, v in user_a_stats[item].items():
+            diffed_stats[item][k] = v
+
+        for k, v in user_b_stats[item].items():
+            diffed_stats[item][k] = diffed_stats[item].get(k, 0.0) - v
+
+    for game_type in ["MINE", "LOOT"]:
+        for k, v in user_a_stats[game_type].items():
+            diffed_stats[game_type][k] = v
+
+        for k, v in user_b_stats[game_type].items():
+            diffed_stats[game_type][k] = diffed_stats[game_type].get(k, 0.0) - v
+
+    if verbose:
+        logger.print_bold("Subtracting game stats:")
+        logger.print_normal(json.dumps(diffed_stats, indent=4))
+    return diffed_stats
+
+
+def merge_game_stats(
+    user_a_stats: str, user_b_stats: str, log_dir: str, verbose
+) -> LifetimeGameStats:
+    diff = deepdiff.DeepDiff(user_a_stats, user_b_stats)
+    if not diff:
+        return user_a_stats
+
+    merged_stats = copy.deepcopy(NULL_GAME_STATS)
+
+    for item in ["avax_gas_usd"]:
+        merged_stats[item] += user_a_stats[item]
+        merged_stats[item] += user_b_stats[item]
+
+    for item in ["commission_tus"]:
+        for k, v in user_a_stats[item].items():
+            merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
+
+        for k, v in user_b_stats[item].items():
+            merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
+
+    for game_type in ["MINE", "LOOT"]:
+        for k, v in user_a_stats[game_type].items():
+            merged_stats[game_type][k] += v
+
+        for k, v in user_b_stats[game_type].items():
+            merged_stats[game_type][k] += v
+
+    if verbose:
+        logger.print_bold("Merging game stats:")
+        logger.print_normal(json.dumps(merged_stats, indent=4))
+    return merged_stats
+
+
+class LifetimeGameStatsLogger:
+    def __init__(self, user: str, log_dir: str, dry_run: bool = False, verbose: bool = False):
+        self.user = user
+        self.log_dir = log_dir
+
+        self.dry_run = dry_run
+        self.verbose = verbose
+
+        if not os.path.isfile(get_lifetime_stats_file(self.user, self.log_dir)):
+            self.lifetime_stats = copy.deepcopy(NULL_GAME_STATS)
+        else:
+            self.lifetime_stats = update_lifetime_stats_format(
+                get_game_stats(self.user, self.log_dir)
+            )
+
+        write_game_stats(self.user, self.log_dir, self.lifetime_stats, dry_run=dry_run)
+
+        self.last_lifetime_stats = copy.deepcopy(self.lifetime_stats)
+
+    def write(self) -> None:
+        delta_stats = delta_game_stats(
+            self.lifetime_stats, self.last_lifetime_stats, verbose=self.verbose
+        )
+        file_stats = self.read()
+        combined_stats = merge_game_stats(
+            delta_stats, file_stats, self.log_dir, verbose=self.verbose
+        )
+
+        if self.verbose:
+            logger.print_bold(f"Writing stats for {self.user} [alias: {self.user}]")
+
+        write_game_stats(self.user, self.log_dir, combined_stats, dry_run=self.dry_run)
+        self.last_lifetime_stats = copy.deepcopy(self.lifetime_stats)
+
+    def read(self) -> LifetimeGameStats:
+        if self.verbose:
+            logger.print_bold(f"Reading stats for {self.user} [alias: {self.user}]")
+
+        return get_game_stats(self.user, self.log_dir)

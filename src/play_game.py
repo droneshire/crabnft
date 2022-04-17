@@ -150,7 +150,7 @@ def run_bot() -> None:
                 bot_stats = bot.get_lifetime_stats()
                 for k in totals.keys():
                     gross_tus += bot_stats[k]["tus_gross"]
-                    if USERS[bot.user]["should_reinforce"]:
+                    if bot.get_config()["should_reinforce"]:
                         totals[k]["wins"] += bot_stats[k]["game_wins"]
                         totals[k]["losses"] += bot_stats[k]["game_losses"]
 
