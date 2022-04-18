@@ -4,6 +4,7 @@ import typing as T
 from eth_typing import Address
 
 from crabada.crabada_web2_client import CrabadaWeb2Client
+from crabada.factional_advantage import FACTIONAL_ADVANTAGE
 from utils import logger
 
 TARGET_ADDRESSES = [
@@ -56,15 +57,16 @@ class LootSnipes:
         self.loot_snipes = {}
 
     def check_and_alert(self, address: str) -> None:
+        logger.print_ok_blue("Hunting for loot snipes...")
         update_loot_snipes = find_loot_snipe(address, verbose=False)
         for mine, data in update_loot_snipes.items():
             if mine not in self.loot_snipes.keys():
                 page = data["page"]
-                faction = data["faction"]
-                webhook_text = (
-                    f"**Found new loot snipe!**\nMine: {mine} Faction: {faction} Page: {page}"
-                )
-                webhook_text += f"{self.LOOTING_URL}"
+                mine_faction = data["faction"]
+                attack_factions = [f for f, a in FACTIONAL_ADVANTAGE.items() if f in a]
+                webhook_text = f"**Found new loot snipe!**\n"
+                webhook_text += f"Mine: {mine} Faction: {mine_faction} Page: {page}\n"
+                webhook_text += f"Loot with: {' '.join(attack_factions)}\n"
                 logger.print_bold(webhook_text)
                 if not self.dry_run:
                     self.webhooks["LOOT_SNIPE"].send(webhook_text)
