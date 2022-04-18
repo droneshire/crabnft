@@ -114,7 +114,7 @@ class CrabadaMineBot:
         csv_file = get_lifetime_stats_file(self.alias, self.log_dir).split(".")[0] + ".csv"
         self.csv = CsvLogger(csv_file, csv_header, dry_run)
         self.stats_logger = LifetimeGameStatsLogger(
-            self.alias, self.log_dir, self.dry_run, verbose=True
+            self.alias, self.log_dir, self.dry_run, verbose=False
         )
 
         logger.print_ok_blue(f"Adding bot for user {self.alias} with address {self.address}")
@@ -770,4 +770,5 @@ class CrabadaMineBot:
 
         for team in self.game_stats.keys():
             self.game_stats[team]["team_id"] = team
-        self.csv.write(self.game_stats)
+        if self.game_stats:
+            self.csv.write(self.game_stats)

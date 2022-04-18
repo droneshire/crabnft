@@ -10,20 +10,22 @@ from utils import logger
 
 
 class CsvLogger:
-    def __init__(self, csv_file: str, header: T.List[str], dry_run=False) -> None:
+    def __init__(self, csv_file: str, header: T.List[str], dry_run=False, verbose=False) -> None:
         self.csv_file = csv_file
         self.header = header
         self.col_map = {col.lower(): i for i, col in enumerate(header)}
         self.dry_run = dry_run
         self._write_header_if_needed()
+        self.verbose = verbose
 
     def write(self, data: T.Dict[str, T.Any]) -> None:
         if self.dry_run:
             return
 
-        logger.print_bold(
-            f"Writing stats to {self.csv_file}:\nStats:\n{json.dumps(data, indent=4)}"
-        )
+        if self.verbose:
+            logger.print_bold(
+                f"Writing stats to {self.csv_file}:\nStats:\n{json.dumps(data, indent=4)}"
+            )
         with open(self.csv_file, "a") as appendfile:
             csv_writer = csv.writer(appendfile)
 
