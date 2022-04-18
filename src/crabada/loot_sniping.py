@@ -5,6 +5,7 @@ from eth_typing import Address
 
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.factional_advantage import FACTIONAL_ADVANTAGE
+from crabada.types import Faction
 from utils import logger
 
 TARGET_ADDRESSES = [
@@ -34,7 +35,7 @@ def find_loot_snipe(user_address: Address, verbose: bool = False) -> T.Dict[int,
     available_loots = web2.list_available_loots(user_address, params=params)
     target_pages = {}
     for inx, mine in enumerate(available_loots):
-        page = (inx + 1) % 8
+        page = int((inx + 9) / 9)
         faction = mine["faction"].upper()
         if mine["game_id"] in loot_list:
             data = {"page": page, "faction": faction}
@@ -63,7 +64,14 @@ class LootSnipes:
             if mine not in self.loot_snipes.keys():
                 page = data["page"]
                 mine_faction = data["faction"]
-                attack_factions = [f for f, a in FACTIONAL_ADVANTAGE.items() if f in a]
+                if mine_faction == Faction.NO_FACTION:
+                    attack_factions = list(
+                        [k for k in FACTIONAL_ADVANTAGE.keys() if k != Faction.NO_FACTION]
+                    )
+                else:
+                    attack_factions = [
+                        f for f, a in FACTIONAL_ADVANTAGE.items() if mine_faction in a
+                    ]
                 webhook_text = f"**Found new loot snipe!**\n"
                 webhook_text += f"Mine: {mine} Faction: {mine_faction} Page: {page}\n"
                 webhook_text += f"Loot with: {' '.join(attack_factions)}\n"
