@@ -1,4 +1,5 @@
 import copy
+import time
 import typing as T
 
 from eth_typing import Address
@@ -24,6 +25,8 @@ TARGET_ADDRESSES = [
     "0xd5d412a38c5f4be5278860d4820782d4bb9c6351",
 ]
 
+MAX_FAILED_SEARCHES = 4
+
 
 def find_loot_snipe(user_address: Address, verbose: bool = False) -> T.Dict[int, int]:
     web2 = CrabadaWeb2Client()
@@ -33,10 +36,27 @@ def find_loot_snipe(user_address: Address, verbose: bool = False) -> T.Dict[int,
         mines = [m["game_id"] for m in web2.list_my_mines(address)]
         loot_list.extend(mines)
 
-    params = {
-        "limit": 500,
-    }
-    available_loots = web2.list_available_loots(user_address, params=params)
+    available_loots = []
+    empty_calls = 0
+    for page in range(100):
+        params = {
+            "page": page,
+            "limit": 100,
+        }
+        time.sleep(2.0)
+        loots = web2.list_available_loots(user_address, params=params)
+
+        if not loots:
+            empty_calls += 1
+
+        if empty_calls >= MAX_FAILED_SEARCHES:
+            break
+
+        if verbose:
+            logger.print_normal(f"Found {len(loots)} mines...")
+
+        available_loots.extend(loots)
+
     target_pages = {}
     for inx, mine in enumerate(available_loots):
         page = int((inx + 9) / 9)
@@ -49,7 +69,7 @@ def find_loot_snipe(user_address: Address, verbose: bool = False) -> T.Dict[int,
                 logger.print_bold(
                     f"Found target {mine['game_id']} on page {data['page']} faction {data['faction']}"
                 )
-
+    logger.print_normal(f"Found {len(target_pages.keys())} mines")
     return target_pages
 
 
@@ -63,7 +83,7 @@ class LootSnipes:
 
     def check_and_alert(self, address: str) -> None:
         logger.print_ok_blue("Hunting for loot snipes...")
-        update_loot_snipes = find_loot_snipe(address, verbose=False)
+        update_loot_snipes = find_loot_snipe(address, verbose=True)
         for mine, data in update_loot_snipes.items():
             if mine not in self.loot_snipes.keys():
                 page = data["page"]
