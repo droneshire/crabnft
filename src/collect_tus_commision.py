@@ -186,7 +186,7 @@ def collect_tus_commission(
                 f"Attempting to send commission of {commission_tus:.2f} TUS from {user} -> {to_address}..."
             )
             try:
-                tx_hash = tus_w3.transfer_tus(to_address, commission_tus)
+                tx_hash = tus_w3.transfer_tus(to_address, commission)
                 tx_receipt = tus_w3.get_transaction_receipt(tx_hash)
             except:
                 logger.print_fail(f"Failed to collect from {user}")
@@ -218,13 +218,13 @@ def collect_tus_commission(
             message += f"Explorer: https://snowtrace.io/address/{from_address}\n\n"
             message += f"New TUS commission balance: {new_commission} TUS\n"
             logger.print_ok_blue(message)
-            if not dry_run:
-                send_sms_message(encrypt_password, config["email"], config["sms_number"], message)
+            # if not dry_run:
+            #     send_sms_message(encrypt_password, config["email"], config["sms_number"], message)
 
     logger.print_bold(
         f"Collected {sum([c for _, c in total_stats['total_commission_tus'].items()])} TUS in commission!!!"
     )
-
+    return
     if dry_run:
         return
 

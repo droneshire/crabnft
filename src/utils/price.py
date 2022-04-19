@@ -62,6 +62,8 @@ def get_avax_price_usd(api_token: str, dry_run: bool = False) -> T.Optional[floa
 
 
 def get_token_price_usd(api_token: str, symbol: str, dry_run: bool = False) -> T.Optional[float]:
+    if dry_run:
+        return 1.0
     try:
         data = CoinMarketCapAPI(api_key=api_token).cryptocurrency_info(symbol=symbol).data
         description = data[symbol]["description"]

@@ -356,7 +356,7 @@ class CrabadaMineBot:
         message = f"Unable to complete bot transaction due to insufficient gas \U000026FD!\n"
         message += f"Please add AVAX to your wallet ASAP to avoid delay in mining!\n"
         logger.print_fail(message)
-        self._send_status_update(True, True, message)
+        self._send_status_update(self.config["get_sms_updates_alerts"], True, message)
         self.time_since_last_alert = now
 
     def _calculate_and_log_gas_price(self, tx: CrabadaTransaction) -> float:
@@ -494,8 +494,6 @@ class CrabadaMineBot:
             logger.print_ok_blue(
                 f"Adjusting reinforcement backoff to {self.reinforcement_search_backoff}"
             )
-            # back off by 5 in the tavern every failure
-            time.sleep(1.0)
 
     def _reinforce_with_crab(
         self,

@@ -54,6 +54,11 @@ NULL_STATS = GameStats(
     miners_revenge=0.0,
 )
 
+STATIC_WIN_PERCENTAGES = {
+    "MINE": 40.0,
+    "LOOT": 60.0,
+}
+
 
 class Scenarios:
     Loot = "LOOT"
@@ -209,16 +214,17 @@ def get_expected_game_profit(
     avg_gas_price_avax: float,
     avg_reinforce_tus: float,
     win_percent: float,
+    commission_percent: float,
     do_reinforce: bool,
     verbose: bool = False,
 ) -> float:
     revenue_tus = get_expected_tus(game_type, prices, win_percent)
     avg_gas_per_game_avax = avg_gas_price_avax * (4 if do_reinforce else 2)
     avg_gas_per_game_tus = prices.avax_to_tus(avg_gas_per_game_avax)
-
     reinforcement_per_game_tus = 2.0 * avg_reinforce_tus if do_reinforce else 0.0
+    commission_tus = (commission_percent / 100.0) * revenue_tus
 
-    profit_tus = revenue_tus - avg_gas_per_game_tus - reinforcement_per_game_tus
+    profit_tus = revenue_tus - avg_gas_per_game_tus - reinforcement_per_game_tus - commission_tus
     if verbose:
         logger.print_normal(
             f"[{game_type}]: Revenue: {revenue_tus}, Gas: {avg_gas_per_game_tus}, Reinforce: {reinforcement_per_game_tus}, Profit: {profit_tus}"
@@ -260,12 +266,20 @@ def is_idle_game_transaction_profitable(
     avg_gas_price_avax: float,
     avg_reinforce_tus: float,
     win_percent: float,
+    commission_percent: float,
     do_reinforce: bool,
     verbose: bool = False,
 ) -> bool:
     return (
         get_expected_game_profit(
-            game_type, prices, avg_gas_price_avax, avg_reinforce_tus, win_percent, do_reinforce
+            game_type,
+            prices,
+            avg_gas_price_avax,
+            avg_reinforce_tus,
+            win_percent,
+            commission_percent,
+            do_reinforce,
+            verbose=verbose,
         )
         > 0.0
     )
@@ -277,7 +291,9 @@ def get_profitability_message(
     gas_price_gwei: float,
     avg_reinforce_tus: float,
     win_percentages: T.Dict[str, float],
+    commission_percent: float = 0.0,
     verbose: bool = False,
+    use_static_percents: bool = True,
 ) -> str:
     PROFIT_HYSTERESIS = 10
 
@@ -292,14 +308,18 @@ def get_profitability_message(
         "cra_usd": prices.cra_usd,
     }
 
+    percentages = {}
+    if use_static_percents:
+        percentages = STATIC_WIN_PERCENTAGES
+    else:
+        percentages = win_percentages
+
     message = "**Profitability Update**\n"
     message += "{}\t\t{}\n".format(f"**Avg Tx Gas \U000026FD**:", f"{avg_gas_avax:.5f} AVAX")
     message += "{}\t\t{}\n".format(f"**Avg Gas Price \U000026FD**:", f"{gas_price_gwei:.6f} gwei")
+    message += "{}\t{}\n".format(f"**Avg Mining Win % \U0001F3C6**:", f"{percentages['MINE']:.2f}%")
     message += "{}\t{}\n".format(
-        f"**Avg Mining Win % \U0001F3C6**:", f"{win_percentages['MINE']:.2f}%"
-    )
-    message += "{}\t{}\n".format(
-        f"**Avg Looting Win % \U0001F480**:", f"{win_percentages['LOOT']:.2f}%"
+        f"**Avg Looting Win % \U0001F480**:", f"{percentages['LOOT']:.2f}%"
     )
     message += "{}\t{}\n\n".format(
         f"**Avg Reinforce Cost \U0001F4B0**:", f"{avg_reinforce_tus:.2f} TUS"
@@ -327,9 +347,9 @@ def get_profitability_message(
     csv = csv_logger.CsvLogger(csv_file, header)
     for game in REWARDS_TUS.keys():
         if game in LOOT_SCENARIOS:
-            win_percent = win_percentages["LOOT"]
+            win_percent = percentages["LOOT"]
         else:
-            win_percent = win_percentages["MINE"]
+            win_percent = percentages["MINE"]
 
         if game == Scenarios.TavernThreeMpCrabs:
             profit_tus = avg_reinforce_tus * 3 - prices.avax_to_tus(avg_gas_avax) / 6
@@ -337,7 +357,13 @@ def get_profitability_message(
             do_reinforce = game in REINFORCE_SCENARIOS
             reinforce_tus = avg_reinforce_tus if game not in SELF_REINFORCE_SCENARIOS else 0.0
             profit_tus = get_expected_game_profit(
-                game, prices, avg_gas_avax, reinforce_tus, win_percent, do_reinforce
+                game,
+                prices,
+                avg_gas_avax,
+                reinforce_tus,
+                win_percent,
+                commission_percent,
+                do_reinforce,
             )
 
         games_per_4_hrs = NORMALIZED_TIME / REWARDS_TUS[game]["time_normalized"]

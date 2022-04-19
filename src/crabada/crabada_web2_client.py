@@ -24,6 +24,21 @@ class CrabadaWeb2Client:
 
     BASE_URL = "https://idle-api.crabada.com/public/idle"
 
+    BROWSER_HEADERS = {
+        "authority": "idle-api.crabada.com",
+        "accept": "application/json, text/plain, */*",
+        "accept-language": "en-GB,en-US;q=0.9,en;q=0.8",
+        "cache-control": "no-cache",
+        "origin": "https://play.crabada.com",
+        "pragma": "no-cache",
+        "referer": "https://play.crabada.com/",
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "same-site",
+        "sec-gpc": "1",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.79 Safari/537.36",
+    }
+
     # reinforcement stuff
     N_CRAB_PERCENT = 37.0
     REINFORCE_TIME_WINDOW = 60 * (30 - 1)  # 30 minute window + 1 minute buffer
@@ -38,6 +53,16 @@ class CrabadaWeb2Client:
 
     MAX_BP_NORMAL_CRAB = 237
 
+    def _get_request(self, url: str, params: T.Dict[str, T.Any] = {}) -> T.Any:
+        try:
+            return requests.request(
+                "GET", url, params=params, headers=self.BROWSER_HEADERS, timeout=5.0
+            ).json()
+        except KeyboardInterrupt:
+            raise
+        except:
+            return {}
+
     def get_mine(self, mine_id: int, params: T.Dict[str, T.Any] = {}) -> IdleGame:
         """Get information from the given mine"""
         res = self.get_mine_raw(mine_id, params)
@@ -48,12 +73,7 @@ class CrabadaWeb2Client:
 
     def get_mine_raw(self, mine_id: int, params: T.Dict[str, T.Any] = {}) -> T.Any:
         url = self.BASE_URL + "/mine/" + str(mine_id)
-        try:
-            return requests.request("GET", url, params=params, timeout=5.0).json()
-        except KeyboardInterrupt:
-            raise
-        except:
-            return {}
+        return self._get_request(url, params)
 
     def list_mines(self, params: T.Dict[str, T.Any] = {}) -> T.List[IdleGame]:
         """
@@ -91,12 +111,7 @@ class CrabadaWeb2Client:
             "limit": self.CRAB_LIMIT,
         }
         actual_params.update(params)
-        try:
-            return requests.request("GET", url, params=actual_params, timeout=5.0).json()
-        except KeyboardInterrupt:
-            raise
-        except:
-            return {}
+        return self._get_request(url, actual_params)
 
     def list_crabs_in_game_raw(
         self, user_address: Address, params: T.Dict[str, T.Any] = {}
@@ -109,12 +124,7 @@ class CrabadaWeb2Client:
             "order": "desc",
         }
         actual_params.update(params)
-        try:
-            return requests.request("GET", url, params=actual_params, timeout=5.0).json()
-        except KeyboardInterrupt:
-            raise
-        except:
-            return {}
+        return self._get_request(url, actual_params)
 
     def list_my_mines(
         self, user_address: Address, params: T.Dict[str, T.Any] = {}
@@ -168,12 +178,7 @@ class CrabadaWeb2Client:
             "page": 1,
         }
         actual_params.update(params)
-        try:
-            return requests.request("GET", url, params=actual_params, timeout=5.0).json()
-        except KeyboardInterrupt:
-            raise
-        except:
-            return {}
+        return self._get_request(url, actual_params)
 
     def get_team(self) -> None:
         raise Exception("The team route does not exit on the server!")
@@ -209,12 +214,7 @@ class CrabadaWeb2Client:
         url = self.BASE_URL + "/teams"
         actual_params = {"limit": self.TEAM_AND_MINE_LIMIT, "page": 1, "user_address": user_address}
         actual_params.update(params)
-        try:
-            return requests.request("GET", url, params=actual_params, timeout=5.0).json()
-        except KeyboardInterrupt:
-            raise
-        except:
-            return {}
+        return self._get_request(url, actual_params)
 
     def list_high_mp_crabs_for_lending(
         self, params: T.Dict[str, T.Any] = {}
@@ -345,12 +345,7 @@ class CrabadaWeb2Client:
             "order": "asc",
         }
         actual_params.update(params)
-        try:
-            return requests.request("GET", url, params=actual_params, timeout=5.0).json()
-        except KeyboardInterrupt:
-            raise
-        except:
-            return {}
+        return self._get_request(url, actual_params)
 
     @staticmethod
     def _get_battle_points(mine: IdleGame) -> T.Tuple[int, int]:

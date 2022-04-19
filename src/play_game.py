@@ -15,7 +15,7 @@ import typing as T
 from discord import Webhook
 from twilio.rest import Client
 
-from config import COINMARKETCAP_API_TOKEN, GMAIL, IEX_API_TOKEN, TWILIO_CONFIG, USERS
+from config import COINMARKETCAP_API_TOKEN, GMAIL, USER_GROUPS, IEX_API_TOKEN, TWILIO_CONFIG, USERS
 from crabada.bot import CrabadaMineBot
 from crabada.loot_sniping import LootSnipes
 from crabada.profitability import get_profitability_message
@@ -38,6 +38,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--quiet", action="store_true", help="Disable alerts")
     parser.add_argument("--log-level", choices=["INFO", "DEBUG", "ERROR", "NONE"], default="INFO")
     parser.add_argument("--log-dir", default=log_dir)
+    parser.add_argument("--groups", nargs="+", default=USER_GROUPS)
     return parser.parse_args()
 
 
@@ -87,6 +88,10 @@ def run_bot() -> None:
 
     bots = []
     for user, config in USERS.items():
+        if config["group"] not in [int(i) for i in args.groups]:
+            logger.print_warn(f"Skipping {user} in group {config['group']}...")
+            continue
+
         crabada_key = (
             ""
             if not encrypt_password
@@ -186,7 +191,9 @@ def run_bot() -> None:
                 avg_gas_gwei.get_avg(),
                 avg_reinforce_tus.get_avg(),
                 win_percentages,
+                commission_percent=0.0,
                 verbose=True,
+                use_static_percents=True,
             )
 
             now = time.time()
@@ -196,7 +203,8 @@ def run_bot() -> None:
 
             if alerts_enabled and now - last_discord_update > DISCORD_UPDATE_TIME:
                 last_discord_update = now
-                webhook_text = f"\U0001F980\t**Total TUS mined by bot: {int(gross_tus):,} TUS**\n"
+                groups = ", ".join(args.groups)
+                webhook_text = f"\U0001F980\t**Total TUS mined by groups {groups} bot: {int(gross_tus):,} TUS**\n"
                 for k in totals.keys():
                     webhook_text += f"\U0001F916\t**Bot {k.lower()} win percentage: {win_percentages[k]:.2f}%**\n"
                 total_users, total_teams = get_users_teams()

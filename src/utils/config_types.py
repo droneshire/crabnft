@@ -18,6 +18,7 @@ class SmsConfig(T.TypedDict):
 
 
 class UserConfig(T.TypedDict):
+    group: int
     crabada_key: str
     address: Address
     mining_teams: T.Dict[int, int]
@@ -35,5 +36,6 @@ class UserConfig(T.TypedDict):
     email: str
     get_sms_updates: bool
     get_sms_updates_loots: bool
+    get_sms_updates_alerts: bool
     get_email_updates: bool
     should_reinforce: bool
