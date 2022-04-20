@@ -159,7 +159,7 @@ class LootSnipes:
                     embed.set_thumbnail(url=FACTION_ICON_URLS[mine_faction])
                     webhook.add_embed(embed)
                     self.sent_webhooks[mine] = webhook.execute()
-                time.sleep(0.5)
+                time.sleep(1.0)
 
         self.loot_snipes.update(update_loot_snipes)
 

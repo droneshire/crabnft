@@ -41,11 +41,14 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def setup_log(log_level: str, log_dir: str) -> None:
+def setup_log(log_level: str, log_dir: str, id_string: str) -> None:
     if log_level == "NONE":
         return
 
-    log_name = time.strftime("%Y_%m_%d__%H_%M_%S", time.localtime(time.time())) + "_crabada.log"
+    log_name = (
+        time.strftime("%Y_%m_%d__%H_%M_%S", time.localtime(time.time()))
+        + f"_crabada_{id_string}.log"
+    )
     log_file = os.path.join(log_dir, log_name)
     logging.basicConfig(
         filename=log_file,
@@ -67,7 +70,11 @@ def get_users_teams() -> T.Tuple[int, int]:
 def run_bot() -> None:
     args = parse_args()
 
-    setup_log(args.log_level, args.log_dir)
+    if len(args.groups) == 1:
+        id_string = str(args.groups[0])
+    else:
+        id_string = "_".join(args.groups)
+    setup_log(args.log_level, args.log_dir, id_string)
 
     sms_client = Client(TWILIO_CONFIG["account_sid"], TWILIO_CONFIG["account_auth_token"])
 
@@ -142,6 +149,9 @@ def run_bot() -> None:
     alerts_enabled = not args.quiet and not args.dry_run
     reinforcement_backoff = 0
 
+    # assume only group 1 can post updates
+    should_post_updates = 1 in args.groups
+
     try:
         while True:
             gross_tus = 0.0
@@ -175,7 +185,7 @@ def run_bot() -> None:
                     last_price_update = now
 
             logger.print_bold(
-                f"Took {get_pretty_seconds(int(time.time() - start_of_loop))} to get through all {len(USERS.keys())} players"
+                f"Took {get_pretty_seconds(int(time.time() - start_of_loop))} to get through all {len(bots)} players"
             )
             win_percentages = {}
             for k in totals.keys():
@@ -195,8 +205,17 @@ def run_bot() -> None:
                 verbose=True,
                 use_static_percents=True,
                 log_stats=True,
-                group=None if len(args.groups) > 1 else args.groups,
+                group=id_string,
             )
+
+            downsample_count += 1
+            if downsample_count > GAS_DOWNSAMPLE_COUNT:
+                downsample_count = 0
+                avg_gas_avax.reset(avg_gas_avax.get_avg())
+                avg_gas_gwei.reset(avg_gas_gwei.get_avg())
+
+            if not should_post_updates:
+                continue
 
             now = time.time()
             if alerts_enabled and now - last_profitability_update > PROFITABILITY_UPDATE_TIME:
@@ -212,12 +231,6 @@ def run_bot() -> None:
                 total_users, total_teams = get_users_teams()
                 message += f"**Users: {total_users} Teams: {total_teams}**\n"
                 logger.print_normal(message)
-
-            downsample_count += 1
-            if downsample_count > GAS_DOWNSAMPLE_COUNT:
-                downsample_count = 0
-                avg_gas_avax.reset(avg_gas_avax.get_avg())
-                avg_gas_gwei.reset(avg_gas_gwei.get_avg())
 
     except KeyboardInterrupt:
         pass

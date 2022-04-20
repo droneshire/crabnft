@@ -752,8 +752,11 @@ class CrabadaMineBot:
 
         self._print_mine_loot_status()
         self._check_and_maybe_close()
+        time.sleep(2.0)
         self._check_and_maybe_start_mines()
+        time.sleep(2.0)
         self._check_and_maybe_reinforce()
+        time.sleep(2.0)
 
         if self.updated_game_stats:
             self.updated_game_stats = False
