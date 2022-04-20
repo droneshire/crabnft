@@ -112,7 +112,7 @@ def find_loot_snipe(
             target_pages[mine["game_id"]] = data
 
             if verbose:
-                logger.normal(
+                logger.print_normal(
                     f"Found target {mine['game_id']} on page {data['page']} faction {data['faction']}"
                 )
     logger.print_ok_arrow(f"Found {len(target_pages.keys())} snipes")
@@ -125,41 +125,72 @@ class LootSnipes:
     def __init__(self, webhook_url: str, dry_run: bool = False):
         self.dry_run = dry_run
         self.loot_snipes = {}
-        self.webhook_url = webhook_url
-        self.sent_webhooks = {}
+        self.url = webhook_url
+        self.webhooks = {}
+
+    def delete_all_messages(self) -> None:
+        for _, hook in self.webhooks.items():
+            try:
+                hook["webhook"].execute(remove_embeds=True)
+                hook["webhook"].delete(hook["sent"])
+            except:
+                pass
+        self.webhooks = {}
+
+    def _get_embed(
+        self, attack_factions: T.List[str], mine_faction: str, mine: int, page: int
+    ) -> None:
+        embed = DiscordEmbed(
+            title=f"MINE {mine}",
+            description=f"{', '.join(attack_factions)}\n",
+            color=FACTION_COLORS[mine_faction].value,
+        )
+        embed.add_embed_field(name="Mine", value=mine_faction.upper())
+        embed.add_embed_field(name="Page", value=page)
+        embed.set_thumbnail(url=FACTION_ICON_URLS[mine_faction])
+        return embed
 
     def check_and_alert(self, address: str) -> None:
         logger.print_ok_blue("Hunting for loot snipes...")
         update_loot_snipes, available_loots = find_loot_snipe(address, verbose=True)
         for mine, data in update_loot_snipes.items():
-            if mine not in self.loot_snipes.keys():
-                page = data["page"]
-                mine_faction = data["faction"]
-                if mine_faction == Faction.NO_FACTION:
-                    attack_factions = list(
-                        [k for k in FACTIONAL_ADVANTAGE.keys() if k != Faction.NO_FACTION]
-                    )
-                else:
-                    attack_factions = [
-                        f for f, a in FACTIONAL_ADVANTAGE.items() if mine_faction in a
-                    ]
-                context = f"MINE: {mine} Faction: {mine_faction} Page: {page}\n"
-                context += f"Loot with: {' '.join(attack_factions)}\n"
-                logger.print_bold(context)
+            page = data["page"]
+            mine_faction = data["faction"]
 
-                if not self.dry_run:
-                    webhook = DiscordWebhook(url=self.webhook_url)
-                    embed = DiscordEmbed(
-                        title=f"MINE {mine}",
-                        description=f"Page: {page}\n",
-                        color=FACTION_COLORS[mine_faction].value,
-                    )
-                    embed.add_embed_field(name="Mine", value=mine_faction.upper())
-                    embed.add_embed_field(name="Attack", value=", ".join(attack_factions))
-                    embed.set_thumbnail(url=FACTION_ICON_URLS[mine_faction])
-                    webhook.add_embed(embed)
-                    self.sent_webhooks[mine] = webhook.execute()
-                time.sleep(1.0)
+            if mine_faction == Faction.NO_FACTION:
+                attack_factions = ["ANY"]
+            else:
+                attack_factions = [f for f, a in FACTIONAL_ADVANTAGE.items() if mine_faction in a]
+
+            if mine in self.loot_snipes.keys():
+                old_page = self.loot_snipes[mine]["page"]
+                if page == old_page:
+                    continue
+                elif mine in self.webhooks:
+                    logger.print_normal(f"Updating page for mine {mine}, {old_page} -> {page}")
+                    embed = self._get_embed(attack_factions, mine_faction, mine, page)
+                    self.webhooks[mine]["webhook"].add_embed(embed)
+                    try:
+                        response = self.webhooks[mine]["webhook"].edit(self.webhooks[mine]["sent"])
+                        self.webhooks[mine]["sent"] = response
+                    except:
+                        logger.print_warn("failed to edit webhook")
+                continue
+
+            context = f"MINE: {mine} Faction: {mine_faction} Page: {page}\n"
+            context += f"Loot with: {' '.join(attack_factions)}\n"
+            logger.print_bold(context)
+
+            webhook = DiscordWebhook(url=self.url, rate_limit_retry=True)
+            embed = self._get_embed(attack_factions, mine_faction, mine, page)
+            webhook.add_embed(embed)
+            try:
+                self.webhooks[mine] = {}
+                self.webhooks[mine]["sent"] = webhook.execute()
+                self.webhooks[mine]["webhook"] = webhook
+            except:
+                logger.print_warn("failed to send webhook")
+            time.sleep(3.0)
 
         self.loot_snipes.update(update_loot_snipes)
 
@@ -167,7 +198,9 @@ class LootSnipes:
 
         for mine in mark_for_delete:
             logger.print_normal(f"Deleting mine {mine} from cache")
-            webhook = DiscordWebhook(url=self.webhook_url)
-            webhook.delete(self.sent_webhooks[mine])
-            del self.sent_webhooks[mine]
+
             del self.loot_snipes[mine]
+
+            if mine in self.sent_webhooks:
+                self.webhooks[mine]["webhook"].delete(self.webhooks[mine]["sent"])
+                del self.webhooks[mine]

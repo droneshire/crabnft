@@ -21,7 +21,7 @@ FACTIONAL_ADVANTAGE = {
 FACTION_ICON_URLS = {
     Faction.ABYSS: "https://drive.google.com/uc?export=view&id=1TaRYPXPjSbJvY83Z__05U8sb9nY6y76O",
     Faction.FAERIE: "https://drive.google.com/uc?export=view&id=1g-dKGur0Dt6XvVNKLneTSL9hTI7iCL6e",
-    Faction.LUX: "https://drive.google.com/uc?export=view&id=1AhNDiVi7SLWHkg_am1q5Ml9FNLrkGLY6",
+    Faction.LUX: "https://drive.google.com/uc?export=view&id=1L192vnT4hbwlgFxr0HIF9D22RuBNimpz",
     Faction.MACHINE: "https://drive.google.com/uc?export=view&id=1BBNCTZa2SAJHnn5Jy8d3ekJTeyflV2A8",
     Faction.ORE: "https://drive.google.com/uc?export=view&id=13PyQF-az6REb_ZRoVdmoKSrS4SMPKzAa",
     Faction.TRENCH: "https://drive.google.com/uc?export=view&id=1cr23fk1onoHw4o63fziB2Djucijfdo7E",
@@ -30,7 +30,7 @@ FACTION_ICON_URLS = {
 
 
 FACTION_COLORS = {
-    Faction.ABYSS: Color.purple,
+    Faction.ABYSS: Color.purple(),
     Faction.FAERIE: Color.green(),
     Faction.LUX: Color.gold(),
     Faction.MACHINE: Color.blue(),
