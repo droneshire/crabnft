@@ -11,8 +11,11 @@ def main() -> None:
     while True:
         try:
             sniper.check_and_alert(USERS["ROSS"]["address"])
-        finally:
+        except KeyboardInterrupt:
             sniper.delete_all_messages()
+            return
+        except:
+            pass
         time.sleep(20.0)
 
 

@@ -67,12 +67,14 @@ UNVALIDATED_ADDRESSES = [
     "0xfcfa6885830f508f6efb78bdfad1e299cb56d022",
 ]
 
+MAX_PAGE_DEPTH = 50
+
 
 def get_available_loots(user_address: Address, verbose: bool = False) -> T.List[T.Any]:
     web2 = CrabadaWeb2Client()
 
     available_loots = []
-    for page in range(1, 100):
+    for page in range(1, 15):
         params = {
             "page": page,
             "limit": 100,
@@ -128,6 +130,7 @@ class LootSnipes:
         self.snipes = {}
 
     def delete_all_messages(self) -> None:
+        logger.print_fail("Deleting all messages")
         for _, hook in self.snipes.items():
             try:
                 hook["webhook"].execute(remove_embeds=True)
@@ -164,20 +167,21 @@ class LootSnipes:
             if mine in self.snipes.keys():
                 old_page = self.snipes[mine]["page"]
                 if page == old_page:
+                    logger.print_ok_blue(f"Skipping {mine} since already in cache")
                     continue
-                elif mine in self.snipes:
-                    logger.print_normal(f"Updating page for mine {mine}, {old_page} -> {page}")
-                    self.snipes[mine]["webhook"].add_embed(
-                        self._get_embed(attack_factions, mine_faction, mine, page)
+
+                logger.print_normal(f"Updating page for mine {mine}, {old_page} -> {page}")
+                self.snipes[mine]["webhook"].add_embed(
+                    self._get_embed(attack_factions, mine_faction, mine, page)
+                )
+                try:
+                    self.snipes[mine]["sent"] = self.snipes[mine]["webhook"].edit(
+                        self.snipes[mine]["sent"]
                     )
-                    try:
-                        self.snipes[mine]["sent"] = self.snipes[mine]["webhook"].edit(
-                            self.snipes[mine]["sent"]
-                        )
-                        self.snipes[mine]["page"] = page
-                    except:
-                        logger.print_warn("failed to edit webhook")
-                    time.sleep(1.0)
+                    self.snipes[mine]["page"] = page
+                except:
+                    logger.print_warn("failed to edit webhook")
+                time.sleep(1.0)
                 continue
 
             context = f"MINE: {mine} Faction: {mine_faction} Page: {page}\n"
@@ -195,7 +199,8 @@ class LootSnipes:
                 self.snipes[mine]["faction"] = mine_faction
             except:
                 logger.print_warn("failed to send webhook")
-            time.sleep(3.0)
+
+            time.sleep(4.0)
 
         mark_for_delete = [mine for mine in self.snipes.keys() if mine not in available_loots]
 
