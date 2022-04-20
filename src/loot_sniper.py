@@ -10,7 +10,7 @@ def main() -> None:
     sniper = LootSnipes(webhook_url=DISCORD_WEBHOOK_URL["LOOT_SNIPE"])
     while True:
         sniper.check_and_alert(USERS["ROSS"]["address"])
-        time.sleep(60.0)
+        time.sleep(20.0)
 
 
 if __name__ == "__main__":

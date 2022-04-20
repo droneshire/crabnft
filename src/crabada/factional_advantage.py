@@ -39,6 +39,7 @@ FACTION_COLORS = {
     Faction.NO_FACTION: Color.light_grey(),
 }
 
+
 def get_bp_mp_from_crab(crab: TeamMember) -> T.Tuple[int, int]:
     bp = crab["hp"] + crab["damage"] + crab["armor"]
     mp = crab["speed"] + crab["critical"]

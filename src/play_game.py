@@ -25,7 +25,7 @@ from utils.math import Average
 from utils.price import get_avax_price_usd, get_token_price_usd
 
 PRICE_UPDATE_TIME = 60.0 * 30.0
-DISCORD_UPDATE_TIME = 60.0 * 60.0 * 3
+BOT_TOTALS_UPDATE = 60.0 * 60.0 * 3
 PROFITABILITY_UPDATE_TIME = 60.0 * 10.0
 GAS_DOWNSAMPLE_COUNT = 3
 
@@ -201,15 +201,15 @@ def run_bot() -> None:
                 last_profitability_update = now
                 webhooks["UPDATES"].send(profitability_message)
 
-            if alerts_enabled and now - last_discord_update > DISCORD_UPDATE_TIME:
+            if alerts_enabled and now - last_discord_update > BOT_TOTALS_UPDATE:
                 last_discord_update = now
                 groups = ", ".join(args.groups)
-                webhook_text = f"\U0001F980\t**Total TUS mined by groups {groups} bot: {int(gross_tus):,} TUS**\n"
+                message = f"\U0001F980\t**Total TUS mined by groups {groups} bot: {int(gross_tus):,} TUS**\n"
                 for k in totals.keys():
-                    webhook_text += f"\U0001F916\t**Bot {k.lower()} win percentage: {win_percentages[k]:.2f}%**\n"
+                    message += f"\U0001F916\t**Bot {k.lower()} win percentage: {win_percentages[k]:.2f}%**\n"
                 total_users, total_teams = get_users_teams()
-                webhook_text += f"**Users: {total_users} Teams: {total_teams}**\n"
-                webhooks["HOLDERS"].send(webhook_text)
+                message += f"**Users: {total_users} Teams: {total_teams}**\n"
+                logger.print_normal(message)
 
             downsample_count += 1
             if downsample_count > GAS_DOWNSAMPLE_COUNT:
