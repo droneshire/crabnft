@@ -33,9 +33,7 @@ TARGET_ADDRESSES = [
     "0xed6e6a787fcfab544592cedab8ed477295927e0f",
     "0x426fF99B3F0c22dC130179656385bB4a4a4A0f3f",
     "0xb14b8b1e6ef554a4643b359d04188982cc4bd32c",
-]
-
-UNVALIDATED_ADDRESSES = [
+    # UNVALIDATED_ADDRESSES
     "0xe7679a598b476af9bbf61fa22d9e4edbf74a6c1f",
     "0xc7037680db9bc95dccf7616cf413ad798ddf9d86",
     "0x1c1ecf896340f69626d926d5426ae4686a5576e0",
@@ -105,6 +103,9 @@ def find_loot_snipe(
 
     available_loots = get_available_loots(user_address, verbose)
 
+    if verbose:
+        logger.print_normal(f"Checking against {len(loot_list)} suspected no reinforce mines...")
+
     target_pages = {}
     for inx, mine in enumerate(available_loots):
         page = int((inx + 9) / 9)
@@ -124,8 +125,8 @@ def find_loot_snipe(
 class LootSnipes:
     LOOTING_URL = "https://play.crabada.com/mine/start-looting"
 
-    def __init__(self, webhook_url: str, dry_run: bool = False):
-        self.dry_run = dry_run
+    def __init__(self, webhook_url: str, verbose: bool = False):
+        self.verbose = verbose
         self.url = webhook_url
         self.snipes = {}
 
@@ -153,7 +154,7 @@ class LootSnipes:
 
     def check_and_alert(self, address: str) -> None:
         logger.print_ok_blue("Hunting for loot snipes...")
-        update_loot_snipes, available_loots = find_loot_snipe(address, verbose=True)
+        update_loot_snipes, available_loots = find_loot_snipe(address, verbose=self.verbose)
         for mine, data in update_loot_snipes.items():
             page = data["page"]
             mine_faction = data["faction"]

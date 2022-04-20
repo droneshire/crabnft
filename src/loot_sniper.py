@@ -7,16 +7,17 @@ from utils.discord import DISCORD_WEBHOOK_URL
 
 
 def main() -> None:
-    sniper = LootSnipes(webhook_url=DISCORD_WEBHOOK_URL["LOOT_SNIPE"])
+    sniper = LootSnipes(webhook_url=DISCORD_WEBHOOK_URL["LOOT_SNIPE"], verbose=True)
     while True:
-        try:
-            sniper.check_and_alert(USERS["ROSS"]["address"])
-        except KeyboardInterrupt:
-            sniper.delete_all_messages()
-            return
-        except:
-            pass
-        time.sleep(20.0)
+        for _, config in USERS.items():
+            try:
+                sniper.check_and_alert(config["address"])
+            except KeyboardInterrupt:
+                sniper.delete_all_messages()
+                return
+            except:
+                pass
+            time.sleep(20.0)
 
 
 if __name__ == "__main__":
