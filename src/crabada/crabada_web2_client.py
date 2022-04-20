@@ -516,8 +516,10 @@ class CrabadaWeb2Client:
 
     @staticmethod
     def loot_past_settle_time(mine: IdleGame) -> bool:
-        time_since_start = time.time() - mine["start_time"]
-
+        time_since_start = 0.0
+        for p in mine["process"]:
+            if p["action"] == "attack":
+                time_since_start = time.time() - p["transaction_time"]
         return time_since_start > CrabadaWeb2Client.MIN_LOOT_GAME_TIME
 
     @staticmethod
