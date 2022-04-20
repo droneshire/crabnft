@@ -13,6 +13,7 @@ cssutils==2.4.0
 cytoolz==0.11.2
 deepdiff==5.8.0
 discord==1.7.3
+discord-webhook==0.15.0
 discord.py==1.7.3
 eth-abi==2.1.1
 eth-account==0.5.7

@@ -2,10 +2,11 @@ import copy
 import time
 import typing as T
 
+from discord_webhook import DiscordEmbed, DiscordWebhook
 from eth_typing import Address
 
 from crabada.crabada_web2_client import CrabadaWeb2Client
-from crabada.factional_advantage import FACTIONAL_ADVANTAGE
+from crabada.factional_advantage import FACTIONAL_ADVANTAGE, FACTION_ICON_URLS, FACTION_COLORS
 from crabada.types import Faction
 from utils import logger
 
@@ -23,12 +24,15 @@ TARGET_ADDRESSES = [
     "0xd5d412a38c5f4be5278860d4820782d4bb9c6351",
     "0x93e1465c361531eca2998f6270c87660f18e81d8",
     "0xd5d412a38c5f4be5278860d4820782d4bb9c6351",
+    "0xbd238cdC4aE0285ED90f1c027E6BCe4FcfBcb640",
+    "0xbaD22EE016e19F99c918712D06f399C0B12da1E0",
+    "0x0198B604c13E1ccA07A6cd31c5dC4CDE68bDdf7E",
+    "0x05e428A8640Ac0a21cb6945857B8377F2F6016c2",
+    "0x32564dF03f74B481cF133e89091a513B411495D9",
 ]
 
-MAX_FAILED_SEARCHES = 4
 
-
-def find_loot_snipe(user_address: Address, verbose: bool = False) -> T.Dict[int, int]:
+def find_loot_snipe(user_address: Address, verbose: bool = False) -> T.Tuple[T.Dict[int, int], T.List[T.Any]]:
     web2 = CrabadaWeb2Client()
 
     loot_list = []
@@ -37,8 +41,7 @@ def find_loot_snipe(user_address: Address, verbose: bool = False) -> T.Dict[int,
         loot_list.extend(mines)
 
     available_loots = []
-    empty_calls = 0
-    for page in range(100):
+    for page in range(1,100):
         params = {
             "page": page,
             "limit": 100,
@@ -47,13 +50,10 @@ def find_loot_snipe(user_address: Address, verbose: bool = False) -> T.Dict[int,
         loots = web2.list_available_loots(user_address, params=params)
 
         if not loots:
-            empty_calls += 1
-
-        if empty_calls >= MAX_FAILED_SEARCHES:
             break
 
         if verbose:
-            logger.print_normal(f"Found {len(loots)} mines...")
+            logger.print_normal(f"Searching through {len(loots)} mines...")
 
         available_loots.extend(loots)
 
@@ -69,21 +69,21 @@ def find_loot_snipe(user_address: Address, verbose: bool = False) -> T.Dict[int,
                 logger.print_bold(
                     f"Found target {mine['game_id']} on page {data['page']} faction {data['faction']}"
                 )
-    logger.print_normal(f"Found {len(target_pages.keys())} mines")
-    return target_pages
+    logger.print_ok_arrow(f"Found {len(target_pages.keys())} snipes")
+    return target_pages, available_loots
 
 
 class LootSnipes:
     LOOTING_URL = "https://play.crabada.com/mine/start-looting"
 
-    def __init__(self, webhooks: T.Dict[str, T.Any], dry_run: bool = False):
+    def __init__(self, webhook_url: str, dry_run: bool = False):
         self.dry_run = dry_run
-        self.webhooks = webhooks
+        self.webhook_url = webhook_url
         self.loot_snipes = {}
 
     def check_and_alert(self, address: str) -> None:
         logger.print_ok_blue("Hunting for loot snipes...")
-        update_loot_snipes = find_loot_snipe(address, verbose=True)
+        update_loot_snipes, available_loots = find_loot_snipe(address, verbose=True)
         for mine, data in update_loot_snipes.items():
             if mine not in self.loot_snipes.keys():
                 page = data["page"]
@@ -96,10 +96,21 @@ class LootSnipes:
                     attack_factions = [
                         f for f, a in FACTIONAL_ADVANTAGE.items() if mine_faction in a
                     ]
-                webhook_text = f"**Found new loot snipe!**\n"
-                webhook_text += f"Mine: {mine} Faction: {mine_faction} Page: {page}\n"
-                webhook_text += f"Loot with: {' '.join(attack_factions)}\n"
+                webhook_text = f"Faction: {mine_faction} Page: {page}\n"
+                webhook_text += f"Loot with: **{' '.join(attack_factions)}**\n"
                 logger.print_bold(webhook_text)
                 if not self.dry_run:
-                    self.webhooks["LOOT_SNIPE"].send(webhook_text)
+                    webhook = DiscordWebhook(url=self.webhook_url)
+                    embed = DiscordEmbed(title=f"MINE {mine}", description=f"Page: {page}\n", color=FACTION_COLORS[mine_faction].value)
+                    embed.add_embed_field(name="Mine", value=mine_faction.upper())
+                    embed.add_embed_field(name="Attack", value=', '.join(attack_factions))
+                    webhook.add_embed(embed)
+                    webhook.execute()
+
         self.loot_snipes = copy.deepcopy(update_loot_snipes)
+
+        mark_for_delete = [mine for mine in self.loot_snipes.keys() if mine not in available_loots]
+
+        for mine in mark_for_delete:
+            logger.print_normal(f"Deleting mine {mine} from cache")
+            del self.loot_snipes[mine]
