@@ -124,18 +124,17 @@ class LootSnipes:
 
     def __init__(self, webhook_url: str, dry_run: bool = False):
         self.dry_run = dry_run
-        self.loot_snipes = {}
         self.url = webhook_url
-        self.webhooks = {}
+        self.snipes = {}
 
     def delete_all_messages(self) -> None:
-        for _, hook in self.webhooks.items():
+        for _, hook in self.snipes.items():
             try:
                 hook["webhook"].execute(remove_embeds=True)
                 hook["webhook"].delete(hook["sent"])
             except:
                 pass
-        self.webhooks = {}
+        self.snipes = {}
 
     def _get_embed(
         self, attack_factions: T.List[str], mine_faction: str, mine: int, page: int
@@ -162,45 +161,45 @@ class LootSnipes:
             else:
                 attack_factions = [f for f, a in FACTIONAL_ADVANTAGE.items() if mine_faction in a]
 
-            if mine in self.loot_snipes.keys():
-                old_page = self.loot_snipes[mine]["page"]
+            if mine in self.snipes.keys():
+                old_page = self.snipes[mine]["page"]
                 if page == old_page:
                     continue
-                elif mine in self.webhooks:
+                elif mine in self.snipes:
                     logger.print_normal(f"Updating page for mine {mine}, {old_page} -> {page}")
-                    embed = self._get_embed(attack_factions, mine_faction, mine, page)
-                    self.webhooks[mine]["webhook"].add_embed(embed)
+                    self.snipes[mine]["webhook"].add_embed(
+                        self._get_embed(attack_factions, mine_faction, mine, page)
+                    )
                     try:
-                        response = self.webhooks[mine]["webhook"].edit(self.webhooks[mine]["sent"])
-                        self.webhooks[mine]["sent"] = response
+                        self.snipes[mine]["sent"] = self.snipes[mine]["webhook"].edit(
+                            self.snipes[mine]["sent"]
+                        )
+                        self.snipes[mine]["page"] = page
                     except:
                         logger.print_warn("failed to edit webhook")
+                    time.sleep(1.0)
                 continue
 
             context = f"MINE: {mine} Faction: {mine_faction} Page: {page}\n"
             context += f"Loot with: {' '.join(attack_factions)}\n"
             logger.print_bold(context)
 
-            webhook = DiscordWebhook(url=self.url, rate_limit_retry=True)
-            embed = self._get_embed(attack_factions, mine_faction, mine, page)
-            webhook.add_embed(embed)
+            self.snipes[mine] = {}
+            self.snipes[mine]["webhook"] = DiscordWebhook(url=self.url, rate_limit_retry=True)
+            self.snipes[mine]["webhook"].add_embed(
+                self._get_embed(attack_factions, mine_faction, mine, page)
+            )
             try:
-                self.webhooks[mine] = {}
-                self.webhooks[mine]["sent"] = webhook.execute()
-                self.webhooks[mine]["webhook"] = webhook
+                self.snipes[mine]["sent"] = self.snipes[mine]["webhook"].execute()
+                self.snipes[mine]["page"] = page
+                self.snipes[mine]["faction"] = mine_faction
             except:
                 logger.print_warn("failed to send webhook")
             time.sleep(3.0)
 
-        self.loot_snipes.update(update_loot_snipes)
-
-        mark_for_delete = [mine for mine in self.loot_snipes.keys() if mine not in available_loots]
+        mark_for_delete = [mine for mine in self.snipes.keys() if mine not in available_loots]
 
         for mine in mark_for_delete:
             logger.print_normal(f"Deleting mine {mine} from cache")
-
-            del self.loot_snipes[mine]
-
-            if mine in self.sent_webhooks:
-                self.webhooks[mine]["webhook"].delete(self.webhooks[mine]["sent"])
-                del self.webhooks[mine]
+            self.snipes[mine]["webhook"].delete(self.snipes[mine]["sent"])
+            del self.snipes[mine]
