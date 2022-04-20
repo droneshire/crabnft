@@ -150,7 +150,7 @@ def run_bot() -> None:
     reinforcement_backoff = 0
 
     # assume only group 1 can post updates
-    should_post_updates = 1 in args.groups
+    should_post_updates = 1 in [int(i) for i in args.groups]
 
     try:
         while True:
