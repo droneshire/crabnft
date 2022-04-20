@@ -74,7 +74,7 @@ def get_available_loots(user_address: Address, verbose: bool = False) -> T.List[
     web2 = CrabadaWeb2Client()
 
     available_loots = []
-    for page in range(1, 15):
+    for page in range(1, 4):
         params = {
             "page": page,
             "limit": 100,
@@ -133,7 +133,6 @@ class LootSnipes:
         logger.print_fail("Deleting all messages")
         for _, hook in self.snipes.items():
             try:
-                hook["webhook"].execute(remove_embeds=True)
                 hook["webhook"].delete(hook["sent"])
             except:
                 pass
