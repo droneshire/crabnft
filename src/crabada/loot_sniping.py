@@ -72,7 +72,7 @@ def get_available_loots(user_address: Address, verbose: bool = False) -> T.List[
     web2 = CrabadaWeb2Client()
 
     available_loots = []
-    for page in range(1, 4):
+    for page in range(1, 8):
         params = {
             "page": page,
             "limit": 100,
