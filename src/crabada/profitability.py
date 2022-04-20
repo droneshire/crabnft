@@ -294,6 +294,8 @@ def get_profitability_message(
     commission_percent: float = 0.0,
     verbose: bool = False,
     use_static_percents: bool = True,
+    log_stats: bool = True,
+    group: T.Optional[int] = None,
 ) -> str:
     PROFIT_HYSTERESIS = 10
 
@@ -335,7 +337,7 @@ def get_profitability_message(
 
     csv_file = os.path.join(
         logger.get_logging_dir(),
-        "profitability_stats.csv",
+        "profitability_stats{}.csv".format(str(group) if group is not None else ""),
     )
 
     profit_headers = []
@@ -378,7 +380,8 @@ def get_profitability_message(
 
     now = datetime.datetime.now()
     data_points["timestamp"] = now.strftime("%m/%d/%Y %H:%M:%S")
-    csv.write(data_points)
+    if log_stats:
+        csv.write(data_points)
 
     if verbose:
         logger.print_normal(message)

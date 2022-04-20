@@ -218,13 +218,13 @@ def collect_tus_commission(
             message += f"Explorer: https://snowtrace.io/address/{from_address}\n\n"
             message += f"New TUS commission balance: {new_commission} TUS\n"
             logger.print_ok_blue(message)
-            # if not dry_run:
-            #     send_sms_message(encrypt_password, config["email"], config["sms_number"], message)
+            if not dry_run:
+                send_sms_message(encrypt_password, config["email"], config["sms_number"], message)
 
     logger.print_bold(
         f"Collected {sum([c for _, c in total_stats['total_commission_tus'].items()])} TUS in commission!!!"
     )
-    return
+
     if dry_run:
         return
 

@@ -47,6 +47,7 @@ def calc_profits() -> None:
             commission_percent=commission_percent,
             verbose=True,
             use_static_percents=False,
+            log_stats=False,
         )
         return
 

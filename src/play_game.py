@@ -194,6 +194,8 @@ def run_bot() -> None:
                 commission_percent=0.0,
                 verbose=True,
                 use_static_percents=True,
+                log_stats=True,
+                group=None if len(args.groups) > 1 else args.groups,
             )
 
             now = time.time()
