@@ -17,7 +17,7 @@ def main() -> None:
                 return
             except:
                 pass
-            time.sleep(20.0)
+            time.sleep(10.0)
 
 
 if __name__ == "__main__":

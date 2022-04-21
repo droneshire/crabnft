@@ -63,6 +63,34 @@ TARGET_ADDRESSES = [
     "0xbb3c82459015497ffcf18ce01f2cb302d11b8b6c",
     "0xc47e328be8960c86df0126f019c883947b862281",
     "0xfcfa6885830f508f6efb78bdfad1e299cb56d022",
+    "0x9f1920a809b07f2748075e5eac216264c74ad647",
+    "0xf95132048b0f642f45d400aab08d2f6c86d63d98",
+    "0x40f5402277e83a8a0ba902e255883f3f5142978a",
+    "0x49fff1e342921f89d9bab94d95dd159c641d8a0b",
+    "0x5a538c794d056a2b3e437bf8c563e1dc195e1393",
+    "0xa8c153f9441913a5cf28fd5149d2287822d0535f",
+    "0xfe1315dafd9624e59c9a257d457215bafe8dc67c",
+    "0xf2aafffa10eeb133b6bda8b40aba2b5068c7d633",
+    "0x2e2530d185f299a7c88862d34a490e253953c07c",
+    "0x223a2a1884868decd14bf63afd247962819a6f2a",
+    "0x2e2530d185f299a7c88862d34a490e253953c07c",
+    "0xb8cc9ca72f12ad16352917ccf769a5de5c2df007",
+    "0xc049082f2fa3f142c987cf31054f67a2e2577bc5",
+    "0xc016ef5cb8c874c1da0fe0dc160770e063bb4d74",
+    "0x6e7609bbc3701f42ea56e068841cdc0955e7feec",
+    "0x1ab93c4e10995aa1d94b265949a247e2c1db8251",
+    "0xbd1c769b9678cb795b213d6d8a417a38d77a905e",
+    "0x1b309d8d43aa5d9d719bd65f73fdb8cdf3f839d9",
+    "0xba23023f3edfa5501faa5d70ef8b7103a80fcad6",
+    "0xd7f1fce99d88301707035dcf8196819318b7f4d1",
+    "0x85b5edb52e17b9e9f789b69dca2e83ca624a7ece",
+    "0x6e6a61b04c1a0c2f81a0df6a43fe8eccbd635547",
+    "0x115d023a655e8d70a1153302b41a641b080eb81f",
+    "0x1d0c32ed8225e6173fc043442706a6c8661ac045",
+    "0x3969a1b3be0cb3024ebda6778ba72c4f72e1423a",
+    "0x2e2530d185f299a7c88862d34a490e253953c07c",
+    "0x0445d01f3f467c1661ff9267fd7592e6f6801576",
+    "0x6212a5e86f46841e4ccc44e8a3a763efcd9b3fcc",
 ]
 
 MAX_PAGE_DEPTH = 50
@@ -129,12 +157,16 @@ class LootSnipes:
         self.verbose = verbose
         self.url = webhook_url
         self.snipes = {}
+        erase_message = f"!clear 1000"
+        logger.print_fail("Erasing channel")
+        DiscordWebhook(url=webhook_url, content=erase_message).execute()
 
     def delete_all_messages(self) -> None:
         logger.print_fail("Deleting all messages")
         for _, hook in self.snipes.items():
             try:
                 hook["webhook"].delete(hook["sent"])
+                time.sleep(1.0)
             except:
                 pass
         self.snipes = {}
@@ -171,6 +203,7 @@ class LootSnipes:
                     continue
 
                 logger.print_normal(f"Updating page for mine {mine}, {old_page} -> {page}")
+                self.snipes[mine]["webhook"].remove_embeds()
                 self.snipes[mine]["webhook"].add_embed(
                     self._get_embed(attack_factions, mine_faction, mine, page)
                 )
@@ -180,7 +213,9 @@ class LootSnipes:
                     )
                     self.snipes[mine]["page"] = page
                 except:
-                    logger.print_warn("failed to edit webhook")
+                    logger.print_warn("failed to edit webhook, deleting webhook...")
+                    self.snipes[mine]["webhook"].delete(self.snipes[mine]["sent"])
+                    del self.snipes[mine]
                 time.sleep(1.0)
                 continue
 
