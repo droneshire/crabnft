@@ -19,8 +19,9 @@ from config import COINMARKETCAP_API_TOKEN, GMAIL, USER_GROUPS, IEX_API_TOKEN, T
 from crabada.bot import CrabadaMineBot
 from crabada.profitability import get_profitability_message
 from utils import discord, email, logger, price, security
+from utils.circuit_breaker import CircuitBreaker
 from utils.game_stats import LifetimeGameStats
-from utils.general import dict_sum, get_pretty_seconds
+from utils.general import dict_sum
 from utils.math import Average
 from utils.price import get_avax_price_usd, get_token_price_usd
 
@@ -152,12 +153,14 @@ def run_bot() -> None:
     # assume only group 1 can post updates
     should_post_updates = 1 in [int(i) for i in args.groups]
 
+    circuit_breaker = CircuitBreaker(min_delta=60.0)
+
     try:
         while True:
             gross_tus = 0.0
             totals = {"MINE": {"wins": 0, "losses": 0}, "LOOT": {"wins": 0, "losses": 0}}
 
-            start_of_loop = time.time()
+            circuit_breaker.start()
 
             for bot in bots:
                 bot.set_backoff(reinforcement_backoff)
@@ -184,9 +187,8 @@ def run_bot() -> None:
                     bot.update_prices(prices.avax_usd, prices.tus_usd, prices.cra_usd)
                     last_price_update = now
 
-            logger.print_bold(
-                f"Took {get_pretty_seconds(int(time.time() - start_of_loop))} to get through all {len(bots)} players"
-            )
+            circuit_breaker.end()
+
             win_percentages = {}
             for k in totals.keys():
                 if totals[k].get("wins", 0) == 0 and totals[k].get("losses", 0) == 0:

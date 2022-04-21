@@ -159,9 +159,6 @@ class LootSnipes:
         self.verbose = verbose
         self.url = webhook_url
         self.snipes = {}
-        erase_message = f"!clear 1000"
-        logger.print_fail("Erasing channel")
-        DiscordWebhook(url=webhook_url, content=erase_message).execute()
 
     def delete_all_messages(self) -> None:
         logger.print_fail("Deleting all messages")
