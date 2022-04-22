@@ -10,13 +10,7 @@ def main() -> None:
     sniper = LootSnipes(webhook_url=DISCORD_WEBHOOK_URL["LOOT_SNIPE"], verbose=True)
     while True:
         for _, config in USERS.items():
-            try:
-                sniper.hunt(config["address"])
-            except KeyboardInterrupt:
-                sniper.delete_all_messages()
-                return
-            except:
-                pass
+            sniper.hunt(config["address"])
             time.sleep(10.0)
 
 

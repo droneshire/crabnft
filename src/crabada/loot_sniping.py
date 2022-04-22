@@ -8,6 +8,7 @@ from eth_typing import Address
 from crabada.loot_target_addresses import TARGET_ADDRESSES, UNVALIDATED_ADDRESSES
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.factional_advantage import FACTIONAL_ADVANTAGE, FACTION_ICON_URLS, FACTION_COLORS
+from crabada.factional_advantage import get_faction_adjusted_battle_point
 from crabada.miners_revenge import calc_miners_revenge
 from crabada.types import Faction, IdleGame, TeamMember
 from utils import logger
@@ -39,7 +40,9 @@ PURE_LOOT_TEAM_IDLE_GAME_STATS = {
 }
 
 
-def get_available_loots(user_address: Address, max_pages: int = 8, verbose: bool = False) -> T.List[IdleGame]:
+def get_available_loots(
+    user_address: Address, max_pages: int = 8, verbose: bool = False
+) -> T.List[IdleGame]:
     web2 = CrabadaWeb2Client()
 
     available_loots = []
@@ -72,7 +75,7 @@ def find_loot_snipe(
         mines = [m["game_id"] for m in web2.list_my_mines(address)]
         loot_list.extend(mines)
 
-    available_loots = get_available_loots(user_address, max_pages=8,verbose=verbose)
+    available_loots = get_available_loots(user_address, max_pages=8, verbose=verbose)
 
     if verbose:
         logger.print_normal(f"Checking against {len(loot_list)} suspected no reinforce mines...")
@@ -164,6 +167,14 @@ class LootSnipes:
                 pass
         self.snipes = {}
 
+    def hunt(self, address: str) -> None:
+        logger.print_ok_blue("Hunting for verified loot snipes...")
+        self._hunt_no_reinforce_mines(address, TARGET_ADDRESSES, True)
+        logger.print_ok_blue("Hunting for suspected loot snipes...")
+        self._hunt_no_reinforce_mines(address, UNVALIDATED_ADDRESSES, False)
+        # logger.print_ok_blue("Hunting for low MP loot snipes...")
+        # self.hunt_low_mp_teams()
+
     def _get_embed(
         self,
         attack_factions: T.List[str],
@@ -185,24 +196,19 @@ class LootSnipes:
         embed.set_thumbnail(url=FACTION_ICON_URLS[mine_faction])
         return embed
 
-    def hunt(self, address: str) -> None:
-        logger.print_ok_blue("Hunting for verified loot snipes...")
-        self.hunt_no_reinforce_mines(address, TARGET_ADDRESSES, True)
-        logger.print_ok_blue("Hunting for suspected loot snipes...")
-        self.hunt_no_reinforce_mines(address, UNVALIDATED_ADDRESSES, False)
-        # logger.print_ok_blue("Hunting for low MP loot snipes...")
-        # self.hunt_low_mp_teams()
-
-    def hunt_no_reinforce_mines(
+    def _hunt_no_reinforce_mines(
         self, address: str, address_list: T.List[str], verified: bool
     ) -> None:
         update_loot_snipes, available_loots = find_loot_snipe(
             address, address_list, verbose=self.verbose
         )
-        self.update_discord(update_loot_snipes, available_loots)
+        self._update_discord(update_loot_snipes, available_loots, verified=verified)
 
-    def update_discord(
-        self, update_loot_snipes: T.Dict[int, T.Dict[str, T.Any]], available_loots: T.List[int]
+    def _update_discord(
+        self,
+        update_loot_snipes: T.Dict[int, T.Dict[str, T.Any]],
+        available_loots: T.List[int],
+        verified: bool,
     ) -> None:
         for mine, data in update_loot_snipes.items():
             page = data["page"]
@@ -234,8 +240,6 @@ class LootSnipes:
                     self.snipes[mine]["page"] = page
                 except:
                     logger.print_warn("failed to edit webhook, deleting webhook...")
-                    self.snipes[mine]["webhook"].delete(self.snipes[mine]["sent"])
-                    del self.snipes[mine]
                 time.sleep(1.0)
                 continue
 
@@ -263,5 +267,8 @@ class LootSnipes:
 
         for mine in mark_for_delete:
             logger.print_normal(f"Deleting mine {mine} from cache")
-            self.snipes[mine]["webhook"].delete(self.snipes[mine]["sent"])
-            del self.snipes[mine]
+            try:
+                self.snipes[mine]["webhook"].delete(self.snipes[mine]["sent"])
+                del self.snipes[mine]
+            except:
+                logger.print_fail("failed to delete webhook")
