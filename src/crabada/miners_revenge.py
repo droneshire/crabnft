@@ -18,12 +18,13 @@ def calc_miners_revenge(mine: IdleGame) -> float:
     defense_mine_point = 0
     attack_mine_point = 0
 
-    for crab in mine["defense_team_info"]:
+    key = "defense_team_info" if "defense_team_info" in mine else "defense_team_members"
+    for crab in mine[key]:
         _, defense_mp = get_bp_mp_from_crab(crab)
         defense_mine_point += defense_mp
 
     revenge = BASE_CHANCE
-    mine_point = defense_mine_point / len(mine["defense_team_info"])
+    mine_point = defense_mine_point / len(mine[key])
 
     if mine_point > 56:
         revenge += MP_MODIFIER * (mine_point - 56)

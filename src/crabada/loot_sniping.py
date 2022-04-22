@@ -5,104 +5,45 @@ import typing as T
 from discord_webhook import DiscordEmbed, DiscordWebhook
 from eth_typing import Address
 
+from crabada.loot_target_addresses import TARGET_ADDRESSES, UNVALIDATED_ADDRESSES
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.factional_advantage import FACTIONAL_ADVANTAGE, FACTION_ICON_URLS, FACTION_COLORS
-from crabada.types import Faction
+from crabada.miners_revenge import calc_miners_revenge
+from crabada.types import Faction, IdleGame, TeamMember
 from utils import logger
 
-TARGET_ADDRESSES = [
-    "0x9DA9FEB8fad6a9A98594825d14F13cdE3CA8fD3e",
-    "0xDEf7CB0eAA0DB7aF60DFe90E2B1665441a44d7C1",
-    "0xd42a401d2762d8b22dba1bada7f9970457bcfac6",
-    "0xd1090cfccaf7381db44b06a937a90780d2c61304",
-    "0x0e9CEb3Ea6C16D7CC0Ad00927e6f038FB3B95525",
-    "0x07b6228E674Ed8875A9B57DB8C06f5bcEa9F3F15",
-    "0x01d778e7de7e05b541b8c596fb579030ce4db291",
-    "0xb5a943ab656bd34c8715c74ad14c63554ca74b84",
-    "0x558afda5dd07d0898691cef304682c5f87d8bcf2",
-    "0xd5d412a38c5f4be5278860d4820782d4bb9c6351",
-    "0xd5d412a38c5f4be5278860d4820782d4bb9c6351",
-    "0xbd238cdC4aE0285ED90f1c027E6BCe4FcfBcb640",
-    "0xbaD22EE016e19F99c918712D06f399C0B12da1E0",
-    "0x0198B604c13E1ccA07A6cd31c5dC4CDE68bDdf7E",
-    "0x05e428A8640Ac0a21cb6945857B8377F2F6016c2",
-    "0x32564dF03f74B481cF133e89091a513B411495D9",
-    "0x2b255855ef74882b7b48300bc7778dbd7b81e55e",
-    "0xed6e6a787fcfab544592cedab8ed477295927e0f",
-    "0x426fF99B3F0c22dC130179656385bB4a4a4A0f3f",
-    "0xb14b8b1e6ef554a4643b359d04188982cc4bd32c",
-    # UNVALIDATED_ADDRESSES
-    "0xe7679a598b476af9bbf61fa22d9e4edbf74a6c1f",
-    "0xc7037680db9bc95dccf7616cf413ad798ddf9d86",
-    "0x1c1ecf896340f69626d926d5426ae4686a5576e0",
-    "0xab5c80ca5139482abaf546755e294da6986512f8",
-    "0xf603bd3789c5787c0bc78a19bfb96d4651561ad8",
-    "0x9ae1273678a3f4ab9d9fd5b51808c1cd7a6ba946",
-    "0x92b6d8881153763ed6d8bade2ba1b073bdc4fbee",
-    "0xae580287c02bb5455a3e680c88040921893751de",
-    "0x74dc71b8ff1377891f730ae0a205034f4acdc9f6",
-    "0xb43e226669a2b9af39afe869f6357194c1d1cb82",
-    "0x1e79dbcbb7eadf462fbb3f5812eb59e0808c8b04",
-    "0x69a4b86f6f8f3bfd0e79ec8ca554af9751770606",
-    "0xb87abaf428a6c16757a497180cdfe4b0df563433",
-    "0xe6f8e10a344f37fb986bb9f6da9e70586bf66bca",
-    "0xfbc8938a58cf13f179961f0e8a30b0188d3b3dfc",
-    "0xca663017d99db8f9f23bfadd5ee6d2cde5b5c665",
-    "0xfbc8938a58cf13f179961f0e8a30b0188d3b3dfc",
-    "0x8a0e11751d45da6d0377d4ad53ccbf71144d960f",
-    "0xb43e226669a2b9af39afe869f6357194c1d1cb82",
-    "0x74dc71b8ff1377891f730ae0a205034f4acdc9f6",
-    "0xae580287c02bb5455a3e680c88040921893751de",
-    "0x92b6d8881153763ed6d8bade2ba1b073bdc4fbee",
-    "0xb4f821c2ec6da5ea9577497129a6c400f183950a",
-    "0xfff827f8f80bbdd5b3d3f4fd62af2d12377b9094",
-    "0xddae761f963ccbc77ed33e89bc6b0e0022dc9ec0",
-    "0xbb3c82459015497ffcf18ce01f2cb302d11b8b6c",
-    "0xc47e328be8960c86df0126f019c883947b862281",
-    "0xfcfa6885830f508f6efb78bdfad1e299cb56d022",
-    "0x9f1920a809b07f2748075e5eac216264c74ad647",
-    "0xf95132048b0f642f45d400aab08d2f6c86d63d98",
-    "0x40f5402277e83a8a0ba902e255883f3f5142978a",
-    "0x49fff1e342921f89d9bab94d95dd159c641d8a0b",
-    "0x5a538c794d056a2b3e437bf8c563e1dc195e1393",
-    "0xa8c153f9441913a5cf28fd5149d2287822d0535f",
-    "0xfe1315dafd9624e59c9a257d457215bafe8dc67c",
-    "0xf2aafffa10eeb133b6bda8b40aba2b5068c7d633",
-    "0x2e2530d185f299a7c88862d34a490e253953c07c",
-    "0x223a2a1884868decd14bf63afd247962819a6f2a",
-    "0x2e2530d185f299a7c88862d34a490e253953c07c",
-    "0xb8cc9ca72f12ad16352917ccf769a5de5c2df007",
-    "0xc049082f2fa3f142c987cf31054f67a2e2577bc5",
-    "0xc016ef5cb8c874c1da0fe0dc160770e063bb4d74",
-    "0x6e7609bbc3701f42ea56e068841cdc0955e7feec",
-    "0x1ab93c4e10995aa1d94b265949a247e2c1db8251",
-    "0xbd1c769b9678cb795b213d6d8a417a38d77a905e",
-    "0x1b309d8d43aa5d9d719bd65f73fdb8cdf3f839d9",
-    "0xba23023f3edfa5501faa5d70ef8b7103a80fcad6",
-    "0xd7f1fce99d88301707035dcf8196819318b7f4d1",
-    "0x85b5edb52e17b9e9f789b69dca2e83ca624a7ece",
-    "0x6e6a61b04c1a0c2f81a0df6a43fe8eccbd635547",
-    "0x115d023a655e8d70a1153302b41a641b080eb81f",
-    "0x1d0c32ed8225e6173fc043442706a6c8661ac045",
-    "0x3969a1b3be0cb3024ebda6778ba72c4f72e1423a",
-    "0x2e2530d185f299a7c88862d34a490e253953c07c",
-    "0x0445d01f3f467c1661ff9267fd7592e6f6801576",
-    "0x6212a5e86f46841e4ccc44e8a3a763efcd9b3fcc",
-    "0x7d9291fb57822031977a983dbbf7d0157c016c60",
-    "0x337a52a3f0d42303eb73d228e6b43544f8261671",
-    "0x833c29e720ceaee0681a12721dd51f5e513a1dca",
-    "0x9ae1273678a3f4ab9d9fd5b51808c1cd7a6ba946",
-    "0x4c0f4f0268fe1d86b3745cf6d9243cdb081265cc",
-]
-
 MAX_PAGE_DEPTH = 50
+MIN_MINERS_REVENGE = 0.35
+
+PURE_LOOT_TEAM_IDLE_GAME_STATS = {
+    "CCP": {
+        "bp": 661,
+        "mp": 245,
+        "faction": Faction.MACHINE,
+    },
+    "SSP": {
+        "bp": 665,
+        "mp": 239,
+        "faction": Faction.TRENCH,
+    },
+    "BBP": {
+        "bp": 695,
+        "mp": 213,
+        "faction": Faction.ORE,
+    },
+    "RRP": {
+        "bp": 665,
+        "mp": 239,
+        "faction": Faction.ABYSS,
+    },
+}
 
 
-def get_available_loots(user_address: Address, verbose: bool = False) -> T.List[T.Any]:
+def get_available_loots(user_address: Address, max_pages: int = 8, verbose: bool = False) -> T.List[IdleGame]:
     web2 = CrabadaWeb2Client()
 
     available_loots = []
-    for page in range(1, 8):
+    for page in range(1, max_pages):
         params = {
             "page": page,
             "limit": 100,
@@ -122,16 +63,16 @@ def get_available_loots(user_address: Address, verbose: bool = False) -> T.List[
 
 
 def find_loot_snipe(
-    user_address: Address, verbose: bool = False
+    user_address: Address, address_list: T.List[str], verbose: bool = False
 ) -> T.Tuple[T.Dict[int, int], T.List[T.Any]]:
     web2 = CrabadaWeb2Client()
 
     loot_list = []
-    for address in TARGET_ADDRESSES:
+    for address in address_list:
         mines = [m["game_id"] for m in web2.list_my_mines(address)]
         loot_list.extend(mines)
 
-    available_loots = get_available_loots(user_address, verbose)
+    available_loots = get_available_loots(user_address, max_pages=8,verbose=verbose)
 
     if verbose:
         logger.print_normal(f"Checking against {len(loot_list)} suspected no reinforce mines...")
@@ -141,13 +82,66 @@ def find_loot_snipe(
         page = int((inx + 9) / 9)
         faction = mine["faction"].upper()
         if mine["game_id"] in loot_list:
-            data = {"page": page, "faction": faction}
+            battle_point = get_faction_adjusted_battle_point(mine, is_looting=False, verbose=True)
+            data = {"page": page, "faction": faction, "defense_battle_point": battle_point}
             target_pages[mine["game_id"]] = data
 
             if verbose:
                 logger.print_normal(
                     f"Found target {mine['game_id']} on page {data['page']} faction {data['faction']}"
                 )
+    logger.print_ok_arrow(f"Found {len(target_pages.keys())} snipes")
+    return target_pages, [m["game_id"] for m in available_loots]
+
+
+def create_fake_team(loot_team: str, mine: IdleGame) -> IdleGame:
+    mine["attack_team_members"] = []
+    for _ in range(2):
+        crab = TeamMember(
+            hp=0,
+            damage=0,
+            speed=0,
+            critical=0,
+            armor=0,
+        )
+        mine["attack_team_members"].append(crab)
+
+    crab = TeamMember(
+        hp=0,
+        damage=0,
+        speed=0,
+        critical=PURE_LOOT_TEAM_IDLE_GAME_STATS[loot_team]["mp"],
+        armor=PURE_LOOT_TEAM_IDLE_GAME_STATS[loot_team]["bp"],
+    )
+
+    mine["attack_team_members"].append(crab)
+    mine["attack_point"] = PURE_LOOT_TEAM_IDLE_GAME_STATS[loot_team]["bp"]
+    mine["attack_team_faction"] = PURE_LOOT_TEAM_IDLE_GAME_STATS[loot_team]["faction"]
+
+    return mine
+
+
+def find_low_mr_teams(user_address: Address, verbose: bool = False) -> None:
+    available_loots = get_available_loots(user_address, max_pages=4, verbose=verbose)
+
+    target_pages = {}
+    for inx, mine in enumerate(available_loots):
+        for team_type in PURE_LOOT_TEAM_IDLE_GAME_STATS.keys():
+            mine = create_fake_team(team_type, mine)
+            page = int((inx + 9) / 9)
+            faction = mine["faction"].upper()
+            miners_revenge = calc_miners_revenge(mine)
+            print(miners_revenge * 100.0)
+            if miners_revenge > MIN_MINERS_REVENGE or page <= 2:
+                continue
+            data = {"page": page, "faction": faction, "defense_battle_point": battle_point}
+            target_pages[mine["game_id"]] = data
+
+            if verbose:
+                logger.print_normal(
+                    f"Found target {mine['game_id']} with MR {miners_revenge * 100.0}% on page {data['page']} faction {data['faction']}"
+                )
+
     logger.print_ok_arrow(f"Found {len(target_pages.keys())} snipes")
     return target_pages, [m["game_id"] for m in available_loots]
 
@@ -171,24 +165,49 @@ class LootSnipes:
         self.snipes = {}
 
     def _get_embed(
-        self, attack_factions: T.List[str], mine_faction: str, mine: int, page: int
+        self,
+        attack_factions: T.List[str],
+        mine_faction: str,
+        mine: int,
+        page: int,
+        battle_point: int,
+        verified: bool,
     ) -> None:
         embed = DiscordEmbed(
             title=f"MINE {mine}",
             description=f"{', '.join(attack_factions)}\n",
             color=FACTION_COLORS[mine_faction].value,
         )
-        embed.add_embed_field(name="Mine", value=mine_faction.upper())
-        embed.add_embed_field(name="Page", value=page)
+        embed.add_embed_field(name="Mine", value=mine_faction.upper(), inline=True)
+        embed.add_embed_field(name="Page", value=page, inline=True)
+        embed.add_embed_field(name="BP", value=battle_point, inline=False)
+        embed.add_embed_field(name="Verified", value="True" if verified else "False", inline=True)
         embed.set_thumbnail(url=FACTION_ICON_URLS[mine_faction])
         return embed
 
-    def check_and_alert(self, address: str) -> None:
-        logger.print_ok_blue("Hunting for loot snipes...")
-        update_loot_snipes, available_loots = find_loot_snipe(address, verbose=self.verbose)
+    def hunt(self, address: str) -> None:
+        logger.print_ok_blue("Hunting for verified loot snipes...")
+        self.hunt_no_reinforce_mines(address, TARGET_ADDRESSES, True)
+        logger.print_ok_blue("Hunting for suspected loot snipes...")
+        self.hunt_no_reinforce_mines(address, UNVALIDATED_ADDRESSES, False)
+        # logger.print_ok_blue("Hunting for low MP loot snipes...")
+        # self.hunt_low_mp_teams()
+
+    def hunt_no_reinforce_mines(
+        self, address: str, address_list: T.List[str], verified: bool
+    ) -> None:
+        update_loot_snipes, available_loots = find_loot_snipe(
+            address, address_list, verbose=self.verbose
+        )
+        self.update_discord(update_loot_snipes, available_loots)
+
+    def update_discord(
+        self, update_loot_snipes: T.Dict[int, T.Dict[str, T.Any]], available_loots: T.List[int]
+    ) -> None:
         for mine, data in update_loot_snipes.items():
             page = data["page"]
             mine_faction = data["faction"]
+            battle_point = data["defense_battle_point"]
 
             if mine_faction == Faction.NO_FACTION:
                 attack_factions = ["ANY"]
@@ -204,7 +223,9 @@ class LootSnipes:
                 logger.print_normal(f"Updating page for mine {mine}, {old_page} -> {page}")
                 self.snipes[mine]["webhook"].remove_embeds()
                 self.snipes[mine]["webhook"].add_embed(
-                    self._get_embed(attack_factions, mine_faction, mine, page)
+                    self._get_embed(
+                        attack_factions, mine_faction, mine, page, battle_point, verified=verified
+                    )
                 )
                 try:
                     self.snipes[mine]["sent"] = self.snipes[mine]["webhook"].edit(
@@ -225,7 +246,9 @@ class LootSnipes:
             self.snipes[mine] = {}
             self.snipes[mine]["webhook"] = DiscordWebhook(url=self.url, rate_limit_retry=True)
             self.snipes[mine]["webhook"].add_embed(
-                self._get_embed(attack_factions, mine_faction, mine, page)
+                self._get_embed(
+                    attack_factions, mine_faction, mine, page, battle_point, verified=verified
+                )
             )
             try:
                 self.snipes[mine]["sent"] = self.snipes[mine]["webhook"].execute()

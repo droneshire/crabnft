@@ -11,7 +11,7 @@ def main() -> None:
     while True:
         for _, config in USERS.items():
             try:
-                sniper.check_and_alert(config["address"])
+                sniper.hunt(config["address"])
             except KeyboardInterrupt:
                 sniper.delete_all_messages()
                 return

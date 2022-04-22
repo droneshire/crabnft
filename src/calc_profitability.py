@@ -54,7 +54,7 @@ def calc_profits() -> None:
     if args.user == "ALL":
         users = list(USERS.keys())
     else:
-        users = [arg.user]
+        users = [args.user]
 
     for user in users:
         alias = get_alias_from_user(user)
