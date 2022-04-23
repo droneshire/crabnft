@@ -5,6 +5,7 @@ import typing as T
 from discord_webhook import DiscordEmbed, DiscordWebhook
 from eth_typing import Address
 
+from config import USERS
 from crabada.loot_target_addresses import TARGET_ADDRESSES, UNVALIDATED_ADDRESSES
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.factional_advantage import FACTIONAL_ADVANTAGE, FACTION_ICON_URLS, FACTION_COLORS
@@ -14,7 +15,7 @@ from crabada.types import Faction, IdleGame, TeamMember
 from utils import logger
 
 MAX_PAGE_DEPTH = 50
-MIN_MINERS_REVENGE = 0.35
+MIN_MINERS_REVENGE = 36.0
 
 PURE_LOOT_TEAM_IDLE_GAME_STATS = {
     "CCP": {
@@ -66,16 +67,22 @@ def get_available_loots(
 
 
 def find_loot_snipe(
-    user_address: Address, address_list: T.List[str], verbose: bool = False
-) -> T.Tuple[T.Dict[int, int], T.List[T.Any]]:
+    user_address: Address,
+    address_list: T.List[str],
+    available_loots: T.List[IdleGame],
+    verbose: bool = False,
+) -> T.Dict[int, T.Any]:
     web2 = CrabadaWeb2Client()
+
+    bot_user_addresses = [v["address"] for _, v in USERS.items()]
 
     loot_list = []
     for address in address_list:
+        if address in bot_user_addresses:
+            logger.print_fail_arrow(f"Snipe added for bot holder user: {address}...skipping")
+            continue
         mines = [m["game_id"] for m in web2.list_my_mines(address)]
         loot_list.extend(mines)
-
-    available_loots = get_available_loots(user_address, max_pages=8, verbose=verbose)
 
     if verbose:
         logger.print_normal(f"Checking against {len(loot_list)} suspected no reinforce mines...")
@@ -85,7 +92,7 @@ def find_loot_snipe(
         page = int((inx + 9) / 9)
         faction = mine["faction"].upper()
         if mine["game_id"] in loot_list:
-            battle_point = get_faction_adjusted_battle_point(mine, is_looting=False, verbose=True)
+            battle_point = get_faction_adjusted_battle_point(mine, is_looting=False, verbose=False)
             data = {"page": page, "faction": faction, "defense_battle_point": battle_point}
             target_pages[mine["game_id"]] = data
 
@@ -94,7 +101,7 @@ def find_loot_snipe(
                     f"Found target {mine['game_id']} on page {data['page']} faction {data['faction']}"
                 )
     logger.print_ok_arrow(f"Found {len(target_pages.keys())} snipes")
-    return target_pages, [m["game_id"] for m in available_loots]
+    return target_pages
 
 
 def create_fake_team(loot_team: str, mine: IdleGame) -> IdleGame:
@@ -124,29 +131,41 @@ def create_fake_team(loot_team: str, mine: IdleGame) -> IdleGame:
     return mine
 
 
-def find_low_mr_teams(user_address: Address, verbose: bool = False) -> None:
-    available_loots = get_available_loots(user_address, max_pages=4, verbose=verbose)
-
+def find_low_mr_teams(
+    user_address: Address, available_loots: T.List[IdleGame], verbose: bool = False
+) -> T.Dict[int, T.Any]:
     target_pages = {}
     for inx, mine in enumerate(available_loots):
+        battle_point = get_faction_adjusted_battle_point(mine, is_looting=False, verbose=False)
+        faction = mine["faction"].upper()
+        page = int((inx + 9) / 9)
+
+        looters = {}
         for team_type in PURE_LOOT_TEAM_IDLE_GAME_STATS.keys():
             mine = create_fake_team(team_type, mine)
-            page = int((inx + 9) / 9)
-            faction = mine["faction"].upper()
             miners_revenge = calc_miners_revenge(mine)
-            print(miners_revenge * 100.0)
-            if miners_revenge > MIN_MINERS_REVENGE or page <= 2:
+            if miners_revenge > MIN_MINERS_REVENGE or page <= 1:
                 continue
-            data = {"page": page, "faction": faction, "defense_battle_point": battle_point}
-            target_pages[mine["game_id"]] = data
+            looters[team_type] = miners_revenge
 
             if verbose:
                 logger.print_normal(
-                    f"Found target {mine['game_id']} with MR {miners_revenge * 100.0}% on page {data['page']} faction {data['faction']}"
+                    f"Found target for {team_type} in {mine['game_id']}\n\t{miners_revenge}\non page {page} faction {faction}"
                 )
 
-    logger.print_ok_arrow(f"Found {len(target_pages.keys())} snipes")
-    return target_pages, [m["game_id"] for m in available_loots]
+        if not looters:
+            continue
+
+        data = {
+            "page": page,
+            "faction": faction,
+            "miners_revenge": looters,
+            "defense_battle_point": battle_point,
+        }
+        target_pages[mine["game_id"]] = data
+
+    logger.print_ok_arrow(f"Found {len(target_pages.keys())} low MP snipes")
+    return target_pages
 
 
 class LootSnipes:
@@ -168,14 +187,15 @@ class LootSnipes:
         self.snipes = {}
 
     def hunt(self, address: str) -> None:
+        available_loots = get_available_loots(address, 8, True)
         logger.print_ok_blue("Hunting for verified loot snipes...")
-        self._hunt_no_reinforce_mines(address, TARGET_ADDRESSES, True)
+        self._hunt_no_reinforce_mines(address, TARGET_ADDRESSES, available_loots, True)
         logger.print_ok_blue("Hunting for suspected loot snipes...")
-        self._hunt_no_reinforce_mines(address, UNVALIDATED_ADDRESSES, False)
-        # logger.print_ok_blue("Hunting for low MP loot snipes...")
-        # self.hunt_low_mp_teams()
+        self._hunt_no_reinforce_mines(address, UNVALIDATED_ADDRESSES, available_loots, False)
+        logger.print_ok_blue("Hunting for low MP loot snipes...")
+        self._hunt_low_mp_teams(address, available_loots)
 
-    def _get_embed(
+    def _get_address_snipe_embed(
         self,
         attack_factions: T.List[str],
         mine_faction: str,
@@ -183,7 +203,7 @@ class LootSnipes:
         page: int,
         battle_point: int,
         verified: bool,
-    ) -> None:
+    ) -> DiscordEmbed:
         embed = DiscordEmbed(
             title=f"MINE {mine}",
             description=f"{', '.join(attack_factions)}\n",
@@ -196,21 +216,32 @@ class LootSnipes:
         embed.set_thumbnail(url=FACTION_ICON_URLS[mine_faction])
         return embed
 
-    def _hunt_no_reinforce_mines(
-        self, address: str, address_list: T.List[str], verified: bool
-    ) -> None:
-        update_loot_snipes, available_loots = find_loot_snipe(
-            address, address_list, verbose=self.verbose
-        )
-        self._update_discord(update_loot_snipes, available_loots, verified=verified)
-
-    def _update_discord(
+    def _get_low_mp_snipe_embed(
         self,
-        update_loot_snipes: T.Dict[int, T.Dict[str, T.Any]],
-        available_loots: T.List[int],
-        verified: bool,
-    ) -> None:
-        for mine, data in update_loot_snipes.items():
+        attack_factions: T.List[str],
+        mine_faction: str,
+        mine: int,
+        page: int,
+        battle_point: int,
+        looters: T.Dict[str, float],
+    ) -> DiscordEmbed:
+        embed = DiscordEmbed(
+            title=f"MINE {mine}",
+            description=f"{', '.join(attack_factions)}\n",
+            color=FACTION_COLORS[mine_faction].value,
+        )
+        embed.add_embed_field(name="Mine", value=mine_faction.upper(), inline=True)
+        embed.add_embed_field(name="Page", value=page, inline=True)
+        embed.add_embed_field(name="BP", value=battle_point, inline=False)
+        for k, v in looters.items():
+            embed.add_embed_field(name=k, value=f"{v:.2f}%", inline=True)
+        embed.set_thumbnail(url=FACTION_ICON_URLS[mine_faction])
+        return embed
+
+    def _hunt_low_mp_teams(self, address: str, available_loots: T.List[IdleGame]) -> None:
+        update_loot_snipes = find_low_mr_teams(address, available_loots, verbose=True)
+
+        def get_embed(mine: int, data: T.Dict[str, T.Any]) -> DiscordEmbed:
             page = data["page"]
             mine_faction = data["faction"]
             battle_point = data["defense_battle_point"]
@@ -220,6 +251,61 @@ class LootSnipes:
             else:
                 attack_factions = [f for f, a in FACTIONAL_ADVANTAGE.items() if mine_faction in a]
 
+            context = f"MINE: {mine} Faction: {mine_faction} Page: {page}\n"
+            context += f"Loot with: {' '.join(attack_factions)}\n"
+            context += f"MR: {data['miners_revenge']}%\n"
+            logger.print_bold(context)
+
+            return self._get_low_mp_snipe_embed(
+                attack_factions, mine_faction, mine, page, battle_point, data["miners_revenge"]
+            )
+
+        open_loots = [m["game_id"] for m in available_loots]
+        self._update_discord(update_loot_snipes, open_loots, embed_handle=get_embed)
+
+    def _hunt_no_reinforce_mines(
+        self,
+        address: str,
+        address_list: T.List[str],
+        available_loots: T.List[IdleGame],
+        verified: bool,
+    ) -> None:
+        update_loot_snipes = find_loot_snipe(
+            address, address_list, available_loots, verbose=self.verbose
+        )
+
+        def get_embed(mine: int, data: T.Dict[str, T.Any]) -> DiscordEmbed:
+            page = data["page"]
+            mine_faction = data["faction"]
+            battle_point = data["defense_battle_point"]
+
+            if mine_faction == Faction.NO_FACTION:
+                attack_factions = ["ANY"]
+            else:
+                attack_factions = [f for f, a in FACTIONAL_ADVANTAGE.items() if mine_faction in a]
+
+            context = f"MINE: {mine} Faction: {mine_faction} Page: {page}\n"
+            context += f"Loot with: {' '.join(attack_factions)}\n"
+            logger.print_bold(context)
+
+            return self._get_address_snipe_embed(
+                attack_factions, mine_faction, mine, page, battle_point, verified
+            )
+
+        open_loots = [m["game_id"] for m in available_loots]
+        self._update_discord(update_loot_snipes, open_loots, embed_handle=get_embed)
+
+    def _update_discord(
+        self,
+        update_loot_snipes: T.Dict[int, T.Dict[str, T.Any]],
+        available_loots: T.List[int],
+        embed_handle: T.Callable[[int, T.Dict[str, T.Any]], DiscordEmbed],
+    ) -> None:
+        for mine, data in update_loot_snipes.items():
+            page = data["page"]
+            mine_faction = data["faction"]
+            battle_point = data["defense_battle_point"]
+
             if mine in self.snipes.keys():
                 old_page = self.snipes[mine]["page"]
                 if page == old_page:
@@ -228,11 +314,7 @@ class LootSnipes:
 
                 logger.print_normal(f"Updating page for mine {mine}, {old_page} -> {page}")
                 self.snipes[mine]["webhook"].remove_embeds()
-                self.snipes[mine]["webhook"].add_embed(
-                    self._get_embed(
-                        attack_factions, mine_faction, mine, page, battle_point, verified=verified
-                    )
-                )
+                self.snipes[mine]["webhook"].add_embed(embed_handle(mine, data))
                 try:
                     self.snipes[mine]["sent"] = self.snipes[mine]["webhook"].edit(
                         self.snipes[mine]["sent"]
@@ -243,25 +325,16 @@ class LootSnipes:
                 time.sleep(1.0)
                 continue
 
-            context = f"MINE: {mine} Faction: {mine_faction} Page: {page}\n"
-            context += f"Loot with: {' '.join(attack_factions)}\n"
-            logger.print_bold(context)
-
             self.snipes[mine] = {}
             self.snipes[mine]["webhook"] = DiscordWebhook(url=self.url, rate_limit_retry=True)
-            self.snipes[mine]["webhook"].add_embed(
-                self._get_embed(
-                    attack_factions, mine_faction, mine, page, battle_point, verified=verified
-                )
-            )
+            self.snipes[mine]["webhook"].add_embed(embed_handle(mine, data))
             try:
                 self.snipes[mine]["sent"] = self.snipes[mine]["webhook"].execute()
                 self.snipes[mine]["page"] = page
-                self.snipes[mine]["faction"] = mine_faction
             except:
                 logger.print_warn("failed to send webhook")
 
-            time.sleep(4.0)
+            time.sleep(1.0)
 
         mark_for_delete = [mine for mine in self.snipes.keys() if mine not in available_loots]
 
@@ -272,3 +345,5 @@ class LootSnipes:
                 del self.snipes[mine]
             except:
                 logger.print_fail("failed to delete webhook")
+
+        logger.print_normal(f"DB: {','.join([str(k) for k in self.snipes.keys()])}")
