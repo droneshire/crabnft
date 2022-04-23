@@ -293,7 +293,7 @@ class CrabadaWeb2Client:
     def get_best_high_mp_crab_for_lending(
         self, max_tus: Tus, reinforcement_search_backoff: int
     ) -> T.Optional[CrabForLending]:
-        for class_id in [CrabadaClass.PRIME, CrabadaClass.CRABOID]:
+        for class_id in [CrabadaClass.PRIME, CrabadaClass.CRABOID, CrabadaClass.RUINED, CrabadaClass.SUNKEN, CrabadaClass.ORGANIC]:
             params = {
                 "class_ids[]": class_id,
             }
