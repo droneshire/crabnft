@@ -17,6 +17,7 @@ from utils.game_stats import LifetimeGameStats, get_game_stats, write_game_stats
 from utils.price import is_gas_too_high
 from utils.price import Tus
 from utils.security import decrypt
+from utils.user import get_alias_from_user
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.tus_web3_client import TusWeb3Client
 
@@ -70,11 +71,20 @@ def send_collection_notice(
     from_users: T.List[str], log_dir: str, encrypt_password: str = "", dry_run: bool = False
 ) -> None:
     run_all_users = "ALL" in from_users
+
+    aliases = set([get_alias_from_user(u) for u in USERS])
+
     for user, config in USERS.items():
         if not run_all_users and user not in from_users:
             continue
 
-        game_stats = get_game_stats(user, log_dir)
+        alias = get_alias_from_user(user)
+
+        if alias not in aliases:
+            logger.print_normal(f"Multi-wallet, skipping {user} b/c we already sent notice")
+            continue
+
+        game_stats = get_game_stats(alias, log_dir)
 
         commission_tus = 0.0
         for address, commission in game_stats["commission_tus"].items():
@@ -97,17 +107,17 @@ def send_collection_notice(
         )
 
         available_tus = float(tus_w3.get_balance())
-        logger.print_ok(f"{user} balance: {available_tus} TUS, commission: {commission_tus} TUS")
+        logger.print_ok(f"{alias} balance: {available_tus} TUS, commission: {commission_tus} TUS")
 
         if commission_tus < MINIMUM_TUS_TO_TRANSFER:
-            logger.print_warn(f"Skipping transfer of {commission_tus:.2f} from {user} (too small)")
+            logger.print_warn(f"Skipping transfer of {commission_tus:.2f} from {alias} (too small)")
             continue
 
         if commission_tus > available_tus:
-            logger.print_fail(f"WARNING: {commission_tus:.2f} from {user}: insufficient funds!")
+            logger.print_fail(f"WARNING: {commission_tus:.2f} from {alias}: insufficient funds!")
 
         message = f"\U0000203C  COURTESY NOTICE  \U0000203C\n"
-        message += f"Hey {user}!\nCollecting Crabada commission at next low gas period.\n"
+        message += f"Hey {alias}!\nCollecting Crabada commission at next low gas period.\n"
         message += f"Please ensure {commission_tus:.2f} TUS are in wallet.\n"
         message += f"Confirmation will be sent after successful tx\n"
         message += f"snib snib \U0001F980\n"
@@ -115,7 +125,9 @@ def send_collection_notice(
         if not dry_run:
             send_sms_message(encrypt_password, config["email"], config["sms_number"], message)
 
-    if not dry_run:
+        aliases.remove(alias)
+
+    if not dry_run and run_all_users:
         discord.get_discord_hook("HOLDERS").send(DISCORD_TRANSFER_NOTICE)
 
 
@@ -129,11 +141,20 @@ def collect_tus_commission(
     total_stats = {"total_commission_tus": {}}
 
     run_all_users = "ALL" in from_users
+
+    aliases = set([get_alias_from_user(u) for u in USERS])
+
     for user, config in USERS.items():
         if not run_all_users and user not in from_users:
             continue
 
         if user == to_user:
+            continue
+
+        alias = get_alias_from_user(user)
+
+        if alias not in aliases:
+            logger.print_normal(f"Multi-wallet, skipping {user} b/c we already collected")
             continue
 
         crabada_key = (
@@ -142,7 +163,7 @@ def collect_tus_commission(
             else decrypt(str.encode(encrypt_password), config["crabada_key"]).decode()
         )
 
-        game_stats = get_game_stats(user, log_dir)
+        game_stats = get_game_stats(alias, log_dir)
 
         from_address = config["address"]
 
@@ -156,12 +177,6 @@ def collect_tus_commission(
             ),
         )
 
-        if is_gas_too_high(
-            gas_price_gwei=tus_w3.get_gas_price(), max_price_gwei=MAX_COLLECTION_GAS_GWEI
-        ):
-            logger.print_fail_arrow(f"Skipping collection, gas too high!!!")
-            continue
-
         commission_tus = 0.0
         for _, commission in game_stats["commission_tus"].items():
             commission_tus += commission
@@ -171,25 +186,31 @@ def collect_tus_commission(
         )
 
         if commission_tus < MINIMUM_TUS_TO_TRANSFER:
-            logger.print_warn(f"Skipping transfer of {commission_tus:.2f} from {user} (too small)")
+            logger.print_warn(f"Skipping transfer of {commission_tus:.2f} from {alias} (too small)")
             continue
 
         if commission_tus > available_tus:
             logger.print_fail(
-                f"Skipping transfer of {commission_tus:.2f} from {user}: insufficient funds!"
+                f"Skipping transfer of {commission_tus:.2f} from {alias}: insufficient funds!"
             )
+            continue
+
+        if is_gas_too_high(
+            gas_price_gwei=tus_w3.get_gas_price(), max_price_gwei=MAX_COLLECTION_GAS_GWEI
+        ):
+            logger.print_fail_arrow(f"Skipping transfer of {commission_tus:.2f} from {alias}: gas too high!!!")
             continue
 
         did_fail = False
         for to_address, commission in game_stats["commission_tus"].items():
             logger.print_bold(
-                f"Attempting to send commission of {commission_tus:.2f} TUS from {user} -> {to_address}..."
+                f"Attempting to send commission of {commission_tus:.2f} TUS from {alias} -> {to_address}..."
             )
             try:
                 tx_hash = tus_w3.transfer_tus(to_address, commission)
                 tx_receipt = tus_w3.get_transaction_receipt(tx_hash)
             except:
-                logger.print_fail(f"Failed to collect from {user}")
+                logger.print_fail(f"Failed to collect from {alias}")
                 continue
 
             if tx_receipt["status"] != 1:
@@ -206,7 +227,7 @@ def collect_tus_commission(
                 )
                 game_stats["commission_tus"][to_address] -= commission
                 if not dry_run:
-                    write_game_stats(user, log_dir, game_stats)
+                    write_game_stats(alias, log_dir, game_stats)
                 logger.print_normal(
                     f"New TUS commission balance: {game_stats['commission_tus']} TUS"
                 )
@@ -214,7 +235,7 @@ def collect_tus_commission(
         if not did_fail:
             new_commission = sum([c for _, c in game_stats["commission_tus"].items()])
             message = f"\U0001F980  Commission Collection: \U0001F980\n"
-            message += f"Successful tx of {commission_tus:.2f} TUS from {user}\n"
+            message += f"Successful tx of {commission_tus:.2f} TUS from {alias}\n"
             message += f"Explorer: https://snowtrace.io/address/{from_address}\n\n"
             message += f"New TUS commission balance: {new_commission} TUS\n"
             logger.print_ok_blue(message)
