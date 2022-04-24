@@ -18,6 +18,9 @@ from utils.discord import DISCORD_WEBHOOK_URL
 MAX_PAGE_DEPTH = 50
 MIN_MINERS_REVENGE = 36.0
 
+TARGET_ADDRESSES_SET = [t for t in set(TARGET_ADDRESSES)]
+UNVALIDATED_ADDRESSES_SET = [t for t in set(UNVALIDATED_ADDRESSES)]
+
 PURE_LOOT_TEAM_IDLE_GAME_STATS = {
     "CCP": {
         "bp": 661,
@@ -191,9 +194,9 @@ class LootSnipes:
     def hunt(self, address: str) -> None:
         available_loots = get_available_loots(address, 8, True)
         logger.print_ok_blue("Hunting for verified loot snipes...")
-        self._hunt_no_reinforce_mines(address, TARGET_ADDRESSES, available_loots, True)
+        self._hunt_no_reinforce_mines(address, TARGET_ADDRESSES_SET, available_loots, True)
         logger.print_ok_blue("Hunting for suspected loot snipes...")
-        self._hunt_no_reinforce_mines(address, UNVALIDATED_ADDRESSES, available_loots, False)
+        self._hunt_no_reinforce_mines(address, UNVALIDATED_ADDRESSES_SET, available_loots, False)
         logger.print_ok_blue("Hunting for low MP loot snipes...")
         self._hunt_low_mp_teams(address, available_loots)
 
