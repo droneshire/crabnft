@@ -171,6 +171,7 @@ def find_low_mr_teams(
 
 class LootSnipes:
     LOOTING_URL = "https://play.crabada.com/mine/start-looting"
+    MAX_LOOT_STALE_TIME = 60.0 * 60.0
 
     def __init__(self, verbose: bool = False):
         self.verbose = verbose
@@ -298,6 +299,23 @@ class LootSnipes:
         open_loots = [m["game_id"] for m in available_loots]
         self._update_discord(update_loot_snipes, open_loots, "LOOT_SNIPE", embed_handle=get_embed)
 
+    def _get_mines_to_delete(self, available_loots: T.List[int]) -> T.List[int]:
+        mark_for_delete = []
+        for mine in self.snipes.keys():
+            if mine not in available_loots:
+                mark_for_delete.append(mine)
+                continue
+
+            if time.time() - self.snipes[mine].get("start_time", 0.0) > self.MAX_LOOT_STALE_TIME:
+                mark_for_delete.append(mine)
+                continue
+
+            if self.snipes[mine].get("discord_attempts", 0) > 3:
+                mark_for_delete.append(mine)
+                continue
+
+        return mark_for_delete
+
     def _update_discord(
         self,
         update_loot_snipes: T.Dict[int, T.Dict[str, T.Any]],
@@ -337,12 +355,13 @@ class LootSnipes:
             try:
                 self.snipes[mine]["sent"] = self.snipes[mine]["webhook"].execute()
                 self.snipes[mine]["page"] = page
+                self.snipes[mine]["start_time"] = time.time()
             except:
                 logger.print_warn("failed to send webhook")
 
             time.sleep(1.0)
 
-        mark_for_delete = [mine for mine in self.snipes.keys() if mine not in available_loots]
+        mark_for_delete = self._get_mines_to_delete(available_loots)
 
         for mine in mark_for_delete:
             logger.print_normal(f"Deleting mine {mine} from cache")

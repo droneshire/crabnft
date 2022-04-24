@@ -93,11 +93,13 @@ def run_bot() -> None:
     if not args.dry_run:
         encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
 
-        for email in GMAIL:
+        for email_account in GMAIL:
             email_password = security.decrypt(
-                str.encode(encrypt_password), email["password"]
+                str.encode(encrypt_password), email_account["password"]
             ).decode()
-            email_accounts.append(email.Email(address=GMAIL["user"], password=email_password))
+            email_accounts.append(
+                email.Email(address=email_account["user"], password=email_password)
+            )
 
     bots = []
     for user, config in USERS.items():
