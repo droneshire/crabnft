@@ -71,10 +71,12 @@ def get_users_teams() -> T.Tuple[int, int]:
 def run_bot() -> None:
     args = parse_args()
 
-    if len(args.groups) == 1:
+    if len(args.groups) == 0:
+        id_string = ""
+    elif len(args.groups) == 1:
         id_string = str(args.groups[0])
     else:
-        id_string = "_".join(args.groups)
+        id_string = "_".join([str(g) for g in args.groups])
     setup_log(args.log_level, args.log_dir, id_string)
 
     sms_client = Client(TWILIO_CONFIG["account_sid"], TWILIO_CONFIG["account_auth_token"])
@@ -87,11 +89,15 @@ def run_bot() -> None:
 
     encrypt_password = ""
     email_password = ""
+    email_accounts = []
     if not args.dry_run:
         encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
-        email_password = security.decrypt(str.encode(encrypt_password), GMAIL["password"]).decode()
 
-    email_account = email.Email(address=GMAIL["user"], password=email_password)
+        for email in GMAIL:
+            email_password = security.decrypt(
+                str.encode(encrypt_password), email["password"]
+            ).decode()
+            email_accounts.append(email.Email(address=GMAIL["user"], password=email_password))
 
     bots = []
     for user, config in USERS.items():
@@ -112,7 +118,7 @@ def run_bot() -> None:
                 config,
                 TWILIO_CONFIG["from_sms_number"],
                 sms_client,
-                email_account,
+                email_accounts,
                 args.log_dir,
                 args.dry_run,
             )

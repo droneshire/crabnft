@@ -29,7 +29,7 @@ def setup_log(log_level: str, log_dir: str, id_string: str) -> None:
 
 def main() -> None:
     setup_log("INFO", logger.get_logging_dir(), "loot_sniper")
-    sniper = LootSnipes(webhook_url=DISCORD_WEBHOOK_URL["LOOT_SNIPE"], verbose=True)
+    sniper = LootSnipes(verbose=True)
     while True:
         for _, config in USERS.items():
             sniper.hunt(config["address"])

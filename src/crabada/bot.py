@@ -52,7 +52,7 @@ class CrabadaMineBot:
         config: UserConfig,
         from_sms_number: str,
         sms_client: Client,
-        email_account: Email,
+        email_accounts: T.List[Email],
         log_dir: str,
         dry_run: bool,
     ) -> None:
@@ -60,7 +60,7 @@ class CrabadaMineBot:
         self.config: UserConfig = config
         self.from_sms_number: str = from_sms_number
         self.sms: Client = sms_client
-        self.email: Email = email_account
+        self.emails: T.List[Email] = email_accounts
         self.log_dir: str = log_dir
         self.dry_run: bool = dry_run
         self.address: Address = self.config["address"]
@@ -202,12 +202,21 @@ class CrabadaMineBot:
         email_message += "Here is your updated bot configuration:\n\n"
         email_message += content
 
-        send_email(
-            self.email,
-            self.config["email"],
-            f"\U0001F980 Crabada Bot Configuration",
-            email_message,
-        )
+        for email in self.emails:
+            try:
+                send_email(
+                    email,
+                    self.config["email"],
+                    f"\U0001F980 Crabada Bot Configuration",
+                    email_message,
+                )
+                return
+            except KeyboardInterrupt:
+                raise
+            except:
+                pass
+
+        logger.print_fail("Failed to send email alert")
 
     def _send_status_update(
         self,
@@ -259,19 +268,22 @@ class CrabadaMineBot:
         except:
             logger.print_fail("Failed to send sms alert")
 
-        try:
-            if do_send_email and self.config["email"]:
-                email_message = f"Hello {self.alias}!\n"
-                email_message += content
-                send_email(
-                    self.email,
-                    self.config["email"],
-                    f"\U0001F980 Crabada Bot Update",
-                    email_message,
-                )
-        except KeyboardInterrupt:
-            raise
-        except:
+        if do_send_email and self.config["email"]:
+            email_message = f"Hello {self.alias}!\n"
+            email_message += content
+            for email in self.emails:
+                try:
+                    send_email(
+                        email,
+                        self.config["email"],
+                        f"\U0001F980 Crabada Bot Update",
+                        email_message,
+                    )
+                    return
+                except KeyboardInterrupt:
+                    raise
+                except:
+                    pass
             logger.print_fail("Failed to send email alert")
 
     def _update_bot_stats(self, tx: CrabadaTransaction, team: Team, mine: IdleGame) -> None:
