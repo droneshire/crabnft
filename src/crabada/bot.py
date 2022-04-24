@@ -91,7 +91,8 @@ class CrabadaMineBot:
         self.reinforcement_search_backoff: int = 0
         self.last_mine_start: T.Optional[float] = None
         self.time_since_last_alert: T.Optional[float] = None
-        self.fraud_detection_tracker: T.List[int] = []
+        self.fraud_detection_tracker: T.Set[int] = set()
+        self.gas_skip_tracker: T.Set[int] = set()
 
         self.prices: Prices = Prices(0.0, 0.0, 0.0)
         self.avg_gas_used: Average = Average()
@@ -303,6 +304,9 @@ class CrabadaMineBot:
         logger.print_bold(f"Profits w/ commission: {profit_tus:.2f} TUS (${profit_usd:.2f})")
 
         message = f"Successfully closed {tx.game_type} {team['game_id']}, we {tx.result} {outcome_emoji}.\n"
+        if mine["game_id"] in self.gas_skip_tracker:
+            self.gas_skip_tracker.discard(mine["game_id"])
+            message += f"**NOTE: we did not reinforce this mine due to high gas!\n"
         logger.print_ok_arrow(message)
 
         message += f"Profits: {profit_tus:.2f} TUS [${profit_usd:.2f}]\n"
@@ -464,6 +468,7 @@ class CrabadaMineBot:
             max_price_gwei=self.config["max_gas_price_gwei"],
             margin=strategy.get_gas_margin(game_stage=GameStage.REINFORCE, mine=mine),
         ):
+            self.gas_skip_tracker.add(mine["game_id"])
             logger.print_warn(
                 f"Skipping reinforcement of Mine[{mine['game_id']}] due to high gas cost"
             )
@@ -485,6 +490,8 @@ class CrabadaMineBot:
                     logger.print_ok_blue(
                         f"Reinforcement backoff: {last_reinforcement_search_backoff}->{self.reinforcement_search_backoff}"
                     )
+                if mine["game_id"] in self.gas_skip_tracker:
+                    self.gas_skip_tracker.discard(mine["game_id"])
                 return
 
             self.reinforcement_search_backoff = self.reinforcement_search_backoff + 5
@@ -531,8 +538,8 @@ class CrabadaMineBot:
             return True
 
         if team["team_id"] not in self.fraud_detection_tracker:
-            logger.logging(f"Adding team {team['team_id']} to fraud detection list")
-            self.fraud_detection_tracker.append(team["team_id"])
+            logger.print_warn(f"Adding team {team['team_id']} to fraud detection list")
+            self.fraud_detection_tracker.add(team["team_id"])
 
         with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
             tx = strategy.reinforce(team["game_id"], crabada_id, reinforcement_crab["price"])
@@ -575,8 +582,8 @@ class CrabadaMineBot:
                 self._update_bot_stats(tx, team, mine)
 
                 if team["team_id"] in self.fraud_detection_tracker:
-                    self.fraud_detection_tracker.remove(team["team_id"])
-                    logger.logging(f"Removing {team['team_id']} from fraud detection list")
+                    self.fraud_detection_tracker.discard(team["team_id"])
+                    logger.print_warn(f"Removing {team['team_id']} from fraud detection list")
 
                 return True
 
@@ -598,8 +605,8 @@ class CrabadaMineBot:
             )
             send_email(self.emails, ADMIN_EMAIL, "Fraud Detection Alert!", content)
         else:
-            self.fraud_detection_tracker.append(team["team_id"])
-            logger.logging(f"Adding team {team['team_id']} to fraud detection list")
+            self.fraud_detection_tracker.add(team["team_id"])
+            logger.print_warn(f"Adding team {team['team_id']} to fraud detection list")
 
         with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
             tx = self.mining_strategy.start(team["team_id"])
