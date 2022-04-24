@@ -532,11 +532,7 @@ class CrabadaWeb2Client:
 
     @staticmethod
     def loot_past_settle_time(mine: IdleGame) -> bool:
-        time_since_start = 0.0
-        for p in mine["process"]:
-            if p["action"] == "attack":
-                time_since_start = time.time() - p["transaction_time"]
-        return time_since_start > CrabadaWeb2Client.MIN_LOOT_GAME_TIME
+        return CrabadaWeb2Client.get_remaining_loot_time(mine) < 0
 
     @staticmethod
     def loot_is_able_to_be_settled(mine: IdleGame) -> bool:
@@ -597,7 +593,13 @@ class CrabadaWeb2Client:
         Seconds to the end of the given loot before can settle
         """
         now = time.time()
-        end_time = game.get("start_time", now) + CrabadaWeb2Client.MIN_LOOT_GAME_TIME
+
+        start_time = game.get("start_time", now)
+        for p in game["process"]:
+            if p["action"] == "attack":
+                start_time = p["transaction_time"]
+
+        end_time = start_time + CrabadaWeb2Client.MIN_LOOT_GAME_TIME
         return int(end_time - now)
 
     @staticmethod

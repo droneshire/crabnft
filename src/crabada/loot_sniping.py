@@ -89,7 +89,7 @@ def find_loot_snipe(
         loot_list.extend(mines)
 
     if verbose:
-        logger.print_normal(f"Checking against {len(loot_list)} suspected no reinforce mines...")
+        logger.print_normal(f"Checking against {len(loot_list)} no-reinforce mines...")
 
     target_pages = {}
     for inx, mine in enumerate(available_loots):
