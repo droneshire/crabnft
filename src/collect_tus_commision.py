@@ -43,9 +43,15 @@ def send_sms_message(encrypt_password: str, to_email: str, to_number: str, messa
         logger.print_warn(f"Failed to send message to {to_number}")
 
     try:
-        email_password = decrypt(str.encode(encrypt_password), GMAIL["password"]).decode()
-        email_account = email.Email(address=GMAIL["user"], password=email_password)
-        email.send_email(email_account, to_email, COMMISSION_SUBJECT, message)
+        email_accounts = []
+        for email_account in GMAIL:
+            email_password = decrypt(
+                str.encode(encrypt_password), email_account["password"]
+            ).decode()
+            email_accounts.append(
+                email.Email(address=email_account["user"], password=email_password)
+            )
+        email.send_email(email_accounts, to_email, COMMISSION_SUBJECT, message)
     except:
         logger.print_warn(f"Failed to send message to {to_email}")
 

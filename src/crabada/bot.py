@@ -10,6 +10,7 @@ import typing as T
 from twilio.rest import Client
 from web3.types import Address, TxReceipt
 
+from config import ADMIN_EMAIL
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
 from crabada.miners_revenge import calc_miners_revenge
@@ -90,6 +91,7 @@ class CrabadaMineBot:
         self.reinforcement_search_backoff: int = 0
         self.last_mine_start: T.Optional[float] = None
         self.time_since_last_alert: T.Optional[float] = None
+        self.fraud_detection_tracker: T.List[int] = []
 
         self.prices: Prices = Prices(0.0, 0.0, 0.0)
         self.avg_gas_used: Average = Average()
@@ -202,21 +204,12 @@ class CrabadaMineBot:
         email_message += "Here is your updated bot configuration:\n\n"
         email_message += content
 
-        for email in self.emails:
-            try:
-                send_email(
-                    email,
-                    self.config["email"],
-                    f"\U0001F980 Crabada Bot Configuration",
-                    email_message,
-                )
-                return
-            except KeyboardInterrupt:
-                raise
-            except:
-                pass
-
-        logger.print_fail("Failed to send email alert")
+        send_email(
+            self.emails,
+            self.config["email"],
+            f"\U0001F980 Crabada Bot Configuration",
+            email_message,
+        )
 
     def _send_status_update(
         self,
@@ -271,20 +264,12 @@ class CrabadaMineBot:
         if do_send_email and self.config["email"]:
             email_message = f"Hello {self.alias}!\n"
             email_message += content
-            for email in self.emails:
-                try:
-                    send_email(
-                        email,
-                        self.config["email"],
-                        f"\U0001F980 Crabada Bot Update",
-                        email_message,
-                    )
-                    return
-                except KeyboardInterrupt:
-                    raise
-                except:
-                    pass
-            logger.print_fail("Failed to send email alert")
+            send_email(
+                self.emails,
+                self.config["email"],
+                f"\U0001F980 Crabada Bot Update",
+                email_message,
+            )
 
     def _update_bot_stats(self, tx: CrabadaTransaction, team: Team, mine: IdleGame) -> None:
         team_id = team["team_id"]
@@ -545,6 +530,10 @@ class CrabadaMineBot:
             )
             return True
 
+        if team["team_id"] not in self.fraud_detection_tracker:
+            logger.logging(f"Adding team {team['team_id']} to fraud detection list")
+            self.fraud_detection_tracker.append(team["team_id"])
+
         with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
             tx = strategy.reinforce(team["game_id"], crabada_id, reinforcement_crab["price"])
 
@@ -584,10 +573,16 @@ class CrabadaMineBot:
             if tx.did_succeed:
                 self.time_since_last_alert = None
                 self._update_bot_stats(tx, team, mine)
+
+                if team["team_id"] in self.fraud_detection_tracker:
+                    self.fraud_detection_tracker.remove(team["team_id"])
+                    logger.logging(f"Removing {team['team_id']} from fraud detection list")
+
                 return True
 
             if team["team_id"] not in self.game_stats:
                 self.game_stats[team["team_id"]] = NULL_STATS
+
             self.game_stats[team["team_id"]]["gas_close"] = gas_avax
 
         logger.print_fail_arrow(f"Error closing game {team['game_id']}")
@@ -595,6 +590,16 @@ class CrabadaMineBot:
 
     def _start_mine(self, team: Team) -> bool:
         logger.print_normal(f"Attemting to start new mine with team {team['team_id']}!")
+
+        if team["team_id"] in self.fraud_detection_tracker:
+            content = f"Possible fraud detection from user {self.user}.\n\n"
+            content += (
+                f"Started a mine with team {team['team_id']} that never was closed by the bot!"
+            )
+            send_email(self.emails, ADMIN_EMAIL, "Fraud Detection Alert!", content)
+        else:
+            self.fraud_detection_tracker.append(team["team_id"])
+            logger.logging(f"Adding team {team['team_id']} to fraud detection list")
 
         with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
             tx = self.mining_strategy.start(team["team_id"])
@@ -764,11 +769,11 @@ class CrabadaMineBot:
 
         self._print_mine_loot_status()
         self._check_and_maybe_close()
-        time.sleep(3.0)
+        time.sleep(2.0)
         self._check_and_maybe_start_mines()
-        time.sleep(3.0)
+        time.sleep(2.0)
         self._check_and_maybe_reinforce()
-        time.sleep(3.0)
+        time.sleep(2.0)
 
         if self.updated_game_stats:
             self.updated_game_stats = False
