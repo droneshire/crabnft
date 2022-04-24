@@ -12,7 +12,7 @@ from utils.general import get_pretty_seconds
 
 class MiningDelayReinforcementStrategy(MiningStrategy):
     MAX_TIME_REMAINING_DELTA = 60.0 * 3
-    DELAY_BEFORE_REINFORCING = 60.0 * 13
+    DELAY_BEFORE_REINFORCING = 60.0 * 21.0
 
     def __init__(
         self,

@@ -22,7 +22,7 @@ FACTION_ICON_URLS = {
     Faction.ABYSS: "https://drive.google.com/uc?export=view&id=1TaRYPXPjSbJvY83Z__05U8sb9nY6y76O",
     Faction.FAERIE: "https://drive.google.com/uc?export=view&id=1g-dKGur0Dt6XvVNKLneTSL9hTI7iCL6e",
     Faction.LUX: "https://drive.google.com/uc?export=view&id=1L192vnT4hbwlgFxr0HIF9D22RuBNimpz",
-    Faction.MACHINE: "https://drive.google.com/uc?export=view&id=1BBNCTZa2SAJHnn5Jy8d3ekJTeyflV2A8",
+    Faction.MACHINE: "https://drive.google.com/uc?export=view&id=1YhA-O86EkI1U0xACx33nk2N4qBxL44hs",
     Faction.ORE: "https://drive.google.com/uc?export=view&id=13PyQF-az6REb_ZRoVdmoKSrS4SMPKzAa",
     Faction.TRENCH: "https://drive.google.com/uc?export=view&id=1cr23fk1onoHw4o63fziB2Djucijfdo7E",
     Faction.NO_FACTION: "https://drive.google.com/uc?export=view&id=17kJOWyAWyK0FVEfVaR8PN-FyS-qgAGkf",

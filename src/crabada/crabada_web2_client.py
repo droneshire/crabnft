@@ -295,8 +295,8 @@ class CrabadaWeb2Client:
     ) -> T.Optional[CrabForLending]:
         for class_id in [
             CrabadaClass.PRIME,
-            CrabadaClass.CRABOID,
             CrabadaClass.RUINED,
+            CrabadaClass.CRABOID,
             CrabadaClass.SUNKEN,
             CrabadaClass.ORGANIC,
         ]:
