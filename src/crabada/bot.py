@@ -32,7 +32,7 @@ from utils.game_stats import (
     update_lifetime_stats_format,
     write_game_stats,
 )
-from utils.general import dict_sum, get_pretty_seconds
+from utils.general import dict_sum, get_pretty_seconds, TIMESTAMP_FORMAT
 from utils.math import Average
 from utils.price import Prices
 from utils.price import is_gas_too_high, wei_to_tus, wei_to_cra_raw, wei_to_tus_raw
@@ -212,6 +212,64 @@ class CrabadaMineBot:
             email_message,
         )
 
+    def _check_calc_and_get_daily_update_message(self) -> str:
+        profit_usd = 0.0
+        total_tus = 0.0
+        total_cra = 0.0
+        wins = 0
+        losses = 0
+        miners_revenge = 0.0
+        total_mrs = 0
+
+        message = ""
+        for row in self.csv.read():
+            if len(row) < len(self.csv.get_col_map().keys()):
+                continue
+
+            timestamp = row[self.csv.get_col_map()["timestamp"]]
+            if not timestamp:
+                continue
+
+            date = datetime.datetime.strptime(timestamp, TIMESTAMP_FORMAT)
+            if datetime.datetime.today().date() != date.date():
+                continue
+
+            p = row[self.csv.get_col_map()["profit_usd"]]
+            if p:
+                profit_usd += float(p)
+
+            r = row[self.csv.get_col_map()["outcome"]]
+            if r:
+                wins += 1 if r.upper() == Result.WIN else 0
+                losses += 1 if r.upper() == Result.LOSE else 0
+
+            c = row[self.csv.get_col_map()["reward_cra"]]
+            if c:
+                total_cra += float(c)
+
+            t = row[self.csv.get_col_map()["reward_tus"]]
+            if t:
+                total_tus += float(t)
+
+            m = row[self.csv.get_col_map()["miners_revenge"]]
+            if m:
+                miners_revenge += float(m)
+                total_mrs += 1
+
+        if total_mrs > 0:
+            miners_revenge = miners_revenge / total_mrs
+
+        message += f"{self.alias} Stats For Today:\n"
+        message += f"Profit USD: ${profit_usd:.2f}"
+        message += f"Gross TUS: {total_tus:.2f} $TUS"
+        message += f"Gross CRA: {total_cra:.2f} $CRA"
+        message += f"Wins: {wins} Losses: {losses}"
+        message += f"Avg Miners Revenge: {miners_revenge:.2f}%"
+
+        logger.print_normal(message)
+
+        return message
+
     def _send_status_update(
         self,
         do_send_sms: bool,
@@ -325,7 +383,7 @@ class CrabadaMineBot:
         self.stats_logger.write()
 
         now = datetime.datetime.now()
-        self.game_stats[team_id]["timestamp"] = now.strftime("%m/%d/%Y %H:%M:%S")
+        self.game_stats[team_id]["timestamp"] = now.strftime(TIMESTAMP_FORMAT)
         self.game_stats[team_id]["team_id"] = team_id
         self.game_stats[team_id]["miners_revenge"] = calc_miners_revenge(mine)
         self.csv.write(self.game_stats[team_id])
@@ -599,7 +657,7 @@ class CrabadaMineBot:
         logger.print_normal(f"Attemting to start new mine with team {team['team_id']}!")
 
         if team["team_id"] in self.fraud_detection_tracker:
-            content = f"Possible fraud detection from user {self.user}.\n\n"
+            content = f"Possible fraud detection from user {self.alias}.\n\n"
             content += (
                 f"Started a mine with team {team['team_id']} that never was closed by the bot!"
             )

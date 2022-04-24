@@ -1,5 +1,7 @@
 import typing as T
 
+TIMESTAMP_FORMAT = "%m/%d/%Y %H:%M:%S"
+
 
 def dict_sum(d: T.Dict[T.Any, T.Any]) -> float:
     sum = 0.0

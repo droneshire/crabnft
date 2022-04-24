@@ -3,6 +3,7 @@ import os
 import typing as T
 
 from utils import csv_logger, logger
+from utils.general import TIMESTAMP_FORMAT
 from utils.price import Prices
 
 NORMALIZED_TIME = 4.0
@@ -379,7 +380,7 @@ def get_profitability_message(
         )
 
     now = datetime.datetime.now()
-    data_points["timestamp"] = now.strftime("%m/%d/%Y %H:%M:%S")
+    data_points["timestamp"] = now.strftime(TIMESTAMP_FORMAT)
     if log_stats:
         csv.write(data_points)
 

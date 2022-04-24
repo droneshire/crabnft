@@ -37,6 +37,17 @@ class CsvLogger:
                 row[inx] = v
             csv_writer.writerow(row)
 
+    def read(self) -> T.List[T.List[T.Any]]:
+        if not os.path.isfile(self.csv_file):
+            return []
+
+        with open(self.csv_file) as infile:
+            reader = list(csv.reader(infile))
+        return reader[1:]
+
+    def get_col_map(self) -> T.Dict[str, int]:
+        return self.col_map
+
     def _write_header_if_needed(self) -> None:
         if self.dry_run:
             return
