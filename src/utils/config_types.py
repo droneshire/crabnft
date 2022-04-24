@@ -22,7 +22,7 @@ class UserConfig(T.TypedDict):
     crabada_key: str
     address: Address
     mining_teams: T.Dict[int, int]
-    looting_teams: T.List[int]
+    looting_teams: T.Dict[int, int]
     max_gas_price: int
     max_gas_price_gwei: int
     max_reinforcement_price_tus: Tus

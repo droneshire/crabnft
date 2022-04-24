@@ -258,7 +258,7 @@ class LootSnipes:
 
             context = f"MINE: {mine} Faction: {mine_faction} Page: {page}\n"
             context += f"Loot with: {' '.join(attack_factions)}\n"
-            context += f"MR: {data['miners_revenge']}%\n"
+            context += f"MR: {data['miners_revenge']}\n"
             logger.print_bold(context)
 
             return self._get_low_mp_snipe_embed(

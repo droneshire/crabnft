@@ -2,8 +2,7 @@ PYTHON ?= python3
 RUN_PY = $(PYTHON) -m
 BLACK_CMD = $(RUN_PY) black --line-length 100 .
 # NOTE: exclude any virtual environment subdirectories here
-# (e.g. PY_FIND_COMMAND = find -name '*.py' -not -path './.venv/*')
-PY_FIND_COMMAND = find -name '*.py'
+PY_FIND_COMMAND = find -name '*.py' ! -path './venv/*'
 
 install:
 	pip3 install -r requirements.txt

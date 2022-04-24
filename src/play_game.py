@@ -26,7 +26,7 @@ from utils.math import Average
 from utils.price import get_avax_price_usd, get_token_price_usd
 
 PRICE_UPDATE_TIME = 60.0 * 30.0
-BOT_TOTALS_UPDATE = 60.0 * 60.0 * 3
+BOT_TOTALS_UPDATE = 60.0 * 5
 PROFITABILITY_UPDATE_TIME = 60.0 * 10.0
 GAS_DOWNSAMPLE_COUNT = 3
 

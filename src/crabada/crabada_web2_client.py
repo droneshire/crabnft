@@ -556,10 +556,11 @@ class CrabadaWeb2Client:
 
         if actions[-1] in ["attack", "reinforce-attack"]:
             margin = 60.0 * 3
-            return (
+            is_past_action_time = (
                 CrabadaWeb2Client.get_time_since_last_action(mine)
                 > CrabadaWeb2Client.TIME_PER_MINING_ACTION + margin
             )
+            return is_past_action_time
 
         return True
 
