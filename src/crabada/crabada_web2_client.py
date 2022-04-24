@@ -293,7 +293,13 @@ class CrabadaWeb2Client:
     def get_best_high_mp_crab_for_lending(
         self, max_tus: Tus, reinforcement_search_backoff: int
     ) -> T.Optional[CrabForLending]:
-        for class_id in [CrabadaClass.PRIME, CrabadaClass.CRABOID, CrabadaClass.RUINED, CrabadaClass.SUNKEN, CrabadaClass.ORGANIC]:
+        for class_id in [
+            CrabadaClass.PRIME,
+            CrabadaClass.CRABOID,
+            CrabadaClass.RUINED,
+            CrabadaClass.SUNKEN,
+            CrabadaClass.ORGANIC,
+        ]:
             params = {
                 "class_ids[]": class_id,
             }
@@ -303,17 +309,27 @@ class CrabadaWeb2Client:
             )
             if high_mp_crab is not None:
                 return high_mp_crab
+        return None
 
     def get_best_high_bp_crab_for_lending(
         self, max_tus: Tus, reinforcement_search_backoff: int
     ) -> T.Optional[CrabForLending]:
-        params = {
-            "class_ids[]": 4,  # bulks
-        }
-        high_bp_crabs = self.list_high_bp_crabs_for_lending()
-        return self.get_cheapest_best_crab_from_list_for_lending(
-            high_bp_crabs, max_tus, reinforcement_search_backoff, "battle_point"
-        )
+        for class_id in [
+            CrabadaClass.GEM,
+            CrabadaClass.BULK,
+            CrabadaClass.SURGE,
+        ]:
+            params = {
+                "class_ids[]": class_id,  # bulks
+            }
+            high_bp_crabs = self.list_high_bp_crabs_for_lending(params=params)
+            high_bp_crab = self.get_cheapest_best_crab_from_list_for_lending(
+                high_bp_crabs, max_tus, reinforcement_search_backoff, "battle_point"
+            )
+
+            if high_bp_crab is not None:
+                return high_bp_crab
+        return None
 
     def get_my_best_mp_crab_for_lending(self, user_address: Address) -> T.Optional[CrabForLending]:
         return self.get_my_best_crab_for_lending(user_address, params={"orderBy": "mine_point"})

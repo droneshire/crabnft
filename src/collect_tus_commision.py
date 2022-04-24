@@ -198,7 +198,9 @@ def collect_tus_commission(
         if is_gas_too_high(
             gas_price_gwei=tus_w3.get_gas_price(), max_price_gwei=MAX_COLLECTION_GAS_GWEI
         ):
-            logger.print_fail_arrow(f"Skipping transfer of {commission_tus:.2f} from {alias}: gas too high!!!")
+            logger.print_fail_arrow(
+                f"Skipping transfer of {commission_tus:.2f} from {alias}: gas too high!!!"
+            )
             continue
 
         did_fail = False

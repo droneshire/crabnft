@@ -1,9 +1,9 @@
-"": config_types.UserConfig(
+CONFIG_TEMPLATE = {
+    "USERNAME": config_types.UserConfig(
         group=2,
         crabada_key="",
         address=Address(""),
-        mining_teams={
-        },
+        mining_teams={},
         looting_teams={},
         reinforcing_crabs={},
         breed_crabs=[],
@@ -24,3 +24,4 @@
         get_email_updates=True,
         should_reinforce=True,
     ),
+}

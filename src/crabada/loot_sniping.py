@@ -13,6 +13,7 @@ from crabada.factional_advantage import get_faction_adjusted_battle_point
 from crabada.miners_revenge import calc_miners_revenge
 from crabada.types import Faction, IdleGame, TeamMember
 from utils import logger
+from utils.discord import DISCORD_WEBHOOK_URL
 
 MAX_PAGE_DEPTH = 50
 MIN_MINERS_REVENGE = 36.0
@@ -171,9 +172,9 @@ def find_low_mr_teams(
 class LootSnipes:
     LOOTING_URL = "https://play.crabada.com/mine/start-looting"
 
-    def __init__(self, webhook_url: str, verbose: bool = False):
+    def __init__(self, verbose: bool = False):
         self.verbose = verbose
-        self.url = webhook_url
+        self.urls = DISCORD_WEBHOOK_URL
         self.snipes = {}
 
     def delete_all_messages(self) -> None:
@@ -261,7 +262,9 @@ class LootSnipes:
             )
 
         open_loots = [m["game_id"] for m in available_loots]
-        self._update_discord(update_loot_snipes, open_loots, embed_handle=get_embed)
+        self._update_discord(
+            update_loot_snipes, open_loots, "LOW_MR_LOOT_SNIPE", embed_handle=get_embed
+        )
 
     def _hunt_no_reinforce_mines(
         self,
@@ -293,12 +296,13 @@ class LootSnipes:
             )
 
         open_loots = [m["game_id"] for m in available_loots]
-        self._update_discord(update_loot_snipes, open_loots, embed_handle=get_embed)
+        self._update_discord(update_loot_snipes, open_loots, "LOOT_SNIPE", embed_handle=get_embed)
 
     def _update_discord(
         self,
         update_loot_snipes: T.Dict[int, T.Dict[str, T.Any]],
         available_loots: T.List[int],
+        discord_channel: str,
         embed_handle: T.Callable[[int, T.Dict[str, T.Any]], DiscordEmbed],
     ) -> None:
         for mine, data in update_loot_snipes.items():
@@ -326,7 +330,9 @@ class LootSnipes:
                 continue
 
             self.snipes[mine] = {}
-            self.snipes[mine]["webhook"] = DiscordWebhook(url=self.url, rate_limit_retry=True)
+            self.snipes[mine]["webhook"] = DiscordWebhook(
+                url=self.urls[discord_channel], rate_limit_retry=True
+            )
             self.snipes[mine]["webhook"].add_embed(embed_handle(mine, data))
             try:
                 self.snipes[mine]["sent"] = self.snipes[mine]["webhook"].execute()
