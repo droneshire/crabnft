@@ -90,6 +90,7 @@ class CrabadaMineBot:
         self.updated_game_stats: bool = True
         self.reinforcement_search_backoff: int = 0
         self.last_mine_start: T.Optional[float] = None
+        self.last_date = datetime.date.today()
         self.time_since_last_alert: T.Optional[float] = None
         self.fraud_detection_tracker: T.Set[int] = set()
         self.gas_skip_tracker: T.Set[int] = set()
@@ -212,7 +213,13 @@ class CrabadaMineBot:
             email_message,
         )
 
-    def _check_calc_and_get_daily_update_message(self) -> str:
+    def _check_calc_and_send_daily_update_message(self) -> None:
+        today = datetime.date.today()
+        if today == self.last_date:
+            return
+
+        self.last_date = today
+
         profit_usd = 0.0
         total_tus = 0.0
         total_cra = 0.0
@@ -222,6 +229,9 @@ class CrabadaMineBot:
         total_mrs = 0
 
         message = ""
+
+        rows = self.csv.read()
+
         for row in self.csv.read():
             if len(row) < len(self.csv.get_col_map().keys()):
                 continue
@@ -230,8 +240,8 @@ class CrabadaMineBot:
             if not timestamp:
                 continue
 
-            date = datetime.datetime.strptime(timestamp, TIMESTAMP_FORMAT)
-            if datetime.datetime.today().date() != date.date():
+            date = datetime.datetime.strptime(timestamp.strip(), TIMESTAMP_FORMAT)
+            if datetime.date.today() != date.date():
                 continue
 
             p = row[self.csv.get_col_map()["profit_usd"]]
@@ -259,16 +269,28 @@ class CrabadaMineBot:
         if total_mrs > 0:
             miners_revenge = miners_revenge / total_mrs
 
-        message += f"{self.alias} Stats For Today:\n"
-        message += f"Profit USD: ${profit_usd:.2f}"
-        message += f"Gross TUS: {total_tus:.2f} $TUS"
-        message += f"Gross CRA: {total_cra:.2f} $CRA"
-        message += f"Wins: {wins} Losses: {losses}"
-        message += f"Avg Miners Revenge: {miners_revenge:.2f}%"
+        message += f"{self.alias}'s Stats For Today:\n"
+        message += f"Profit USD: ${profit_usd:.2f}\n"
+        message += f"Gross TUS: {total_tus:.2f} $TUS\n"
+        message += f"Gross CRA: {total_cra:.2f} $CRA\n"
+        win_percent = (wins / float(wins + losses)) * 100.0
+        message += f"Wins: {wins} Losses: {losses} Win Percent: {win_percent:.2f}%\n"
+        message += f"Avg Miners Revenge: {miners_revenge:.2f}%\n"
 
         logger.print_normal(message)
 
-        return message
+        if self.dry_run or True:
+            return
+
+        if self.config["email"] and self.config["get_email_updates"]:
+            email_message = f"Hello!\n"
+            email_message += message
+            send_email(
+                self.emails,
+                self.config["email"],
+                f"\U0001F4C8 Crabada Daily Bot Stats",
+                email_message,
+            )
 
     def _send_status_update(
         self,
@@ -831,6 +853,8 @@ class CrabadaMineBot:
         logger.print_ok(
             f"AVAX: ${self.prices.avax_usd:.3f}, TUS: ${self.prices.tus_usd:.3f}, CRA: ${self.prices.cra_usd:.3f}, Gas: {gas_price_gwei:.2f}"
         )
+
+        self._check_calc_and_send_daily_update_message()
 
         self._print_mine_loot_status()
         self._check_and_maybe_close()

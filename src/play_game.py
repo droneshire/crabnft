@@ -50,7 +50,14 @@ def setup_log(log_level: str, log_dir: str, id_string: str) -> None:
         time.strftime("%Y_%m_%d__%H_%M_%S", time.localtime(time.time()))
         + f"_crabada_{id_string}.log"
     )
+
+    log_dir = os.path.join(log_dir, "bot")
+
+    if not os.path.isdir(log_dir):
+        os.mkdir(log_dir)
+
     log_file = os.path.join(log_dir, log_name)
+
     logging.basicConfig(
         filename=log_file,
         level=logging.getLevelName(log_level),

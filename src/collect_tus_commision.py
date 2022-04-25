@@ -63,7 +63,13 @@ def setup_log(log_level: str, log_dir: str) -> None:
     log_name = (
         time.strftime("%Y_%m_%d__%H_%M_%S", time.localtime(time.time())) + "_tus_transactions.log"
     )
+
+    log_dir = os.path.join(log_dir, "collections")
+    if not os.path.isdir(log_dir):
+        os.mkdir(log_dir)
+
     log_file = os.path.join(log_dir, log_name)
+
     logging.basicConfig(
         filename=log_file,
         level=logging.getLevelName(log_level),

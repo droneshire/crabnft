@@ -178,6 +178,7 @@ class LootSnipes:
     LOOTING_URL = "https://play.crabada.com/mine/start-looting"
     MAX_LOOT_STALE_TIME = 60.0 * 60.0
     ADDRESS_GSHEET = "No Reinforce List"
+    UPDATE_TIME_DELTA = 60.0 * 15.0
 
     def __init__(self, credentials: str, verbose: bool = False):
         self.verbose = verbose
@@ -188,6 +189,7 @@ class LootSnipes:
             "verified": TARGET_ADDRESSES_SET,
             "unverified": UNVALIDATED_ADDRESSES_SET,
         }
+        self.last_update = time.time()
 
     def delete_all_messages(self) -> None:
         logger.print_fail("Deleting all messages")
@@ -200,6 +202,12 @@ class LootSnipes:
         self.snipes = {}
 
     def _update_addresses_from_sheet(self) -> None:
+        now = time.time()
+        if now - self.last_update < self.UPDATE_TIME_DELTA:
+            return
+
+        self.last_update = now
+
         old_addresses = copy.deepcopy(self.addresses)
 
         self.addresses = {
