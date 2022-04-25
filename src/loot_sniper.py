@@ -37,16 +37,11 @@ def main() -> None:
     setup_log("INFO", logger.get_logging_dir(), "loot_sniper")
     this_dir = os.path.dirname(os.path.realpath(__file__))
     sniper = LootSnipes(os.path.join(this_dir, "credentials.json"), verbose=True)
-    cb = circuit_breaker.CircuitBreaker(60.0)
+    cb = circuit_breaker.CircuitBreaker(15.0)
     while True:
         for _, config in USERS.items():
             cb.start()
-            try:
-                sniper.hunt(config["address"])
-            except KeyboardInterrupt:
-                sniper.delete_all_messages()
-            except:
-                logger.print_fail(f"Error caught in sniper hunt")
+            sniper.hunt(config["address"])
             cb.end()
             time.sleep(1.0)
 
