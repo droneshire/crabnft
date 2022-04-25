@@ -53,7 +53,7 @@ class LootSnipes:
     MAX_LOOT_STALE_TIME = 60.0 * 30.0
     ADDRESS_GSHEET = "No Reinforce List"
     UPDATE_TIME_DELTA = 60.0 * 15.0
-    SEARCH_ADDRESSES_PER_ITERATION = 20
+    SEARCH_ADDRESSES_PER_ITERATION = 50
 
     def __init__(self, credentials: str, verbose: bool = False):
         self.verbose = verbose
@@ -135,9 +135,11 @@ class LootSnipes:
         if self.SEARCH_ADDRESSES_PER_ITERATION > len(address_list):
             search_this_time = address_list
         elif end > len(address_list):
-            search_this_time = address_list[start:] + address_list[0 : (end - len(address_list))]
+            end = end - len(address_list)
+            search_this_time = address_list[start:] + address_list[0:end]
         else:
             search_this_time = address_list[start:end]
+        logger.print_normal(f"Searching through address list index {start}->{end}")
 
         self.search_index += self.SEARCH_ADDRESSES_PER_ITERATION
         if self.search_index >= len(address_list):
