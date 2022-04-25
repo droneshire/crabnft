@@ -156,7 +156,6 @@ class LootSnipes:
             logger.print_normal(f"Checking against {len(loot_list)} no-reinforce mines...")
 
         target_pages = {}
-        pb = tqdm.tqdm(total=len(available_loots))
         for inx, mine in enumerate(available_loots):
             page = int((inx + 9) / 9)
             faction = mine["faction"].upper()
@@ -171,8 +170,6 @@ class LootSnipes:
                     logger.print_normal(
                         f"Found target {mine['game_id']} on page {data['page']} faction {data['faction']}"
                     )
-            pb.update(1)
-        pb.close()
         logger.print_ok_arrow(f"Found {len(target_pages.keys())} snipes")
         return target_pages
 
@@ -206,9 +203,7 @@ class LootSnipes:
         self, user_address: Address, available_loots: T.List[IdleGame], verbose: bool = False
     ) -> T.Dict[int, T.Any]:
         target_pages = {}
-        pb = tqdm.tqdm(total=len(available_loots))
         for inx, mine in enumerate(available_loots):
-            pb.update(1)
             battle_point = get_faction_adjusted_battle_point(mine, is_looting=False, verbose=False)
             faction = mine["faction"].upper()
             page = int((inx + 9) / 9)
@@ -236,7 +231,6 @@ class LootSnipes:
                 "defense_battle_point": battle_point,
             }
             target_pages[mine["game_id"]] = data
-        pb.close()
 
         logger.print_ok_arrow(f"Found {len(target_pages.keys())} low MP snipes")
         return target_pages
