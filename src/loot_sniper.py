@@ -41,7 +41,12 @@ def main() -> None:
     while True:
         for _, config in USERS.items():
             cb.start()
-            sniper.hunt(config["address"])
+            try:
+                sniper.hunt(config["address"])
+            except KeyboardInterrupt:
+                sniper.delete_all_messages()
+            except:
+                pass
             cb.end()
             time.sleep(1.0)
 

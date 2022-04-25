@@ -67,6 +67,7 @@ class LootSnipes:
         self.last_update = 0.0
         self.web2 = CrabadaWeb2Client()
         self.search_index = 0
+        self.sheets_update_delta = self.UPDATE_TIME_DELTA
 
     def delete_all_messages(self) -> None:
         logger.print_fail("Deleting all messages")
@@ -239,17 +240,22 @@ class LootSnipes:
 
     def _update_addresses_from_sheet(self) -> None:
         now = time.time()
-        if now - self.last_update < self.UPDATE_TIME_DELTA:
+        if now - self.last_update < self.sheets_update_delta:
             return
 
         self.last_update = now
 
         old_addresses = copy.deepcopy(self.addresses)
 
-        self.addresses = {
-            "verified": list(set(self.gsheet.read_column(1)[1:])),
-            "unverified": list(set(self.gsheet.read_column(3)[1:])),
-        }
+        try:
+            self.addresses = {
+                "verified": list(set(self.gsheet.read_column(1)[1:])),
+                "unverified": list(set(self.gsheet.read_column(3)[1:])),
+            }
+            self.sheets_update_delta = self.UPDATE_TIME_DELTA
+        except:
+            self.sheets_update_delta = self.sheets_update_delta * 2
+
         diff = deepdiff.DeepDiff(old_addresses, self.addresses)
         if diff:
             logger.print_bold(f"Updating from spreadsheet...")
