@@ -60,11 +60,11 @@ class LootSnipes:
         self.urls = DISCORD_WEBHOOK_URL
         self.snipes = {}
         self.gsheet = GoogleSheets(self.ADDRESS_GSHEET, credentials)
-        self.addresses = {
+        self.addresses: T.Dict[str, list] = {
             "verified": TARGET_ADDRESSES_SET,
             "unverified": UNVALIDATED_ADDRESSES_SET,
         }
-        self.last_update = time.time()
+        self.last_update = 0.0
         self.web2 = CrabadaWeb2Client()
         self.search_index = 0
 
@@ -131,7 +131,9 @@ class LootSnipes:
         search_this_time = []
         start = self.search_index
         end = self.search_index + self.SEARCH_ADDRESSES_PER_ITERATION
-        if end > len(address_list):
+        if self.SEARCH_ADDRESSES_PER_ITERATION > len(address_list):
+            search_this_time = address_list
+        elif end > len(address_list):
             search_this_time = address_list[start:] + address_list[0 : (end - len(address_list))]
         else:
             search_this_time = address_list[start:end]
@@ -245,12 +247,14 @@ class LootSnipes:
         old_addresses = copy.deepcopy(self.addresses)
 
         self.addresses = {
-            "verified": self.gsheet.read_column(1)[1:],
-            "unverified": self.gsheet.read_column(3)[1:],
+            "verified": list(set(self.gsheet.read_column(1)[1:])),
+            "unverified": list(set(self.gsheet.read_column(3)[1:])),
         }
         diff = deepdiff.DeepDiff(old_addresses, self.addresses)
         if diff:
             logger.print_bold(f"Updating from spreadsheet...")
+            logger.print_bold(f"{len(self.addresses['verified'])} verified addresses")
+            logger.print_bold(f"{len(self.addresses['unverified'])} unverified addresses")
             logger.print_normal(f"{diff}")
 
     def _get_address_snipe_embed(
