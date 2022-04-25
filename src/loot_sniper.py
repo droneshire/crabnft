@@ -29,7 +29,8 @@ def setup_log(log_level: str, log_dir: str, id_string: str) -> None:
 
 def main() -> None:
     setup_log("INFO", logger.get_logging_dir(), "loot_sniper")
-    sniper = LootSnipes(verbose=True)
+    this_dir = os.path.dirname(os.path.realpath(__file__))
+    sniper = LootSnipes(os.path.join(this_dir, "credentials.json"), verbose=True)
     while True:
         for _, config in USERS.items():
             sniper.hunt(config["address"])

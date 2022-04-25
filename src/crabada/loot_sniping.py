@@ -1,4 +1,5 @@
 import copy
+import deepdiff
 import time
 import typing as T
 
@@ -14,6 +15,7 @@ from crabada.miners_revenge import calc_miners_revenge
 from crabada.types import Faction, IdleGame, TeamMember
 from utils import logger
 from utils.discord import DISCORD_WEBHOOK_URL
+from utils.google_sheets import GoogleSheets
 
 MAX_PAGE_DEPTH = 50
 MIN_MINERS_REVENGE = 36.0
@@ -56,7 +58,7 @@ def get_available_loots(
             "page": page,
             "limit": 100,
         }
-        time.sleep(2.0)
+        time.sleep(0.5)
         loots = web2.list_available_loots(user_address, params=params)
 
         if not loots:
@@ -175,11 +177,17 @@ def find_low_mr_teams(
 class LootSnipes:
     LOOTING_URL = "https://play.crabada.com/mine/start-looting"
     MAX_LOOT_STALE_TIME = 60.0 * 60.0
+    ADDRESS_GSHEET = "No Reinforce List"
 
-    def __init__(self, verbose: bool = False):
+    def __init__(self, credentials: str, verbose: bool = False):
         self.verbose = verbose
         self.urls = DISCORD_WEBHOOK_URL
         self.snipes = {}
+        self.gsheet = GoogleSheets(self.ADDRESS_GSHEET, credentials)
+        self.addresses = {
+            "verified": TARGET_ADDRESSES_SET,
+            "unverified": UNVALIDATED_ADDRESSES_SET,
+        }
 
     def delete_all_messages(self) -> None:
         logger.print_fail("Deleting all messages")
@@ -191,12 +199,25 @@ class LootSnipes:
                 pass
         self.snipes = {}
 
+    def _update_addresses_from_sheet(self) -> None:
+        old_addresses = copy.deepcopy(self.addresses)
+
+        self.addresses = {
+            "verified": self.gsheet.read_column(1)[1:],
+            "unverified": self.gsheet.read_column(3)[1:],
+        }
+        diff = deepdiff.DeepDiff(old_addresses, self.addresses)
+        if diff:
+            logger.print_bold(f"Updating from spreadsheet...")
+            logger.print_normal(f"{diff}")
+
     def hunt(self, address: str) -> None:
+        self._update_addresses_from_sheet()
         available_loots = get_available_loots(address, 8, True)
         logger.print_ok_blue("Hunting for verified loot snipes...")
-        self._hunt_no_reinforce_mines(address, TARGET_ADDRESSES_SET, available_loots, True)
+        self._hunt_no_reinforce_mines(address, self.addresses["verified"], available_loots, True)
         logger.print_ok_blue("Hunting for suspected loot snipes...")
-        self._hunt_no_reinforce_mines(address, UNVALIDATED_ADDRESSES_SET, available_loots, False)
+        self._hunt_no_reinforce_mines(address, self.addresses["unverified"], available_loots, False)
         logger.print_ok_blue("Hunting for low MP loot snipes...")
         self._hunt_low_mp_teams(address, available_loots)
 
