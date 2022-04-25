@@ -4,7 +4,6 @@ import requests
 import time
 
 from eth_typing import Address
-from torrequest import TorRequest
 
 from crabada.factional_advantage import get_faction_adjusted_battle_point
 from crabada.types import Crab, CrabadaClass, CrabForLending, IdleGame, LendingCategories, Team
@@ -56,23 +55,12 @@ class CrabadaWeb2Client:
 
     def __init__(self) -> None:
         self.requests = requests
-        try:
-            self.requests = TorRequest()
-            self.tor_request.reset_identity()
-            logger.print_bold(f"Tor session established")
-        except OSError:
-            pass
 
     def _get_request(self, url: str, params: T.Dict[str, T.Any] = {}) -> T.Any:
         try:
-            if isinstance(self.requests, TorRequest):
-                return self.requests.request(
-                    "GET", url, params=params, headers=self.BROWSER_HEADERS, timeout=5.0
-                ).json
-            else:
-                return self.requests.request(
-                    "GET", url, params=params, headers=self.BROWSER_HEADERS, timeout=5.0
-                ).json()
+            return self.requests.request(
+                "GET", url, params=params, headers=self.BROWSER_HEADERS, timeout=5.0
+            ).json()
         except KeyboardInterrupt:
             raise
         except:
@@ -378,8 +366,7 @@ class CrabadaWeb2Client:
         actual_params.update(params)
         return self._get_request(url, actual_params)
 
-    @staticmethod
-    def _get_battle_points(mine: IdleGame) -> T.Tuple[int, int]:
+    def _get_battle_points(self, mine: IdleGame) -> T.Tuple[int, int]:
         defense_battle_point = get_faction_adjusted_battle_point(
             mine, is_looting=False, verbose=False
         )
@@ -389,13 +376,11 @@ class CrabadaWeb2Client:
 
         return (defense_battle_point, attack_battle_point)
 
-    @staticmethod
-    def _can_loot_reinforcement_win(mine: IdleGame) -> bool:
-        defense_battle_point, attack_battle_point = CrabadaWeb2Client()._get_battle_points(mine)
-        return attack_battle_point + CrabadaWeb2Client.MAX_BP_NORMAL_CRAB > defense_battle_point
+    def _can_loot_reinforcement_win(self, mine: IdleGame) -> bool:
+        defense_battle_point, attack_battle_point = self._get_battle_points(mine)
+        return attack_battle_point + self.MAX_BP_NORMAL_CRAB > defense_battle_point
 
-    @staticmethod
-    def loot_is_winning(mine: IdleGame) -> bool:
+    def loot_is_winning(self, mine: IdleGame) -> bool:
         """
         Determines if attack looter has won the battle
         """
@@ -406,11 +391,10 @@ class CrabadaWeb2Client:
             raise
         except:
             return False
-        defense_battle_point, attack_battle_point = CrabadaWeb2Client()._get_battle_points(mine)
+        defense_battle_point, attack_battle_point = self._get_battle_points(mine)
         return attack_battle_point > defense_battle_point
 
-    @staticmethod
-    def mine_is_winning(mine: IdleGame) -> bool:
+    def mine_is_winning(self, mine: IdleGame) -> bool:
         """
         Determines if defense miner has won the battle
         """
@@ -421,7 +405,7 @@ class CrabadaWeb2Client:
             raise
         except:
             return False
-        defense_battle_point, attack_battle_point = CrabadaWeb2Client()._get_battle_points(mine)
+        defense_battle_point, attack_battle_point = self._get_battle_points(mine)
 
         if defense_battle_point is None:
             return False
@@ -431,8 +415,7 @@ class CrabadaWeb2Client:
 
         return defense_battle_point >= attack_battle_point
 
-    @staticmethod
-    def mine_has_been_attacked(mine: IdleGame) -> bool:
+    def mine_has_been_attacked(self, mine: IdleGame) -> bool:
         """
         Return True if, in the given game, the miner (the defense) has
         been attacked
@@ -442,8 +425,7 @@ class CrabadaWeb2Client:
 
         return mine.get("attack_team_id", None) is not None
 
-    @staticmethod
-    def mine_needs_reinforcement(mine: IdleGame) -> bool:
+    def mine_needs_reinforcement(self, mine: IdleGame) -> bool:
         """
         Return True if, in the given game, the miner (the defense) needs
         to reinforce the mine from an attacker
@@ -451,16 +433,16 @@ class CrabadaWeb2Client:
         if not mine:
             return False
 
-        if not CrabadaWeb2Client.mine_is_open(mine):
+        if not self.mine_is_open(mine):
             return False
 
-        if CrabadaWeb2Client.mine_is_finished(mine):
+        if self.mine_is_finished(mine):
             return False
 
-        if CrabadaWeb2Client.mine_is_settled(mine):
+        if self.mine_is_settled(mine):
             return False
 
-        if not CrabadaWeb2Client.mine_has_been_attacked(mine):
+        if not self.mine_has_been_attacked(mine):
             return False
 
         process = mine["process"]
@@ -471,14 +453,13 @@ class CrabadaWeb2Client:
         if actions.count("reinforce-defense") >= 2:
             return False
 
-        if CrabadaWeb2Client.mine_is_winning(mine):
+        if self.mine_is_winning(mine):
             return False
 
         attack_start_time = process[-1]["transaction_time"]
-        return time.time() - attack_start_time < CrabadaWeb2Client.REINFORCE_TIME_WINDOW
+        return time.time() - attack_start_time < self.REINFORCE_TIME_WINDOW
 
-    @staticmethod
-    def loot_needs_reinforcement(mine: IdleGame) -> bool:
+    def loot_needs_reinforcement(self, mine: IdleGame) -> bool:
         """
         Return True if, in the given game, the looter (the offense) needs
         to attack the mine of a miner
@@ -486,13 +467,13 @@ class CrabadaWeb2Client:
         if not mine:
             return False
 
-        if not CrabadaWeb2Client.mine_is_open(mine):
+        if not self.mine_is_open(mine):
             return False
 
-        if CrabadaWeb2Client.mine_is_finished(mine):
+        if self.mine_is_finished(mine):
             return False
 
-        if CrabadaWeb2Client.mine_is_settled(mine):
+        if self.mine_is_settled(mine):
             return False
 
         process = mine["process"]
@@ -504,19 +485,18 @@ class CrabadaWeb2Client:
         if num_reinforcements >= 2:
             return False
 
-        if CrabadaWeb2Client.loot_is_winning(mine):
+        if self.loot_is_winning(mine):
             return False
 
         # make sure we don't reinforce to a legendary when we can't win
-        if not CrabadaWeb2Client._can_loot_reinforcement_win(mine):
+        if not self._can_loot_reinforcement_win(mine):
             logger.print_warn(f"Not reinforcing due to LEGENDARY reinforcement")
             return False
 
         defense_start_time = process[-1]["transaction_time"]
-        return time.time() - defense_start_time < CrabadaWeb2Client.REINFORCE_TIME_WINDOW
+        return time.time() - defense_start_time < self.REINFORCE_TIME_WINDOW
 
-    @staticmethod
-    def mine_is_open(mine: IdleGame) -> bool:
+    def mine_is_open(self, mine: IdleGame) -> bool:
         """
         Return True if the given game is open
         """
@@ -525,39 +505,32 @@ class CrabadaWeb2Client:
 
         return mine.get("status", "") == "open"
 
-    @staticmethod
-    def mine_is_settled(mine: IdleGame) -> bool:
+    def mine_is_settled(self, mine: IdleGame) -> bool:
         """
         Return True if the given game is settled
         """
         if not mine:
             return False
 
-        return (
-            CrabadaWeb2Client.get_remaining_time(mine) < 7000
-            or mine.get("winner_team_id", None) is not None
-        )
+        return self.get_remaining_time(mine) < 7000 or mine.get("winner_team_id", None) is not None
 
-    @staticmethod
-    def mine_is_finished(mine: IdleGame) -> bool:
+    def mine_is_finished(self, mine: IdleGame) -> bool:
         """
         Return true if the given game is past its end_time
         """
-        return CrabadaWeb2Client.get_remaining_time(mine) <= 0
+        return self.get_remaining_time(mine) <= 0
 
-    @staticmethod
-    def loot_past_settle_time(mine: IdleGame) -> bool:
-        return CrabadaWeb2Client.get_remaining_loot_time(mine) < 0
+    def loot_past_settle_time(self, mine: IdleGame) -> bool:
+        return self.get_remaining_loot_time(mine) < 0
 
-    @staticmethod
-    def loot_is_able_to_be_settled(mine: IdleGame) -> bool:
+    def loot_is_able_to_be_settled(self, mine: IdleGame) -> bool:
         """
         Return true if the given loot is able to be settled
         """
-        if not CrabadaWeb2Client.loot_past_settle_time(mine):
+        if not self.loot_past_settle_time(mine):
             return False
 
-        if CrabadaWeb2Client.loot_needs_reinforcement(mine):
+        if self.loot_needs_reinforcement(mine):
             return False
 
         actions = [p["action"] for p in mine["process"]]
@@ -568,42 +541,36 @@ class CrabadaWeb2Client:
         if actions[-1] in ["attack", "reinforce-attack"]:
             margin = 60.0 * 3
             is_past_action_time = (
-                CrabadaWeb2Client.get_time_since_last_action(mine)
-                > CrabadaWeb2Client.TIME_PER_MINING_ACTION + margin
+                self.get_time_since_last_action(mine) > self.TIME_PER_MINING_ACTION + margin
             )
             return is_past_action_time
 
         return True
 
-    @staticmethod
-    def mine_is_closed(mine: IdleGame) -> bool:
+    def mine_is_closed(self, mine: IdleGame) -> bool:
         """
         Return true if the given game is closed (meaning the
         game has been settled and the reward has been claimed)
         """
         return mine.get("status", "") == "close"
 
-    @staticmethod
-    def get_remaining_time(game: IdleGame) -> int:
+    def get_remaining_time(self, game: IdleGame) -> int:
         """
         Seconds to the end of the given game
         """
         now = time.time()
         return int(game.get("end_time", now) - now)
 
-    @staticmethod
-    def get_total_mine_time(game: IdleGame) -> int:
+    def get_total_mine_time(self, game: IdleGame) -> int:
         """
         Seconds total mine start to end
         """
         return int(game.get("end_time", 0) - game.get("start_time", 0))
 
-    @staticmethod
-    def get_total_mine_time_formatted(game: IdleGame) -> int:
-        return get_pretty_seconds(CrabadaWeb2Client.get_total_mine_time(game))
+    def get_total_mine_time_formatted(self, game: IdleGame) -> int:
+        return get_pretty_seconds(self.get_total_mine_time(game))
 
-    @staticmethod
-    def get_remaining_loot_time(game: IdleGame) -> int:
+    def get_remaining_loot_time(self, game: IdleGame) -> int:
         """
         Seconds to the end of the given loot before can settle
         """
@@ -614,15 +581,13 @@ class CrabadaWeb2Client:
             if p["action"] == "attack":
                 start_time = p["transaction_time"]
 
-        end_time = start_time + CrabadaWeb2Client.MIN_LOOT_GAME_TIME
+        end_time = start_time + self.MIN_LOOT_GAME_TIME
         return int(end_time - now)
 
-    @staticmethod
-    def get_remaining_loot_time_formatted(game: IdleGame) -> str:
-        return get_pretty_seconds(CrabadaWeb2Client.get_remaining_loot_time(game))
+    def get_remaining_loot_time_formatted(self, game: IdleGame) -> str:
+        return get_pretty_seconds(self.get_remaining_loot_time(game))
 
-    @staticmethod
-    def get_time_since_last_action(game: IdleGame) -> int:
+    def get_time_since_last_action(self, game: IdleGame) -> int:
         """
         Seconds since last game action
         """
@@ -630,35 +595,30 @@ class CrabadaWeb2Client:
         transaction_time = game["process"][-1]["transaction_time"]
         return int(now - transaction_time)
 
-    @staticmethod
-    def get_time_since_last_action_formatted(game: IdleGame) -> str:
+    def get_time_since_last_action_formatted(self, game: IdleGame) -> str:
         """
         Hours, minutes and seconds to the end of the current action
         """
-        return get_pretty_seconds(CrabadaWeb2Client.get_time_since_last_action(game))
+        return get_pretty_seconds(self.get_time_since_last_action(game))
 
-    @staticmethod
-    def get_remaining_time_for_action(game: IdleGame) -> int:
+    def get_remaining_time_for_action(self, game: IdleGame) -> int:
         now = time.time()
         last_transaction_time = game["process"][-1]["transaction_time"]
-        return int(last_transaction_time + CrabadaWeb2Client.TIME_PER_MINING_ACTION - now)
+        return int(last_transaction_time + self.TIME_PER_MINING_ACTION - now)
 
-    @staticmethod
-    def get_remaining_time_for_action_formatted(game: IdleGame) -> str:
+    def get_remaining_time_for_action_formatted(self, game: IdleGame) -> str:
         """
         Hours, minutes and seconds to the end of the current action
         """
-        return get_pretty_seconds(CrabadaWeb2Client.get_remaining_time_for_action(game))
+        return get_pretty_seconds(self.get_remaining_time_for_action(game))
 
-    @staticmethod
-    def get_remaining_time_formatted(game: IdleGame) -> str:
+    def get_remaining_time_formatted(self, game: IdleGame) -> str:
         """
         Hours, minutes and seconds to the end of the given game
         """
-        return get_pretty_seconds(CrabadaWeb2Client.get_remaining_time(game))
+        return get_pretty_seconds(self.get_remaining_time(game))
 
-    @staticmethod
-    def get_next_mine_to_finish(games: T.List[IdleGame]) -> IdleGame:
+    def get_next_mine_to_finish(self, games: T.List[IdleGame]) -> IdleGame:
         """Given a list of games, return the mine that is open and
         next to finish; returns None if there are no unfinished games
         (finished=past the 4th our, regardless of whether the reward
@@ -668,9 +628,8 @@ class CrabadaWeb2Client:
         unfinished_games = [g for g in games if not mine_is_finished(g)]
         return first_or_none(sorted(unfinished_games, key=lambda g: g.get("end_time", 10e20)))
 
-    @staticmethod
-    def get_last_mine_start_time(user_address: Address) -> int:
+    def get_last_mine_start_time(self, user_address: Address) -> int:
         last_mine_start = 0
-        for mine in CrabadaWeb2Client().list_my_open_mines(user_address):
+        for mine in self.list_my_open_mines(user_address):
             last_mine_start = max(last_mine_start, mine.get("start_time", 0))
         return last_mine_start
