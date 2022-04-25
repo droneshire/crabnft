@@ -4,6 +4,7 @@ import requests
 import time
 
 from eth_typing import Address
+from torrequest import TorRequest
 
 from crabada.factional_advantage import get_faction_adjusted_battle_point
 from crabada.types import Crab, CrabadaClass, CrabForLending, IdleGame, LendingCategories, Team
@@ -53,11 +54,25 @@ class CrabadaWeb2Client:
 
     MAX_BP_NORMAL_CRAB = 237
 
+    def __init__(self) -> None:
+        self.requests = requests
+        try:
+            self.requests = TorRequest()
+            self.tor_request.reset_identity()
+            logger.print_bold(f"Tor session established")
+        except OSError:
+            pass
+
     def _get_request(self, url: str, params: T.Dict[str, T.Any] = {}) -> T.Any:
         try:
-            return requests.request(
-                "GET", url, params=params, headers=self.BROWSER_HEADERS, timeout=5.0
-            ).json()
+            if isinstance(self.requests, TorRequest):
+                return self.requests.request(
+                    "GET", url, params=params, headers=self.BROWSER_HEADERS, timeout=5.0
+                ).json
+            else:
+                return self.requests.request(
+                    "GET", url, params=params, headers=self.BROWSER_HEADERS, timeout=5.0
+                ).json()
         except KeyboardInterrupt:
             raise
         except:
@@ -595,7 +610,7 @@ class CrabadaWeb2Client:
         now = time.time()
 
         start_time = game.get("start_time", now)
-        for p in game["process"]:
+        for p in game.get("process", []):
             if p["action"] == "attack":
                 start_time = p["transaction_time"]
 
