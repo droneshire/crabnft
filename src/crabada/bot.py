@@ -242,7 +242,7 @@ class CrabadaMineBot:
                 continue
 
             date = datetime.datetime.strptime(timestamp.strip(), TIMESTAMP_FORMAT)
-            if yesterday.date() != date.date():
+            if yesterday != date.date():
                 continue
 
             p = row[self.csv.get_col_map()["profit_usd"]]
