@@ -219,6 +219,7 @@ class CrabadaMineBot:
             return
 
         self.last_date = today
+        yesterday = today - datetime.timedelta(days=1)
 
         profit_usd = 0.0
         total_tus = 0.0
@@ -241,7 +242,7 @@ class CrabadaMineBot:
                 continue
 
             date = datetime.datetime.strptime(timestamp.strip(), TIMESTAMP_FORMAT)
-            if datetime.date.today() != date.date():
+            if yesterday.date() != date.date():
                 continue
 
             p = row[self.csv.get_col_map()["profit_usd"]]
@@ -269,11 +270,15 @@ class CrabadaMineBot:
         if total_mrs > 0:
             miners_revenge = miners_revenge / total_mrs
 
-        message += f"{self.alias}'s Stats For Today:\n"
+        yesterday_pretty = yesterday.strftime("%m/%d/%Y")
+        message += f"{self.alias}'s Stats For {yesterday_pretty}:\n"
         message += f"Profit USD: ${profit_usd:.2f}\n"
         message += f"Gross TUS: {total_tus:.2f} $TUS\n"
         message += f"Gross CRA: {total_cra:.2f} $CRA\n"
-        win_percent = (wins / float(wins + losses)) * 100.0
+        if wins + losses > 0:
+            win_percent = (wins / float(wins + losses)) * 100.0
+        else:
+            win_percent = 0.0
         message += f"Wins: {wins} Losses: {losses} Win Percent: {win_percent:.2f}%\n"
         message += f"Avg Miners Revenge: {miners_revenge:.2f}%\n"
 
