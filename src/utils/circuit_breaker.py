@@ -6,8 +6,8 @@ from utils.general import get_pretty_seconds
 
 
 class CircuitBreaker:
-    def __init__(self, min_delta: float):
-        self.backoff = 1.0
+    def __init__(self, min_delta: float, backoff: float = 1.0):
+        self.backoff = backoff
         self.start_time = 0.0
         self.min_delta = min_delta
 
