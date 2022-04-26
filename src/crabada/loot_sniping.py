@@ -66,7 +66,10 @@ class LootSnipes:
         }
         self.last_update = 0.0
         self.web2 = CrabadaWeb2Client()
-        self.search_index = 0
+        self.search_index: T.Dict[str, int] = {
+            "verified": 0,
+            "unverified": 0,
+        }
         self.sheets_update_delta = self.UPDATE_TIME_DELTA
 
     def delete_all_messages(self) -> None:
@@ -82,8 +85,14 @@ class LootSnipes:
     def hunt(self, address: str) -> None:
         self._update_addresses_from_sheet()
         available_loots = self._get_available_loots(address, 8, False)
+        addresses_to_search = self._update_address_search_circ_buffer(
+            "verified", self.addresses["verified"]
+        )
         logger.print_ok_blue("Hunting for verified loot snipes...")
-        self._hunt_no_reinforce_mines(address, self.addresses["verified"], available_loots, True)
+        self._hunt_no_reinforce_mines(address, addresses_to_search, available_loots, True)
+        addresses_to_search = self._update_address_search_circ_buffer(
+            "unverified", self.addresses["unverified"]
+        )
         logger.print_ok_blue("Hunting for suspected loot snipes...")
         self._hunt_no_reinforce_mines(address, self.addresses["unverified"], available_loots, False)
         logger.print_ok_blue("Hunting for low MP loot snipes...")
@@ -116,6 +125,27 @@ class LootSnipes:
 
         return available_loots
 
+    def _update_address_search_circ_buffer(
+        self, list_name: str, address_list: T.List[str]
+    ) -> T.List[str]:
+        search_this_time = []
+        start = self.search_index[list_name]
+        logger.print_bold(f"{start}")
+        end = start + self.SEARCH_ADDRESSES_PER_ITERATION
+        if self.SEARCH_ADDRESSES_PER_ITERATION > len(address_list):
+            search_this_time = address_list
+        elif end > len(address_list):
+            end = end - len(address_list)
+            search_this_time = address_list[start:] + address_list[0:end]
+        else:
+            search_this_time = address_list[start:end]
+        logger.print_normal(f"Searching through address list index {start}->{end}")
+
+        self.search_index[list_name] = end
+
+        logger.print_normal(f"Updated {list_name} search index: {self.search_index[list_name]}")
+        return search_this_time
+
     def _find_loot_snipe(
         self,
         user_address: Address,
@@ -129,25 +159,9 @@ class LootSnipes:
         if verbose:
             logger.print_normal(f"Searching through addresses...")
 
-        search_this_time = []
-        start = self.search_index
-        end = self.search_index + self.SEARCH_ADDRESSES_PER_ITERATION
-        if self.SEARCH_ADDRESSES_PER_ITERATION > len(address_list):
-            search_this_time = address_list
-        elif end > len(address_list):
-            end = end - len(address_list)
-            search_this_time = address_list[start:] + address_list[0:end]
-        else:
-            search_this_time = address_list[start:end]
-        logger.print_normal(f"Searching through address list index {start}->{end}")
-
-        self.search_index += self.SEARCH_ADDRESSES_PER_ITERATION
-        if self.search_index >= len(address_list):
-            self.search_index = 0
-
-        pb = tqdm.tqdm(total=len(search_this_time))
+        pb = tqdm.tqdm(total=len(address_list))
         loot_list = []
-        for address in search_this_time:
+        for address in address_list:
             if address in bot_user_addresses:
                 logger.print_fail_arrow(f"Snipe added for bot holder user: {address}...skipping")
                 continue
