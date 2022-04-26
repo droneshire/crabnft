@@ -192,32 +192,6 @@ class LootSnipes:
         logger.print_ok_arrow(f"Found {len(target_pages.keys())} snipes")
         return target_pages
 
-    def _create_fake_team(self, loot_team: str, mine: IdleGame) -> IdleGame:
-        mine["attack_team_members"] = []
-        for _ in range(2):
-            crab = TeamMember(
-                hp=0,
-                damage=0,
-                speed=0,
-                critical=0,
-                armor=0,
-            )
-            mine["attack_team_members"].append(crab)
-
-        crab = TeamMember(
-            hp=0,
-            damage=0,
-            speed=0,
-            critical=PURE_LOOT_TEAM_IDLE_GAME_STATS[loot_team]["mp"],
-            armor=PURE_LOOT_TEAM_IDLE_GAME_STATS[loot_team]["bp"],
-        )
-
-        mine["attack_team_members"].append(crab)
-        mine["attack_point"] = PURE_LOOT_TEAM_IDLE_GAME_STATS[loot_team]["bp"]
-        mine["attack_team_faction"] = PURE_LOOT_TEAM_IDLE_GAME_STATS[loot_team]["faction"]
-
-        return mine
-
     def _find_low_mr_teams(
         self, user_address: Address, available_loots: T.List[IdleGame], verbose: bool = False
     ) -> T.Dict[int, T.Any]:
@@ -229,8 +203,14 @@ class LootSnipes:
 
             looters = {}
             for team_type in PURE_LOOT_TEAM_IDLE_GAME_STATS.keys():
-                mine = self._create_fake_team(team_type, mine)
-                miners_revenge = calc_miners_revenge(mine)
+                crab = TeamMember(
+                    hp=0,
+                    damage=0,
+                    speed=0,
+                    critical=PURE_LOOT_TEAM_IDLE_GAME_STATS[loot_team]["mp"],
+                    armor=PURE_LOOT_TEAM_IDLE_GAME_STATS[loot_team]["bp"],
+                )
+                miners_revenge = calc_miners_revenge(mine, is_looting=True, additional_crabs=[crab])
                 if miners_revenge > MIN_MINERS_REVENGE or page <= 1:
                     continue
                 looters[team_type] = miners_revenge

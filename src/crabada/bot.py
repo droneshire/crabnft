@@ -412,7 +412,9 @@ class CrabadaMineBot:
         now = datetime.datetime.now()
         self.game_stats[team_id]["timestamp"] = now.strftime(TIMESTAMP_FORMAT)
         self.game_stats[team_id]["team_id"] = team_id
-        self.game_stats[team_id]["miners_revenge"] = calc_miners_revenge(mine)
+        self.game_stats[team_id]["miners_revenge"] = calc_miners_revenge(
+            mine, is_looting=tx.game_type == "LOOT"
+        )
         self.csv.write(self.game_stats[team_id])
         self.game_stats.pop(team_id)
         self.updated_game_stats = True
