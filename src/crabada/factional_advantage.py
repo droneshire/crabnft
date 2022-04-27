@@ -40,6 +40,33 @@ FACTION_COLORS = {
 }
 
 
+def get_bp_mp_from_mine(
+    mine: IdleGame, is_looting: bool = False, verbose: bool = False
+) -> T.Tuple[int, int]:
+    if is_looting:
+        battle_point = get_faction_adjusted_battle_point(mine, is_looting=True)
+    else:
+        battle_point = get_faction_adjusted_battle_point(mine, is_looting=False)
+
+    mine_point = 0
+
+    if is_looting:
+        key = "attack_team_info" if "attack_team_info" in mine else "attack_team_members"
+    else:
+        key = "defense_team_info" if "defense_team_info" in mine else "defense_team_members"
+
+    for crab in mine[key]:
+        _, mp = get_bp_mp_from_crab(crab)
+        mine_point += mp
+
+    if verbose:
+        logger.print_normal(
+            f"{'Loot' if is_looting else 'Mine'} BP: {battle_point} MP: {mine_point} "
+        )
+
+    return battle_point, mine_point
+
+
 def get_bp_mp_from_crab(crab: TeamMember) -> T.Tuple[int, int]:
     bp = crab["hp"] + crab["damage"] + crab["armor"]
     mp = crab["speed"] + crab["critical"]

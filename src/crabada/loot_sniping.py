@@ -11,7 +11,7 @@ from config import USERS
 from crabada.loot_target_addresses import TARGET_ADDRESSES, UNVALIDATED_ADDRESSES
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.factional_advantage import FACTIONAL_ADVANTAGE, FACTION_ICON_URLS, FACTION_COLORS
-from crabada.factional_advantage import get_faction_adjusted_battle_point
+from crabada.factional_advantage import get_faction_adjusted_battle_point, get_bp_mp_from_mine
 from crabada.miners_revenge import calc_miners_revenge
 from crabada.types import Faction, IdleGame, TeamMember
 from utils import logger
@@ -54,6 +54,7 @@ class LootSnipes:
     ADDRESS_GSHEET = "No Reinforce List"
     UPDATE_TIME_DELTA = 60.0 * 15.0
     SEARCH_ADDRESSES_PER_ITERATION = 50
+    MIN_MP_THRESHOLD = 225
 
     def __init__(self, credentials: str, verbose: bool = False):
         self.verbose = verbose
@@ -84,7 +85,7 @@ class LootSnipes:
 
     def hunt(self, address: str) -> None:
         self._update_addresses_from_sheet()
-        available_loots = self._get_available_loots(address, 8, False)
+        available_loots = self._get_available_loots(address, 9, False)
         addresses_to_search = self._update_address_search_circ_buffer(
             "verified", self.addresses["verified"]
         )
@@ -130,7 +131,6 @@ class LootSnipes:
     ) -> T.List[str]:
         search_this_time = []
         start = self.search_index[list_name]
-        logger.print_bold(f"{start}")
         end = start + self.SEARCH_ADDRESSES_PER_ITERATION
         if self.SEARCH_ADDRESSES_PER_ITERATION > len(address_list):
             search_this_time = address_list
@@ -223,31 +223,18 @@ class LootSnipes:
     ) -> T.Dict[int, T.Any]:
         target_pages = {}
         for inx, mine in enumerate(available_loots):
-            battle_point = get_faction_adjusted_battle_point(mine, is_looting=False, verbose=False)
             faction = mine["faction"].upper()
             page = int((inx + 9) / 9)
+            bp, mp = get_bp_mp_from_mine(mine, is_looting=False, verbose=False)
 
-            looters = {}
-            for team_type in PURE_LOOT_TEAM_IDLE_GAME_STATS.keys():
-                mine = self._create_fake_team(team_type, mine)
-                miners_revenge = calc_miners_revenge(mine)
-                if miners_revenge > MIN_MINERS_REVENGE or page <= 1:
-                    continue
-                looters[team_type] = miners_revenge
-
-                if verbose:
-                    logger.print_normal(
-                        f"Found target for {team_type} in {mine['game_id']}\n\t{miners_revenge}\non page {page} faction {faction}"
-                    )
-
-            if not looters:
+            if mp > self.MIN_MP_THRESHOLD or page < 3:
                 continue
 
             data = {
                 "page": page,
                 "faction": faction,
-                "miners_revenge": looters,
-                "defense_battle_point": battle_point,
+                "defense_mine_point": mp,
+                "defense_battle_point": bp,
             }
             target_pages[mine["game_id"]] = data
 
@@ -307,7 +294,7 @@ class LootSnipes:
         mine: int,
         page: int,
         battle_point: int,
-        looters: T.Dict[str, float],
+        mine_point: int,
     ) -> DiscordEmbed:
         embed = DiscordEmbed(
             title=f"MINE {mine}",
@@ -317,8 +304,7 @@ class LootSnipes:
         embed.add_embed_field(name="Mine", value=mine_faction.upper(), inline=True)
         embed.add_embed_field(name="Page", value=page, inline=True)
         embed.add_embed_field(name="BP", value=battle_point, inline=False)
-        for k, v in looters.items():
-            embed.add_embed_field(name=k, value=f"{v:.2f}%", inline=True)
+        embed.add_embed_field(name="MP", value=mine_point, inline=True)
         embed.set_thumbnail(url=FACTION_ICON_URLS[mine_faction])
         return embed
 
@@ -329,6 +315,7 @@ class LootSnipes:
             page = data["page"]
             mine_faction = data["faction"]
             battle_point = data["defense_battle_point"]
+            mine_point = data["defense_mine_point"]
 
             if mine_faction == Faction.NO_FACTION:
                 attack_factions = ["ANY"]
@@ -337,11 +324,11 @@ class LootSnipes:
 
             context = f"MINE: {mine} Faction: {mine_faction} Page: {page}\n"
             context += f"Loot with: {' '.join(attack_factions)}\n"
-            context += f"MR: {data['miners_revenge']}\n"
-            logger.print_bold(context)
+            context += f"MP: {data['defense_mine_point']}\n"
+            logger.print_normal(context)
 
             return self._get_low_mp_snipe_embed(
-                attack_factions, mine_faction, mine, page, battle_point, data["miners_revenge"]
+                attack_factions, mine_faction, mine, page, battle_point, mine_point
             )
 
         open_loots = [m["game_id"] for m in available_loots]
