@@ -8,12 +8,12 @@ apt -y update
 apt -y install git python3-pip python3-testresources python3.8-venv
 
 ssh-keygen -t ed25519 -C $EMAIL -f /root/.ssh/id_ed25519 -q -N ""
-ssh-add ~/.ssh/id_ed25519-q
 
 TMP_GITHUB_KEY=/tmp/githubKey
 ssh-keyscan github.com >> $TMP_GITHUB_KEY
 ssh-keygen -lf $TMP_GITHUB_KEY
 echo $TMP_GITHUB_KEY >> ~/.ssh/known_hosts
+ssh-add ~/.ssh/id_ed25519-q
 
 mkdir -p $CRABADA_DIR
 cd $CRABADA_DIR
