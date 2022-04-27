@@ -392,9 +392,15 @@ class LootSnipes:
         discord_channel: str,
         embed_handle: T.Callable[[int, T.Dict[str, T.Any]], DiscordEmbed],
     ) -> None:
+        info = []
         for mine, data in update_loot_snipes.items():
             page = data["page"]
             mine_faction = data["faction"]
+            info.append((page, mine_faction, mine))
+
+        snipes = sorted(info, key=lambda d: (d[1], -d[0], d[2]))
+        for page, mine_faction, mine in snipes:
+            data = update_loot_snipes[mine]
             battle_point = data["defense_battle_point"]
 
             if mine in self.snipes.keys():
