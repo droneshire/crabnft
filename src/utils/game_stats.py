@@ -107,6 +107,9 @@ def get_daily_stats_message(user: str, csv: CsvLogger, target_date: datetime.dat
         if t:
             total_tus += float(t)
 
+        if row[csv.get_col_map()["game_type"]] == "LOOT":
+            continue
+
         m = row[csv.get_col_map()["miners_revenge"]]
         if m and float(m) > 0.0 and float(m) < 100.0:
             miners_revenge += min(float(m), 40.0)
