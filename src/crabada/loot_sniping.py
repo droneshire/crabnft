@@ -54,7 +54,7 @@ class LootSnipes:
     ADDRESS_GSHEET = "No Reinforce List"
     UPDATE_TIME_DELTA = 60.0 * 15.0
     SEARCH_ADDRESSES_PER_ITERATION = 50
-    MIN_MP_THRESHOLD = 225
+    MIN_MP_THRESHOLD = 213
 
     def __init__(self, credentials: str, verbose: bool = False):
         self.verbose = verbose
