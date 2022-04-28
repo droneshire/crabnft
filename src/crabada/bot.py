@@ -222,7 +222,7 @@ class CrabadaMineBot:
         self.last_date = today
         yesterday = today - datetime.timedelta(days=1)
 
-        message = get_daily_stats_message(self.csv, yesterday)
+        message = get_daily_stats_message(self.alias, self.csv, yesterday)
 
         logger.print_normal(message)
 

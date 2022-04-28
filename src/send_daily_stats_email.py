@@ -37,7 +37,9 @@ def calc_profits() -> None:
     else:
         encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
 
-    for user in users:
+    aliases = set([get_alias_from_user(u) for u in USERS])
+
+    for user in aliases:
         alias = get_alias_from_user(user)
         logger.print_ok_blue(f"Daily Stats for {alias.upper()}:")
 
