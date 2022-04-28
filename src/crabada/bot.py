@@ -626,16 +626,6 @@ class CrabadaMineBot:
     def _start_mine(self, team: Team) -> bool:
         logger.print_normal(f"Attemting to start new mine with team {team['team_id']}!")
 
-        if team["team_id"] in self.fraud_detection_tracker:
-            content = f"Possible fraud detection from user {self.alias}.\n\n"
-            content += (
-                f"Started a mine with team {team['team_id']} that never was closed by the bot!"
-            )
-            send_email(self.emails, ADMIN_EMAIL, "Fraud Detection Alert!", content)
-        else:
-            self.fraud_detection_tracker.add(team["team_id"])
-            logger.print_warn(f"Adding team {team['team_id']} to fraud detection list")
-
         with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
             tx = self.mining_strategy.start(team["team_id"])
 
@@ -646,6 +636,15 @@ class CrabadaMineBot:
                 self.game_stats[team["team_id"]] = NULL_STATS
                 self.game_stats[team["team_id"]]["gas_start"] = gas_avax
                 logger.print_ok_arrow(f"Successfully started mine for team {team['team_id']}")
+
+                if team["team_id"] in self.fraud_detection_tracker:
+                    content = f"Possible fraud detection from user {self.alias}.\n\n"
+                    content += f"Started a mine with team {team['team_id']} that never was closed by the bot!"
+                    send_email(self.emails, ADMIN_EMAIL, "Fraud Detection Alert!", content)
+                else:
+                    self.fraud_detection_tracker.add(team["team_id"])
+                    logger.print_warn(f"Adding team {team['team_id']} to fraud detection list")
+
                 return True
 
         logger.print_fail(f"Error starting mine for team {team['team_id']}")
