@@ -64,8 +64,14 @@ def get_daily_stats_message(user: str, csv: CsvLogger, target_date: datetime.dat
     profit_usd = 0.0
     total_tus = 0.0
     total_cra = 0.0
-    wins = 0
-    losses = 0
+    wins = {
+        "LOOT": 0,
+        "MINE": 0,
+    }
+    losses = {
+        "LOOT": 0,
+        "MINE": 0,
+    }
     miners_revenge = 0.0
     total_mrs = 0
 
@@ -94,10 +100,12 @@ def get_daily_stats_message(user: str, csv: CsvLogger, target_date: datetime.dat
         if p:
             profit_usd += float(p)
 
+        game_type = row[csv.get_col_map()["game_type"]]
+
         r = row[csv.get_col_map()["outcome"]]
         if r:
-            wins += 1 if r.upper() == Result.WIN else 0
-            losses += 1 if r.upper() == Result.LOSE else 0
+            wins[game_type] += 1 if r.upper() == Result.WIN else 0
+            losses[game_type] += 1 if r.upper() == Result.LOSE else 0
 
         c = row[csv.get_col_map()["reward_cra"]]
         if c:
@@ -107,7 +115,7 @@ def get_daily_stats_message(user: str, csv: CsvLogger, target_date: datetime.dat
         if t:
             total_tus += float(t)
 
-        if row[csv.get_col_map()["game_type"]] == "LOOT":
+        if game_type == "LOOT":
             continue
 
         m = row[csv.get_col_map()["miners_revenge"]]
@@ -120,15 +128,17 @@ def get_daily_stats_message(user: str, csv: CsvLogger, target_date: datetime.dat
 
     date_pretty = target_date.strftime("%m/%d/%Y")
     message += f"------------{user}'s Stats For {date_pretty}------------\n\n"
-    message += f"Profit USD: ${profit_usd:.2f}\n"
+    message += f"Net Profit USD: ${profit_usd:.2f}\n"
     message += f"Gross TUS: {total_tus:.2f} TUS\n"
     message += f"Gross CRA: {total_cra:.2f} CRA\n"
-    if wins + losses > 0:
-        win_percent = (wins / float(wins + losses)) * 100.0
-    else:
-        win_percent = 0.0
-    message += f"Wins: {wins} Losses: {losses}\nWin Percent: {win_percent:.2f}%\n"
-    message += f"Avg Miners Revenge: {miners_revenge:.2f}%\n"
+    for gt in wins.keys():
+        if wins[gt] + losses[gt] > 0:
+            win_percent = (wins[gt] / float(wins[gt] + losses[gt])) * 100.0
+        else:
+            win_percent = 0.0
+        message += f"[{gt.upper()}] Wins: {wins[gt]} Losses: {losses[gt]}\n"
+        message += f"[{gt.upper()}] Win Percent: {win_percent:.2f}%\n"
+    message += f"[MINE] Avg Miners Revenge: {miners_revenge:.2f}%\n"
     return message
 
 

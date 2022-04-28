@@ -39,11 +39,15 @@ def calc_profits() -> None:
 
     aliases = set([get_alias_from_user(u) for u in USERS])
 
-    for user in aliases:
+    for user in users:
         alias = get_alias_from_user(user)
         logger.print_ok_blue(f"Daily Stats for {alias.upper()}:")
 
         alias = get_alias_from_user(user)
+
+        if alias not in aliases:
+            continue
+
         csv_header = ["timestamp"] + [k for k in NULL_STATS.keys()] + ["team_id"]
         csv_file = get_lifetime_stats_file(alias, logger.get_logging_dir()).split(".")[0] + ".csv"
         csv = CsvLogger(csv_file, csv_header, dry_run=args.dry_run)
@@ -74,6 +78,7 @@ def calc_profits() -> None:
             )
         try:
             email.send_email(email_accounts, config["email"], subject, message)
+            aliases.remove(alias)
         except:
             logger.print_warn(f"Failed to send message to {config['email']}")
 
