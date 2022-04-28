@@ -238,7 +238,10 @@ def run_bot() -> None:
             now = time.time()
             if alerts_enabled and now - last_profitability_update > PROFITABILITY_UPDATE_TIME:
                 last_profitability_update = now
-                webhooks["UPDATES"].send(profitability_message)
+                try:
+                    webhooks["UPDATES"].send(profitability_message)
+                except:
+                    logger.print_fail(f"Failed to post to UPDATES discord hook")
 
             if alerts_enabled and now - last_discord_update > BOT_TOTALS_UPDATE:
                 last_discord_update = now
@@ -265,7 +268,10 @@ def run_bot() -> None:
             )
         if alerts_enabled:
             stop_message += "Please manually attend your mines until we're back up"
-            webhooks["HOLDERS"].send(stop_message)
+            try:
+                webhooks["HOLDERS"].send(stop_message)
+            except:
+                pass
         logger.print_fail(traceback.format_exc())
     finally:
         for bot in bots:
