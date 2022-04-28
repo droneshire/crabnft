@@ -50,11 +50,12 @@ PURE_LOOT_TEAM_IDLE_GAME_STATS = {
 
 class LootSnipes:
     LOOTING_URL = "https://play.crabada.com/mine/start-looting"
-    MAX_LOOT_STALE_TIME = 60.0 * 30.0
+    MAX_LOOT_STALE_TIME = 60.0 * 9.0
     ADDRESS_GSHEET = "No Reinforce List"
     UPDATE_TIME_DELTA = 60.0 * 15.0
     SEARCH_ADDRESSES_PER_ITERATION = 50
     MIN_MP_THRESHOLD = 213
+    MIN_PAGE_THRESHOLD = 6
 
     def __init__(self, credentials: str, verbose: bool = False):
         self.verbose = verbose
@@ -227,7 +228,7 @@ class LootSnipes:
             page = int((inx + 9) / 9)
             bp, mp = get_bp_mp_from_mine(mine, is_looting=False, verbose=False)
 
-            if mp > self.MIN_MP_THRESHOLD or page < 3:
+            if mp > self.MIN_MP_THRESHOLD or page < self.MIN_PAGE_THRESHOLD:
                 continue
 
             data = {
