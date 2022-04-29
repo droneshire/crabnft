@@ -169,7 +169,7 @@ class LootSnipes:
             mines = [{m["game_id"]: address} for m in self.web2.list_my_mines(address)]
             loot_list.extend(mines)
             pb.update(1)
-            time.sleep(0.5)
+            time.sleep(0.1)
         pb.close()
 
         if verbose:
@@ -430,7 +430,6 @@ class LootSnipes:
                 except:
                     logger.print_warn("failed to edit webhook, deleting webhook...")
                     self.snipes[mine]["fail_count"] += 1
-                time.sleep(1.0)
                 continue
 
             self.snipes[mine] = {}
