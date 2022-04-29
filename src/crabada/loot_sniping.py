@@ -1,5 +1,7 @@
 import copy
 import deepdiff
+import json
+import os
 import time
 import tqdm
 import typing as T
@@ -74,14 +76,22 @@ class LootSnipes:
         }
         self.sheets_update_delta = self.UPDATE_TIME_DELTA
 
+        self.hit_rate = {}
+        self.log_file = os.path.join(logger.get_logging_dir(), "sniper", "hit_rates.json")
+
+        self.hit_rate = self._read_log()
+
     def delete_all_messages(self) -> None:
         logger.print_fail("Deleting all messages")
         for _, hook in self.snipes.items():
             try:
                 hook["webhook"].delete(hook["sent"])
-                time.sleep(1.0)
+                time.sleep(0.2)
             except:
                 pass
+
+        self._write_log(self.hit_rate)
+
         self.snipes = {}
 
     def hunt(self, address: str) -> None:
@@ -100,6 +110,17 @@ class LootSnipes:
         logger.print_ok_blue("Hunting for low MP loot snipes...")
         self._hunt_low_mp_teams(address, available_loots)
 
+    def _read_log(self) -> T.Dict[str, int]:
+        if not os.path.isfile(self.log_file):
+            return {}
+
+        with open(self.log_file, "r") as infile:
+            return json.load(infile)
+
+    def _write_log(self, data: T.Dict[str, int]) -> None:
+        with open(self.log_file, "w") as outfile:
+            json.dump(data, outfile, indent=4)
+
     def _get_available_loots(
         self, user_address: Address, max_pages: int = 8, verbose: bool = False
     ) -> T.List[IdleGame]:
@@ -112,7 +133,6 @@ class LootSnipes:
                 "page": page,
                 "limit": 100,
             }
-            time.sleep(0.5)
             pb.update(1)
             loots = self.web2.list_available_loots(user_address, params=params)
 
@@ -161,15 +181,14 @@ class LootSnipes:
             logger.print_normal(f"Searching through addresses...")
 
         pb = tqdm.tqdm(total=len(address_list))
-        loot_list = []
+        loot_list = {}
         for address in address_list:
             if address in bot_user_addresses:
                 logger.print_fail_arrow(f"Snipe added for bot holder user: {address}...skipping")
                 continue
-            mines = [{m["game_id"]: address} for m in self.web2.list_my_mines(address)]
-            loot_list.extend(mines)
+            mines = {m["game_id"]: address for m in self.web2.list_my_mines(address)}
+            loot_list.update(mines)
             pb.update(1)
-            time.sleep(0.1)
         pb.close()
 
         if verbose:
@@ -179,15 +198,19 @@ class LootSnipes:
         for inx, mine in enumerate(available_loots):
             page = int((inx + 9) / 9)
             faction = mine["faction"].upper()
-            if mine["game_id"] in loot_list:
+            if mine["game_id"] in loot_list.keys():
                 battle_point = get_faction_adjusted_battle_point(
                     mine, is_looting=False, verbose=False
                 )
+                address = loot_list[mine["game_id"]]
+
+                self.hit_rate[address] = self.hit_rate.get(address, 0) + 1
+
                 data = {
                     "page": page,
                     "faction": faction,
                     "defense_battle_point": battle_point,
-                    "address": loot_list[mine["game_id"]],
+                    "address": address,
                 }
                 target_pages[mine["game_id"]] = data
 
@@ -291,7 +314,9 @@ class LootSnipes:
         embed.add_embed_field(name="Page", value=page, inline=True)
         embed.add_embed_field(name="BP", value=battle_point, inline=False)
         embed.add_embed_field(name="Verified", value="True" if verified else "False", inline=True)
-        embed.add_embed_field(name="Address", value=address, inline=True)
+        embed.add_embed_field(name="Address", value=address[:8], inline=True)
+        embed.add_embed_field(name="Address Hit Count", value=self.hit_rate[address], inline=False)
+
         embed.set_thumbnail(url=FACTION_ICON_URLS[mine_faction])
         return embed
 
@@ -459,3 +484,5 @@ class LootSnipes:
                 logger.print_fail("failed to delete webhook")
 
         logger.print_normal(f"DB: {','.join([str(k) for k in self.snipes.keys()])}")
+
+        self._write_log(self.hit_rate)
