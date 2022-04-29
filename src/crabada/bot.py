@@ -1,6 +1,4 @@
-import copy
 import datetime
-import deepdiff
 import json
 import logging
 import math
@@ -11,6 +9,7 @@ from twilio.rest import Client
 from web3.types import Address, TxReceipt
 
 from config import ADMIN_EMAIL
+from crabada.config_manager import ConfigManager
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
 from crabada.miners_revenge import calc_miners_revenge
@@ -124,95 +123,8 @@ class CrabadaMineBot:
 
         logger.print_ok_blue(f"Adding bot for user {self.alias} with address {self.address}")
 
-        self._print_out_config()
-        self._send_email_config_if_needed()
-        self._save_config()
-
-    def _get_save_config(self) -> T.Dict[T.Any, T.Any]:
-        save_config = copy.deepcopy(self.config)
-        for dont_save_key in [
-            "crabada_key",
-            "address",
-            "commission_percent_per_mine",
-            "discord_handle",
-        ]:
-            del save_config[dont_save_key]
-        return json.loads(json.dumps(save_config))
-
-    def _save_config(self) -> None:
-        if self.dry_run:
-            return
-
-        config = self._get_save_config()
-        log_dir = logger.get_logging_dir()
-        config_file = os.path.join(logger.get_logging_dir(), f"{self.user.lower()}_config.json")
-        with open(config_file, "w") as outfile:
-            json.dump(config, outfile, indent=4)
-
-    def _load_config(self) -> T.Dict[T.Any, T.Any]:
-        log_dir = logger.get_logging_dir()
-        config_file = os.path.join(logger.get_logging_dir(), f"{self.user.lower()}_config.json")
-        try:
-            with open(config_file, "r") as infile:
-                return json.load(infile)
-        except:
-            return {}
-
-    def _get_email_config(self) -> str:
-        content = ""
-        for config_key, value in self._get_save_config().items():
-            new_value = value
-
-            if isinstance(value, T.List):
-                new_value = "\n\t".join([str(v) for v in value])
-
-            if isinstance(value, T.Dict):
-                new_value = ""
-                for k, v in value.items():
-                    new_value += f"{k}: {str(v)}\n"
-
-            if isinstance(value, bool):
-                new_value = str(value)
-
-            content += f"{config_key.upper()}:\n{new_value}\n\n"
-        return content
-
-    def _did_config_change(self) -> bool:
-        current = self._get_save_config()
-        old = self._load_config()
-
-        diff = deepdiff.DeepDiff(old, current)
-        if diff:
-            logger.print_normal(f"{diff}")
-            return True
-        return False
-
-    def _print_out_config(self) -> None:
-        logger.print_bold(f"{self.user} Configuration\n")
-        for config_item, value in self.config.items():
-            if config_item == "crabada_key":
-                continue
-            logger.print_normal(f"\t{config_item}: {value}")
-        logger.print_normal("")
-
-    def _send_email_config_if_needed(self) -> None:
-        content = self._get_email_config()
-
-        if self.dry_run or not self._did_config_change():
-            return
-
-        logger.print_warn(f"Config changed for {self.alias}, sending config email...")
-
-        email_message = f"Hello {self.alias}!\n"
-        email_message += "Here is your updated bot configuration:\n\n"
-        email_message += content
-
-        send_email(
-            self.emails,
-            self.config["email"],
-            f"\U0001F980 Crabada Bot Configuration",
-            email_message,
-        )
+        self.config_manager = ConfigManager(user, config)
+        self.config_manager.init()
 
     def _check_calc_and_send_daily_update_message(self) -> None:
         today = datetime.date.today()
