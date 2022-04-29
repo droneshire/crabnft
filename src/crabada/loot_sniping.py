@@ -54,7 +54,7 @@ class LootSnipes:
     ADDRESS_GSHEET = "No Reinforce List"
     UPDATE_TIME_DELTA = 60.0 * 15.0
     SEARCH_ADDRESSES_PER_ITERATION = 50
-    MIN_MP_THRESHOLD = 213
+    MIN_MP_THRESHOLD = 225
     MIN_PAGE_THRESHOLD = 6
 
     def __init__(self, credentials: str, verbose: bool = False):
@@ -166,7 +166,7 @@ class LootSnipes:
             if address in bot_user_addresses:
                 logger.print_fail_arrow(f"Snipe added for bot holder user: {address}...skipping")
                 continue
-            mines = [m["game_id"] for m in self.web2.list_my_mines(address)]
+            mines = [{m["game_id"]: address} for m in self.web2.list_my_mines(address)]
             loot_list.extend(mines)
             pb.update(1)
             time.sleep(0.5)
@@ -183,7 +183,12 @@ class LootSnipes:
                 battle_point = get_faction_adjusted_battle_point(
                     mine, is_looting=False, verbose=False
                 )
-                data = {"page": page, "faction": faction, "defense_battle_point": battle_point}
+                data = {
+                    "page": page,
+                    "faction": faction,
+                    "defense_battle_point": battle_point,
+                    "address": loot_list[mine["game_id"]],
+                }
                 target_pages[mine["game_id"]] = data
 
                 if verbose:
@@ -275,6 +280,7 @@ class LootSnipes:
         page: int,
         battle_point: int,
         verified: bool,
+        address: str,
     ) -> DiscordEmbed:
         embed = DiscordEmbed(
             title=f"MINE {mine}",
@@ -285,6 +291,7 @@ class LootSnipes:
         embed.add_embed_field(name="Page", value=page, inline=True)
         embed.add_embed_field(name="BP", value=battle_point, inline=False)
         embed.add_embed_field(name="Verified", value="True" if verified else "False", inline=True)
+        embed.add_embed_field(name="Address", value=address, inline=True)
         embed.set_thumbnail(url=FACTION_ICON_URLS[mine_faction])
         return embed
 
@@ -352,6 +359,7 @@ class LootSnipes:
             page = data["page"]
             mine_faction = data["faction"]
             battle_point = data["defense_battle_point"]
+            address = data["address"]
 
             if mine_faction == Faction.NO_FACTION:
                 attack_factions = ["ANY"]
@@ -363,7 +371,7 @@ class LootSnipes:
             logger.print_bold(context)
 
             return self._get_address_snipe_embed(
-                attack_factions, mine_faction, mine, page, battle_point, verified
+                attack_factions, mine_faction, mine, page, battle_point, verified, address
             )
 
         open_loots = [m["game_id"] for m in available_loots]
