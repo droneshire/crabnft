@@ -75,6 +75,31 @@ def get_users_teams() -> T.Tuple[int, int]:
     return (total_users, total_teams)
 
 
+def handle_subscription_posts(
+    prices: price.Prices, avg_gas_avax: float, gas_price_gwei: float, avg_reinforce_tus: float
+) -> None:
+    subscriptions = {
+        "HEYA_SUBSCRIPTION": {
+            "hook": discord.get_discord_hook("HEYA_SUBSCRIPTION"),
+            "win_percentages": {
+                "MINE": 40.0,
+                "LOOT": 80.0,
+            },
+        }
+    }
+    for subscription, details in subscriptions.items():
+        logger.print_normal(f"Sending subscription profitability update to {subscription}")
+        message = get_profitability_message(
+            prices,
+            avg_gas_avax,
+            gas_price_gwei,
+            avg_reinforce_tus,
+            details["win_percentages"],
+            log_stats=False,
+        )
+        details["hook"].send(message)
+
+
 def run_bot() -> None:
     args = parse_args()
 
@@ -92,7 +117,6 @@ def run_bot() -> None:
         "HOLDERS": discord.get_discord_hook("HOLDERS"),
         "UPDATES": discord.get_discord_hook("UPDATES"),
         "LOOT_SNIPE": discord.get_discord_hook("LOOT_SNIPE"),
-        "HEYA_SUBSCRIPTION": discord.get_discord_hook("HEYA_SUBSCRIPTION")
     }
 
     encrypt_password = ""
@@ -241,9 +265,15 @@ def run_bot() -> None:
                 last_profitability_update = now
                 try:
                     webhooks["UPDATES"].send(profitability_message)
-                    webhooks["HEYA_SUBSCRIPTION"].send(profitability_message)
                 except:
-                    logger.print_fail(f"Failed to post to UPDATES discord hook")
+                    logger.print_fail(f"Failed to post to discord hook")
+
+                handle_subscription_posts(
+                    prices,
+                    avg_gas_avax.get_avg(),
+                    avg_gas_gwei.get_avg(),
+                    avg_reinforce_tus.get_avg(),
+                )
 
             if alerts_enabled and now - last_discord_update > BOT_TOTALS_UPDATE:
                 last_discord_update = now
