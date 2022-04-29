@@ -95,7 +95,9 @@ def handle_subscription_posts(
             gas_price_gwei,
             avg_reinforce_tus,
             details["win_percentages"],
+            use_static_percents=False,
             log_stats=False,
+            verbose=True,
         )
         details["hook"].send(message)
 
