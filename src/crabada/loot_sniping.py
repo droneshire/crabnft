@@ -61,7 +61,7 @@ class LootSnipes:
         self.verbose = verbose
         self.urls = DISCORD_WEBHOOK_URL
         self.snipes = {}
-        self.gsheet = GoogleSheets(self.ADDRESS_GSHEET, credentials)
+        self.gsheet = GoogleSheets(self.ADDRESS_GSHEET, credentials, [])
         self.addresses: T.Dict[str, list] = {
             "verified": TARGET_ADDRESSES_SET,
             "unverified": UNVALIDATED_ADDRESSES_SET,
