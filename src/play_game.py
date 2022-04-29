@@ -92,6 +92,7 @@ def run_bot() -> None:
         "HOLDERS": discord.get_discord_hook("HOLDERS"),
         "UPDATES": discord.get_discord_hook("UPDATES"),
         "LOOT_SNIPE": discord.get_discord_hook("LOOT_SNIPE"),
+        "HEYA_SUBSCRIPTION": discord.get_discord_hook("HEYA_SUBSCRIPTION")
     }
 
     encrypt_password = ""
@@ -240,6 +241,7 @@ def run_bot() -> None:
                 last_profitability_update = now
                 try:
                     webhooks["UPDATES"].send(profitability_message)
+                    webhooks["HEYA_SUBSCRIPTION"].send(profitability_message)
                 except:
                     logger.print_fail(f"Failed to post to UPDATES discord hook")
 
