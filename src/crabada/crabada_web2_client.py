@@ -6,6 +6,7 @@ import time
 from eth_typing import Address
 
 from crabada.factional_advantage import get_faction_adjusted_battle_point
+from crabada.miners_revenge import calc_miners_revenge
 from crabada.types import Crab, CrabadaClass, CrabForLending, IdleGame, LendingCategories, Team
 from utils import logger
 from utils.general import first_or_none, n_or_better_or_none, get_pretty_seconds
@@ -294,8 +295,9 @@ class CrabadaWeb2Client:
         return n_or_better_or_none(nth_crab, sorted_affordable_crabs)
 
     def get_best_high_mp_crab_for_lending(
-        self, max_tus: Tus, reinforcement_search_backoff: int
+        self, mine: IdleGame, max_tus: Tus, reinforcement_search_backoff: int
     ) -> T.Optional[CrabForLending]:
+        cached_high_mp_crab = None
         for class_id in [
             CrabadaClass.PRIME,
             CrabadaClass.RUINED,
@@ -310,29 +312,74 @@ class CrabadaWeb2Client:
             high_mp_crab = self.get_cheapest_best_crab_from_list_for_lending(
                 high_mp_crabs, max_tus, reinforcement_search_backoff, "mine_point"
             )
-            if high_mp_crab is not None:
-                return high_mp_crab
-        return None
+
+            if high_mp_crab is None:
+                continue
+
+            if cached_high_mp_crab is None:
+                cached_high_mp_crab = high_mp_crab
+
+            miners_revenge_before = min(
+                calc_miners_revenge(mine, is_looting=False, verbose=False), 40.0
+            )
+            miners_revenge_after = min(
+                calc_miners_revenge(
+                    mine, is_looting=False, additional_crabs=[high_mp_crab], verbose=False
+                ),
+                40.0,
+            )
+
+            logger.print_normal(
+                f"MR before: {miners_revenge_before:.2f}% MR after: {miners_revenge_after:.2f}%"
+            )
+
+            if miners_revenge_after < miners_revenge_before:
+                continue
+
+            return high_mp_crab
+
+        return cached_high_mp_crab
 
     def get_best_high_bp_crab_for_lending(
         self, max_tus: Tus, reinforcement_search_backoff: int
     ) -> T.Optional[CrabForLending]:
+        cached_high_bp_crab = None
         for class_id in [
-            CrabadaClass.GEM,
             CrabadaClass.BULK,
+            CrabadaClass.GEM,
             CrabadaClass.SURGE,
         ]:
             params = {
-                "class_ids[]": class_id,  # bulks
+                "class_ids[]": class_id,
             }
             high_bp_crabs = self.list_high_bp_crabs_for_lending(params=params)
             high_bp_crab = self.get_cheapest_best_crab_from_list_for_lending(
                 high_bp_crabs, max_tus, reinforcement_search_backoff, "battle_point"
             )
 
-            if high_bp_crab is not None:
-                return high_bp_crab
-        return None
+            if high_bp_crab is None:
+                continue
+
+            if cached_high_bp_crab is None:
+                cached_high_bp_crab = high_bp_crab
+
+            miners_revenge_before = min(
+                calc_miners_revenge(mine, is_looting=True, verbose=False), 40.0
+            )
+            miners_revenge_after = min(
+                calc_miners_revenge(
+                    mine, is_looting=True, additional_crabs=[high_bp_crab], verbose=False
+                ),
+                40.0,
+            )
+            logger.print_normal(
+                f"MR before: {miners_revenge_before:.2f}% MR after: {miners_revenge_after:.2f}%"
+            )
+
+            if miners_revenge_after > miners_revenge_before:
+                continue
+
+        return cached_high_bp_crab
 
     def get_my_best_mp_crab_for_lending(self, user_address: Address) -> T.Optional[CrabForLending]:
         return self.get_my_best_crab_for_lending(user_address, params={"orderBy": "mine_point"})

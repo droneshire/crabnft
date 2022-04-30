@@ -139,7 +139,7 @@ class Strategy:
             logger.print_bold(f"Mine[{mine['game_id']}]: using our own crab to reinforce!")
         else:
             reinforcement_crab = self.crabada_w2.get_best_high_bp_crab_for_lending(
-                self.max_reinforcement_price_tus, self.reinforcement_search_backoff
+                mine, self.max_reinforcement_price_tus, self.reinforcement_search_backoff
             )
 
         return reinforcement_crab
@@ -168,7 +168,7 @@ class Strategy:
             logger.print_bold(f"Mine[{mine['game_id']}]: using our own crab to reinforce!")
         else:
             reinforcement_crab = self.crabada_w2.get_best_high_mp_crab_for_lending(
-                self.max_reinforcement_price_tus, self.reinforcement_search_backoff
+                mine, self.max_reinforcement_price_tus, self.reinforcement_search_backoff
             )
 
         return reinforcement_crab
