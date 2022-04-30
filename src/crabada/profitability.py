@@ -317,6 +317,9 @@ def get_profitability_message(
     else:
         percentages = win_percentages
 
+    if prices.avax_usd is None or prices.tus_usd is None or prices.cra_usd is None:
+        return ""
+
     message = "**Profitability Update**\n"
     message += "{}\t\t{}\n".format(f"**Avg Tx Gas \U000026FD**:", f"{avg_gas_avax:.5f} AVAX")
     message += "{}\t\t{}\n".format(f"**Avg Gas Price \U000026FD**:", f"{gas_price_gwei:.6f} gwei")
@@ -336,18 +339,20 @@ def get_profitability_message(
     message += f"**Expected Profit (EP)**\n"
     message += f"*(normalized over a 4 hour window)*\n"
 
-    csv_file = os.path.join(
-        logger.get_logging_dir(),
-        "profitability_stats{}.csv".format(str(group) if group is not None else ""),
-    )
+    if log_stats:
+        csv_file = os.path.join(
+            logger.get_logging_dir(),
+            "profitability_stats{}.csv".format(str(group) if group is not None else ""),
+        )
 
-    profit_headers = []
-    for scenario in REWARDS_TUS.keys():
-        profit_headers.append(f"{scenario.lower()}_4hr_profit_tus")
-        profit_headers.append(f"{scenario.lower()}_4hr_profit_usd")
+        profit_headers = []
+        for scenario in REWARDS_TUS.keys():
+            profit_headers.append(f"{scenario.lower()}_4hr_profit_tus")
+            profit_headers.append(f"{scenario.lower()}_4hr_profit_usd")
 
-    header = ["timestamp"] + list(data_points.keys()) + profit_headers
-    csv = csv_logger.CsvLogger(csv_file, header)
+        header = ["timestamp"] + list(data_points.keys()) + profit_headers
+        csv = csv_logger.CsvLogger(csv_file, header)
+
     for game in REWARDS_TUS.keys():
         if game in LOOT_SCENARIOS:
             win_percent = percentages["LOOT"]
@@ -375,7 +380,7 @@ def get_profitability_message(
         profit_emoji = "\U0001F4C8" if profit_tus_4_hrs > 0.0 else "\U0001F4C9"
         data_points[f"{game.lower()}_4hr_profit_tus"] = profit_tus_4_hrs
         data_points[f"{game.lower()}_4hr_profit_usd"] = profit_usd_4_hrs
-        message += "{}\n    {} $TUS,    ${}\n".format(
+        message += "{}\n    {} TUS,    ${}\n".format(
             f"**{game}**:", f"{profit_tus_4_hrs:.2f}", f"{profit_usd_4_hrs:.2f}"
         )
 

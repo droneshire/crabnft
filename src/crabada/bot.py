@@ -26,6 +26,7 @@ from utils.csv_logger import CsvLogger
 from utils.email import Email, send_email
 from utils.game_stats import LifetimeGameStatsLogger, NULL_GAME_STATS, Result
 from utils.game_stats import (
+    get_daily_stats_message,
     get_game_stats,
     get_lifetime_stats_file,
     update_game_stats_after_close,
@@ -221,80 +222,22 @@ class CrabadaMineBot:
         self.last_date = today
         yesterday = today - datetime.timedelta(days=1)
 
-        profit_usd = 0.0
-        total_tus = 0.0
-        total_cra = 0.0
-        wins = 0
-        losses = 0
-        miners_revenge = 0.0
-        total_mrs = 0
-
-        message = ""
-
-        rows = self.csv.read()
-
-        for row in self.csv.read():
-            if len(row) < len(self.csv.get_col_map().keys()):
-                continue
-
-            timestamp = row[self.csv.get_col_map()["timestamp"]]
-            if not timestamp:
-                continue
-
-            date = datetime.datetime.strptime(timestamp.strip(), TIMESTAMP_FORMAT)
-            if yesterday != date.date():
-                continue
-
-            p = row[self.csv.get_col_map()["profit_usd"]]
-            if p:
-                profit_usd += float(p)
-
-            r = row[self.csv.get_col_map()["outcome"]]
-            if r:
-                wins += 1 if r.upper() == Result.WIN else 0
-                losses += 1 if r.upper() == Result.LOSE else 0
-
-            c = row[self.csv.get_col_map()["reward_cra"]]
-            if c:
-                total_cra += float(c)
-
-            t = row[self.csv.get_col_map()["reward_tus"]]
-            if t:
-                total_tus += float(t)
-
-            m = row[self.csv.get_col_map()["miners_revenge"]]
-            if m:
-                miners_revenge += float(m)
-                total_mrs += 1
-
-        if total_mrs > 0:
-            miners_revenge = miners_revenge / total_mrs
-
-        yesterday_pretty = yesterday.strftime("%m/%d/%Y")
-        message += f"{self.alias}'s Stats For {yesterday_pretty}:\n"
-        message += f"Profit USD: ${profit_usd:.2f}\n"
-        message += f"Gross TUS: {total_tus:.2f} $TUS\n"
-        message += f"Gross CRA: {total_cra:.2f} $CRA\n"
-        if wins + losses > 0:
-            win_percent = (wins / float(wins + losses)) * 100.0
-        else:
-            win_percent = 0.0
-        message += f"Wins: {wins} Losses: {losses} Win Percent: {win_percent:.2f}%\n"
-        message += f"Avg Miners Revenge: {miners_revenge:.2f}%\n"
+        message = get_daily_stats_message(self.alias, self.csv, yesterday)
 
         logger.print_normal(message)
 
-        if self.dry_run or True:
+        if self.dry_run:
             return
 
+        yesterday_pretty = yesterday.strftime("%m/%d/%Y")
+        subject = f"\U0001F4C8 Crabada Daily Bot Stats for {yesterday_pretty}"
+
         if self.config["email"] and self.config["get_email_updates"]:
-            email_message = f"Hello!\n"
-            email_message += message
             send_email(
                 self.emails,
                 self.config["email"],
-                f"\U0001F4C8 Crabada Daily Bot Stats",
-                email_message,
+                subject,
+                message,
             )
 
     def _send_status_update(
@@ -685,16 +628,6 @@ class CrabadaMineBot:
     def _start_mine(self, team: Team) -> bool:
         logger.print_normal(f"Attemting to start new mine with team {team['team_id']}!")
 
-        if team["team_id"] in self.fraud_detection_tracker:
-            content = f"Possible fraud detection from user {self.alias}.\n\n"
-            content += (
-                f"Started a mine with team {team['team_id']} that never was closed by the bot!"
-            )
-            send_email(self.emails, ADMIN_EMAIL, "Fraud Detection Alert!", content)
-        else:
-            self.fraud_detection_tracker.add(team["team_id"])
-            logger.print_warn(f"Adding team {team['team_id']} to fraud detection list")
-
         with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
             tx = self.mining_strategy.start(team["team_id"])
 
@@ -705,6 +638,15 @@ class CrabadaMineBot:
                 self.game_stats[team["team_id"]] = NULL_STATS
                 self.game_stats[team["team_id"]]["gas_start"] = gas_avax
                 logger.print_ok_arrow(f"Successfully started mine for team {team['team_id']}")
+
+                if team["team_id"] in self.fraud_detection_tracker:
+                    content = f"Possible fraud detection from user {self.alias}.\n\n"
+                    content += f"Started a mine with team {team['team_id']} that never was closed by the bot!"
+                    send_email(self.emails, ADMIN_EMAIL, "Fraud Detection Alert!", content)
+                else:
+                    self.fraud_detection_tracker.add(team["team_id"])
+                    logger.print_warn(f"Adding team {team['team_id']} to fraud detection list")
+
                 return True
 
         logger.print_fail(f"Error starting mine for team {team['team_id']}")

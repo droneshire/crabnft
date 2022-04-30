@@ -1,4 +1,5 @@
 import copy
+import datetime
 import deepdiff
 import json
 import os
@@ -6,6 +7,8 @@ import typing as T
 from eth_typing import Address
 
 from utils import logger
+from utils.csv_logger import CsvLogger
+from utils.general import TIMESTAMP_FORMAT
 from utils.price import Prices, wei_to_cra_raw, wei_to_tus_raw
 from utils.user import get_alias_from_user
 from crabada.profitability import GameStats, Result, NULL_STATS
@@ -55,6 +58,88 @@ NULL_GAME_STATS = LifetimeGameStats(
     commission_tus=dict(),
     avax_gas_usd=0.0,
 )
+
+
+def get_daily_stats_message(user: str, csv: CsvLogger, target_date: datetime.datetime) -> str:
+    profit_usd = 0.0
+    total_tus = 0.0
+    total_cra = 0.0
+    wins = {
+        "LOOT": 0,
+        "MINE": 0,
+    }
+    losses = {
+        "LOOT": 0,
+        "MINE": 0,
+    }
+    miners_revenge = 0.0
+    total_mrs = 0
+
+    message = ""
+
+    rows = csv.read()
+
+    for row in csv.read():
+        if len(row) < len(csv.get_col_map().keys()):
+            continue
+
+        timestamp = row[csv.get_col_map()["timestamp"]]
+
+        if not timestamp:
+            continue
+
+        try:
+            date = datetime.datetime.strptime(timestamp.strip(), TIMESTAMP_FORMAT)
+        except:
+            continue
+
+        if target_date != date.date():
+            continue
+
+        p = row[csv.get_col_map()["profit_usd"]]
+        if p:
+            profit_usd += float(p)
+
+        game_type = row[csv.get_col_map()["game_type"]]
+
+        r = row[csv.get_col_map()["outcome"]]
+        if r:
+            wins[game_type] += 1 if r.upper() == Result.WIN else 0
+            losses[game_type] += 1 if r.upper() == Result.LOSE else 0
+
+        c = row[csv.get_col_map()["reward_cra"]]
+        if c:
+            total_cra += float(c)
+
+        t = row[csv.get_col_map()["reward_tus"]]
+        if t:
+            total_tus += float(t)
+
+        if game_type == "LOOT":
+            continue
+
+        m = row[csv.get_col_map()["miners_revenge"]]
+        if m and float(m) > 0.0 and float(m) < 100.0:
+            miners_revenge += min(float(m), 40.0)
+            total_mrs += 1
+
+    if total_mrs > 0:
+        miners_revenge = miners_revenge / total_mrs
+
+    date_pretty = target_date.strftime("%m/%d/%Y")
+    message += f"------------{user}'s Stats For {date_pretty}------------\n\n"
+    message += f"Net Profit USD: ${profit_usd:.2f}\n"
+    message += f"Gross TUS: {total_tus:.2f} TUS\n"
+    message += f"Gross CRA: {total_cra:.2f} CRA\n"
+    for gt in wins.keys():
+        if wins[gt] + losses[gt] > 0:
+            win_percent = (wins[gt] / float(wins[gt] + losses[gt])) * 100.0
+        else:
+            win_percent = 0.0
+        message += f"[{gt.upper()}] Wins: {wins[gt]} Losses: {losses[gt]}\n"
+        message += f"[{gt.upper()}] Win Percent: {win_percent:.2f}%\n"
+    message += f"[MINE] Avg Miners Revenge: {miners_revenge:.2f}%\n"
+    return message
 
 
 def update_game_stats_after_close(
