@@ -341,7 +341,7 @@ class CrabadaWeb2Client:
         return cached_high_mp_crab
 
     def get_best_high_bp_crab_for_lending(
-        self, max_tus: Tus, reinforcement_search_backoff: int
+        self, mine: IdleGame, max_tus: Tus, reinforcement_search_backoff: int
     ) -> T.Optional[CrabForLending]:
         cached_high_bp_crab = None
         for class_id in [
