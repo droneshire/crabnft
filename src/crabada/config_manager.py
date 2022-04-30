@@ -37,36 +37,7 @@ We do not in any way whatsoever warrant or guarantee the success of any action
 you take in reliance on our statements or recommendations.
 """
 
-class ConfigManager:
-    GSHEETS_SCOPE = [
-        'https://spreadsheets.google.com/feeds',
-        'https://www.googleapis.com/auth/spreadsheets',
-        'https://www.googleapis.com/auth/drive.file',
-        'https://www.googleapis.com/auth/drive']
-
-    def __init__(
-        self, user: str, config: UserConfig, send_email_accounts: T.List[Email], dry_run: bool = False
-    ):
-        self.config = config
-        self.user = user
-        self.alias = get_alias_from_user(user)
-
-        self.send_email_accounts = send_email_accounts
-
-        self.dry_run = dry_run
-
-        self.config_gsheet_title = f"{self.alias.upper()} Crabada Bot Config"
-        this_dir = os.path.dirname(os.path.realpath(__file__))
-        creds_dir = os.path.dirname(this_dir)
-        credentials = os.path.join(creds_dir, "credentials.json")
-        with open(credentials, "r") as infile:
-            creds = ServiceAccountCredentials.from_json_keyfile_dict(json.load(infile), scopes=self.GSHEETS_SCOPE)
-        self.client = gspread.authorize(creds)
-        self.share_email = share_email
-        self.sheet = None
-
-        self.page_title = f"{self.alias.upper()} Configuration Spreadsheet"
-        self.sheet_org = {
+CONFIG_SHEET_SETUP = {
             "Team ID": {
                 "range": "A9",
                 "options": "B9",
@@ -104,17 +75,48 @@ class ConfigManager:
             },
         }
 
+class ConfigManager:
+    GSHEETS_SCOPE = [
+        'https://spreadsheets.google.com/feeds',
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/drive.file',
+        'https://www.googleapis.com/auth/drive']
+
+    def __init__(
+        self, user: str, config: UserConfig, send_email_accounts: T.List[Email], dry_run: bool = False
+    ):
+        self.config = config
+        self.user = user
+        self.alias = get_alias_from_user(user)
+
+        self.send_email_accounts = send_email_accounts
+
+        self.dry_run = dry_run
+
+        this_dir = os.path.dirname(os.path.realpath(__file__))
+        creds_dir = os.path.dirname(this_dir)
+        credentials = os.path.join(creds_dir, "credentials.json")
+        with open(credentials, "r") as infile:
+            creds = ServiceAccountCredentials.from_json_keyfile_dict(json.load(infile), scopes=self.GSHEETS_SCOPE)
+        self.client = gspread.authorize(creds)
+        self.share_email = share_email
+        self.sheet = None
+        self.sheet_title = f"{self.alias.upper()} Crabada Bot Config"
+
+
     def init(self) -> None:
         self._print_out_config()
         self._send_email_config_if_needed()
         self._save_config()
+        self._create_sheet_if_needed()
 
     def check_for_updated_config(self) -> UserConfig:
         self.gsheet.read_column(column)
 
-    def write_updated_config(self) -> None:
+    def write_updated_config_worksheet(self) -> None:
+        worksheet = self.sheet.add_worksheet(title="Config", rows=, cols=)
         # NOTE: making simple assumption that all column values are 1 letter!!!
-        self.gsheet.write("A1", self.page_title)
+        self.gsheet.write("A1", self.sheet_title)
         self.gsheet.format("A1", {"textFormat": {"bold": True}})
 
         values = []
@@ -154,7 +156,37 @@ class ConfigManager:
 
         self.gsheet.write(new_range, values)
 
+    def _create_sheet_if_needed(self) -> None:
+        if self.sheet is not None:
+            return
 
+        sheets = self.client.openall()
+        for sheet in sheets:
+            if sheet.title == self.sheet_title:
+                self.sheet = self.client.open(self.sheet_title)
+
+        if self.sheet is not None:
+            return
+
+        self.sheet = self.client.create(title)
+        self.create_info_worksheet()
+
+    def _create_info_worksheet(self) -> None:
+        worksheet = self.sheet.get_worksheet(0)
+        worksheet.update_title('Info')
+        message = INFO.splitlines()
+        message_cells = worksheet.range(1, 1, len(message), 1)
+        for i, line in enumerate(message):
+            message_cells[i].value = line
+        worksheet.update_cells(message_cells)
+
+        fmt = gsf.cellFormat(backgroundColor=gsf.color(0.7, 0.77, 0.87),
+            textFormat=gsf.textFormat(
+                bold=True,
+                foregroundColor=gsf.color(0, 0, .54)),
+            horizontalAlignment='LEFT')
+        gsf.format_cell_ranges(worksheet, [('A1:E1', fmt),
+                                           ('A12:E12', fmt)])
 
     def _get_save_config(self) -> T.Dict[T.Any, T.Any]:
         save_config = copy.deepcopy(self.config)
