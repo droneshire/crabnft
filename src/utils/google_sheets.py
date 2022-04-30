@@ -12,7 +12,6 @@ class GoogleSheets:
         self.title = title
         self.gspread_client = gspread.service_account(filename=credential_file)
         self.share_emails = share_emails if share_emails is not None else {}
-        print(self.share_emails)
         self.sheet = None
 
         sheets = self.gspread_client.openall()

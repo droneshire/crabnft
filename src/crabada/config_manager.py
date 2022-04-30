@@ -1,17 +1,49 @@
 import copy
 import deepdiff
 import gspread
+import gspread_formatting as gsf
+import json
 import os
 import typing as T
+
+from oauth2client.service_account import ServiceAccountCredentials
 
 from utils import logger
 from utils.config_types import UserConfig
 from utils.email import Email, send_email
-from utils.google_sheets import GoogleSheets
 from utils.user import get_alias_from_user
 
+INFO="""
+This is your Crabada Bot Configuration Spreadsheet
+
+To use it, you can make changes to any cell that is highlighted
+in yellow. The units or choices for various options are showed in
+the title cell. Verification is very rudimentary, so any unparsable
+configurations will just be overwritten by the default config (i.e.
+the last one that was manually configured).
+
+The bot will updated the config with whatever it's up-to-date config
+is.
+
+Disclaimer:
+
+All investments, especially crypto, are highly speculative in nature and
+involve substantial risk of loss. We encourage our investors to invest very
+carefully. We also encourage investors to get personal advice from your
+professional investment advisor and to make independent investigations before
+acting on information that we publish. We also release all responsibility for
+any losses or opportunity costs associated with an incorrect configuration.
+We do not in any way whatsoever warrant or guarantee the success of any action
+you take in reliance on our statements or recommendations.
+"""
 
 class ConfigManager:
+    GSHEETS_SCOPE = [
+        'https://spreadsheets.google.com/feeds',
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/drive.file',
+        'https://www.googleapis.com/auth/drive']
+
     def __init__(
         self, user: str, config: UserConfig, send_email_accounts: T.List[Email], dry_run: bool = False
     ):
@@ -27,8 +59,11 @@ class ConfigManager:
         this_dir = os.path.dirname(os.path.realpath(__file__))
         creds_dir = os.path.dirname(this_dir)
         credentials = os.path.join(creds_dir, "credentials.json")
-        self.gsheet = GoogleSheets(self.config_gsheet_title, credentials, {config["email"]: 'owner' if config["email"].endswith(
-                '@gmail.com') else 'writer'})
+        with open(credentials, "r") as infile:
+            creds = ServiceAccountCredentials.from_json_keyfile_dict(json.load(infile), scopes=self.GSHEETS_SCOPE)
+        self.client = gspread.authorize(creds)
+        self.share_email = share_email
+        self.sheet = None
 
         self.page_title = f"{self.alias.upper()} Configuration Spreadsheet"
         self.sheet_org = {
