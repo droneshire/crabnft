@@ -1,4 +1,6 @@
+import copy
 import datetime
+import deepdiff
 import json
 import logging
 import math
@@ -36,7 +38,7 @@ from utils.general import dict_sum, get_pretty_seconds, TIMESTAMP_FORMAT
 from utils.math import Average
 from utils.price import Prices
 from utils.price import is_gas_too_high, wei_to_tus, wei_to_cra_raw, wei_to_tus_raw
-from utils.user import get_alias_from_user
+from utils.user import BETA_TEST_LIST, get_alias_from_user
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.tus_web3_client import TusWeb3Client
 from web3_utils.web3_client import web3_transaction
@@ -123,7 +125,7 @@ class CrabadaMineBot:
 
         logger.print_ok_blue(f"Adding bot for user {self.alias} with address {self.address}")
 
-        self.config_manager = ConfigManager(user, config)
+        self.config_manager = ConfigManager(user, config, email_accounts, dry_run=dry_run)
         self.config_manager.init()
 
     def _check_calc_and_send_daily_update_message(self) -> None:
@@ -717,13 +719,21 @@ class CrabadaMineBot:
 
         self._check_calc_and_send_daily_update_message()
 
+        if self.user in BETA_TEST_LIST:
+            updated_config = self.config_manager.read_sheets_config()
+            config_diff = deepdiff.DeepDiff(self.config, updated_config)
+            if config_diff and updated_config is not None:
+                logger.print_ok("Detected updated config, saving changes...")
+                self.config = copy.deepcopy(updated_config)
+                self.config_manager.write_sheets_config()
+
         self._print_mine_loot_status()
-        self._check_and_maybe_close()
-        time.sleep(2.0)
-        self._check_and_maybe_start_mines()
-        time.sleep(2.0)
-        self._check_and_maybe_reinforce()
-        time.sleep(2.0)
+        # self._check_and_maybe_close()
+        # time.sleep(2.0)
+        # self._check_and_maybe_start_mines()
+        # time.sleep(2.0)
+        # self._check_and_maybe_reinforce()
+        # time.sleep(2.0)
 
         if self.updated_game_stats:
             self.updated_game_stats = False

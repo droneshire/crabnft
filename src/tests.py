@@ -155,8 +155,8 @@ def test_config_manager() -> None:
     cm = ConfigManager("TEST", TEST_CONFIG, email_accounts, dry_run=dry_run)
     cm._delete_sheet()
     cm._create_sheet_if_needed()
-    time.sleep(4.0)
-    new_config = cm.check_for_updated_config()
+    new_config = cm.read_sheets_config()
+    cm._delete_sheet()
 
     diff = deepdiff.DeepDiff(TEST_CONFIG, new_config)
     if diff:

@@ -114,7 +114,19 @@ class ConfigManager:
         self._save_config()
         self._create_sheet_if_needed()
 
-    def check_for_updated_config(self) -> UserConfig:
+    def write_sheets_config(self) -> None:
+        rows, cols = self._get_rows_cols()
+
+        worksheet = self.sheet.get_worksheet(1)
+        worksheet.clear()
+        logger.print_normal(f"Updating config worksheet")
+
+        self._write_updated_config_worksheet(worksheet, rows, cols)
+
+    def read_sheets_config(self) -> UserConfig:
+        if self.dry_run:
+            return
+
         worksheet = self.sheet.get_worksheet(1)
         new_config = copy.deepcopy(self.config)
 
@@ -239,6 +251,9 @@ class ConfigManager:
         return new_config
 
     def _write_updated_config_worksheet(self, worksheet: T.Any, rows: int, cols: int) -> None:
+        if self.dry_run:
+            return
+
         cell_list = worksheet.range(1, 1, rows, cols)
         logger.print_normal(f"Allocating {rows} rows and {cols} columns")
 
@@ -348,6 +363,9 @@ class ConfigManager:
         )
 
     def _create_sheet_if_needed(self) -> None:
+        if self.dry_run:
+            return
+
         if self.sheet is not None:
             return
 
@@ -356,6 +374,7 @@ class ConfigManager:
         for sheet in sheets:
             if sheet.title == self.sheet_title:
                 self.sheet = self.client.open(self.sheet_title)
+                logger.print_normal(f"Found spreadsheet: {self.sheet_title}")
 
         if self.sheet is not None:
             return
@@ -368,6 +387,9 @@ class ConfigManager:
         self._share_sheet()
 
     def _delete_sheet(self) -> None:
+        if self.dry_run:
+            return
+
         sheets = self.client.openall()
         for sheet in sheets:
             if sheet.title == self.sheet_title:
@@ -375,6 +397,9 @@ class ConfigManager:
                 self.client.del_spreadsheet(sheet.id)
 
     def _share_sheet(self) -> None:
+        if self.dry_run:
+            return
+
         logger.print_ok(f"Sharing config with {self.config['email']}...")
         self.sheet.share(
             self.config["email"],
@@ -404,6 +429,9 @@ class ConfigManager:
         return rows, cols
 
     def _create_config_worksheet(self) -> None:
+        if self.dry_run:
+            return
+
         rows, cols = self._get_rows_cols()
 
         worksheet = self.sheet.add_worksheet(
@@ -416,6 +444,9 @@ class ConfigManager:
         self._write_updated_config_worksheet(worksheet, rows, cols)
 
     def _create_info_worksheet(self) -> None:
+        if self.dry_run:
+            return
+
         logger.print_normal(f"Creating info worksheet")
 
         worksheet = self.sheet.get_worksheet(0)
