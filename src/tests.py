@@ -1,7 +1,9 @@
+import deepdiff
 import getpass
 import json
 import math
 import os
+import time
 
 from eth_typing import Address
 
@@ -14,41 +16,41 @@ from crabada.types import CrabForLending
 from utils import logger
 
 TEST_CONFIG = UserConfig(
-        group=1,
-        crabada_key="deadbeef",
-        address=Address("0xfoobar"),
-        mining_teams={
-            1234: 1,
-            8765: 1,
-            5678: 2,
-            4321: 2,
-        },
-        looting_teams={
-            9999: 20,
-            1111: 20,
-        },
-        reinforcing_crabs={
-            7777: 1,
-            8888: 20,
-        },
-        breed_crabs=[],
-        mining_strategy="PreferOwnMpCrabsAndDelayReinforcement",
-        looting_strategy="PreferOwnBpCrabsAndDelayReinforcement",
-        max_gas_price_gwei=95,
-        max_reinforcement_price_tus=24,
-        max_reinforce_bp_delta=10,
-        commission_percent_per_mine={
-            "": 10.0,
-        },
-        sms_number="",
-        email="info.crabada.bot@gmail.com",
-        discord_handle="",
-        get_sms_updates=False,
-        get_sms_updates_loots=False,
-        get_sms_updates_alerts=False,
-        get_email_updates=True,
-        should_reinforce=True,
-    )
+    group=1,
+    crabada_key="deadbeef",
+    address=Address("0xfoobar"),
+    mining_teams={
+        1234: 0,
+        8765: 0,
+        5678: 0,
+        4321: 0,
+    },
+    looting_teams={
+        9999: 10,
+        1111: 10,
+    },
+    reinforcing_crabs={
+        7777: 0,
+        8888: 10,
+    },
+    breed_crabs=[],
+    mining_strategy="PreferOwnMpCrabsAndDelayReinforcement",
+    looting_strategy="PreferOwnBpCrabsAndDelayReinforcement",
+    max_gas_price_gwei=95.0,
+    max_reinforcement_price_tus=24.0,
+    commission_percent_per_mine={
+        "": 10.0,
+    },
+    sms_number="",
+    email="ryeager12@gmail.com",
+    discord_handle="",
+    get_sms_updates=False,
+    get_sms_updates_loots=False,
+    get_sms_updates_alerts=False,
+    get_email_updates=True,
+    should_reinforce=True,
+)
+
 
 def test_miners_revenge() -> None:
     expected_miners_revenge = 42.25
@@ -134,20 +136,32 @@ def test_miners_revenge() -> None:
         expected_miners_revenge, miners_revenge, abs_tol=0.01
     ), f"Expected: {expected_miners_revenge} Actual: {miners_revenge}"
 
+
 def test_config_manager() -> None:
+    dry_run = True
     email_accounts = []
-    encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
 
-    for email_account in GMAIL:
-        email_password = security.decrypt(
-            str.encode(encrypt_password), email_account["password"]
-        ).decode()
-        email_accounts.append(
-            email.Email(address=email_account["user"], password=email_password)
-        )
-    cm = ConfigManager("TEST", TEST_CONFIG, email_accounts)
+    if not dry_run:
+        encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
 
-    cm.write_updated_config()
+        for email_account in GMAIL:
+            email_password = security.decrypt(
+                str.encode(encrypt_password), email_account["password"]
+            ).decode()
+            email_accounts.append(
+                email.Email(address=email_account["user"], password=email_password)
+            )
+
+    cm = ConfigManager("TEST", TEST_CONFIG, email_accounts, dry_run=dry_run)
+    cm._delete_sheet()
+    cm._create_sheet_if_needed()
+    time.sleep(4.0)
+    new_config = cm.check_for_updated_config()
+
+    diff = deepdiff.DeepDiff(TEST_CONFIG, new_config)
+    if diff:
+        logger.print_normal(f"{diff}")
+        assert False, "unexpected change in configuration"
 
 
 if __name__ == "__main__":

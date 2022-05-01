@@ -7,6 +7,7 @@ SHARE_MESSAGE = """
 I'd like to share a document with you!
 """
 
+
 class GoogleSheets:
     def __init__(self, title: str, credential_file: str, share_emails: T.Dict[str, str]):
         self.title = title
@@ -27,7 +28,9 @@ class GoogleSheets:
         self.sheet.add_worksheet(worksheet, rows=100, cols=40)
         for email, role in share_emails.items():
             print(email, role)
-            self.sheet.share(email, perm_type="user", role=role, notify=True, email_message=SHARE_MESSAGE)
+            self.sheet.share(
+                email, perm_type="user", role=role, notify=True, email_message=SHARE_MESSAGE
+            )
 
     def read_row(self, row: int, worksheet_inx: int = 0) -> T.List[T.Any]:
         worksheet = self.sheet.get_worksheet(worksheet_inx)
@@ -51,6 +54,8 @@ class GoogleSheets:
         else:
             worksheet.update(cell_range, value)
 
-    def format(self, cell_range: str, cell_format: T.Dict[T.Any, T.Any], worksheet_inx: int = 0) -> None:
+    def format(
+        self, cell_range: str, cell_format: T.Dict[T.Any, T.Any], worksheet_inx: int = 0
+    ) -> None:
         worksheet = self.sheet.get_worksheet(worksheet_inx)
         worksheet.format(cell_range, cell_format)
