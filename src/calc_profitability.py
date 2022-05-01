@@ -3,7 +3,7 @@ import argparse
 from config import IEX_API_TOKEN, COINMARKETCAP_API_TOKEN, USERS
 from crabada.profitability import get_profitability_message, STATIC_WIN_PERCENTAGES
 from utils import logger
-from utils.game_stats import get_game_stats
+from crabada.game_stats import get_game_stats
 from utils.general import dict_sum
 from utils.price import get_avax_price_usd, get_token_price_usd, Prices
 from utils.user import get_alias_from_user

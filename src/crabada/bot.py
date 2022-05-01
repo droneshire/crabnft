@@ -23,8 +23,8 @@ from utils import logger
 from utils.config_types import UserConfig, SmsConfig
 from utils.csv_logger import CsvLogger
 from utils.email import Email, send_email
-from utils.game_stats import LifetimeGameStatsLogger, NULL_GAME_STATS, Result
-from utils.game_stats import (
+from crabada.game_stats import LifetimeGameStatsLogger, NULL_GAME_STATS, Result
+from crabada.game_stats import (
     get_daily_stats_message,
     get_game_stats,
     get_lifetime_stats_file,

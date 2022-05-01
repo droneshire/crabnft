@@ -13,7 +13,7 @@ from twilio.rest import Client
 
 from config import GMAIL, TWILIO_CONFIG, USERS
 from utils import discord, email, logger
-from utils.game_stats import LifetimeGameStats, get_game_stats, write_game_stats
+from crabada.game_stats import LifetimeGameStats, get_game_stats, write_game_stats
 from utils.price import is_gas_too_high
 from utils.price import Tus
 from utils.security import decrypt

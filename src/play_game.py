@@ -20,7 +20,7 @@ from crabada.bot import CrabadaMineBot
 from crabada.profitability import get_profitability_message
 from utils import discord, email, logger, price, security
 from utils.circuit_breaker import CircuitBreaker
-from utils.game_stats import LifetimeGameStats
+from crabada.game_stats import LifetimeGameStats
 from utils.general import dict_sum
 from utils.math import Average
 from utils.price import get_avax_price_usd, get_token_price_usd

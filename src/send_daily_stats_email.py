@@ -7,7 +7,7 @@ from config import GMAIL, USERS
 from utils import logger
 from utils import email
 from utils.csv_logger import CsvLogger
-from utils.game_stats import get_daily_stats_message, get_lifetime_stats_file, NULL_STATS
+from crabada.game_stats import get_daily_stats_message, get_lifetime_stats_file, NULL_STATS
 from utils.security import decrypt
 from utils.user import get_alias_from_user
 
