@@ -475,7 +475,13 @@ class ConfigManager:
 
         logger.print_normal(f"Creating spreadsheet: {self.sheet_title}\n")
 
-        self.sheet = self.client.create(self.sheet_title)
+        with self._google_api_action():
+            self.sheet = self.client.create(self.sheet_title)
+
+        if not self.google_api_success:
+            self.sheet = None
+            return
+
         self._create_info_worksheet()
         self._create_config_worksheet()
         self._share_sheet()
