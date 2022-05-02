@@ -608,17 +608,18 @@ class ConfigManager:
             worksheet = self.sheet.get_worksheet(0)
             worksheet.update_title("Info")
 
+            message = INFO.splitlines()
+
+            message_cells = worksheet.range(1, 1, len(message), 1)
+            for i, line in enumerate(message):
+                message_cells[i].value = line
+            worksheet.update_cells(message_cells)
+
+            gsf.format_cell_ranges(worksheet, [("A1:F1", FMT_TITLE), ("A13:F13", FMT_TITLE)])
+
         if not self.google_api_success:
             self.sheet = None
             return
-
-        message = INFO.splitlines()
-        message_cells = worksheet.range(1, 1, len(message), 1)
-        for i, line in enumerate(message):
-            message_cells[i].value = line
-        worksheet.update_cells(message_cells)
-
-        gsf.format_cell_ranges(worksheet, [("A1:F1", FMT_TITLE), ("A13:F13", FMT_TITLE)])
 
     def _get_team_composition(self, team: int) -> str:
         self.team_composition = {}
