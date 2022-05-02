@@ -14,6 +14,7 @@ from crabada.crabada_web2_client import CrabadaWeb2Client
 from utils import logger
 from utils.config_types import UserConfig
 from utils.email import Email, send_email
+from utils.general import get_pretty_seconds
 from utils.user import get_alias_from_user
 
 INFO = """Crabada Bot Configuration
@@ -146,7 +147,7 @@ class ConfigManager:
 
         self.backoff = 2.0
         self.google_api_success = False
-        self.last_fail_time = time.time()
+        self.last_fail_time = 0.0
 
         # if we are using google sheets, we'll use the last saved config from sheets
         # this way we aren't always overriding the config with the local config
@@ -416,10 +417,12 @@ class ConfigManager:
             (f"A{i}:B{i}", FMT_VALUES)
             for i in range(reinforce_row + 1, reinforce_row + 1 + num_crabs)
         ]
-        crab_ranges.extend([
-            (f"C{i}", FMT_BLANK_CENTER)
-            for i in range(reinforce_row + 1, reinforce_row + 1 + num_crabs)
-        ])
+        crab_ranges.extend(
+            [
+                (f"C{i}", FMT_BLANK_CENTER)
+                for i in range(reinforce_row + 1, reinforce_row + 1 + num_crabs)
+            ]
+        )
 
         gsf.set_column_width(worksheet, "A", 250)
         gsf.set_column_width(worksheet, "C", 250)
@@ -552,10 +555,15 @@ class ConfigManager:
             self.sheet = None
             return
 
-    def _check_to_see_if_action(self, create_sheet_if_needed: bool=True) -> bool:
+    def _check_to_see_if_action(self, create_sheet_if_needed: bool = True) -> bool:
         now = time.time()
         if now - self.last_fail_time < self.backoff:
-            logger.print_normal(f"Waiting to take action due to config manager backoff")
+            wait_time_end = self.last_fail_time + self.backoff
+            wait_time_left = wait_time_end - now
+            wait_pretty_seconds = get_pretty_seconds(int(wait_time_left))
+            logger.print_warn(
+                f"Waiting to take action for {wait_pretty_seconds} due to config manager backoff"
+            )
             return False
 
         if self.dry_run:
@@ -581,8 +589,10 @@ class ConfigManager:
             raise
         except Exception as e:
             self.backoff = self.backoff * 2
-            self.last_fail_time = now
-            logger.print_fail(f"failure to google api call, updating backoff to {self.backoff} seconds")
+            self.last_fail_time = time.time()
+            logger.print_fail(
+                f"failure to google api call, updating backoff to {self.backoff} seconds"
+            )
             logger.print_fail(f"{e.args[0]['message']}\n")
 
     def _get_empty_new_config(self) -> UserConfig:
