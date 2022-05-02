@@ -148,7 +148,7 @@ class ConfigManager:
 
         self.backoff = self.DEFAULT_BACKOFF_OPTION
         self.google_api_success = False
-        self.last_fail_time = 0.0
+        self.last_fail_time = time.time()
 
         # if we are using google sheets, we'll use the last saved config from sheets
         # this way we aren't always overriding the config with the local config
