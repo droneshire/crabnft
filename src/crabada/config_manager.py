@@ -589,8 +589,9 @@ class ConfigManager:
         except KeyboardInterrupt:
             raise
         except Exception as e:
-            self.backoff = self.backoff * 2
-            self.last_fail_time = time.time()
+            now = time.time()
+            self.backoff = max(self.backoff * 2, (now - self.last_fail_time) * 2)
+            self.last_fail_time = now
             logger.print_fail(
                 f"failure to google api call, updating backoff to {self.backoff} seconds"
             )
