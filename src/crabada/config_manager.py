@@ -144,7 +144,7 @@ class ConfigManager:
         self.dry_run = dry_run
         self.last_config_update_time = 0.0
 
-        self.backoff = 0.0
+        self.backoff = 2.0
         self.google_api_success = False
         self.last_action_allowed_time = 0.0
 
