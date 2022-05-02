@@ -7,6 +7,7 @@ import os
 import time
 import typing as T
 
+from contextlib import contextmanager
 from oauth2client.service_account import ServiceAccountCredentials
 
 from crabada.crabada_web2_client import CrabadaWeb2Client
@@ -143,6 +144,10 @@ class ConfigManager:
         self.dry_run = dry_run
         self.last_config_update_time = 0.0
 
+        self.backoff = 0.0
+        self.google_api_success = False
+        self.last_action_allowed_time = 0.0
+
         this_dir = os.path.dirname(os.path.realpath(__file__))
         creds_dir = os.path.dirname(this_dir)
         credentials = os.path.join(creds_dir, "credentials.json")
@@ -198,13 +203,49 @@ class ConfigManager:
         if self.sheet is None:
             return
 
-        worksheet = self.sheet.get_worksheet(1)
-        worksheet.clear()
-        gsf.format_cell_ranges(worksheet, [("1:{rows}", FMT_BLANK)])
+        with self._google_api_action():
+            worksheet = self.sheet.get_worksheet(1)
+            worksheet.clear()
+            gsf.format_cell_ranges(worksheet, [("1:{rows}", FMT_BLANK)])
+
+        if not self.google_api_success:
+            logger.print_warn("failed to get and clear worksheet 1")
+            return
 
         logger.print_normal(f"Updating config worksheet")
 
         self._write_updated_config_worksheet(worksheet, rows, cols)
+
+    def _check_to_see_if_action(self, create_sheet_if_needed: bool=True) -> bool:
+        now = time.time()
+        if now - self.last_action_allowed_time < self.backoff:
+            return False
+
+        if self.dry_run:
+            return False
+
+        if not self.allow_sheets_config:
+            return False
+
+        if self.sheet is None and create_sheet_if_needed:
+            self._create_sheet_if_needed()
+            return False
+
+        self.last_action_allowed_time = now
+
+        return True
+
+    @contextmanager
+    def _google_api_action(self) -> T.Iterator[None]:
+        self.google_api_success = False
+        try:
+            yield
+            self.backoff = 0
+            self.google_api_success = True
+        except KeyboardInterrupt:
+            raise
+        except:
+            self.backoff = self.backoff * 2
 
     def _get_empty_new_config(self) -> UserConfig:
         new_config = copy.deepcopy(self.config)
@@ -224,15 +265,13 @@ class ConfigManager:
         return new_config
 
     def read_sheets_config(self) -> T.Optional[UserConfig]:
-        if self.dry_run or not self.allow_sheets_config:
+        if not self._check_to_see_if_action():
             return self.config
 
-        if self.sheet is None:
-            return self.config
-
-        try:
+        with self._google_api_action():
             worksheet = self.sheet.get_worksheet(1)
-        except:
+
+        if not self.google_api_success:
             return self.config
 
         new_config = self._get_empty_new_config()
@@ -240,11 +279,13 @@ class ConfigManager:
         chr_end = chr(ord("A") + cols)
         cell_range = f"A1:{chr_end}{rows}"
 
-        try:
+        with self._google_api_action():
             cell_values = worksheet.get(cell_range)
-        except:
+            self.backoff = 0
+
+        if not self.google_api_success:
             logger.print_warn(f"Failed to get cell values!")
-            return None
+            return self.config
 
         if len(cell_values) < self.DYNAMIC_ROWS_START:
             return None
@@ -333,13 +374,16 @@ class ConfigManager:
         return new_config
 
     def _write_updated_config_worksheet(self, worksheet: T.Any, rows: int, cols: int) -> None:
-        if self.dry_run or not self.allow_sheets_config:
+        if not self._check_to_see_if_action():
+            return self.config
+
+        with self._google_api_action():
+            cell_list = worksheet.range(1, 1, rows, cols)
+
+        if not self.google_api_success:
+            logger.print_warn(f"failed to get range")
             return
 
-        if self.sheet is None:
-            return
-
-        cell_list = worksheet.range(1, 1, rows, cols)
         logger.print_normal(f"Allocating {rows} rows and {cols} columns")
 
         def get_full_row(values: T.List[T.Any]) -> T.List[T.Any]:
@@ -399,7 +443,13 @@ class ConfigManager:
 
         for i, val in enumerate(cell_values):
             cell_list[i].value = val
-        worksheet.update_cells(cell_list)
+
+        with self._google_api_action():
+            worksheet.update_cells(cell_list)
+
+        if not self.google_api_success:
+            logger.print_warn("failed to update sheet cells")
+            return
 
         team_ranges = [(f"A{i}:B{i}", FMT_VALUES) for i in range(10, 10 + num_teams)]
         team_ranges.extend([(f"C{i}", FMT_BLANK_CENTER) for i in range(10, 10 + num_teams)])
@@ -437,20 +487,19 @@ class ConfigManager:
         )
 
     def _create_sheet_if_needed(self) -> None:
-        if self.dry_run or not self.allow_sheets_config:
-            return
-
-        if self.sheet is not None:
+        if not self._check_to_see_if_action(create_sheet_if_needed=False):
             return
 
         logger.print_normal(f"Searching for spreadsheet: {self.sheet_title}")
-        try:
+        with self._google_api_action():
             sheets = self.client.openall()
             for sheet in sheets:
                 if sheet.title == self.sheet_title:
                     self.sheet = self.client.open(self.sheet_title)
                     logger.print_ok_blue_arrow(f"Found sheet: {self.sheet_title}")
-        except:
+
+        if not self.google_api_success:
+            logger.print_warn("failed to open sheet")
             return
 
         if self.sheet is not None:
@@ -464,43 +513,44 @@ class ConfigManager:
         self._share_sheet()
 
     def _delete_sheet(self) -> None:
-        if self.dry_run or not self.allow_sheets_config:
+        if not self._check_to_see_if_action():
+            return self.config
+
+        with self._google_api_action():
+            sheets = self.client.openall()
+
+        if not self.google_api_success:
             return
 
-        if self.sheet is None:
-            self._create_sheet_if_needed()
-            return
-
-        sheets = self.client.openall()
         for sheet in sheets:
             if sheet.title == self.sheet_title:
                 logger.print_warn(f"Deleting spreadsheet: {self.sheet_title}")
-                self.client.del_spreadsheet(sheet.id)
+                with self._google_api_action():
+                    self.client.del_spreadsheet(sheet.id)
 
     def _share_sheet(self) -> None:
-        if self.dry_run or not self.allow_sheets_config:
-            return
-
-        if self.sheet is None:
-            self._create_sheet_if_needed()
-            return
+        if not self._check_to_see_if_action():
+            return self.config
 
         logger.print_ok(f"Sharing config with {self.config['email']}...")
-        self.sheet.share(
-            self.config["email"],
-            perm_type="user",
-            role="writer",
-            notify=True,
-            email_message="Here is your Crabada Bot Configuration",
-        )
-        for email in self.send_email_accounts:
+        with self._google_api_action():
             self.sheet.share(
-                email["address"],
+                self.config["email"],
                 perm_type="user",
                 role="writer",
                 notify=True,
-                email_message=f"Here is {self.user}'s Crabada Bot Configuration",
+                email_message="Here is your Crabada Bot Configuration",
             )
+            for email in self.send_email_accounts:
+                self.sheet.share(
+                    email["address"],
+                    perm_type="user",
+                    role="writer",
+                    notify=True,
+                    email_message=f"Here is {self.user}'s Crabada Bot Configuration",
+                )
+        if not self.google_api_success:
+            self.sheet = None
 
     def _get_rows_cols(self) -> T.Tuple[int, int]:
         rows = 1  # title
@@ -522,36 +572,39 @@ class ConfigManager:
         return rows, cols
 
     def _create_config_worksheet(self) -> None:
-        if self.dry_run or not self.allow_sheets_config:
-            return
-
-        if self.sheet is None:
-            self._create_sheet_if_needed()
-            return
+        if not self._check_to_see_if_action():
+            return self.config
 
         rows, cols = self._get_rows_cols()
 
-        worksheet = self.sheet.add_worksheet(
-            title=f"{self.user} Config", rows=str(rows), cols=str(cols)
-        )
-        worksheet.clear()
+        with self._google_api_action():
+            worksheet = self.sheet.add_worksheet(
+                title=f"{self.user} Config", rows=str(rows), cols=str(cols)
+            )
+            worksheet.clear()
+
+        if not self.google_api_success:
+            self.sheet = None
+            return
 
         logger.print_normal(f"Creating config worksheet")
 
         self._write_updated_config_worksheet(worksheet, rows, cols)
 
     def _create_info_worksheet(self) -> None:
-        if self.dry_run or not self.allow_sheets_config:
-            return
-
-        if self.sheet is None:
-            self._create_sheet_if_needed()
-            return
+        if not self._check_to_see_if_action():
+            return self.config
 
         logger.print_normal(f"Creating info worksheet")
 
-        worksheet = self.sheet.get_worksheet(0)
-        worksheet.update_title("Info")
+        with self._google_api_action():
+            worksheet = self.sheet.get_worksheet(0)
+            worksheet.update_title("Info")
+
+        if not self.google_api_success:
+            self.sheet = None
+            return
+
         message = INFO.splitlines()
         message_cells = worksheet.range(1, 1, len(message), 1)
         for i, line in enumerate(message):
