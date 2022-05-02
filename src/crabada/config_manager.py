@@ -19,10 +19,10 @@ INFO = """Crabada Bot Configuration
 
 This is your Crabada Bot Configuration Spreadsheet
 
-To use it, you can make changes to any cell that is highlighted in yellow. The units
+To use it, you can make changes to any cell that is highlighted in grey. The units
 or choices for various options are showed in the title cell. Verification is very
-rudimentary, so any unparsable configurations will just be overwritten by the default
-config (i.e. the last one that was manually configured).
+rudimentary, so any unparsable configurations will just be overwritten by the last
+validated config (i.e. the last one that was manually configured).
 
 The bot will updated the config with whatever it's up-to-date config
 is.
@@ -62,6 +62,11 @@ FMT_BLANK = gsf.cellFormat(
     backgroundColor=gsf.color(1, 1, 1),
     textFormat=gsf.textFormat(bold=False, foregroundColor=gsf.color(0, 0, 0)),
     horizontalAlignment="LEFT",
+)
+FMT_BLANK_CENTER = gsf.cellFormat(
+    backgroundColor=gsf.color(1, 1, 1),
+    textFormat=gsf.textFormat(bold=False, foregroundColor=gsf.color(0, 0, 0)),
+    horizontalAlignment="CENTER",
 )
 
 
@@ -224,7 +229,10 @@ class ConfigManager:
         if self.sheet is None:
             return self.config
 
-        worksheet = self.sheet.get_worksheet(1)
+        try:
+            worksheet = self.sheet.get_worksheet(1)
+        except:
+            return self.config
 
         new_config = self._get_empty_new_config()
         rows, cols = self._get_rows_cols()
@@ -392,10 +400,12 @@ class ConfigManager:
             cell_list[i].value = val
         worksheet.update_cells(cell_list)
 
-        team_ranges = [(f"A{i}:C{i}", FMT_VALUES) for i in range(10, 10 + num_teams)]
+        team_ranges = [(f"A{i}:B{i}", FMT_VALUES) for i in range(10, 10 + num_teams)]
+        team_ranges.extend([(f"C{i}", FMT_BLANK_CENTER) for i in range(10, 10 + num_teams)])
+
         reinforce_row = 9 + 3 + num_teams
         crab_ranges = [
-            (f"A{i}:C{i}", FMT_VALUES)
+            (f"A{i}:B{i}", FMT_VALUES)
             for i in range(reinforce_row + 1, reinforce_row + 1 + num_crabs)
         ]
 
@@ -434,7 +444,7 @@ class ConfigManager:
             for sheet in sheets:
                 if sheet.title == self.sheet_title:
                     self.sheet = self.client.open(self.sheet_title)
-                    logger.print_normal(f"Found spreadsheet: {self.sheet_title}\n")
+                    logger.print_ok_blue_arrow(f"Found sheet: {self.sheet_title}")
         except:
             return
 

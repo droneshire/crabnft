@@ -74,7 +74,10 @@ class CrabadaWeb2Client:
         crab_classes = {}
         res = self.list_crabs_in_game_raw(user_address, params)
         try:
-            return {c["crabada_id"]: c["class_name"] for c in res["result"]["data"]}
+            return {
+                c.get("crabada_id", -1): c.get("class_name", "UNKNOWN")
+                for c in res["result"]["data"]
+            }
         except KeyboardInterrupt:
             raise
         except:
@@ -88,8 +91,12 @@ class CrabadaWeb2Client:
         for team in teams:
             comp = []
             for i in range(1, 4):
+                if f"crabada_{i}_class" not in team:
+                    break
                 comp.append(CRABADA_ID_TO_CLASS[team[f"crabada_{i}_class"]])
-            team_composition[team["team_id"]] = ", ".join(comp)
+            if len(comp) == 3:
+                team_composition[team["team_id"]] = ", ".join(comp)
+
         return team_composition
 
     def get_mine(self, mine_id: int, params: T.Dict[str, T.Any] = {}) -> IdleGame:
