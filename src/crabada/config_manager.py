@@ -571,7 +571,13 @@ class ConfigManager:
 
     def _check_to_see_if_action(self, check_sheets_none: bool=True) -> bool:
         now = time.time()
-        print(self.last_fail_time, now - self.last_fail_time, self.backoff)
+
+        if self.dry_run:
+            return False
+
+        if not self.allow_sheets_config:
+            return False
+
         if now - self.last_fail_time < self.backoff:
             wait_time_end = self.last_fail_time + self.backoff
             wait_time_left = wait_time_end - now
@@ -581,18 +587,8 @@ class ConfigManager:
             )
             return False
 
-        if self.dry_run:
-            print("dry run")
-            return False
-
-        if not self.allow_sheets_config:
-            print("not allowed")
-            return False
-
         if check_sheets_none and self.sheet is None:
-            print("no sheets")
             return False
-        print("action allowed")
         return True
 
     @contextmanager
