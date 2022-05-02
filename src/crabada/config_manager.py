@@ -145,7 +145,7 @@ class ConfigManager:
         self.dry_run = dry_run
         self.last_config_update_time = 0.0
 
-        self.backoff = 2.0
+        self.backoff = 15.0
         self.google_api_success = False
         self.last_fail_time = 0.0
 
@@ -172,7 +172,7 @@ class ConfigManager:
         self._create_sheet_if_needed()
 
     def check_for_config_updates(self) -> None:
-        if self.dry_run or not self.allow_sheets_config:
+        if not self._check_to_see_if_action():
             return
 
         now = time.time()
