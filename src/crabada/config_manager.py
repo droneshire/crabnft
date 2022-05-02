@@ -146,7 +146,7 @@ class ConfigManager:
 
         self.backoff = 2.0
         self.google_api_success = False
-        self.last_action_allowed_time = time.time()
+        self.last_fail_time = time.time()
 
         # if we are using google sheets, we'll use the last saved config from sheets
         # this way we aren't always overriding the config with the local config
@@ -554,7 +554,7 @@ class ConfigManager:
 
     def _check_to_see_if_action(self, create_sheet_if_needed: bool=True) -> bool:
         now = time.time()
-        if now - self.last_action_allowed_time < self.backoff:
+        if now - self.last_fail_time < self.backoff:
             logger.print_normal(f"Waiting to take action due to config manager backoff")
             return False
 
@@ -567,8 +567,6 @@ class ConfigManager:
         if self.sheet is None and create_sheet_if_needed:
             self._create_sheet_if_needed()
             return False
-
-        self.last_action_allowed_time = now
 
         return True
 
@@ -583,6 +581,7 @@ class ConfigManager:
             raise
         except Exception as e:
             self.backoff = self.backoff * 2
+            self.last_fail_time = now
             logger.print_fail(f"failure to google api call, updating backoff to {self.backoff} seconds")
             logger.print_fail(f"{e.args[0]['message']}\n")
 
