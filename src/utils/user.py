@@ -1,6 +1,17 @@
 from config import ALIAS_POSTFIX
 from utils import logger
 
+BETA_TEST_LIST = [
+    "ROSS",
+    "TEMPLARE",
+    "MASH",
+    "MASH2",
+    "BIGMOE",
+    "ALMUGU",
+    "SOOFKAY",
+    "KING_WING",
+]
+
 
 def get_alias_from_user(user: str) -> str:
     user_split = user.split(ALIAS_POSTFIX[0])

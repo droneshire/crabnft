@@ -10,8 +10,7 @@ CONFIG_TEMPLATE = {
         mining_strategy="PreferOwnMpCrabsAndDelayReinforcement",
         looting_strategy="PreferOwnBpCrabsAndDelayReinforcement",
         max_gas_price_gwei=SMALL_TEAM_GAS_LIMIT,
-        max_reinforcement_price_tus=24,
-        max_reinforce_bp_delta=10,
+        max_reinforcement_price_tus=24.0,
         commission_percent_per_mine={
             "0x8191eFdc4b4A1250481624a908C6cB349A60590e": 10.0,
         },

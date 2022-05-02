@@ -1,16 +1,14 @@
-import copy
 import datetime
-import deepdiff
-import json
 import logging
 import math
 import os
 import time
 import typing as T
 from twilio.rest import Client
-from web3.types import Address, TxReceipt
+from web3.types import Address
 
 from config import ADMIN_EMAIL
+from crabada.config_manager import ConfigManager
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
 from crabada.miners_revenge import calc_miners_revenge
@@ -24,8 +22,8 @@ from utils import logger
 from utils.config_types import UserConfig, SmsConfig
 from utils.csv_logger import CsvLogger
 from utils.email import Email, send_email
-from utils.game_stats import LifetimeGameStatsLogger, NULL_GAME_STATS, Result
-from utils.game_stats import (
+from crabada.game_stats import LifetimeGameStatsLogger, NULL_GAME_STATS, Result
+from crabada.game_stats import (
     get_daily_stats_message,
     get_game_stats,
     get_lifetime_stats_file,
@@ -59,13 +57,12 @@ class CrabadaMineBot:
         dry_run: bool,
     ) -> None:
         self.user: str = user
-        self.config: UserConfig = config
         self.from_sms_number: str = from_sms_number
         self.sms: Client = sms_client
         self.emails: T.List[Email] = email_accounts
         self.log_dir: str = log_dir
         self.dry_run: bool = dry_run
-        self.address: Address = self.config["address"]
+        self.address: Address = config["address"]
 
         self.crabada_w3: CrabadaWeb3Client = T.cast(
             CrabadaWeb3Client,
@@ -80,7 +77,7 @@ class CrabadaMineBot:
             TusWeb3Client,
             (
                 TusWeb3Client()
-                .set_credentials(self.config["address"], config["crabada_key"])
+                .set_credentials(config["address"], config["crabada_key"])
                 .set_node_uri(AvalancheCWeb3Client.AVAX_NODE_URL)
                 .set_dry_run(dry_run)
             ),
@@ -101,17 +98,17 @@ class CrabadaMineBot:
         self.avg_reinforce_tus: Average = Average()
         self.avg_gas_gwei: Average = Average()
 
-        self.mining_strategy = STRATEGY_SELECTION[self.config["mining_strategy"]](
+        self.mining_strategy = STRATEGY_SELECTION[config["mining_strategy"]](
             self.address,
             self.crabada_w2,
             self.crabada_w3,
-            self.config,
+            config,
         )
-        self.looting_strategy = STRATEGY_SELECTION[self.config["looting_strategy"]](
+        self.looting_strategy = STRATEGY_SELECTION[config["looting_strategy"]](
             self.address,
             self.crabada_w2,
             self.crabada_w3,
-            self.config,
+            config,
         )
 
         self.alias = get_alias_from_user(self.user)
@@ -124,95 +121,14 @@ class CrabadaMineBot:
 
         logger.print_ok_blue(f"Adding bot for user {self.alias} with address {self.address}")
 
-        self._print_out_config()
-        self._send_email_config_if_needed()
-        self._save_config()
-
-    def _get_save_config(self) -> T.Dict[T.Any, T.Any]:
-        save_config = copy.deepcopy(self.config)
-        for dont_save_key in [
-            "crabada_key",
-            "address",
-            "commission_percent_per_mine",
-            "discord_handle",
-        ]:
-            del save_config[dont_save_key]
-        return json.loads(json.dumps(save_config))
-
-    def _save_config(self) -> None:
-        if self.dry_run:
-            return
-
-        config = self._get_save_config()
-        log_dir = logger.get_logging_dir()
-        config_file = os.path.join(logger.get_logging_dir(), f"{self.user.lower()}_config.json")
-        with open(config_file, "w") as outfile:
-            json.dump(config, outfile, indent=4)
-
-    def _load_config(self) -> T.Dict[T.Any, T.Any]:
-        log_dir = logger.get_logging_dir()
-        config_file = os.path.join(logger.get_logging_dir(), f"{self.user.lower()}_config.json")
-        try:
-            with open(config_file, "r") as infile:
-                return json.load(infile)
-        except:
-            return {}
-
-    def _get_email_config(self) -> str:
-        content = ""
-        for config_key, value in self._get_save_config().items():
-            new_value = value
-
-            if isinstance(value, T.List):
-                new_value = "\n\t".join([str(v) for v in value])
-
-            if isinstance(value, T.Dict):
-                new_value = ""
-                for k, v in value.items():
-                    new_value += f"{k}: {str(v)}\n"
-
-            if isinstance(value, bool):
-                new_value = str(value)
-
-            content += f"{config_key.upper()}:\n{new_value}\n\n"
-        return content
-
-    def _did_config_change(self) -> bool:
-        current = self._get_save_config()
-        old = self._load_config()
-
-        diff = deepdiff.DeepDiff(old, current)
-        if diff:
-            logger.print_normal(f"{diff}")
-            return True
-        return False
-
-    def _print_out_config(self) -> None:
-        logger.print_bold(f"{self.user} Configuration\n")
-        for config_item, value in self.config.items():
-            if config_item == "crabada_key":
-                continue
-            logger.print_normal(f"\t{config_item}: {value}")
-        logger.print_normal("")
-
-    def _send_email_config_if_needed(self) -> None:
-        content = self._get_email_config()
-
-        if self.dry_run or not self._did_config_change() or not self.config["get_email_updates"]:
-            return
-
-        logger.print_warn(f"Config changed for {self.alias}, sending config email...")
-
-        email_message = f"Hello {self.alias}!\n"
-        email_message += "Here is your updated bot configuration:\n\n"
-        email_message += content
-
-        send_email(
-            self.emails,
-            self.config["email"],
-            f"\U0001F980 Crabada Bot Configuration",
-            email_message,
+        self.config_mgr = ConfigManager(
+            user,
+            config,
+            email_accounts,
+            allow_sheets_config=True,
+            dry_run=dry_run,
         )
+        self.config_mgr.init()
 
     def _check_calc_and_send_daily_update_message(self) -> None:
         today = datetime.date.today()
@@ -232,10 +148,10 @@ class CrabadaMineBot:
         yesterday_pretty = yesterday.strftime("%m/%d/%Y")
         subject = f"\U0001F4C8 Crabada Daily Bot Stats for {yesterday_pretty}"
 
-        if self.config["email"] and self.config["get_email_updates"]:
+        if self.config_mgr.config["email"]:
             send_email(
                 self.emails,
-                self.config["email"],
+                self.config_mgr.config["email"],
                 subject,
                 message,
             )
@@ -255,7 +171,7 @@ class CrabadaMineBot:
 
         if tx_hash is None:
             explorer_content = (
-                f"Explorer: https://snowtrace.io/address/{self.config['address']}\n\n"
+                f"Explorer: https://snowtrace.io/address/{self.config_mgr.config['address']}\n\n"
             )
         else:
             explorer_content = f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n"
@@ -283,19 +199,21 @@ class CrabadaMineBot:
                 sms_message = f"\U0001F980 Crabada Bot Alert \U0001F980\n\n"
                 sms_message += content
                 message = self.sms.messages.create(
-                    body=sms_message, from_=self.from_sms_number, to=self.config["sms_number"]
+                    body=sms_message,
+                    from_=self.from_sms_number,
+                    to=self.config_mgr.config["sms_number"],
                 )
         except KeyboardInterrupt:
             raise
         except:
             logger.print_fail("Failed to send sms alert")
 
-        if do_send_email and self.config["email"]:
+        if do_send_email and self.config_mgr.config["email"]:
             email_message = f"Hello {self.alias}!\n"
             email_message += content
             send_email(
                 self.emails,
-                self.config["email"],
+                self.config_mgr.config["email"],
                 f"\U0001F980 Crabada Bot Update",
                 email_message,
             )
@@ -312,7 +230,7 @@ class CrabadaMineBot:
             self.stats_logger.lifetime_stats,
             self.game_stats,
             self.prices,
-            self.config["commission_percent_per_mine"],
+            self.config_mgr.config["commission_percent_per_mine"],
         )
 
         outcome_emoji = "\U0001F389" if tx.result == Result.WIN else "\U0001F915"
@@ -339,13 +257,13 @@ class CrabadaMineBot:
 
         message += f"Profits: {profit_tus:.2f} TUS [${profit_usd:.2f}]\n"
 
-        send_sms = (tx.game_type == "LOOT" and self.config["get_sms_updates_loots"]) or self.config[
-            "get_sms_updates"
-        ]
+        send_sms = (
+            tx.game_type == "LOOT" and self.config_mgr.config["get_sms_updates_loots"]
+        ) or self.config_mgr.config["get_sms_updates"]
 
         self._send_status_update(
             send_sms,
-            self.config["get_email_updates"],
+            self.config_mgr.config["get_email_updates"],
             message,
             tx_hash=tx.tx_hash,
         )
@@ -365,7 +283,9 @@ class CrabadaMineBot:
     def _print_bot_stats(self) -> None:
         logger.print_normal("\n")
         logger.print_bold("--------\U0001F579  GAME STATS\U0001F579  ------")
-        logger.print_normal(f"Explorer: https://snowtrace.io/address/{self.config['address']}\n\n")
+        logger.print_normal(
+            f"Explorer: https://snowtrace.io/address/{self.config_mgr.config['address']}\n\n"
+        )
         for k, v in self.stats_logger.lifetime_stats.items():
             if k in ["MINE", "LOOT"]:
                 logger.print_ok_blue(f"{k}:")
@@ -387,9 +307,7 @@ class CrabadaMineBot:
         message = f"Unable to complete bot transaction due to insufficient gas \U000026FD!\n"
         message += f"Please add AVAX to your wallet ASAP to avoid delay in mining!\n"
         logger.print_fail(message)
-        self._send_status_update(
-            self.config["get_sms_updates_alerts"], self.config["get_email_updates"], message
-        )
+        self._send_status_update(self.config_mgr.config["get_sms_updates_alerts"], self.config_mgr.config["get_email_updates"], message)
         self.time_since_last_alert = now
 
     def _calculate_and_log_gas_price(self, tx: CrabadaTransaction) -> float:
@@ -448,14 +366,14 @@ class CrabadaMineBot:
                 is_winning = self.crabada_w2.mine_is_winning(mine_data)
                 total_time = self.crabada_w2.get_total_mine_time(mine_data) + 1
                 remaining_time = self.crabada_w2.get_remaining_time(mine_data)
-                group = self.config["mining_teams"].get(mine[team_id])
+                group = self.config_mgr.config["mining_teams"].get(mine[team_id])
             else:
                 team_id = "attack_team_id"
                 num_reinforcements = self.crabada_w2.get_num_loot_reinforcements(mine_data)
                 is_winning = self.crabada_w2.loot_is_winning(mine_data)
                 total_time = self.looting_strategy.LOOTING_DURATION
                 remaining_time = self.crabada_w2.get_remaining_loot_time(mine_data)
-                group = self.config["looting_teams"].get(mine[team_id])
+                group = self.config_mgr.config["looting_teams"].get(mine[team_id])
 
             percent_done = (total_time - remaining_time) / total_time
             progress = (
@@ -464,7 +382,7 @@ class CrabadaMineBot:
 
             reinforments_used_str = logger.format_normal("[")
             for crab in self.crabada_w2.get_reinforcement_crabs(mine_data):
-                if crab in self.config["reinforcing_crabs"].keys():
+                if crab in self.config_mgr.config["reinforcing_crabs"].keys():
                     reinforments_used_str += logger.format_ok_blue(f"{crab} ")
                 else:
                     reinforments_used_str += logger.format_normal(f"{crab} ")
@@ -497,7 +415,7 @@ class CrabadaMineBot:
 
         if is_gas_too_high(
             gas_price_gwei=self.crabada_w3.get_gas_price(),
-            max_price_gwei=self.config["max_gas_price_gwei"],
+            max_price_gwei=self.config_mgr.config["max_gas_price_gwei"],
             margin=strategy.get_gas_margin(game_stage=GameStage.REINFORCE, mine=mine),
         ):
             self.gas_skip_tracker.add(mine["game_id"])
@@ -596,7 +514,7 @@ class CrabadaMineBot:
     def _close_mine(self, team: Team, mine: IdleGame, strategy: Strategy) -> bool:
         if is_gas_too_high(
             gas_price_gwei=self.crabada_w3.get_gas_price(),
-            max_price_gwei=self.config["max_gas_price_gwei"],
+            max_price_gwei=self.config_mgr.config["max_gas_price_gwei"],
             margin=strategy.get_gas_margin(game_stage=GameStage.CLOSE, mine=None),
         ):
             logger.print_warn(
@@ -655,10 +573,10 @@ class CrabadaMineBot:
         return False
 
     def _is_team_allowed_to_mine(self, team: Team) -> bool:
-        return team["team_id"] in self.config["mining_teams"].keys()
+        return team["team_id"] in self.config_mgr.config["mining_teams"].keys()
 
     def _is_team_allowed_to_loot(self, team: Team) -> bool:
-        return team["team_id"] in self.config["looting_teams"].keys()
+        return team["team_id"] in self.config_mgr.config["looting_teams"].keys()
 
     def _check_and_maybe_reinforce_loots(self, team: Team, mine: IdleGame) -> None:
         self._reinforce_loot_or_mine(
@@ -702,7 +620,7 @@ class CrabadaMineBot:
 
             if is_gas_too_high(
                 gas_price_gwei=self.crabada_w3.get_gas_price(),
-                max_price_gwei=self.config["max_gas_price_gwei"],
+                max_price_gwei=self.config_mgr.config["max_gas_price_gwei"],
                 margin=self.mining_strategy.get_gas_margin(game_stage=GameStage.START, mine=None),
             ):
                 logger.print_warn(
@@ -715,7 +633,7 @@ class CrabadaMineBot:
 
             # only start one team from group at a time in case there's some staggering
             # that needs to happen
-            team_group = self.config["mining_teams"].get(team["team_id"], -1)
+            team_group = self.config_mgr.config["mining_teams"].get(team["team_id"], -1)
             if team_group in groups_started:
                 continue
 
@@ -723,7 +641,7 @@ class CrabadaMineBot:
                 groups_started.append(team_group)
 
     def _check_and_maybe_reinforce(self) -> None:
-        if not self.config["should_reinforce"]:
+        if not self.config_mgr.config["should_reinforce"]:
             return
 
         teams = self.crabada_w2.list_teams(self.address)
@@ -792,7 +710,7 @@ class CrabadaMineBot:
         return self.avg_gas_gwei.get_avg()
 
     def get_config(self) -> UserConfig:
-        return self.config
+        return self.config_mgr.config
 
     def run(self) -> None:
         logger.print_normal("=" * 60)
@@ -806,6 +724,8 @@ class CrabadaMineBot:
         )
 
         self._check_calc_and_send_daily_update_message()
+
+        self.config_mgr.check_for_config_updates()
 
         self._print_mine_loot_status()
         self._check_and_maybe_close()

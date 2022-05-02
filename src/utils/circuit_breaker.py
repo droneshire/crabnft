@@ -15,9 +15,9 @@ class CircuitBreaker:
         self.start_time = time.time()
 
     def trip(self):
+        logger.print_fail_arrow(f"Trigger tripped!")
         time.sleep(self.backoff)
         self.backoff = self.backoff * 2
-        logger.print_fail_arrow(f"Trigger tripped!")
 
     def reset(self):
         self.backoff = 1.0

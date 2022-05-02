@@ -23,10 +23,8 @@ class UserConfig(T.TypedDict):
     address: Address
     mining_teams: T.Dict[int, int]
     looting_teams: T.Dict[int, int]
-    max_gas_price: int
     max_gas_price_gwei: int
     max_reinforcement_price_tus: Tus
-    max_reinforce_bp_delta: int
     reinforcing_crabs: T.Dict[int, int]
     breed_crabs: T.List[int]
     mining_strategy: str

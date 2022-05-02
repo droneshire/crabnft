@@ -20,7 +20,7 @@ from crabada.bot import CrabadaMineBot
 from crabada.profitability import get_profitability_message
 from utils import discord, email, logger, price, security
 from utils.circuit_breaker import CircuitBreaker
-from utils.game_stats import LifetimeGameStats
+from crabada.game_stats import LifetimeGameStats
 from utils.general import dict_sum
 from utils.math import Average
 from utils.price import get_avax_price_usd, get_token_price_usd
@@ -196,7 +196,7 @@ def run_bot() -> None:
     should_post_updates = 1 in [int(i) for i in args.groups]
     group_backoff_adjustment = int(args.groups[0]) if len(args.groups) == 1 else 0
 
-    circuit_breaker = CircuitBreaker(min_delta=90.0, backoff=60.0)
+    circuit_breaker = CircuitBreaker(min_delta=90.0, backoff=80.0)
 
     try:
         while True:
