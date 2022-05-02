@@ -408,6 +408,10 @@ class ConfigManager:
             (f"A{i}:B{i}", FMT_VALUES)
             for i in range(reinforce_row + 1, reinforce_row + 1 + num_crabs)
         ]
+        crab_ranges.extend([
+            (f"C{i}", FMT_BLANK_CENTER)
+            for i in range(reinforce_row + 1, reinforce_row + 1 + num_crabs)
+        ])
 
         gsf.set_column_width(worksheet, "A", 250)
         gsf.set_column_width(worksheet, "C", 250)
