@@ -115,7 +115,7 @@ class ConfigManager:
     DYNAMIC_ROWS_START = 9
     MAX_TEAMS = 50
     MAX_CRABS = 20
-    CONFIG_UPDATE_TIME = 30.0
+    CONFIG_UPDATE_TIME = 60.0 * 5.0
 
     def __init__(
         self,
