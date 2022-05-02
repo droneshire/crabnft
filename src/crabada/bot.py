@@ -198,7 +198,7 @@ class CrabadaMineBot:
     def _send_email_config_if_needed(self) -> None:
         content = self._get_email_config()
 
-        if self.dry_run or not self._did_config_change():
+        if self.dry_run or not self._did_config_change() or not self.config["get_email_updates"]:
             return
 
         logger.print_warn(f"Config changed for {self.alias}, sending config email...")
@@ -387,7 +387,9 @@ class CrabadaMineBot:
         message = f"Unable to complete bot transaction due to insufficient gas \U000026FD!\n"
         message += f"Please add AVAX to your wallet ASAP to avoid delay in mining!\n"
         logger.print_fail(message)
-        self._send_status_update(self.config["get_sms_updates_alerts"], True, message)
+        self._send_status_update(
+            self.config["get_sms_updates_alerts"], self.config["get_email_updates"], message
+        )
         self.time_since_last_alert = now
 
     def _calculate_and_log_gas_price(self, tx: CrabadaTransaction) -> float:
