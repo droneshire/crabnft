@@ -150,8 +150,8 @@ class ConfigManager:
 
         # if we are using google sheets, we'll use the last saved config from sheets
         # this way we aren't always overriding the config with the local config
-        if allow_sheets_config:
-            self.config = UserConfig(self._load_config())
+        # if allow_sheets_config:
+        #     self.config = UserConfig(self._load_config())
 
         this_dir = os.path.dirname(os.path.realpath(__file__))
         creds_dir = os.path.dirname(this_dir)
