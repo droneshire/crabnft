@@ -455,7 +455,7 @@ class ConfigManager:
         )
 
     def _create_sheet_if_needed(self) -> None:
-        if not self._check_to_see_if_action():
+        if not self._check_to_see_if_action(check_sheets_none=False):
             return
 
         logger.print_normal(f"Searching for spreadsheet: {self.sheet_title}")
