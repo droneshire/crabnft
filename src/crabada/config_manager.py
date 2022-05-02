@@ -173,7 +173,7 @@ class ConfigManager:
         self._create_sheet_if_needed()
 
     def check_for_config_updates(self) -> None:
-        if not self._check_to_see_if_action():
+        if not self._check_to_see_if_action(check_sheets_none=False):
             return
 
         now = time.time()
@@ -182,6 +182,10 @@ class ConfigManager:
             return
 
         self.last_config_update_time = now
+
+        if self.sheet is None:
+            self._create_sheet_if_needed()
+            return
 
         logger.print_normal("Checking for gsheet config update")
         updated_config = self.read_sheets_config()
@@ -397,7 +401,7 @@ class ConfigManager:
         for _ in range(self.BUFFER_ROWS):
             cell_values.extend(get_full_row([]))
 
-        logger.print_normal(f"Added {len(cell_values)} cells, expecting {len(cell_list)}")
+        logger.print_normal(f"Added {len(cell_values)} cells, expecting {len(cell_list)}\n\n")
         assert len(cell_values) == len(cell_list), "Cell/value mismatch"
 
         for i, val in enumerate(cell_values):
@@ -448,7 +452,7 @@ class ConfigManager:
         )
 
     def _create_sheet_if_needed(self) -> None:
-        if not self._check_to_see_if_action(create_sheet_if_needed=False):
+        if not self._check_to_see_if_action():
             return
 
         logger.print_normal(f"Searching for spreadsheet: {self.sheet_title}")
@@ -556,7 +560,7 @@ class ConfigManager:
             self.sheet = None
             return
 
-    def _check_to_see_if_action(self, create_sheet_if_needed: bool = True) -> bool:
+    def _check_to_see_if_action(self, check_sheets_none: bool=True) -> bool:
         now = time.time()
         print(self.last_fail_time, now - self.last_fail_time, self.backoff)
         if now - self.last_fail_time < self.backoff:
@@ -574,8 +578,7 @@ class ConfigManager:
         if not self.allow_sheets_config:
             return False
 
-        if self.sheet is None and create_sheet_if_needed:
-            self._create_sheet_if_needed()
+        if check_sheets_none and self.sheet is None:
             return False
 
         return True
@@ -587,6 +590,7 @@ class ConfigManager:
             yield
             self.backoff = self.DEFAULT_BACKOFF_OPTION
             self.google_api_success = True
+            logger.print_normal(f"resetting backoff to {self.DEFAULT_BACKOFF_OPTION}")
         except KeyboardInterrupt:
             raise
         except Exception as e:
