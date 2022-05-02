@@ -123,6 +123,7 @@ class ConfigManager:
     MAX_TEAMS = 50
     MAX_CRABS = 20
     CONFIG_UPDATE_TIME = 60.0 * 5.0
+    DEFAULT_BACKOFF_OPTION = 60.0
 
     def __init__(
         self,
@@ -145,7 +146,7 @@ class ConfigManager:
         self.dry_run = dry_run
         self.last_config_update_time = 0.0
 
-        self.backoff = 15.0
+        self.backoff = self.DEFAULT_BACKOFF_OPTION
         self.google_api_success = False
         self.last_fail_time = 0.0
 
@@ -584,7 +585,7 @@ class ConfigManager:
         self.google_api_success = False
         try:
             yield
-            self.backoff = 0
+            self.backoff = self.DEFAULT_BACKOFF_OPTION
             self.google_api_success = True
         except KeyboardInterrupt:
             raise
