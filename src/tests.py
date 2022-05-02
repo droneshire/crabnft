@@ -138,7 +138,7 @@ def test_miners_revenge() -> None:
 
 
 def test_config_manager() -> None:
-    dry_run = True
+    dry_run = False
     email_accounts = []
 
     if not dry_run:
@@ -152,7 +152,9 @@ def test_config_manager() -> None:
                 email.Email(address=email_account["user"], password=email_password)
             )
 
-    cm = ConfigManager("TEST", TEST_CONFIG, email_accounts, dry_run=dry_run)
+    cm = ConfigManager(
+        "TEST", TEST_CONFIG, email_accounts, allow_sheets_config=True, dry_run=dry_run
+    )
     cm._delete_sheet()
     cm._create_sheet_if_needed()
     new_config = cm.read_sheets_config()

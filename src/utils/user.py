@@ -2,8 +2,11 @@ from config import ALIAS_POSTFIX
 from utils import logger
 
 BETA_TEST_LIST = [
-    # "TEMPLARE",
-    "ROSS"
+    "ROSS",
+    "TEMPLARE",
+    "MASH",
+    "MASH2",
+    "BIGMOE",
 ]
 
 

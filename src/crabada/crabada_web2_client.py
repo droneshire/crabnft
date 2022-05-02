@@ -8,6 +8,7 @@ from eth_typing import Address
 from crabada.factional_advantage import get_faction_adjusted_battle_point
 from crabada.miners_revenge import calc_miners_revenge
 from crabada.types import Crab, CrabadaClass, CrabForLending, IdleGame, LendingCategories, Team
+from crabada.types import CRABADA_ID_TO_CLASS
 from utils import logger
 from utils.general import first_or_none, n_or_better_or_none, get_pretty_seconds
 from utils.price import wei_to_tus, Tus
@@ -66,6 +67,30 @@ class CrabadaWeb2Client:
             raise
         except:
             return {}
+
+    def get_crab_classes(
+        self, user_address: Address, params: T.Dict[str, T.Any] = {}
+    ) -> T.Dict[int, str]:
+        crab_classes = {}
+        res = self.list_crabs_in_game_raw(user_address, params)
+        try:
+            return {c["crabada_id"]: c["class_name"] for c in res["result"]["data"]}
+        except KeyboardInterrupt:
+            raise
+        except:
+            return {}
+
+    def get_team_compositions(
+        self, user_address: Address, params: T.Dict[str, T.Any] = {}
+    ) -> T.Dict[int, str]:
+        teams = self.list_teams(user_address)
+        team_composition = {}
+        for team in teams:
+            comp = []
+            for i in range(1, 4):
+                comp.append(CRABADA_ID_TO_CLASS[team[f"crabada_{i}_class"]])
+            team_composition[team["team_id"]] = ", ".join(comp)
+        return team_composition
 
     def get_mine(self, mine_id: int, params: T.Dict[str, T.Any] = {}) -> IdleGame:
         """Get information from the given mine"""
