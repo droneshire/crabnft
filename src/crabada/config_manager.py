@@ -150,8 +150,8 @@ class ConfigManager:
 
         # if we are using google sheets, we'll use the last saved config from sheets
         # this way we aren't always overriding the config with the local config
-        # if allow_sheets_config:
-        #     self.config = UserConfig(self._load_config())
+        if allow_sheets_config:
+            self.config = UserConfig(self._load_config())
 
         this_dir = os.path.dirname(os.path.realpath(__file__))
         creds_dir = os.path.dirname(this_dir)
@@ -220,56 +220,6 @@ class ConfigManager:
         logger.print_normal(f"Updating config worksheet")
 
         self._write_updated_config_worksheet(worksheet, rows, cols)
-
-    def _check_to_see_if_action(self, create_sheet_if_needed: bool=True) -> bool:
-        now = time.time()
-        if now - self.last_action_allowed_time < self.backoff:
-            logger.print_normal(f"Waiting to take action due to config manager backoff")
-            return False
-
-        if self.dry_run:
-            return False
-
-        if not self.allow_sheets_config:
-            return False
-
-        if self.sheet is None and create_sheet_if_needed:
-            self._create_sheet_if_needed()
-            return False
-
-        self.last_action_allowed_time = now
-
-        return True
-
-    @contextmanager
-    def _google_api_action(self) -> T.Iterator[None]:
-        self.google_api_success = False
-        try:
-            yield
-            self.backoff = 0
-            self.google_api_success = True
-        except KeyboardInterrupt:
-            raise
-        except:
-            logger.print_fail(f"failure to google api call")
-            self.backoff = self.backoff * 2
-
-    def _get_empty_new_config(self) -> UserConfig:
-        new_config = copy.deepcopy(self.config)
-
-        delete_keys = ["mining_teams", "looting_teams", "reinforcing_crabs"]
-        delete_keys.extend([v["config_key"] for _, v in INPUT_VERIFY.items()])
-        for del_key in delete_keys:
-            del new_config[del_key]
-            if isinstance(self.config[del_key], dict):
-                new_config[del_key] = {}
-            if isinstance(self.config[del_key], bool):
-                new_config[del_key] = False
-            if isinstance(self.config[del_key], int):
-                new_config[del_key] = 0
-            if isinstance(self.config[del_key], float):
-                new_config[del_key] = 0.0
-        return new_config
 
     def read_sheets_config(self) -> T.Optional[UserConfig]:
         if not self._check_to_see_if_action():
@@ -559,25 +509,6 @@ class ConfigManager:
         if not self.google_api_success:
             self.sheet = None
 
-    def _get_rows_cols(self) -> T.Tuple[int, int]:
-        rows = 1  # title
-        rows += 2  # blank lines
-        rows += 3  # data
-        rows += 2  # blank lines
-        rows += 1  # title
-
-        assert self.DYNAMIC_ROWS_START == rows, "row mismatch"
-
-        rows += len(self.config["mining_teams"])
-        rows += len(self.config["looting_teams"])
-        rows += 2  # blank lines
-        rows += 1  # title
-        rows += len(self.config["reinforcing_crabs"])
-        rows += self.BUFFER_ROWS  # room for expansion
-
-        cols = 4
-        return rows, cols
-
     def _create_config_worksheet(self) -> None:
         if not self._check_to_see_if_action():
             return self.config
@@ -620,6 +551,76 @@ class ConfigManager:
         if not self.google_api_success:
             self.sheet = None
             return
+
+    def _check_to_see_if_action(self, create_sheet_if_needed: bool=True) -> bool:
+        now = time.time()
+        if now - self.last_action_allowed_time < self.backoff:
+            logger.print_normal(f"Waiting to take action due to config manager backoff")
+            return False
+
+        if self.dry_run:
+            return False
+
+        if not self.allow_sheets_config:
+            return False
+
+        if self.sheet is None and create_sheet_if_needed:
+            self._create_sheet_if_needed()
+            return False
+
+        self.last_action_allowed_time = now
+
+        return True
+
+    @contextmanager
+    def _google_api_action(self) -> T.Iterator[None]:
+        self.google_api_success = False
+        try:
+            yield
+            self.backoff = 0
+            self.google_api_success = True
+        except KeyboardInterrupt:
+            raise
+        except Exception as e:
+            logger.print_fail(f"failure to google api call")
+            logger.print_fail(f"{e.message}\n{e.args}")
+            self.backoff = self.backoff * 2
+
+    def _get_empty_new_config(self) -> UserConfig:
+        new_config = copy.deepcopy(self.config)
+
+        delete_keys = ["mining_teams", "looting_teams", "reinforcing_crabs"]
+        delete_keys.extend([v["config_key"] for _, v in INPUT_VERIFY.items()])
+        for del_key in delete_keys:
+            del new_config[del_key]
+            if isinstance(self.config[del_key], dict):
+                new_config[del_key] = {}
+            if isinstance(self.config[del_key], bool):
+                new_config[del_key] = False
+            if isinstance(self.config[del_key], int):
+                new_config[del_key] = 0
+            if isinstance(self.config[del_key], float):
+                new_config[del_key] = 0.0
+        return new_config
+
+    def _get_rows_cols(self) -> T.Tuple[int, int]:
+        rows = 1  # title
+        rows += 2  # blank lines
+        rows += 3  # data
+        rows += 2  # blank lines
+        rows += 1  # title
+
+        assert self.DYNAMIC_ROWS_START == rows, "row mismatch"
+
+        rows += len(self.config["mining_teams"])
+        rows += len(self.config["looting_teams"])
+        rows += 2  # blank lines
+        rows += 1  # title
+        rows += len(self.config["reinforcing_crabs"])
+        rows += self.BUFFER_ROWS  # room for expansion
+
+        cols = 4
+        return rows, cols
 
     def _get_team_composition(self, team: int) -> str:
         self.team_composition = {}
