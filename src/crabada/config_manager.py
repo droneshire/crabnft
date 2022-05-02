@@ -177,8 +177,11 @@ class ConfigManager:
             return
 
         now = time.time()
-
         if now - self.last_config_update_time < self.CONFIG_UPDATE_TIME:
+            wait_end_time  = self.last_config_update_time + self.CONFIG_UPDATE_TIME
+            wait_time_left = wait_end_time - now
+            wait_time_pretty = get_pretty_seconds(int(wait_time_left))
+            logger.print_normal(f"Waiting {wait_time_pretty} to check for config")
             return
 
         self.last_config_update_time = now
