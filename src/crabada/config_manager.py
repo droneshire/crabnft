@@ -582,9 +582,9 @@ class ConfigManager:
         except KeyboardInterrupt:
             raise
         except Exception as e:
-            logger.print_fail(f"failure to google api call")
-            logger.print_fail(f"{e.args[0]['message']}\n")
             self.backoff = self.backoff * 2
+            logger.print_fail(f"failure to google api call, updating backoff to {self.backoff} seconds")
+            logger.print_fail(f"{e.args[0]['message']}\n")
 
     def _get_empty_new_config(self) -> UserConfig:
         new_config = copy.deepcopy(self.config)
