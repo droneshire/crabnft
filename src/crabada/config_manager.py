@@ -583,7 +583,7 @@ class ConfigManager:
             raise
         except Exception as e:
             logger.print_fail(f"failure to google api call")
-            logger.print_fail(f"{e.message}\n{e.args}")
+            logger.print_fail(f"{e.args[0]['message']}\n")
             self.backoff = self.backoff * 2
 
     def _get_empty_new_config(self) -> UserConfig:
