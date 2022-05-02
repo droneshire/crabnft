@@ -219,6 +219,7 @@ class ConfigManager:
     def _check_to_see_if_action(self, create_sheet_if_needed: bool=True) -> bool:
         now = time.time()
         if now - self.last_action_allowed_time < self.backoff:
+            logger.print_normal(f"Waiting to take action due to config manager backoff")
             return False
 
         if self.dry_run:
@@ -245,6 +246,7 @@ class ConfigManager:
         except KeyboardInterrupt:
             raise
         except:
+            logger.print_fail(f"failure to google api call")
             self.backoff = self.backoff * 2
 
     def _get_empty_new_config(self) -> UserConfig:

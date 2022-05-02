@@ -8,6 +8,8 @@ BETA_TEST_LIST = [
     "MASH2",
     "BIGMOE",
     "ALMUGU",
+    "SOOFKAY",
+    "KING_WING",
 ]
 
 
