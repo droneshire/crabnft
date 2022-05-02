@@ -656,6 +656,13 @@ class ConfigManager:
                 "address",
                 "commission_percent_per_mine",
                 "discord_handle",
+                "get_sms_updates",
+                "get_sms_updates_loots",
+                "get_sms_updates_alerts",
+                "get_email_updates",
+                "sms_number",
+                "email",
+                "group",
             ]:
                 continue
 
@@ -699,6 +706,9 @@ class ConfigManager:
         self._send_email_config()
 
     def _send_email_config(self) -> None:
+        if not self.config["get_email_updates"]:
+            return
+
         content = self._get_email_config()
 
         email_message = f"Hello {self.alias}!\n\n"

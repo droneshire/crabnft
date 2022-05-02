@@ -148,7 +148,7 @@ class CrabadaMineBot:
         yesterday_pretty = yesterday.strftime("%m/%d/%Y")
         subject = f"\U0001F4C8 Crabada Daily Bot Stats for {yesterday_pretty}"
 
-        if self.config_mgr.config["email"] and self.config_mgr.config["get_email_updates"]:
+        if self.config_mgr.config["email"]:
             send_email(
                 self.emails,
                 self.config_mgr.config["email"],
@@ -307,7 +307,7 @@ class CrabadaMineBot:
         message = f"Unable to complete bot transaction due to insufficient gas \U000026FD!\n"
         message += f"Please add AVAX to your wallet ASAP to avoid delay in mining!\n"
         logger.print_fail(message)
-        self._send_status_update(self.config_mgr.config["get_sms_updates_alerts"], True, message)
+        self._send_status_update(self.config_mgr.config["get_sms_updates_alerts"], self.config_mgr.config["get_email_updates"], message)
         self.time_since_last_alert = now
 
     def _calculate_and_log_gas_price(self, tx: CrabadaTransaction) -> float:
