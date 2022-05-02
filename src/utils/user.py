@@ -7,6 +7,7 @@ BETA_TEST_LIST = [
     "MASH",
     "MASH2",
     "BIGMOE",
+    "ALMUGU",
 ]
 
 
