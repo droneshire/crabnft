@@ -576,14 +576,17 @@ class ConfigManager:
             return False
 
         if self.dry_run:
+            print("dry run")
             return False
 
         if not self.allow_sheets_config:
+            print("not allowed")
             return False
 
         if check_sheets_none and self.sheet is None:
+            print("no sheets")
             return False
-
+        print("action allowed")
         return True
 
     @contextmanager
