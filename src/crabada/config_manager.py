@@ -557,6 +557,7 @@ class ConfigManager:
 
     def _check_to_see_if_action(self, create_sheet_if_needed: bool = True) -> bool:
         now = time.time()
+        print(self.last_fail_time)
         if now - self.last_fail_time < self.backoff:
             wait_time_end = self.last_fail_time + self.backoff
             wait_time_left = wait_time_end - now
