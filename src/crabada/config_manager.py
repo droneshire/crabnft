@@ -597,9 +597,12 @@ class ConfigManager:
             now = time.time()
             self.backoff = max(self.backoff * 2, (now - self.last_fail_time) * 2)
             self.last_fail_time = now
-            logger.print_fail(
-                f"failure to google api call, updating backoff to {self.backoff} seconds and fail time to {self.last_fail_time}"
-            )
+            try:
+                logger.print_fail(
+                    f"failure to google api call, updating backoff to {self.backoff} seconds and fail time to {self.last_fail_time}"
+                )
+            except:
+                pass
             logger.print_fail(f"{e.args[0]['message']}\n")
 
     def _get_empty_new_config(self) -> UserConfig:
