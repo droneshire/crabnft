@@ -190,6 +190,7 @@ class ConfigManager:
         logger.print_normal(f"{config_diff}")
         self.write_sheets_config()
         self._save_config()
+        self._send_email_config()
 
     def write_sheets_config(self) -> None:
         rows, cols = self._get_rows_cols()
@@ -638,12 +639,14 @@ class ConfigManager:
         logger.print_normal("")
 
     def _send_email_config_if_needed(self) -> None:
-        content = self._get_email_config()
-
         if self.dry_run or not self._did_config_change():
             return
 
         logger.print_warn(f"Config changed for {self.alias}, sending config email...")
+        self._send_email_config()
+
+    def _send_email_config(self) -> None:
+        content = self._get_email_config()
 
         email_message = f"Hello {self.alias}!\n\n"
         email_message += "Here is your updated bot configuration:\n\n"
