@@ -499,14 +499,13 @@ class ConfigManager:
                 notify=True,
                 email_message="Here is your Crabada Bot Configuration",
             )
-            for email in self.send_email_accounts:
-                self.sheet.share(
-                    email["address"],
-                    perm_type="user",
-                    role="writer",
-                    notify=True,
-                    email_message=f"Here is {self.user}'s Crabada Bot Configuration",
-                )
+            self.sheet.share(
+                self.send_email_accounts[0]["address"],
+                perm_type="user",
+                role="writer",
+                notify=False,
+                email_message=f"Here is {self.user}'s Crabada Bot Configuration",
+            )
         if not self.google_api_success:
             self.sheet = None
 
