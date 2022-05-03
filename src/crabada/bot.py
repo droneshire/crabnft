@@ -125,7 +125,7 @@ class CrabadaMineBot:
             user,
             config,
             email_accounts,
-            allow_sheets_config=False,
+            allow_sheets_config=True,
             dry_run=dry_run,
         )
         self.config_mgr.init()

@@ -459,16 +459,11 @@ class ConfigManager:
             return
 
         logger.print_normal(f"Searching for spreadsheet: {self.sheet_title}")
-        with self._google_api_action():
-            sheets = self.client.openall()
-            for sheet in sheets:
-                if sheet.title == self.sheet_title:
-                    self.sheet = self.client.open(self.sheet_title)
-                    logger.print_ok_blue_arrow(f"Found sheet: {self.sheet_title}")
-
-        if not self.google_api_success:
-            logger.print_warn("failed to open sheet")
-            return
+        try:
+            self.sheet = self.client.open(self.sheet_title)
+            logger.print_ok_blue_arrow(f"Found sheet: {self.sheet_title}")
+        except:
+            pass
 
         if self.sheet is not None:
             return
@@ -491,16 +486,8 @@ class ConfigManager:
             return self.config
 
         with self._google_api_action():
-            sheets = self.client.openall()
-
-        if not self.google_api_success:
-            return
-
-        for sheet in sheets:
-            if sheet.title == self.sheet_title:
-                logger.print_warn(f"Deleting spreadsheet: {self.sheet_title}")
-                with self._google_api_action():
-                    self.client.del_spreadsheet(sheet.id)
+            self.client.del_spreadsheet(sheet.id)
+            logger.print_warn(f"Deleting spreadsheet: {self.sheet_title}")
 
     def _share_sheet(self) -> None:
         if not self._check_to_see_if_action():
