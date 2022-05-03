@@ -496,15 +496,13 @@ class ConfigManager:
                 self.config["email"],
                 perm_type="user",
                 role="writer",
-                notify=True,
-                email_message="Here is your Crabada Bot Configuration",
+                notify=False,
             )
             self.sheet.share(
                 self.send_email_accounts[0]["address"],
                 perm_type="user",
                 role="writer",
                 notify=False,
-                email_message=f"Here is {self.user}'s Crabada Bot Configuration",
             )
         if not self.google_api_success:
             self.sheet = None
