@@ -496,13 +496,13 @@ class ConfigManager:
                 self.config["email"],
                 perm_type="user",
                 role="writer",
-                notify=False,
+                notify=True,
             )
             self.sheet.share(
                 self.send_email_accounts[0]["address"],
                 perm_type="user",
                 role="writer",
-                notify=False,
+                notify=True,
             )
         if not self.google_api_success:
             self.sheet = None
