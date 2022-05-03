@@ -132,6 +132,7 @@ class ConfigManager:
         send_email_accounts: T.List[Email],
         allow_sheets_config: bool = False,
         dry_run: bool = False,
+        delete_and_create_new: bool = False,
     ):
         self.config = config
         self.user = user
@@ -145,6 +146,7 @@ class ConfigManager:
 
         self.dry_run = dry_run
         self.last_config_update_time = 0.0
+        self.delete_and_create_new = delete_and_create_new
 
         self.backoff = self.DEFAULT_BACKOFF_OPTION
         self.google_api_success = False
@@ -170,6 +172,8 @@ class ConfigManager:
         self._print_out_config()
         self._send_email_config_if_needed()
         self._save_config()
+        if self.delete_and_create_new:
+            self._delete_sheet()
         self._create_sheet_if_needed()
 
     def check_for_config_updates(self) -> None:
@@ -482,11 +486,8 @@ class ConfigManager:
         self._share_sheet()
 
     def _delete_sheet(self) -> None:
-        if not self._check_to_see_if_action():
-            return self.config
-
         with self._google_api_action():
-            self.client.del_spreadsheet(sheet.id)
+            self.client.del_spreadsheet(self.sheet.id)
             logger.print_warn(f"Deleting spreadsheet: {self.sheet_title}")
 
     def _share_sheet(self) -> None:
@@ -592,13 +593,13 @@ class ConfigManager:
             now = time.time()
             self.backoff = max(self.backoff * 2, (now - self.last_fail_time) * 2)
             self.last_fail_time = now
+            logger.print_fail(
+                f"failure to google api call, updating backoff to {self.backoff} seconds and fail time to {self.last_fail_time}"
+            )
             try:
-                logger.print_fail(
-                    f"failure to google api call, updating backoff to {self.backoff} seconds and fail time to {self.last_fail_time}"
-                )
+                logger.print_fail(f"{e.args[0]['message']}\n")
             except:
                 pass
-            logger.print_fail(f"{e.args[0]['message']}\n")
 
     def _get_empty_new_config(self) -> UserConfig:
         new_config = copy.deepcopy(self.config)
