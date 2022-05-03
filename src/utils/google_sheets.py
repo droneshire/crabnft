@@ -15,12 +15,9 @@ class GoogleSheets:
         self.share_emails = share_emails if share_emails is not None else {}
         self.sheet = None
 
-        sheets = self.gspread_client.openall()
-        for sheet in sheets:
-            if sheet.title == title:
-                self.sheet = self.gspread_client.open(title)
-
-        if self.sheet is None:
+        try:
+            self.sheet = self.gspread_client.open(title)
+        except:
             self.sheet = self.create(title, self.share_emails)
 
     def create(self, title: str, worksheet: str, share_emails: T.Dict[str, str]) -> None:
