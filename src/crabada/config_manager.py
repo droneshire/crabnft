@@ -132,7 +132,6 @@ class ConfigManager:
         send_email_accounts: T.List[Email],
         allow_sheets_config: bool = False,
         dry_run: bool = False,
-        delete_and_create_new: bool = False,
     ):
         self.config = config
         self.user = user
@@ -146,7 +145,6 @@ class ConfigManager:
 
         self.dry_run = dry_run
         self.last_config_update_time = 0.0
-        self.delete_and_create_new = delete_and_create_new
 
         self.backoff = self.DEFAULT_BACKOFF_OPTION
         self.google_api_success = False
@@ -172,8 +170,6 @@ class ConfigManager:
         self._print_out_config()
         self._send_email_config_if_needed()
         self._save_config()
-        if self.delete_and_create_new:
-            self._delete_sheet()
         self._create_sheet_if_needed()
 
     def check_for_config_updates(self) -> None:
