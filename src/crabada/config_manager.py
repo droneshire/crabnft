@@ -164,7 +164,7 @@ class ConfigManager:
             )
         self.client = gspread.authorize(creds)
         self.sheet = None
-        self.sheet_title = f"{self.alias.upper()} Crabada Bot Config"
+        self.sheet_title = f"{self.user.upper()} Crabada Bot Config"
 
     def init(self) -> None:
         self._print_out_config()
