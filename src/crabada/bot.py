@@ -95,8 +95,8 @@ class CrabadaMineBot:
 
         self.prices: Prices = Prices(0.0, 0.0, 0.0)
         self.avg_gas_used: Average = Average()
-        self.avg_reinforce_tus: Average = Average()
-        self.avg_gas_gwei: Average = Average()
+        self.avg_reinforce_tus: Average = Average(15.0)
+        self.avg_gas_gwei: Average = Average(60.0)
 
         self.mining_strategy = STRATEGY_SELECTION[config["mining_strategy"]](
             self.address,
@@ -431,10 +431,15 @@ class CrabadaMineBot:
                 [c for c, v in self.config_mgr.config["reinforcing_crabs"].items() if v == group]
             )
 
+            if self.get_avg_gas_avax() is None:
+                avg_gas_price_avax = self.get_avg_gas_avax()
+            else:
+                avg_gas_price_avax = 0.015
+
             if not is_profitable_to_take_action(
                 team=team,
                 prices=self.prices,
-                avg_gas_price_avax=self.get_avg_gas_avax(),
+                avg_gas_price_avax=avg_gas_price_avax,
                 avg_reinforce_tus=self.avg_reinforce_tus.get_avg(),
                 win_percentages=win_percentages,
                 commission_percent=dict_sum(self.config_mgr.config["commission_percent_per_mine"]),

@@ -434,9 +434,6 @@ def get_scenario_profitability(
         logger.print_normal(f"Gas: {avg_gas_price_avax}")
         logger.print_normal(f"Reinforce cost (TUS): {reinforce_tus:.2f}")
 
-    if avg_gas_price_avax is None:
-        avg_gas_price_avax = 0.01
-
     profit_tus = get_expected_game_profit(
         scenario_to_check,
         prices,
