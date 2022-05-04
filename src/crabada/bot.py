@@ -431,7 +431,7 @@ class CrabadaMineBot:
                 [c for c, v in self.config_mgr.config["reinforcing_crabs"].items() if v == group]
             )
 
-            if self.get_avg_gas_avax() is None:
+            if self.get_avg_gas_avax() is not None:
                 avg_gas_price_avax = self.get_avg_gas_avax()
             else:
                 avg_gas_price_avax = 0.015

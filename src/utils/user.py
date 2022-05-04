@@ -23,5 +23,5 @@ def get_alias_from_user(user: str) -> str:
         return user
 
     alias = user_split[0]
-    logger.print_warn(f"mapping {user} -> {alias}")
+    logger.print_normal(f"\tmapping {user} -> {alias}")
     return alias
