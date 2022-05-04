@@ -312,6 +312,9 @@ def get_expected_game_profit(
     profit_tus = revenue_tus - avg_gas_per_game_tus - reinforcement_per_game_tus - commission_tus
     if verbose:
         logger.print_normal(
+            f"[{game_type}]: Win %: {win_percent:.2f}%, AVAX Per Game: {avg_gas_per_game_avax:.2f}, AVAX: ${prices.avax_usd:.2f}, TUS: ${prices.tus_usd:.2f}, CRA: ${prices.cra_usd:.2f}"
+        )
+        logger.print_normal(
             f"[{game_type}]: Revenue: {revenue_tus:.2f}, Gas: {avg_gas_per_game_tus:.2f}, Commission: {commission_tus:.2f}, Reinforce: {reinforcement_per_game_tus:.2f}, Profit: {profit_tus:.2f}"
         )
     return profit_tus

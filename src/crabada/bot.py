@@ -455,10 +455,10 @@ class CrabadaMineBot:
                 return False
 
         elif is_gas_too_high(
-                gas_price_gwei=self.crabada_w3.get_gas_price(),
-                max_price_gwei=self.config_mgr.config["max_gas_price_gwei"],
-                margin=strategy.get_gas_margin(game_stage=game_stage, mine=mine),
-            ):
+            gas_price_gwei=self.crabada_w3.get_gas_price(),
+            max_price_gwei=self.config_mgr.config["max_gas_price_gwei"],
+            margin=strategy.get_gas_margin(game_stage=game_stage, mine=mine),
+        ):
             if mine is not None:
                 self.gas_skip_tracker.add(mine["game_id"])
 
@@ -544,7 +544,10 @@ class CrabadaMineBot:
             )
             return True
 
-        if strategy_to_game_type(strategy) == MineOption.LOOT and team["team_id"] in self.fraud_detection_tracker:
+        if (
+            strategy_to_game_type(strategy) == MineOption.LOOT
+            and team["team_id"] in self.fraud_detection_tracker
+        ):
             content = f"Possible fraud detection from user {self.alias}.\n\n"
             content += f"Reinforced with team {team['team_id']} that never was closed by the bot!"
             send_email(self.emails, ADMIN_EMAIL, "Fraud Detection Alert!", content)
