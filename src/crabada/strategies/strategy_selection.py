@@ -3,6 +3,7 @@ import typing as T
 from crabada.strategies.strategy import Strategy
 from crabada.strategies import looting, looting_delayed_reinforce
 from crabada.strategies import mining, mining_delayed_reinforce, mining_scattered_reinforce
+from crabada.types import MineOption
 
 STRATEGY_SELECTION: T.Dict[str, Strategy] = {
     "PreferOtherBpCrabs": looting.PreferOtherBpCrabs,
@@ -18,3 +19,7 @@ STRATEGY_SELECTION: T.Dict[str, Strategy] = {
     "ScatteredReinforcement": mining_scattered_reinforce.ScatteredReinforcement,
     "ScatteredDelayReinforcement": mining_scattered_reinforce.ScatteredDelayReinforcement,
 }
+
+
+def strategy_to_game_type(strategy: Strategy) -> MineOption:
+    return MineOption.LOOT if isinstance(strategy, looting.LootingStrategy) else MineOption.MINE

@@ -337,7 +337,7 @@ class LifetimeGameStatsLogger:
 
         write_game_stats(self.user, self.log_dir, self.lifetime_stats, dry_run=dry_run)
 
-        self.last_lifetime_stats = copy.deepcopy(self.lifetime_stats)
+        self.last_lifetime_stats: LifetimeGameStats = copy.deepcopy(self.lifetime_stats)
 
     def write(self) -> None:
         delta_stats = delta_game_stats(

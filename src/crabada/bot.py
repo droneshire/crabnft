@@ -13,11 +13,11 @@ from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
 from crabada.miners_revenge import calc_miners_revenge
 from crabada.profitability import GameStats, NULL_STATS
-from crabada.profitability import get_actual_game_profit
+from crabada.profitability import get_actual_game_profit, is_profitable_to_take_action
 from crabada.strategies.strategy import CrabadaTransaction, GameStage, Strategy
 from crabada.strategies.looting import LootingStrategy
-from crabada.strategies.strategy_selection import STRATEGY_SELECTION
-from crabada.types import CrabForLending, IdleGame, Team
+from crabada.strategies.strategy_selection import STRATEGY_SELECTION, strategy_to_game_type
+from crabada.types import CrabForLending, IdleGame, Team, MineOption
 from utils import logger
 from utils.config_types import UserConfig, SmsConfig
 from utils.csv_logger import CsvLogger
@@ -94,9 +94,9 @@ class CrabadaMineBot:
         self.gas_skip_tracker: T.Set[int] = set()
 
         self.prices: Prices = Prices(0.0, 0.0, 0.0)
-        self.avg_gas_used: Average = Average()
-        self.avg_reinforce_tus: Average = Average()
-        self.avg_gas_gwei: Average = Average()
+        self.avg_gas_used: Average = Average(0.01)
+        self.avg_reinforce_tus: Average = Average(10.0)
+        self.avg_gas_gwei: Average = Average(60.0)
 
         self.mining_strategy = STRATEGY_SELECTION[config["mining_strategy"]](
             self.address,
@@ -408,6 +408,60 @@ class CrabadaMineBot:
             )
         logger.print_normal("\n")
 
+    def _should_take_action(
+        self, team: Team, game_stage: GameStage, strategy: Strategy, mine: T.Optional[IdleGame]
+    ) -> bool:
+        game_type = strategy_to_game_type(strategy)
+
+        if game_stage == GameStage.START or game_stage == GameStage.CLOSE:
+            stats = self.get_lifetime_stats()
+            win_percentages = {
+                MineOption.MINE: stats[MineOption.MINE]["game_win_percent"],
+                MineOption.LOOT: stats[MineOption.LOOT]["game_win_percent"],
+            }
+
+            if game_type == MineOption.MINE:
+                group = self.config_mgr.config["mining_teams"].get(team["team_id"], -1)
+            else:
+                group = self.config_mgr.config["looting_teams"].get(team["team_id"], -1)
+
+            does_have_self_reinforcements = any(
+                [c for c, v in self.config_mgr.config["reinforcing_crabs"].items() if v == group]
+            )
+
+            if not is_profitable_to_take_action(
+                team=team,
+                prices=self.prices,
+                avg_gas_price_avax=self.avg_gas_used.get_avg(),
+                avg_reinforce_tus=self.avg_reinforce_tus.get_avg(),
+                win_percentages=win_percentages,
+                commission_percent=dict_sum(self.config_mgr.config["commission_percent_per_mine"]),
+                is_looting=game_type == MineOption.LOOT,
+                is_reinforcing_allowed=self.config_mgr.config["should_reinforce"],
+                can_self_reinforce=does_have_self_reinforcements,
+                min_profit_threshold_tus=0.0,
+                verbose=True,
+            ):
+                logger.print_warn(
+                    f"Skipping {game_type} {game_stage} for team {team['team_id']} because it is unprofitable"
+                )
+                return False
+
+        elif is_gas_too_high(
+                gas_price_gwei=self.crabada_w3.get_gas_price(),
+                max_price_gwei=self.config_mgr.config["max_gas_price_gwei"],
+                margin=strategy.get_gas_margin(game_stage=game_stage, mine=mine),
+            ):
+            if mine is not None:
+                self.gas_skip_tracker.add(mine["game_id"])
+
+                logger.print_warn(
+                    f"Skipping {game_type} {game_stage} for mine {mine['game_id']} due to high gas"
+                )
+            return False
+
+        return True
+
     def _reinforce_loot_or_mine(
         self,
         team: Team,
@@ -417,15 +471,7 @@ class CrabadaMineBot:
         if not strategy.should_reinforce(mine):
             return
 
-        if is_gas_too_high(
-            gas_price_gwei=self.crabada_w3.get_gas_price(),
-            max_price_gwei=self.config_mgr.config["max_gas_price_gwei"],
-            margin=strategy.get_gas_margin(game_stage=GameStage.REINFORCE, mine=mine),
-        ):
-            self.gas_skip_tracker.add(mine["game_id"])
-            logger.print_warn(
-                f"Skipping reinforcement of Mine[{mine['game_id']}] due to high gas cost"
-            )
+        if not self._should_take_action(team, GameStage.REINFORCE, strategy, mine):
             return
 
         for _ in range(2):
@@ -516,14 +562,8 @@ class CrabadaMineBot:
         return False
 
     def _close_mine(self, team: Team, mine: IdleGame, strategy: Strategy) -> bool:
-        if is_gas_too_high(
-            gas_price_gwei=self.crabada_w3.get_gas_price(),
-            max_price_gwei=self.config_mgr.config["max_gas_price_gwei"],
-            margin=strategy.get_gas_margin(game_stage=GameStage.CLOSE, mine=None),
-        ):
-            logger.print_warn(
-                f"Skipping closing of Game[{mine.get('game_id', '')}] due to high gas cost"
-            )
+
+        if not self._should_take_action(team, GameStage.CLOSE, strategy, mine):
             return False
 
         with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
@@ -622,14 +662,7 @@ class CrabadaMineBot:
                 logger.print_warn(f"Skipping team {team['team_id']} for mining...")
                 continue
 
-            if is_gas_too_high(
-                gas_price_gwei=self.crabada_w3.get_gas_price(),
-                max_price_gwei=self.config_mgr.config["max_gas_price_gwei"],
-                margin=self.mining_strategy.get_gas_margin(game_stage=GameStage.START, mine=None),
-            ):
-                logger.print_warn(
-                    f"Skipping open of mine for team {team['team_id']} due to high gas cost"
-                )
+            if not self._should_take_action(team, GameStage.START, self.mining_strategy, mine=None):
                 continue
 
             if not self.mining_strategy.should_start(team):
