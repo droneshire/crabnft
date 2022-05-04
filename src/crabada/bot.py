@@ -408,49 +408,59 @@ class CrabadaMineBot:
             )
         logger.print_normal("\n")
 
-    def _is_action_profitable(
+    def _should_take_action(
         self, team: Team, game_stage: GameStage, strategy: Strategy, mine: T.Optional[IdleGame]
     ) -> bool:
-        stats = self.get_lifetime_stats()
-        win_percentages = {
-            MineOption.MINE: stats[MineOption.MINE]["game_win_percent"],
-            MineOption.LOOT: stats[MineOption.LOOT]["game_win_percent"],
-        }
+        game_type = strategy_to_game_type(strategy)
 
-        is_profitable = True
+        if game_stage == GameStage.START or game_stage == GameStage.CLOSE:
+            stats = self.get_lifetime_stats()
+            win_percentages = {
+                MineOption.MINE: stats[MineOption.MINE]["game_win_percent"],
+                MineOption.LOOT: stats[MineOption.LOOT]["game_win_percent"],
+            }
 
-        if not is_profitable_to_take_action(
-            team=team,
-            prices=self.prices,
-            avg_gas_price_avax=self.avg_gas_used.get_avg(),
-            avg_reinforce_tus=self.avg_reinforce_tus.get_avg(),
-            win_percentages=win_percentages,
-            commission_percent=dict_sum(self.config_mgr.config["commission_percent_per_mine"]),
-            is_looting=strategy_to_game_type(strategy),
-            is_reinforcing_allowed=self.config_mgr.config["should_reinforce"],
-            can_self_reinforce=any(self.config_mgr.config["reinforcing_crabs"]),
-            min_profit_threshold_tus=0.0,
-            verbose=True,
-        ):
-            is_profitable = False
+            if game_type == MineOption.MINE:
+                group = self.config_mgr.config["mining_teams"].get(team["team_id"], -1)
+            else:
+                group = self.config_mgr.config["looting_teams"].get(team["team_id"], -1)
 
-        if is_gas_too_high(
-            gas_price_gwei=self.crabada_w3.get_gas_price(),
-            max_price_gwei=self.config_mgr.config["max_gas_price_gwei"],
-            margin=strategy.get_gas_margin(game_stage=game_stage, mine=mine),
-        ):
-            is_profitable = False
+            does_have_self_reinforcements = any(
+                [c for c, v in self.config_mgr.config["reinforcing_crabs"].items() if v == group]
+            )
 
-        if is_profitable:
-            return True
+            if not is_profitable_to_take_action(
+                team=team,
+                prices=self.prices,
+                avg_gas_price_avax=self.avg_gas_used.get_avg(),
+                avg_reinforce_tus=self.avg_reinforce_tus.get_avg(),
+                win_percentages=win_percentages,
+                commission_percent=dict_sum(self.config_mgr.config["commission_percent_per_mine"]),
+                is_looting=game_type == MineOption.LOOT,
+                is_reinforcing_allowed=self.config_mgr.config["should_reinforce"],
+                can_self_reinforce=does_have_self_reinforcements,
+                min_profit_threshold_tus=0.0,
+                verbose=True,
+            ):
+                logger.print_warn(
+                    f"Skipping {game_type} {game_stage} for team {team['team_id']} because it is unprofitable"
+                )
+                return False
 
-        if game_stage == GameStage.REINFORCE and mine is not None:
-            self.gas_skip_tracker.add(mine["game_id"])
+        elif is_gas_too_high(
+                gas_price_gwei=self.crabada_w3.get_gas_price(),
+                max_price_gwei=self.config_mgr.config["max_gas_price_gwei"],
+                margin=strategy.get_gas_margin(game_stage=game_stage, mine=mine),
+            ):
+            if mine is not None:
+                self.gas_skip_tracker.add(mine["game_id"])
 
-        logger.print_warn(
-            f"Skipping action for team {team['team_id']} because it is unprofitable"
-        )
-        return False
+                logger.print_warn(
+                    f"Skipping {game_type} {game_stage} for mine {mine['game_id']} due to high gas"
+                )
+            return False
+
+        return True
 
     def _reinforce_loot_or_mine(
         self,
@@ -461,7 +471,7 @@ class CrabadaMineBot:
         if not strategy.should_reinforce(mine):
             return
 
-        if not self._is_action_profitable(team, GameStage.REINFORCE, strategy, mine):
+        if not self._should_take_action(team, GameStage.REINFORCE, strategy, mine):
             return
 
         for _ in range(2):
@@ -553,7 +563,7 @@ class CrabadaMineBot:
 
     def _close_mine(self, team: Team, mine: IdleGame, strategy: Strategy) -> bool:
 
-        if not self._is_action_profitable(team, GameStage.CLOSE, strategy, mine):
+        if not self._should_take_action(team, GameStage.CLOSE, strategy, mine):
             return False
 
         with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
@@ -652,7 +662,7 @@ class CrabadaMineBot:
                 logger.print_warn(f"Skipping team {team['team_id']} for mining...")
                 continue
 
-            if not self._is_action_profitable(team, GameStage.START, self.mining_strategy, mine=None):
+            if not self._should_take_action(team, GameStage.START, self.mining_strategy, mine=None):
                 continue
 
             if not self.mining_strategy.should_start(team):
