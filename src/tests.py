@@ -223,11 +223,12 @@ def test_profitability_calc() -> None:
         prices,
         avg_gas_price_avax,
         avg_reinforce_tus,
-        win_percentages["MINE"],
+        win_percentages,
         0.0,
         is_looting=False,
         is_reinforcing_allowed=True,
-        can_self_reinforce=False,        verbose=True,
+        can_self_reinforce=False,
+        verbose=True,
     )
 
     assert math.isclose(profit_tus, 311.88, abs_tol=0.1), "Failed MINE +10% NO CONTEST test"
@@ -243,7 +244,7 @@ def test_profitability_calc() -> None:
         prices,
         avg_gas_price_avax,
         avg_reinforce_tus,
-        win_percentages["MINE"],
+        win_percentages,
         0.0,
         is_looting=False,
         is_reinforcing_allowed=True,
@@ -258,7 +259,7 @@ def test_profitability_calc() -> None:
         prices,
         avg_gas_price_avax,
         avg_reinforce_tus,
-        win_percentages["MINE"],
+        win_percentages,
         0.0,
         is_looting=False,
         is_reinforcing_allowed=True,
@@ -267,8 +268,75 @@ def test_profitability_calc() -> None:
     )
     assert math.isclose(profit_tus, 67.68, abs_tol=0.1), "Failed MINE +10% SELF REINFORCE test"
 
+    profit_tus = get_scenario_profitability(
+        test_team,
+        prices,
+        avg_gas_price_avax,
+        avg_reinforce_tus,
+        win_percentages,
+        0.0,
+        is_looting=False,
+        is_reinforcing_allowed=False,
+        can_self_reinforce=True,
+        verbose=True,
+    )
+    assert math.isclose(profit_tus, 69.29, abs_tol=0.1), "Failed MINE +10% NO REINFORCE test"
 
+    profit_tus = get_scenario_profitability(
+        test_team,
+        prices,
+        avg_gas_price_avax,
+        avg_reinforce_tus,
+        win_percentages,
+        0.0,
+        is_looting=False,
+        is_reinforcing_allowed=False,
+        can_self_reinforce=False,
+        verbose=True,
+    )
+    assert math.isclose(profit_tus, 69.29, abs_tol=0.1), "Failed MINE +10% NO REINFORCE test"
 
+    profit_tus = get_scenario_profitability(
+        test_team,
+        prices,
+        avg_gas_price_avax,
+        avg_reinforce_tus,
+        win_percentages,
+        0.0,
+        is_looting=True,
+        is_reinforcing_allowed=True,
+        can_self_reinforce=True,
+        verbose=True,
+    )
+    assert math.isclose(profit_tus, 76.76, abs_tol=0.1), "Failed LOOT SELF REINFORCE test"
+
+    profit_tus = get_scenario_profitability(
+        test_team,
+        prices,
+        avg_gas_price_avax,
+        avg_reinforce_tus,
+        win_percentages,
+        0.0,
+        is_looting=True,
+        is_reinforcing_allowed=True,
+        can_self_reinforce=False,
+        verbose=True,
+    )
+    assert math.isclose(profit_tus, 76.76, abs_tol=0.1), "Failed LOOT test"
+
+    profit_tus = get_scenario_profitability(
+        test_team,
+        prices,
+        avg_gas_price_avax,
+        avg_reinforce_tus,
+        win_percentages,
+        0.0,
+        is_looting=True,
+        is_reinforcing_allowed=True,
+        can_self_reinforce=False,
+        verbose=True,
+    )
+    assert math.isclose(profit_tus, 76.76, abs_tol=0.1), "Failed LOOT NO CONTEST test"
 
 
 if __name__ == "__main__":

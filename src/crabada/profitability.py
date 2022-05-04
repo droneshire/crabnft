@@ -2,7 +2,7 @@ import datetime
 import os
 import typing as T
 
-from crabada.types import Team, CrabadaClass, CRABADA_ID_TO_CLASS
+from crabada.types import Team, CrabadaClass, MineOption, CRABADA_ID_TO_CLASS
 from utils import csv_logger, logger
 from utils.general import TIMESTAMP_FORMAT
 from utils.price import Prices
@@ -65,6 +65,7 @@ STATIC_WIN_PERCENTAGES = {
 class Scenarios:
     Loot = "LOOT"
     LootAndSelfReinforce = "LOOT & SELF REINFORCE"
+    LootAndNoReinforce = "LOOT & NO REINFORCE"
     LootWithNoContest = "LOOT w/ NO CONTEST"
     MineAndReinforce = "MINE & REINFORCE"
     MineTenPercentAndReinforce = "MINE +10% & REINFORCE"
@@ -77,19 +78,17 @@ class Scenarios:
     TavernThreeMpCrabs = "TAVERN 3 MP CRABS"
 
 
-REINFORCE_SCENARIOS = [
-    Scenarios.MineAndReinforce,
-    Scenarios.MineTenPercentAndReinforce,
-    Scenarios.Loot,
-    Scenarios.LootAndSelfReinforce,
-    Scenarios.MineTenPercentAndSelfReinforce,
-    Scenarios.MineAndSelfReinforce,
+NO_CONTEST_SCENARIOS = [
+    Scenarios.LootWithNoContest,
+    Scenarios.MineWithNoContest,
+    Scenarios.MineTenPercentWithNoContest,
 ]
 
 LOOT_SCENARIOS = [
     Scenarios.Loot,
     Scenarios.LootAndSelfReinforce,
     Scenarios.LootWithNoContest,
+    Scenarios.LootAndNoReinforce,
 ]
 
 MINE_SCENARIOS = [
@@ -99,6 +98,8 @@ MINE_SCENARIOS = [
     Scenarios.MineAndNoReinforce,
     Scenarios.MineAndSelfReinforce,
     Scenarios.MineTenPercentAndNoReinforce,
+    Scenarios.MineWithNoContest,
+    Scenarios.MineTenPercentWithNoContest,
 ]
 
 TEN_PERCENT_MINE_SCENARIOS = [
@@ -113,11 +114,24 @@ SELF_REINFORCE_SCENARIOS = [
     Scenarios.MineAndSelfReinforce,
 ]
 
-NO_CONTEST_SCENARIOS = [
-    Scenarios.LootWithNoContest,
-    Scenarios.MineWithNoContest,
-    Scenarios.MineTenPercentWithNoContest,
+REINFORCE_SCENARIOS = [
+    Scenarios.MineAndReinforce,
+    Scenarios.MineTenPercentAndReinforce,
+    Scenarios.Loot,
+    Scenarios.LootAndSelfReinforce,
+    Scenarios.MineTenPercentAndSelfReinforce,
+    Scenarios.MineAndSelfReinforce,
 ]
+
+NO_REINFORCE_PAY_SCENARIOS = (
+    [
+        Scenarios.LootAndNoReinforce,
+        Scenarios.MineAndNoReinforce,
+        Scenarios.MineTenPercentAndNoReinforce,
+    ]
+    + NO_CONTEST_SCENARIOS
+    + SELF_REINFORCE_SCENARIOS
+)
 
 REWARDS_TUS: T.Dict[str, T.Dict[str, float]] = {
     Scenarios.Loot: {
@@ -132,6 +146,17 @@ REWARDS_TUS: T.Dict[str, T.Dict[str, float]] = {
         "time_normalized": 1.0,
     },
     Scenarios.LootAndSelfReinforce: {
+        Result.WIN: {
+            "TUS": 221.7375,
+            "CRA": 2.7375,
+        },
+        Result.LOSE: {
+            "TUS": 24.3,
+            "CRA": 0.3,
+        },
+        "time_normalized": 1.0,
+    },
+    Scenarios.LootAndNoReinforce: {
         Result.WIN: {
             "TUS": 221.7375,
             "CRA": 2.7375,
@@ -287,7 +312,7 @@ def get_expected_game_profit(
     profit_tus = revenue_tus - avg_gas_per_game_tus - reinforcement_per_game_tus - commission_tus
     if verbose:
         logger.print_normal(
-            f"[{game_type}]: Revenue: {revenue_tus}, Gas: {avg_gas_per_game_tus}, Reinforce: {reinforcement_per_game_tus}, Profit: {profit_tus}"
+            f"[{game_type}]: Revenue: {revenue_tus:.2f}, Gas: {avg_gas_per_game_tus:.2f}, Commission: {commission_tus:.2f}, Reinforce: {reinforcement_per_game_tus:.2f}, Profit: {profit_tus:.2f}"
         )
     return profit_tus
 
@@ -350,7 +375,7 @@ def get_scenario_profitability(
     prices: Prices,
     avg_gas_price_avax: float,
     avg_reinforce_tus: float,
-    win_percent: float,
+    win_percentages: T.Dict[MineOption, float],
     commission_percent: float,
     is_looting: bool,
     is_reinforcing_allowed: bool,
@@ -372,7 +397,7 @@ def get_scenario_profitability(
 
     if is_looting:
         # lets assume all bot users are using snipes
-        scenarios_to_check = Scenarios.LootWithNoContest
+        scenario_to_check = Scenarios.LootAndNoReinforce
     else:
         # CCP teams lets use a no contest calculation
         if (
@@ -400,11 +425,8 @@ def get_scenario_profitability(
                 scenario_to_check = Scenarios.MineAndNoReinforce
 
     do_reinforce = scenario_to_check in REINFORCE_SCENARIOS
-    no_reinforcement_cost_scenarios = SELF_REINFORCE_SCENARIOS + NO_CONTEST_SCENARIOS
-
-    reinforce_tus = (
-        avg_reinforce_tus if scenario_to_check not in no_reinforcement_cost_scenarios else 0.0
-    )
+    dont_pay_for_reinforcements = scenario_to_check in NO_REINFORCE_PAY_SCENARIOS
+    reinforce_tus = 0.0 if dont_pay_for_reinforcements else avg_reinforce_tus
 
     if verbose:
         logger.print_normal(f"Determined scenario: {scenario_to_check}")
@@ -416,10 +438,10 @@ def get_scenario_profitability(
         prices,
         avg_gas_price_avax,
         reinforce_tus,
-        win_percent,
+        win_percentages[MineOption.LOOT if is_looting else MineOption.MINE],
         commission_percent,
         do_reinforce,
-        verbose=verbose
+        verbose=verbose,
     )
     return profit_tus
 
@@ -429,23 +451,25 @@ def is_profitable_to_take_action(
     prices: Prices,
     avg_gas_price_avax: float,
     avg_reinforce_tus: float,
-    win_percent: float,
+    win_percentages: T.Dict[MineOption, float],
     commission_percent: float,
     is_looting: bool,
     is_reinforcing_allowed: bool,
     can_self_reinforce: bool,
     min_profit_threshold_tus: float = 0.0,
+    verbose: bool = False,
 ) -> bool:
     profit_tus = get_scenario_profitability(
         team,
         prices,
         avg_gas_price_avax,
         avg_reinforce_tus,
-        win_percent,
+        win_percentages,
         commission_percent,
         is_looting,
         is_reinforcing_allowed,
         can_self_reinforce,
+        verbose=verbose,
     )
     return profit_tus > min_profit_threshold_tus
 
@@ -518,6 +542,10 @@ def get_profitability_message(
         csv = csv_logger.CsvLogger(csv_file, header)
 
     for game in REWARDS_TUS.keys():
+        # hypothetical scenario that we use to estimate loot snipes
+        if game == Scenarios.LootAndNoReinforce:
+            continue
+
         if game in LOOT_SCENARIOS:
             win_percent = percentages["LOOT"]
         else:
@@ -527,10 +555,8 @@ def get_profitability_message(
             profit_tus = avg_reinforce_tus * 3 - prices.avax_to_tus(avg_gas_avax) / 6
         else:
             do_reinforce = game in REINFORCE_SCENARIOS
-            no_reinforcement_cost_scenarios = SELF_REINFORCE_SCENARIOS + NO_CONTEST_SCENARIOS
-            reinforce_tus = (
-                avg_reinforce_tus if game not in no_reinforcement_cost_scenarios else 0.0
-            )
+            dont_pay_for_reinforcements = game in NO_REINFORCE_PAY_SCENARIOS
+            reinforce_tus = 0.0 if dont_pay_for_reinforcements else avg_reinforce_tus
             profit_tus = get_expected_game_profit(
                 game,
                 prices,

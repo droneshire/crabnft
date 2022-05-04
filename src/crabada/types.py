@@ -10,6 +10,11 @@ TeamStatus = T.Literal["MINING", "LOOTING", "AVAILABLE"]
 LendingCategories = T.Literal["mine_point", "battle_point", "price"]
 
 
+class MineOption:
+    MINE = "MINE"
+    LOOT = "LOOT"
+
+
 class Faction:
     ABYSS = "ABYSS"
     FAERIE = "FAERIE"
