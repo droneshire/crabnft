@@ -32,14 +32,14 @@ class ScatteredReinforcement(MiningStrategy):
 
     def get_gas_margin(self, game_stage: GameStage, mine: T.Optional[IdleGame] = None) -> int:
         if game_stage == GameStage.START:
-            return 30
+            return 10
         elif game_stage == GameStage.CLOSE:
-            return 30
+            return 10
         elif game_stage == GameStage.REINFORCE:
             if mine is None:
                 return 0
             else:
-                return 30 if self.have_reinforced_at_least_once(mine) else 0
+                return 20 if self.have_reinforced_at_least_once(mine) else 0
         else:
             return 0
 

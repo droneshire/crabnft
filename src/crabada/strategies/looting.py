@@ -89,14 +89,14 @@ class LootingStrategy(Strategy):
 
     def get_gas_margin(self, game_stage: GameStage, mine: T.Optional[IdleGame] = None) -> int:
         if game_stage == GameStage.START:
-            return 20
+            return 0
         elif game_stage == GameStage.CLOSE:
-            return 20
+            return 10
         elif game_stage == GameStage.REINFORCE:
             if mine is None:
                 return 0
             else:
-                return 60
+                return 50
         else:
             return 0
 
