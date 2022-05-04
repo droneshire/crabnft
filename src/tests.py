@@ -340,6 +340,6 @@ def test_profitability_calc() -> None:
 
 
 if __name__ == "__main__":
-    # test_config_manager()
+    test_config_manager()
     test_miners_revenge()
     test_profitability_calc()
