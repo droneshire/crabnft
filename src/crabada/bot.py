@@ -94,9 +94,9 @@ class CrabadaMineBot:
         self.gas_skip_tracker: T.Set[int] = set()
 
         self.prices: Prices = Prices(0.0, 0.0, 0.0)
-        self.avg_gas_used: Average = Average(0.01)
-        self.avg_reinforce_tus: Average = Average(10.0)
-        self.avg_gas_gwei: Average = Average(60.0)
+        self.avg_gas_used: Average = Average()
+        self.avg_reinforce_tus: Average = Average()
+        self.avg_gas_gwei: Average = Average()
 
         self.mining_strategy = STRATEGY_SELECTION[config["mining_strategy"]](
             self.address,
@@ -539,9 +539,13 @@ class CrabadaMineBot:
             )
             return True
 
-        if team["team_id"] not in self.fraud_detection_tracker:
-            logger.print_warn(f"Adding team {team['team_id']} to fraud detection list")
+        if strategy_to_game_type(strategy) == MineOption.LOOT and team["team_id"] in self.fraud_detection_tracker:
+            content = f"Possible fraud detection from user {self.alias}.\n\n"
+            content += f"Reinforced with team {team['team_id']} that never was closed by the bot!"
+            send_email(self.emails, ADMIN_EMAIL, "Fraud Detection Alert!", content)
+        else:
             self.fraud_detection_tracker.add(team["team_id"])
+            logger.print_warn(f"Adding team {team['team_id']} to fraud detection list")
 
         with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
             tx = strategy.reinforce(team["game_id"], crabada_id, reinforcement_crab["price"])
