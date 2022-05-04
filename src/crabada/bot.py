@@ -91,7 +91,7 @@ class CrabadaMineBot:
         self.last_date = datetime.date.today()
         self.time_since_last_alert: T.Optional[float] = None
         self.fraud_detection_tracker: T.Set[int] = set()
-        self.gas_skip_tracker: T.Set[int] = set()
+        self.reinforcement_skip_tracker: T.Set[int] = set()
 
         self.prices: Prices = Prices(0.0, 0.0, 0.0)
         self.avg_gas_used: Average = Average()
@@ -251,9 +251,9 @@ class CrabadaMineBot:
         logger.print_bold(f"Profits w/ commission: {profit_tus:.2f} TUS (${profit_usd:.2f})")
 
         message = f"Successfully closed {tx.game_type} {team['game_id']}, we {tx.result} {outcome_emoji}.\n"
-        if mine["game_id"] in self.gas_skip_tracker:
-            self.gas_skip_tracker.discard(mine["game_id"])
-            message += f"**NOTE: we did not reinforce this mine due to high gas!\n"
+        if team["team_id"] in self.reinforcement_skip_tracker:
+            self.reinforcement_skip_tracker.discard(team["team_id"])
+            message += f"**NOTE: we intentionally did not reinforce this mine due to sustained periods of negative expected profit or high gas!\n"
         logger.print_ok_arrow(message)
 
         message += f"Profits: {profit_tus:.2f} TUS [${profit_usd:.2f}]\n"
@@ -449,8 +449,10 @@ class CrabadaMineBot:
                 min_profit_threshold_tus=0.0,
                 verbose=False,
             ):
+                self.reinforcement_skip_tracker.add(team["team_id"])
+
                 logger.print_warn(
-                    f"Skipping {game_type} {game_stage} for team {team['team_id']} because it is unprofitable"
+                    f"Skipping {game_type} {game_stage} for team {team['team_id']} because it is unprofitable!"
                 )
                 return False
 
@@ -459,12 +461,11 @@ class CrabadaMineBot:
             max_price_gwei=self.config_mgr.config["max_gas_price_gwei"],
             margin=strategy.get_gas_margin(game_stage=game_stage, mine=mine),
         ):
-            if mine is not None:
-                self.gas_skip_tracker.add(mine["game_id"])
+            self.reinforcement_skip_tracker.add(team["team_id"])
 
-                logger.print_warn(
-                    f"Skipping {game_type} {game_stage} for mine {mine['game_id']} due to high gas"
-                )
+            logger.print_warn(
+                f"Skipping {game_type} {game_stage} for team {team['team_id']} because of high gas!"
+            )
             return False
 
         return True
@@ -497,8 +498,8 @@ class CrabadaMineBot:
                     logger.print_ok_blue(
                         f"Reinforcement backoff: {last_reinforcement_search_backoff}->{self.reinforcement_search_backoff}"
                     )
-                if mine["game_id"] in self.gas_skip_tracker:
-                    self.gas_skip_tracker.discard(mine["game_id"])
+                if team["team_id"] in self.reinforcement_skip_tracker:
+                    self.reinforcement_skip_tracker.discard(team["team_id"])
                 return
 
             self.reinforcement_search_backoff = self.reinforcement_search_backoff + 5
