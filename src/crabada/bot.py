@@ -320,7 +320,7 @@ class CrabadaMineBot:
         if tx.gas is None or self.prices.avax_usd is None:
             return 0.0
 
-        self.avg_gas_used.update(tx.gas)
+        self.avg_gas_used.update(tx.tx_gas_used)
 
         avax_gas_usd = self.prices.avax_usd * tx.gas
 
@@ -434,7 +434,7 @@ class CrabadaMineBot:
             if not is_profitable_to_take_action(
                 team=team,
                 prices=self.prices,
-                avg_gas_price_avax=self.avg_gas_used.get_avg(),
+                avg_gas_price_avax=self.avg_gas_used(),
                 avg_reinforce_tus=self.avg_reinforce_tus.get_avg(),
                 win_percentages=win_percentages,
                 commission_percent=dict_sum(self.config_mgr.config["commission_percent_per_mine"]),
