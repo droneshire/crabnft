@@ -442,7 +442,7 @@ class CrabadaMineBot:
                 is_reinforcing_allowed=self.config_mgr.config["should_reinforce"],
                 can_self_reinforce=does_have_self_reinforcements,
                 min_profit_threshold_tus=0.0,
-                verbose=True,
+                verbose=False,
             ):
                 logger.print_warn(
                     f"Skipping {game_type} {game_stage} for team {team['team_id']} because it is unprofitable"

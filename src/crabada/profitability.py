@@ -442,7 +442,7 @@ def get_scenario_profitability(
         win_percentages[MineOption.LOOT if is_looting else MineOption.MINE],
         commission_percent,
         do_reinforce,
-        verbose=verbose,
+        verbose=True,
     )
     return profit_tus
 
