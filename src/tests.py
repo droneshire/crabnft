@@ -10,8 +10,11 @@ from eth_typing import Address
 from config import GMAIL
 from crabada.miners_revenge import calc_miners_revenge
 from crabada.config_manager import ConfigManager
+from crabada.profitability import get_scenario_profitability, is_profitable_to_take_action
+from crabada.types import CrabadaClass, Team
 from utils import email, logger, security
 from utils.config_types import UserConfig
+from utils.price import Prices
 from crabada.types import CrabForLending
 from utils import logger
 
@@ -166,6 +169,109 @@ def test_config_manager() -> None:
         assert False, "unexpected change in configuration"
 
 
+def test_profitability_calc() -> None:
+    """
+    We're gonna test that we get the same results as here given different team inputs:
+
+    **Profitability Update**
+    **Avg Tx Gas ⛽**:              0.01712 AVAX
+    **Avg Gas Price ⛽**:           92.290872 gwei
+    **Avg Mining Win % 🏆**:        40.00%
+    **Avg Looting Win % 💀**:       60.00%
+    **Avg Reinforce Cost 💰**:      7.86 TUS
+
+    **Prices**
+    AVAX: $60.504, TUS: $0.021, CRA: $0.389
+
+    **Expected Profit (EP)**
+    *(normalized over a 4 hour window)*
+    **LOOT**:
+        -136.64 TUS,    $-2.93
+    **LOOT & SELF REINFORCE**:
+        -73.74 TUS,    $-1.58
+    **MINE & REINFORCE**:
+        17.89 TUS,    $0.38
+    **MINE & SELF REINFORCE**:
+        33.62 TUS,    $0.72
+    **MINE +10% & REINFORCE**:
+        55.07 TUS,    $1.18
+    **MINE +10% & SELF REINFORCE**:
+        70.80 TUS,    $1.52
+    **MINE & NO REINFORCE**:
+        33.54 TUS,    $0.72
+    **MINE +10% & NO REINFORCE**:
+        70.72 TUS,    $1.52
+    **TAVERN 3 MP CRABS**:
+        31.08 TUS,    $0.67
+    """
+
+    prices = Prices(60.504, 0.021, 0.389)
+    avg_gas_price_avax = 0.01712
+    avg_reinforce_tus = 7.86
+    win_percentages = {
+        "MINE": 40.0,
+        "LOOT": 60.0,
+    }
+    test_team = Team(
+        crabada_1_class=CrabadaClass.PRIME,
+        crabada_2_class=CrabadaClass.CRABOID,
+        crabada_3_class=CrabadaClass.CRABOID,
+    )
+
+    profit_tus = get_scenario_profitability(
+        test_team,
+        prices,
+        avg_gas_price_avax,
+        avg_reinforce_tus,
+        win_percentages["MINE"],
+        0.0,
+        is_looting=False,
+        is_reinforcing_allowed=True,
+        can_self_reinforce=False,        verbose=True,
+    )
+
+    assert math.isclose(profit_tus, 311.88, abs_tol=0.1), "Failed MINE +10% NO CONTEST test"
+
+    test_team = Team(
+        crabada_1_class=CrabadaClass.PRIME,
+        crabada_2_class=CrabadaClass.BULK,
+        crabada_3_class=CrabadaClass.BULK,
+    )
+
+    profit_tus = get_scenario_profitability(
+        test_team,
+        prices,
+        avg_gas_price_avax,
+        avg_reinforce_tus,
+        win_percentages["MINE"],
+        0.0,
+        is_looting=False,
+        is_reinforcing_allowed=True,
+        can_self_reinforce=False,
+        verbose=True,
+    )
+
+    assert math.isclose(profit_tus, 51.9, abs_tol=0.1), "Failed MINE +10% REINFORCE test"
+
+    profit_tus = get_scenario_profitability(
+        test_team,
+        prices,
+        avg_gas_price_avax,
+        avg_reinforce_tus,
+        win_percentages["MINE"],
+        0.0,
+        is_looting=False,
+        is_reinforcing_allowed=True,
+        can_self_reinforce=True,
+        verbose=True,
+    )
+    assert math.isclose(profit_tus, 67.68, abs_tol=0.1), "Failed MINE +10% SELF REINFORCE test"
+
+
+
+
+
 if __name__ == "__main__":
-    test_config_manager()
+    # test_config_manager()
     test_miners_revenge()
+    test_profitability_calc()

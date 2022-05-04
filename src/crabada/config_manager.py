@@ -178,7 +178,7 @@ class ConfigManager:
 
         now = time.time()
         if now - self.last_config_update_time < self.CONFIG_UPDATE_TIME:
-            wait_end_time  = self.last_config_update_time + self.CONFIG_UPDATE_TIME
+            wait_end_time = self.last_config_update_time + self.CONFIG_UPDATE_TIME
             wait_time_left = wait_end_time - now
             wait_time_pretty = get_pretty_seconds(int(wait_time_left))
             logger.print_normal(f"Waiting {wait_time_pretty} to check for config")
@@ -550,7 +550,7 @@ class ConfigManager:
             self.sheet = None
             return
 
-    def _check_to_see_if_action(self, check_sheets_none: bool=True) -> bool:
+    def _check_to_see_if_action(self, check_sheets_none: bool = True) -> bool:
         now = time.time()
 
         if self.dry_run:
