@@ -162,6 +162,7 @@ class CrabadaMineBot:
         do_send_email: bool,
         custom_message: str,
         tx_hash: str = None,
+        subject: str = f"\U0001F980 Crabada Bot Update",
     ) -> None:
 
         if self.dry_run:
@@ -214,7 +215,7 @@ class CrabadaMineBot:
             send_email(
                 self.emails,
                 self.config_mgr.config["email"],
-                f"\U0001F980 Crabada Bot Update",
+                subject,
                 email_message,
             )
 
@@ -311,6 +312,7 @@ class CrabadaMineBot:
             self.config_mgr.config["get_sms_updates_alerts"],
             self.config_mgr.config["get_email_updates"],
             message,
+            f"\U0001F980 Out of Gas Notification!",
         )
         self.time_since_last_alert = now
 
