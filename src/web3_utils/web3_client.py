@@ -73,6 +73,7 @@ class Web3Client:
         tx: TxParams = {
             "type": 0x2,
             "chainId": self.chain_id,
+            "gas": self.gas_limit,
             "maxFeePerGas": Web3.toWei(self.estimate_max_fee_per_gas_in_gwei(), "gwei"),
             "maxPriorityFeePerGas": Web3.toWei(self.max_priority_fee_per_gas_in_gwei, "gwei"),
             "nonce": self.get_nonce(),
@@ -270,6 +271,10 @@ class Web3Client:
         self, max_priority_fee_per_gas_in_gwei: int
     ) -> Web3Client:
         self.max_priority_fee_per_gas_in_gwei = max_priority_fee_per_gas_in_gwei
+        return self
+
+    def set_gas_limit(self, gas_limit: int) -> Web3Client:
+        self.gas_limit = gas_limit
         return self
 
     def set_dry_run(self, dry_run: bool = False) -> None:
