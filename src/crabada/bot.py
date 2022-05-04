@@ -320,7 +320,7 @@ class CrabadaMineBot:
         if tx.gas is None or self.prices.avax_usd is None:
             return 0.0
 
-        self.avg_gas_used.update(tx.tx_gas_used)
+        self.avg_gas_used.update(tx.gas)
 
         avax_gas_usd = self.prices.avax_usd * tx.gas
 
