@@ -91,12 +91,12 @@ class LootingStrategy(Strategy):
         if game_stage == GameStage.START:
             return 0
         elif game_stage == GameStage.CLOSE:
-            return 10
+            return 5
         elif game_stage == GameStage.REINFORCE:
             if mine is None:
                 return 0
             else:
-                return 50
+                return 40
         else:
             return 0
 
