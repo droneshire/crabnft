@@ -399,8 +399,7 @@ def get_scenario_profitability(
     scenario_to_check = Scenarios.MineAndReinforce
 
     if is_looting:
-        # lets assume all bot users are using snipes
-        scenario_to_check = Scenarios.LootAndNoReinforce
+        scenario_to_check = Scenarios.LootAndSelfReinforce
     else:
         # CCP teams lets use a no contest calculation
         if (
