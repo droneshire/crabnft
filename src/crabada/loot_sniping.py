@@ -50,7 +50,7 @@ class LootSnipes:
     LOOTING_URL = "https://play.crabada.com/mine/start-looting"
     MAX_LOOT_STALE_TIME = 60.0 * 9.0
     ADDRESS_GSHEET = "No Reinforce List"
-    UPDATE_TIME_DELTA = 60.0 * 30.0
+    UPDATE_TIME_DELTA = 60.0 * 5.0
     SEARCH_ADDRESSES_PER_ITERATION = 50
     MIN_MP_THRESHOLD = 225
     MIN_PAGE_THRESHOLD = 6
