@@ -394,13 +394,18 @@ class CrabadaMineBot:
                     reinforments_used_str += logger.format_normal(f"{crab} ")
             reinforments_used_str += logger.format_normal("]")
 
+            if len(mine.get("process", [])) > 1:
+                round_str = mine["process"][-1].get("action", "unknown")
+            else:
+                round_str = "uknown"
+
             logger.print_normal(
                 "#{:3s}{:10s}{:6s}{:10s}{:20s}{:25s}{:15s}{:15s}{:20s}\t{:25s}".format(
                     str(inx + 1),
                     str(mine[team_id]),
                     str(group),
                     str(mine["game_id"]),
-                    mine["process"][-1]["action"],
+                    round_str,
                     "|{}{}|".format("#" * progress, " " * (PROGRESS_SLOTS - progress)),
                     get_pretty_seconds(remaining_time),
                     f"reinforced {num_reinforcements}x",
