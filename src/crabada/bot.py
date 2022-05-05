@@ -415,7 +415,7 @@ class CrabadaMineBot:
     ) -> bool:
         game_type = strategy_to_game_type(strategy)
 
-        if game_stage == GameStage.START or game_stage == GameStage.CLOSE:
+        if game_stage == GameStage.START:
             stats = self.get_lifetime_stats()
             win_percentages = {
                 MineOption.MINE: stats[MineOption.MINE]["game_win_percent"],
