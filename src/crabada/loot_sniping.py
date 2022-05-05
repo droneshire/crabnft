@@ -10,7 +10,6 @@ from discord_webhook import DiscordEmbed, DiscordWebhook
 from eth_typing import Address
 
 from config import USERS
-from crabada.loot_target_addresses import TARGET_ADDRESSES, UNVALIDATED_ADDRESSES
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.factional_advantage import FACTIONAL_ADVANTAGE, FACTION_ICON_URLS, FACTION_COLORS
 from crabada.factional_advantage import get_faction_adjusted_battle_point, get_bp_mp_from_mine
@@ -22,9 +21,6 @@ from utils.google_sheets import GoogleSheets
 
 MAX_PAGE_DEPTH = 50
 MIN_MINERS_REVENGE = 36.0
-
-TARGET_ADDRESSES_SET = [t for t in set(TARGET_ADDRESSES)]
-UNVALIDATED_ADDRESSES_SET = [t for t in set(UNVALIDATED_ADDRESSES)]
 
 PURE_LOOT_TEAM_IDLE_GAME_STATS = {
     "CCP": {
@@ -64,10 +60,7 @@ class LootSnipes:
         self.urls = DISCORD_WEBHOOK_URL
         self.snipes = {}
         self.gsheet = GoogleSheets(self.ADDRESS_GSHEET, credentials, [])
-        self.addresses: T.Dict[str, list] = {
-            "verified": TARGET_ADDRESSES_SET,
-            "unverified": UNVALIDATED_ADDRESSES_SET,
-        }
+        self.addresses: T.Dict[str, list] = {"verified": [], "unverified": [], "blocklist": []}
         self.last_update = 0.0
         self.web2 = CrabadaWeb2Client()
         self.search_index: T.Dict[str, int] = {
@@ -97,18 +90,24 @@ class LootSnipes:
     def hunt(self, address: str) -> None:
         self._update_addresses_from_sheet()
         available_loots = self._get_available_loots(address, 9, False)
-        addresses_to_search = self._update_address_search_circ_buffer(
-            "verified", self.addresses["verified"]
-        )
-        logger.print_ok_blue("Hunting for verified loot snipes...")
-        self._hunt_no_reinforce_mines(address, addresses_to_search, available_loots, True)
-        addresses_to_search = self._update_address_search_circ_buffer(
-            "unverified", self.addresses["unverified"]
-        )
-        logger.print_ok_blue("Hunting for suspected loot snipes...")
-        self._hunt_no_reinforce_mines(address, self.addresses["unverified"], available_loots, False)
-        logger.print_ok_blue("Hunting for low MP loot snipes...")
-        self._hunt_low_mp_teams(address, available_loots)
+
+        if len(self.addresses["verified"]) > 0:
+            addresses_to_search = self._update_address_search_circ_buffer(
+                "verified", self.addresses["verified"]
+            )
+            logger.print_ok_blue("Hunting for verified loot snipes...")
+            self._hunt_no_reinforce_mines(address, addresses_to_search, available_loots, True)
+
+        if len(self.addresses["unverified"]) > 0:
+            addresses_to_search = self._update_address_search_circ_buffer(
+                "unverified", self.addresses["unverified"]
+            )
+            logger.print_ok_blue("Hunting for suspected loot snipes...")
+            self._hunt_no_reinforce_mines(
+                address, self.addresses["unverified"], available_loots, False
+            )
+            logger.print_ok_blue("Hunting for low MP loot snipes...")
+            self._hunt_low_mp_teams(address, available_loots)
 
     def _read_log(self) -> T.Dict[str, int]:
         if not os.path.isfile(self.log_file):
@@ -186,6 +185,9 @@ class LootSnipes:
             if address in bot_user_addresses:
                 logger.print_fail_arrow(f"Snipe added for bot holder user: {address}...skipping")
                 continue
+            if address in self.addresses["blocklist"]:
+                logger.print_warn(f"Owner ({owner}) is on blocklist...skipping")
+                continue
             mines = {m["game_id"]: address for m in self.web2.list_my_mines(address)}
             loot_list.update(mines)
             pb.update(1)
@@ -199,6 +201,13 @@ class LootSnipes:
             page = int((inx + 9) / 9)
             faction = mine["faction"].upper()
             if mine["game_id"] in loot_list.keys():
+
+                if mine["owner"] in self.addresses["blocklist"]:
+                    logger.print_warn(
+                        f"Skipping low mp mine b/c owner ({mine['owner']}) is on blocklist"
+                    )
+                    continue
+
                 battle_point = get_faction_adjusted_battle_point(
                     mine, is_looting=False, verbose=False
                 )
@@ -259,6 +268,12 @@ class LootSnipes:
             if mp > self.MIN_MP_THRESHOLD or page < self.MIN_PAGE_THRESHOLD:
                 continue
 
+            if mine["owner"] in self.addresses["blocklist"]:
+                logger.print_warn(
+                    f"Skipping low mp mine b/c owner ({mine['owner']}) is on blocklist"
+                )
+                continue
+
             data = {
                 "page": page,
                 "faction": faction,
@@ -283,6 +298,7 @@ class LootSnipes:
             self.addresses = {
                 "verified": list(set(self.gsheet.read_column(1)[1:])),
                 "unverified": list(set(self.gsheet.read_column(3)[1:])),
+                "blocklist": list(set(self.gsheet.read_column(4)[1:])),
             }
             self.sheets_update_delta = self.UPDATE_TIME_DELTA
         except:
@@ -293,6 +309,7 @@ class LootSnipes:
             logger.print_bold(f"Updating from spreadsheet...")
             logger.print_bold(f"{len(self.addresses['verified'])} verified addresses")
             logger.print_bold(f"{len(self.addresses['unverified'])} unverified addresses")
+            logger.print_bold(f"{len(self.addresses['blocklist'])} blocklist addresses")
             logger.print_normal(f"{diff}")
 
     def _get_address_snipe_embed(
