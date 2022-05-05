@@ -160,7 +160,7 @@ def test_config_manager() -> None:
     )
     cm._delete_sheet()
     cm._create_sheet_if_needed()
-    new_config = cm.read_sheets_config()
+    new_config = cm._read_sheets_config()
     cm._delete_sheet()
 
     diff = deepdiff.DeepDiff(TEST_CONFIG, new_config)
