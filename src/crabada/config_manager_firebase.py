@@ -54,7 +54,9 @@ class ConfigManagerFirebase(ConfigManager):
             email = config["email"].lower()
             for db_email, db_config in db_setup.items():
                 try:
-                    notification_email = db_config["preferences"]["notifications"]["email"]["email"].lower()
+                    notification_email = db_config["preferences"]["notifications"]["email"][
+                        "email"
+                    ].lower()
                 except:
                     continue
 
