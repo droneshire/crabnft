@@ -11,8 +11,10 @@ from contextlib import contextmanager
 from oauth2client.service_account import ServiceAccountCredentials
 
 from crabada.crabada_web2_client import CrabadaWeb2Client
+from crabada.types import MineOption
+from crabada.config_manager import ConfigManager
 from utils import logger
-from utils.config_types import UserConfig, MineOption
+from utils.config_types import UserConfig
 from utils.email import Email, send_email
 from utils.general import get_pretty_seconds
 from utils.user import get_alias_from_user
@@ -136,7 +138,7 @@ class ConfigManagerSheets(ConfigManager):
 
         this_dir = os.path.dirname(os.path.realpath(__file__))
         creds_dir = os.path.dirname(this_dir)
-        credentials = os.path.join(creds_dir, "credentials.json")
+        credentials = os.path.join(creds_dir, "gspread_credentials.json")
         with open(credentials, "r") as infile:
             creds = ServiceAccountCredentials.from_json_keyfile_dict(
                 json.load(infile), scopes=self.GSHEETS_SCOPE

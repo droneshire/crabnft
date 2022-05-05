@@ -11,6 +11,7 @@ from utils.config_types import UserConfig
 from utils.email import Email, send_email
 from utils.user import get_alias_from_user
 
+
 class ConfigManager:
     CONFIG_UPDATE_TIME = 60.0 * 5.0
 
