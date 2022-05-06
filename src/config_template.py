@@ -3,9 +3,7 @@ CONFIG_TEMPLATE = {
         group=4,
         crabada_key="",
         address=Address(""),
-        mining_teams={
-
-        },
+        mining_teams={},
         looting_teams={},
         reinforcing_crabs={},
         breed_crabs=[],
