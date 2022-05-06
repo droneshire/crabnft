@@ -471,7 +471,7 @@ class CrabadaMineBot:
 
             if (
                 math.isclose(stats[MineOption.LOOT]["game_win_percent"], 0.0, abs_tol=1.0)
-                or total_loot_games_percent < 50
+                or total_loot_games < 50
             ):
                 loot_win_percent = 60.0
             else:
