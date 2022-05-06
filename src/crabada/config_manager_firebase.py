@@ -37,12 +37,13 @@ class ConfigManagerFirebase(ConfigManager):
         self.db = firestore.client()
         self.users_ref = self.db.collection("users")
         self.user_doc = self._get_user_document(self.config)
-        # assert self.user_doc is not None, "user not found in database"
         self.verbose = verbose
 
     def init(self) -> None:
         self._print_out_config()
-        if self.user_doc is not None:
+        if self.user_doc is None:
+            logger.print_warn(f"{self.user} does not have a firebase account! Using default config")
+        else:
             self.config = self._load_config()
         self._send_email_config_if_needed()
         self._save_config()
