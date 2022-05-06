@@ -239,6 +239,7 @@ def test_profitability_calc() -> None:
         crabada_3_class=CrabadaClass.BULK,
     )
 
+    avg_gas_price_avax = 0.005
     profit_tus = get_scenario_profitability(
         test_team,
         prices,
@@ -252,7 +253,7 @@ def test_profitability_calc() -> None:
         verbose=True,
     )
 
-    assert math.isclose(profit_tus, 51.9, abs_tol=0.1), "Failed MINE +10% REINFORCE test"
+    assert math.isclose(profit_tus, 191.64, abs_tol=0.1), "Failed MINE +10% REINFORCE test"
 
     profit_tus = get_scenario_profitability(
         test_team,
@@ -266,7 +267,39 @@ def test_profitability_calc() -> None:
         can_self_reinforce=True,
         verbose=True,
     )
-    assert math.isclose(profit_tus, 67.68, abs_tol=0.1), "Failed MINE +10% SELF REINFORCE test"
+    assert math.isclose(profit_tus, 207.36, abs_tol=0.1), "Failed MINE +10% SELF REINFORCE test"
+
+    avg_gas_price_avax = 0.01712
+    profit_tus = get_scenario_profitability(
+        test_team,
+        prices,
+        avg_gas_price_avax,
+        avg_reinforce_tus,
+        win_percentages,
+        0.0,
+        is_looting=False,
+        is_reinforcing_allowed=True,
+        can_self_reinforce=False,
+        verbose=False,
+    )
+
+    # in this scenario, gas is high so we should result in NO REINFORCE
+    assert math.isclose(profit_tus, 69.30, abs_tol=0.1), "Failed MINE +10% REINFORCE test"
+
+    profit_tus = get_scenario_profitability(
+        test_team,
+        prices,
+        avg_gas_price_avax,
+        avg_reinforce_tus,
+        win_percentages,
+        0.0,
+        is_looting=False,
+        is_reinforcing_allowed=True,
+        can_self_reinforce=True,
+        verbose=False,
+    )
+    # in this scenario, gas is high so we should result in NO REINFORCE
+    assert math.isclose(profit_tus, 69.30, abs_tol=0.1), "Failed MINE +10% SELF REINFORCE test"
 
     profit_tus = get_scenario_profitability(
         test_team,

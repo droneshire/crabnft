@@ -396,58 +396,64 @@ def get_scenario_profitability(
         comp_str = " ".join([CRABADA_ID_TO_CLASS[c] for c in composition])
         logger.print_normal(f"Team comp: {comp_str}")
 
-    scenario_to_check = Scenarios.MineAndReinforce
+    scenarios_to_check = [Scenarios.MineAndReinforce]
 
     if is_looting:
         # assume looters get snipes
-        scenario_to_check = Scenarios.LootWithNoContest
+        scenarios_to_check = [Scenarios.LootWithNoContest]
     else:
         # CCP teams lets use a no contest calculation
         if (
             composition.count(CrabadaClass.CRABOID) == 2
             and composition.count(CrabadaClass.PRIME) == 1
         ):
-            scenario_to_check = Scenarios.MineTenPercentWithNoContest
+            scenarios_to_check = [Scenarios.MineTenPercentWithNoContest]
+
         elif CrabadaClass.PRIME in composition:
+            scenarios_to_check = [Scenarios.MineTenPercentAndNoReinforce]
+
             if is_reinforcing_allowed:
-                scenario_to_check = (
-                    Scenarios.MineTenPercentAndSelfReinforce
-                    if can_self_reinforce
-                    else Scenarios.MineTenPercentAndReinforce
-                )
-            else:
-                scenario_to_check = Scenarios.MineTenPercentAndNoReinforce
+                if can_self_reinforce:
+                    scenarios_to_check.append(Scenarios.MineTenPercentAndSelfReinforce)
+                else:
+                    scenarios_to_check.append(Scenarios.MineTenPercentAndReinforce)
         else:
+            scenarios_to_check = [Scenarios.MineAndNoReinforce]
+
             if is_reinforcing_allowed:
-                scenario_to_check = (
-                    Scenarios.MineAndSelfReinforce
-                    if can_self_reinforce
-                    else Scenarios.MineAndReinforce
-                )
-            else:
-                scenario_to_check = Scenarios.MineAndNoReinforce
+                if can_self_reinforce:
+                    scenarios_to_check.append(Scenarios.MineAndSelfReinforce)
+                else:
+                    scenarios_to_check.append(Scenarios.MineAndReinforce)
 
-    do_reinforce = scenario_to_check in REINFORCE_SCENARIOS
-    dont_pay_for_reinforcements = scenario_to_check in NO_REINFORCE_PAY_SCENARIOS
-    reinforce_tus = 0.0 if dont_pay_for_reinforcements else avg_reinforce_tus
+    scenario_profits_tus = {}
+    for scenario_to_check in scenarios_to_check:
+        do_reinforce = scenario_to_check in REINFORCE_SCENARIOS
+        dont_pay_for_reinforcements = scenario_to_check in NO_REINFORCE_PAY_SCENARIOS
+        reinforce_tus = 0.0 if dont_pay_for_reinforcements else avg_reinforce_tus
 
-    if verbose:
-        logger.print_normal(f"Determined scenario: {scenario_to_check}")
-        logger.print_normal(f"Do reinforce: {do_reinforce}")
-        logger.print_normal(f"Gas: {avg_gas_price_avax}")
-        logger.print_normal(f"Reinforce cost (TUS): {reinforce_tus:.2f}")
+        if verbose:
+            logger.print_normal(f"Testing scenario: {scenario_to_check}")
+            logger.print_normal(f"Do reinforce: {do_reinforce}")
+            logger.print_normal(f"Gas: {avg_gas_price_avax}")
+            logger.print_normal(f"Reinforce cost (TUS): {reinforce_tus:.2f}")
 
-    profit_tus = get_expected_game_profit(
-        scenario_to_check,
-        prices,
-        avg_gas_price_avax,
-        reinforce_tus,
-        win_percentages[MineOption.LOOT if is_looting else MineOption.MINE],
-        commission_percent,
-        do_reinforce,
-        verbose=True,
-    )
-    return profit_tus
+        profit_tus = get_expected_game_profit(
+            scenario_to_check,
+            prices,
+            avg_gas_price_avax,
+            reinforce_tus,
+            win_percentages[MineOption.LOOT if is_looting else MineOption.MINE],
+            commission_percent,
+            do_reinforce,
+            verbose=True,
+        )
+        scenario_profits_tus[profit_tus] = scenario_to_check
+
+    max_profit_tus = max(scenario_profits_tus.keys())
+
+    logger.print_normal(f"Most profitable scenario: {scenario_profits_tus[max_profit_tus]}")
+    return max_profit_tus
 
 
 def is_profitable_to_take_action(
