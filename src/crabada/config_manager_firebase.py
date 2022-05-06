@@ -42,7 +42,8 @@ class ConfigManagerFirebase(ConfigManager):
 
     def init(self) -> None:
         self._print_out_config()
-        # self.config = self._load_config()
+        if self.user_doc is not None:
+            self.config = self._load_config()
         self._send_email_config_if_needed()
         self._save_config()
 
@@ -63,6 +64,9 @@ class ConfigManagerFirebase(ConfigManager):
             logger.print_fail(f"Failed to read and translate updated config from database")
 
     def _read_and_update_config(self) -> None:
+        if self.user_doc is None:
+            return
+
         db_config = self.user_doc.get().to_dict()
 
         new_config: UserConfig = self._get_empty_new_config()
