@@ -33,7 +33,7 @@ from utils.csv_logger import CsvLogger
 from utils.email import Email, send_email
 from utils.general import dict_sum, get_pretty_seconds, TIMESTAMP_FORMAT
 from utils.math import Average
-from utils.price import Prices
+from utils.price import Prices, DEFAULT_GAS_USED
 from utils.price import is_gas_too_high, wei_to_tus, wei_to_cra_raw, wei_to_tus_raw
 from utils.user import get_alias_from_user
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
@@ -346,7 +346,10 @@ class CrabadaMineBot:
     def _get_gas_avax(self, gas_used: T.Optional[float]) -> T.Optional[float]:
         gas_price_wei = self.crabada_w3.get_gas_price("wei")
         print(gas_used, gas_price_wei)
-        if gas_used is None or gas_price_wei is None:
+        if gas_used is None:
+            gas_used = DEFAULT_GAS_USED
+
+        if gas_price_wei is None:
             return None
         return wei_to_tus_raw(gas_price_wei * gas_used)
 

@@ -23,7 +23,7 @@ from utils.circuit_breaker import CircuitBreaker
 from crabada.game_stats import LifetimeGameStats
 from utils.general import dict_sum
 from utils.math import Average
-from utils.price import get_avax_price_usd, get_token_price_usd
+from utils.price import get_avax_price_usd, get_token_price_usd, DEFAULT_GAS_USED
 
 PRICE_UPDATE_TIME = 60.0 * 60.0
 BOT_TOTALS_UPDATE = 60.0 * 5
