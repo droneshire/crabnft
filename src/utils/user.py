@@ -3,13 +3,13 @@ from utils import logger
 
 BETA_TEST_LIST = [
     "ROSS",
-    "TEMPLARE",
-    "MASH",
-    "MASH2",
-    "BIGMOE",
-    "ALMUGU",
-    "SOOFKAY",
-    "KING_WING",
+    # "TEMPLARE",
+    # "MASH",
+    # "MASH2",
+    # "BIGMOE",
+    # "ALMUGU",
+    # "SOOFKAY",
+    # "KING_WING",
 ]
 
 
