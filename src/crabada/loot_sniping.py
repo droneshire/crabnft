@@ -106,8 +106,8 @@ class LootSnipes:
             self._hunt_no_reinforce_mines(
                 address, self.addresses["unverified"], available_loots, False
             )
-            logger.print_ok_blue("Hunting for low MP loot snipes...")
-            self._hunt_low_mp_teams(address, available_loots)
+        logger.print_ok_blue("Hunting for low MP loot snipes...")
+        self._hunt_low_mp_teams(address, available_loots)
 
     def _read_log(self) -> T.Dict[str, int]:
         if not os.path.isfile(self.log_file):
