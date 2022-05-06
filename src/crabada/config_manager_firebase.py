@@ -19,8 +19,6 @@ from utils.user import BETA_TEST_LIST
 
 
 class ConfigManagerFirebase(ConfigManager):
-    LOOTING_GROUP_NUM = 10
-
     def __init__(
         self,
         user: str,
@@ -28,6 +26,7 @@ class ConfigManagerFirebase(ConfigManager):
         send_email_accounts: T.List[Email],
         encrypt_password: str,
         dry_run: bool = False,
+        verbose: bool = False,
     ):
         super().__init__(user, config, send_email_accounts, encrypt_password, dry_run)
         this_dir = os.path.dirname(os.path.realpath(__file__))
@@ -39,6 +38,7 @@ class ConfigManagerFirebase(ConfigManager):
         self.db = firestore.client()
         self.users_ref = self.db.collection("users")
         self.user_doc = self._get_user_document(self.config)
+        self.verbose = verbose
 
     def init(self) -> None:
         self._print_out_config()
@@ -48,6 +48,13 @@ class ConfigManagerFirebase(ConfigManager):
     def check_for_config_updates(self) -> None:
         if self.user not in BETA_TEST_LIST:
             return
+
+        now = time.time()
+
+        if now - self.last_config_update_time < self.CONFIG_UPDATE_TIME:
+            return
+
+        self.last_config_update_time = now
 
         db_config = self.user_doc.get().to_dict()
 
@@ -67,51 +74,41 @@ class ConfigManagerFirebase(ConfigManager):
         new_config["max_gas_price_gwei"] = db_config["strategy"]["maxGas"]
         new_config["max_reinforcement_price_tus"] = db_config["strategy"]["maxReinforcement"]
 
-        count = {
-            "teams": {
-                MineOption.MINE: 0,
-                MineOption.LOOT: 0,
-            },
-            "crabs": {
-                MineOption.MINE: 0,
-                MineOption.LOOT: 0,
-            },
-        }
-
         logger.print_ok_blue(f"Checking database for team changes...")
 
         for team, details in db_config["strategy"]["teams"].items():
             team_id = int(team)
             if details["action"] == "MINING":
-                group = int((count["teams"][MineOption.MINE] + 6) / 6)
-                count["teams"][MineOption.MINE] += 1
+                group = self.MINING_GROUP_NUM
                 new_config["mining_teams"][team_id] = group
             elif details["action"] == "LOOTING":
-                count["teams"][MineOption.LOOT] += 1
                 group = self.LOOTING_GROUP_NUM
                 new_config["looting_teams"][team_id] = group
             else:
                 logger.print_fail(f"Unknown action from teams!")
 
-            logger.print_normal(
-                f"Team: {team_id}, Composition: {', '.join(details['composition'])}, Group: {group}"
-            )
+            if self.verbose:
+                logger.print_normal(
+                    f"Team: {team_id}, Composition: {', '.join(details['composition'])}, Group: {group}"
+                )
 
         logger.print_ok_blue(f"Checking database for reinforcement crab changes...")
 
-        group = 1
-        for crab_id, details in db_config["strategy"]["reinforcingCrabs"].items():
+        for crab, details in db_config["strategy"]["reinforcingCrabs"].items():
+            crab_id = int(crab)
             if details["action"] == "MINING":
-                # assign 2 crabs for every group
-                if count["crabs"][MineOption.MINE] % 2 == 0:
-                    group += 1
-                count["crabs"][MineOption.MINE] += 1
+                group = self.MINING_GROUP_NUM
                 new_config["reinforcing_crabs"][crab_id] = group
             elif details["action"] == "LOOTING":
-                count["crabs"][MineOption.LOOT] += 1
-                new_config["reinforcing_crabs"][crab_id] = self.LOOTING_GROUP_NUM
+                group = self.LOOTING_GROUP_NUM
+                new_config["reinforcing_crabs"][crab_id] = group
             else:
                 logger.print_fail(f"Unknown action from reinforcingCrabs!")
+
+            if self.verbose:
+                logger.print_normal(
+                    f"Crab: {crab_id}, Composition: {details['class']}, Group: {group}"
+                )
 
         diff = deepdiff.DeepDiff(self.config, new_config, ignore_order=True)
         if diff:
@@ -193,5 +190,6 @@ class ConfigManagerFirebase(ConfigManager):
                         "class": [crab_class.strip()],
                     }
 
-                logger.print_normal(f"{json.dumps(db_config, indent=4)}")
+                if self.verbose:
+                    logger.print_normal(f"{json.dumps(db_config, indent=4)}")
                 doc.set(json.loads(json.dumps(db_config)))

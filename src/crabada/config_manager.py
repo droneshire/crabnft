@@ -15,6 +15,8 @@ from utils.user import get_alias_from_user
 
 class ConfigManager:
     CONFIG_UPDATE_TIME = 60.0 * 5.0
+    LOOTING_GROUP_NUM = 0
+    MINING_GROUP_NUM = 1
 
     def __init__(
         self,

@@ -238,17 +238,6 @@ class ConfigManagerSheets(ConfigManager):
         if len(cell_values) < self.DYNAMIC_ROWS_START:
             return None
 
-        count = {
-            "teams": {
-                MineOption.MINE: 0,
-                MineOption.LOOT: 0,
-            },
-            "crabs": {
-                MineOption.MINE: 0,
-                MineOption.LOOT: 0,
-            },
-        }
-
         parse_state = ParseState.SEARCHING
 
         for i in range(len(cell_values)):
@@ -280,11 +269,9 @@ class ConfigManagerSheets(ConfigManager):
                     return None
 
                 if MineOption.MINE in data[1]:
-                    count["teams"][MineOption.MINE] += 1
-                    new_config["mining_teams"][team_id] = int(count["teams"][MineOption.MINE] / 6)
+                    new_config["mining_teams"][team_id] = self.MINING_GROUP_NUM
                 elif MineOption.LOOT in data[1]:
-                    count["teams"][MineOption.LOOT] += 1
-                    new_config["looting_teams"][team_id] = 10
+                    new_config["looting_teams"][team_id] = self.LOOTING_GROUP_NUM
                 else:
                     logger.print_warn(f"Team ID did not have valid option: {data[1]}")
 
@@ -298,13 +285,9 @@ class ConfigManagerSheets(ConfigManager):
                     return None
 
                 if MineOption.MINE in data[1]:
-                    count["crabs"][MineOption.MINE] += 1
-                    if count["crabs"][MineOption.MINE] % 2 == 0:
-                        group += 1
-                    new_config["reinforcing_crabs"][crab_id] = group
+                    new_config["reinforcing_crabs"][crab_id] = self.MINING_GROUP_NUM
                 elif MineOption.LOOT in data[1]:
-                    count["crabs"][MineOption.LOOT] += 1
-                    new_config["reinforcing_crabs"][crab_id] = 10
+                    new_config["reinforcing_crabs"][crab_id] = self.LOOTING_GROUP_NUM
                 else:
                     logger.print_warn(f"Crab ID did not have valid option: {data[1]}")
             else:
