@@ -80,8 +80,15 @@ class ConfigManagerFirebase(ConfigManager):
 
         logger.print_ok_blue(f"Checking database for team changes...")
 
+        teams = self.crabada_w2.list_teams(self.config["address"])
+
         for team, details in db_config["strategy"]["teams"].items():
             team_id = int(team)
+
+            if team_id not in [t["team_id"] for t in teams]:
+                logger.print_warn(f"Team not associated with user, not adding from database")
+                continue
+
             if details["action"] == "MINING":
                 group = self.MINING_GROUP_NUM
                 new_config["mining_teams"][team] = group
@@ -102,8 +109,15 @@ class ConfigManagerFirebase(ConfigManager):
 
         logger.print_ok_blue(f"Checking database for reinforcement crab changes...")
 
+        crabs = self.crabada_w2.get_crabs(self.config["address"])
+
         for crab, details in db_config["strategy"]["reinforcingCrabs"].items():
             crab_id = int(crab)
+
+            if crab_id not in [c["crabada_id"] for c in crabs]:
+                logger.print_warn(f"Crab not associated with user, not adding from database")
+                continue
+
             if details["action"] == "MINING":
                 group = self.MINING_GROUP_NUM
                 new_config["reinforcing_crabs"][crab] = group

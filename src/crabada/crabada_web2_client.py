@@ -68,6 +68,17 @@ class CrabadaWeb2Client:
         except:
             return {}
 
+    def get_crabs(
+        self, user_address: Address, params: T.Dict[str, T.Any] = {}
+    ) -> T.List[Crab]:
+        res = self.list_crabs_in_game_raw(user_address, params)
+        try:
+            return res["result"]["data"] or []
+        except KeyboardInterrupt:
+            raise
+        except:
+            return []
+
     def get_crab_classes(
         self, user_address: Address, params: T.Dict[str, T.Any] = {}
     ) -> T.Dict[int, str]:
