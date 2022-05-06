@@ -343,7 +343,7 @@ class CrabadaMineBot:
 
         self.time_since_last_alert = now
 
-    def _get_gas_avax(self, gas_used: float) -> T.Optional[float]:
+    def _get_gas_avax(self, gas_used: T.Optional[float]) -> T.Optional[float]:
         gas_price_wei = self.crabada_w3.get_gas_price("wei")
         if gas_used is None or gas_price_wei is None:
             return None
@@ -813,6 +813,7 @@ class CrabadaMineBot:
         return self.reinforcement_search_backoff
 
     def get_avg_gas_avax(self) -> T.Optional[float]:
+        print(self.avg_gas_used.get_avg(), "*" * 100)
         self._get_gas_avax(self.avg_gas_used.get_avg())
 
     def get_avg_reinforce_tus(self) -> T.Optional[float]:
