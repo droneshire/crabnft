@@ -89,7 +89,7 @@ class ConfigManagerFirebase(ConfigManager):
                 continue
 
             composition = self._get_team_composition(team_id, new_config)
-            db_config["teams"][team]["composition"] = [c.strip() for c in composition.split(",")]
+            db_config["strategy"]["teams"][team]["composition"] = [c.strip() for c in composition.split(",")]
 
             if self.verbose:
                 logger.print_normal(
@@ -111,7 +111,7 @@ class ConfigManagerFirebase(ConfigManager):
                 continue
 
             crab_class = self._get_crab_class(crab_id, new_config)
-            db_config["reinforcing_crabs"][crab]["class"] = [crab_class.strip()]
+            db_config["strategy"]["reinforcing_crabs"][crab]["class"] = [crab_class.strip()]
 
             if self.verbose:
                 logger.print_normal(f"Crab: {crab_id}, Composition: {crab_class}, Group: {group}")
