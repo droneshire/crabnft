@@ -136,4 +136,4 @@ logs/
 backup/
 
 # google sheet api
-credentials.json
+*credentials.json

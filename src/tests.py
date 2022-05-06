@@ -10,6 +10,8 @@ from eth_typing import Address
 from config import GMAIL
 from crabada.miners_revenge import calc_miners_revenge
 from crabada.config_manager import ConfigManager
+from crabada.config_manager_sheets import ConfigManagerSheets
+from crabada.config_manager_firebase import ConfigManagerFirebase
 from crabada.profitability import get_scenario_profitability, is_profitable_to_take_action
 from crabada.types import CrabadaClass, Team
 from utils import email, logger, security
@@ -140,27 +142,25 @@ def test_miners_revenge() -> None:
     ), f"Expected: {expected_miners_revenge} Actual: {miners_revenge}"
 
 
-def test_config_manager() -> None:
+def test_config_manager_firebase() -> None:
+    email_accounts = []
+
+    encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
+
+    cm = ConfigManagerFirebase("TEST", TEST_CONFIG, email_accounts, encrypt_password, dry_run=False)
+    cm.update_all_users_from_local_config()
+    cm.check_for_config_updates()
+
+
+def test_config_manager_sheets() -> None:
     dry_run = False
     email_accounts = []
 
-    if not dry_run:
-        encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
-
-        for email_account in GMAIL:
-            email_password = security.decrypt(
-                str.encode(encrypt_password), email_account["password"]
-            ).decode()
-            email_accounts.append(
-                email.Email(address=email_account["user"], password=email_password)
-            )
-
-    cm = ConfigManager(
-        "TEST", TEST_CONFIG, email_accounts, allow_sheets_config=True, dry_run=dry_run
-    )
+    encrypt_password = ""
+    cm = ConfigManagerSheets("TEST", TEST_CONFIG, email_accounts, encrypt_password, dry_run=False)
     cm._delete_sheet()
     cm._create_sheet_if_needed()
-    new_config = cm.read_sheets_config()
+    new_config = cm._read_sheets_config()
     cm._delete_sheet()
 
     diff = deepdiff.DeepDiff(TEST_CONFIG, new_config)
@@ -228,7 +228,7 @@ def test_profitability_calc() -> None:
         is_looting=False,
         is_reinforcing_allowed=True,
         can_self_reinforce=False,
-        verbose=True,
+        verbose=False,
     )
 
     assert math.isclose(profit_tus, 311.88, abs_tol=0.1), "Failed MINE +10% NO CONTEST test"
@@ -250,7 +250,7 @@ def test_profitability_calc() -> None:
         is_looting=False,
         is_reinforcing_allowed=True,
         can_self_reinforce=False,
-        verbose=True,
+        verbose=False,
     )
 
     assert math.isclose(profit_tus, 191.64, abs_tol=0.1), "Failed MINE +10% REINFORCE test"
@@ -265,7 +265,7 @@ def test_profitability_calc() -> None:
         is_looting=False,
         is_reinforcing_allowed=True,
         can_self_reinforce=True,
-        verbose=True,
+        verbose=False,
     )
     assert math.isclose(profit_tus, 207.36, abs_tol=0.1), "Failed MINE +10% SELF REINFORCE test"
 
@@ -311,7 +311,7 @@ def test_profitability_calc() -> None:
         is_looting=False,
         is_reinforcing_allowed=False,
         can_self_reinforce=True,
-        verbose=True,
+        verbose=False,
     )
     assert math.isclose(profit_tus, 69.29, abs_tol=0.1), "Failed MINE +10% NO REINFORCE test"
 
@@ -325,7 +325,7 @@ def test_profitability_calc() -> None:
         is_looting=False,
         is_reinforcing_allowed=False,
         can_self_reinforce=False,
-        verbose=True,
+        verbose=False,
     )
     assert math.isclose(profit_tus, 69.29, abs_tol=0.1), "Failed MINE +10% NO REINFORCE test"
 
@@ -339,9 +339,9 @@ def test_profitability_calc() -> None:
         is_looting=True,
         is_reinforcing_allowed=True,
         can_self_reinforce=True,
-        verbose=True,
+        verbose=False,
     )
-    assert math.isclose(profit_tus, 76.76, abs_tol=0.1), "Failed LOOT SELF REINFORCE test"
+    assert math.isclose(profit_tus, 173.79, abs_tol=0.1), "Failed LOOT SELF REINFORCE test"
 
     profit_tus = get_scenario_profitability(
         test_team,
@@ -353,9 +353,9 @@ def test_profitability_calc() -> None:
         is_looting=True,
         is_reinforcing_allowed=True,
         can_self_reinforce=False,
-        verbose=True,
+        verbose=False,
     )
-    assert math.isclose(profit_tus, 76.76, abs_tol=0.1), "Failed LOOT test"
+    assert math.isclose(profit_tus, 173.79, abs_tol=0.1), "Failed LOOT test"
 
     profit_tus = get_scenario_profitability(
         test_team,
@@ -367,12 +367,13 @@ def test_profitability_calc() -> None:
         is_looting=True,
         is_reinforcing_allowed=True,
         can_self_reinforce=False,
-        verbose=True,
+        verbose=False,
     )
-    assert math.isclose(profit_tus, 76.76, abs_tol=0.1), "Failed LOOT NO CONTEST test"
+    assert math.isclose(profit_tus, 173.79, abs_tol=0.1), "Failed LOOT NO CONTEST test"
 
 
 if __name__ == "__main__":
-    test_config_manager()
+    test_config_manager_firebase()
+    test_config_manager_sheets()
     test_miners_revenge()
     test_profitability_calc()

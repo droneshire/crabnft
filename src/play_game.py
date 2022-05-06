@@ -155,6 +155,7 @@ def run_bot() -> None:
                 TWILIO_CONFIG["from_sms_number"],
                 sms_client,
                 email_accounts,
+                encrypt_password,
                 args.log_dir,
                 args.dry_run,
             )

@@ -8,9 +8,18 @@ from twilio.rest import Client
 from web3.types import Address
 
 from config import ADMIN_EMAIL
-from crabada.config_manager import ConfigManager
+from crabada.config_manager_firebase import ConfigManagerFirebase
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
+from crabada.game_stats import LifetimeGameStatsLogger, NULL_GAME_STATS, Result
+from crabada.game_stats import (
+    get_daily_stats_message,
+    get_game_stats,
+    get_lifetime_stats_file,
+    update_game_stats_after_close,
+    update_lifetime_stats_format,
+    write_game_stats,
+)
 from crabada.miners_revenge import calc_miners_revenge
 from crabada.profitability import GameStats, NULL_STATS
 from crabada.profitability import get_actual_game_profit, is_profitable_to_take_action
@@ -22,15 +31,6 @@ from utils import logger
 from utils.config_types import UserConfig, SmsConfig
 from utils.csv_logger import CsvLogger
 from utils.email import Email, send_email
-from crabada.game_stats import LifetimeGameStatsLogger, NULL_GAME_STATS, Result
-from crabada.game_stats import (
-    get_daily_stats_message,
-    get_game_stats,
-    get_lifetime_stats_file,
-    update_game_stats_after_close,
-    update_lifetime_stats_format,
-    write_game_stats,
-)
 from utils.general import dict_sum, get_pretty_seconds, TIMESTAMP_FORMAT
 from utils.math import Average
 from utils.price import Prices
@@ -53,6 +53,7 @@ class CrabadaMineBot:
         from_sms_number: str,
         sms_client: Client,
         email_accounts: T.List[Email],
+        encrypt_password: str,
         log_dir: str,
         dry_run: bool,
     ) -> None:
@@ -122,11 +123,11 @@ class CrabadaMineBot:
 
         logger.print_ok_blue(f"Adding bot for user {self.alias} with address {self.address}")
 
-        self.config_mgr = ConfigManager(
+        self.config_mgr = ConfigManagerFirebase(
             user,
             config,
             email_accounts,
-            allow_sheets_config=False,
+            encrypt_password,
             dry_run=dry_run,
         )
         self.config_mgr.init()
@@ -856,6 +857,7 @@ class CrabadaMineBot:
         logger.print_fail(f"Exiting bot for {self.user}...")
 
         self.stats_logger.write()
+        self.config_mgr.close()
 
         for team in self.game_stats.keys():
             self.game_stats[team]["team_id"] = team
