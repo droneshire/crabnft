@@ -812,7 +812,7 @@ class CrabadaMineBot:
         return self.reinforcement_search_backoff
 
     def get_avg_gas_avax(self) -> T.Optional[float]:
-        print(self.avg_gas_used.get_avg(), "*" * 100)
+        print(self.avg_gas_used.get_avg(), self.avg_gas_used.count, "*" * 100)
         self._get_gas_avax(self.avg_gas_used.get_avg())
 
     def get_avg_reinforce_tus(self) -> T.Optional[float]:
