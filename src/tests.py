@@ -147,6 +147,7 @@ def test_config_manager_firebase() -> None:
 
     cm = ConfigManagerFirebase("TEST", TEST_CONFIG, email_accounts, dry_run=False)
     cm.update_all_users_from_local_config()
+    cm._read_database()
 
 
 def test_config_manager_sheets() -> None:
