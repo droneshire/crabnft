@@ -747,6 +747,10 @@ class CrabadaMineBot:
             if not self.mining_strategy.should_start(team):
                 continue
 
+            # only start one team from group at a time in case there's some staggering
+            # that needs to happen
+            team_group = self.config_mgr.config["mining_teams"].get(team["team_id"], -1)
+
             if self._start_mine(team):
                 groups_started.append(team_group)
 
