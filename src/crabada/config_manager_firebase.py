@@ -111,7 +111,7 @@ class ConfigManagerFirebase(ConfigManager):
                 continue
 
             crab_class = self._get_crab_class(crab_id, new_config)
-            db_config["strategy"]["reinforcing_crabs"][crab]["class"] = [crab_class.strip()]
+            db_config["strategy"]["reinforcingCrabs"][crab]["class"] = [crab_class.strip()]
 
             if self.verbose:
                 logger.print_normal(f"Crab: {crab_id}, Composition: {crab_class}, Group: {group}")
