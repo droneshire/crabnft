@@ -282,8 +282,13 @@ def run_bot() -> None:
                 logger.print_normal(message)
 
             if avg_gas_avax.count > GAS_DOWNSAMPLE_COUNT:
-                avg_gas_avax.reset(avg_gas_avax.get_avg())
-                avg_gas_gwei.reset(avg_gas_gwei.get_avg())
+                avg_gas_avax_val = avg_gas_avax.get_avg()
+                avg_gas_gwei_val = avg_gas_gwei.get_avg()
+
+                if avg_gas_avax_val is not None:
+                    avg_gas_avax.reset(avg_gas_avax.get_avg())
+                if avg_gas_gwei_val is not None:
+                    avg_gas_gwei.reset(avg_gas_gwei.get_avg())
 
     except KeyboardInterrupt:
         pass
