@@ -86,10 +86,14 @@ class ConfigManagerFirebase(ConfigManager):
                 new_config["looting_teams"][team_id] = group
             else:
                 logger.print_fail(f"Unknown action from teams!")
+                continue
+
+            composition = self._get_team_composition(team_id, new_config)
+            new_config["teams"][team]["composition"] = [c.strip() for c in composition.split(",")]
 
             if self.verbose:
                 logger.print_normal(
-                    f"Team: {team_id}, Composition: {', '.join(details['composition'])}, Group: {group}"
+                    f"Team: {team_id}, Composition: {composition}, Group: {group}"
                 )
 
         logger.print_ok_blue(f"Checking database for reinforcement crab changes...")
@@ -104,11 +108,13 @@ class ConfigManagerFirebase(ConfigManager):
                 new_config["reinforcing_crabs"][crab_id] = group
             else:
                 logger.print_fail(f"Unknown action from reinforcingCrabs!")
+                continue
+
+            crab_class = self._get_crab_class(crab_id, new_config)
+            new_config["reinforcing_crabs"][crab]["class"] = [crab_class.strip()]
 
             if self.verbose:
-                logger.print_normal(
-                    f"Crab: {crab_id}, Composition: {details['class']}, Group: {group}"
-                )
+                logger.print_normal(f"Crab: {crab_id}, Composition: {crab_class}, Group: {group}")
 
         diff = deepdiff.DeepDiff(self.config, new_config, ignore_order=True)
         if diff:
@@ -117,6 +123,8 @@ class ConfigManagerFirebase(ConfigManager):
             self.config = copy.deepcopy(new_config)
             logger.print_normal(f"Saving new config to disk")
             self._save_config()
+            logger.print_normal(f"Updating firebase db")
+            self.user_doc.set(json.loads(json.dumps(new_config)))
 
     def _get_user_document(self, config: UserConfig) -> T.Optional[T.Any]:
         db_setup = {}
