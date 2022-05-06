@@ -99,10 +99,10 @@ class ConfigManagerFirebase(ConfigManager):
 
             if details["action"] == "MINING":
                 group = self.MINING_GROUP_NUM
-                new_config["mining_teams"][team] = group
+                new_config["mining_teams"][team_id] = group
             elif details["action"] == "LOOTING":
                 group = self.LOOTING_GROUP_NUM
-                new_config["looting_teams"][team] = group
+                new_config["looting_teams"][team_id] = group
             else:
                 logger.print_fail(f"Unknown action from teams!")
                 continue
@@ -128,10 +128,10 @@ class ConfigManagerFirebase(ConfigManager):
 
             if details["action"] == "MINING":
                 group = self.MINING_GROUP_NUM
-                new_config["reinforcing_crabs"][crab] = group
+                new_config["reinforcing_crabs"][crab_id] = group
             elif details["action"] == "LOOTING":
                 group = self.LOOTING_GROUP_NUM
-                new_config["reinforcing_crabs"][crab] = group
+                new_config["reinforcing_crabs"][crab_id] = group
             else:
                 logger.print_fail(f"Unknown action from reinforcingCrabs!")
                 continue
