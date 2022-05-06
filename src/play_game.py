@@ -186,7 +186,7 @@ def run_bot() -> None:
     last_discord_update = time.time()
     last_profitability_update = time.time()
     downsample_count = 0
-    avg_gas_avax = Average(0.02)
+    avg_gas_avax = Average(DEFAULT_GAS_USED)
     avg_reinforce_tus = Average(9.0)
     avg_gas_gwei = Average(50.0)
 
