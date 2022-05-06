@@ -321,7 +321,9 @@ class CrabadaMineBot:
                 email_message,
             )
         except:
-            logger.print_warn(f"Failed to send out of gas email alert to {self.config_mgr.config['email']}")
+            logger.print_warn(
+                f"Failed to send out of gas email alert to {self.config_mgr.config['email']}"
+            )
 
         if self.config_mgr.config["get_sms_updates_alerts"]:
             sms_message = f"\U0001F980 Out of Gas Alert \U0001F980\n\n"
@@ -333,7 +335,9 @@ class CrabadaMineBot:
                     to=self.config_mgr.config["sms_number"],
                 )
             except:
-                logger.print_warn(f"Failed to send out of gas sms alert to {self.config_mgr.config['sms_number']}")
+                logger.print_warn(
+                    f"Failed to send out of gas sms alert to {self.config_mgr.config['sms_number']}"
+                )
 
         self.time_since_last_alert = now
 
@@ -451,9 +455,31 @@ class CrabadaMineBot:
 
         if game_stage == GameStage.START:
             stats = self.get_lifetime_stats()
+            total_mine_games = (
+                stats[MineOption.MINE]["game_wins"] + stats[MineOption.MINE]["game_losses"]
+            )
+            total_loot_games = (
+                stats[MineOption.LOOT]["game_wins"] + stats[MineOption.LOOT]["game_losses"]
+            )
+            if (
+                math.isclose(stats[MineOption.MINE]["game_win_percent"], 0.0, abs_tol=1.0)
+                or total_mine_games < 50
+            ):
+                mine_win_percent = 40.0
+            else:
+                mine_win_percent = stats[MineOption.MINE]["game_win_percent"]
+
+            if (
+                math.isclose(stats[MineOption.LOOT]["game_win_percent"], 0.0, abs_tol=1.0)
+                or total_loot_games < 50
+            ):
+                loot_win_percent = 60.0
+            else:
+                loot_win_percent = stats[MineOption.LOOT]["game_win_percent"]
+
             win_percentages = {
-                MineOption.MINE: stats[MineOption.MINE]["game_win_percent"],
-                MineOption.LOOT: stats[MineOption.LOOT]["game_win_percent"],
+                MineOption.MINE: mine_win_percent,
+                MineOption.LOOT: loot_win_percent,
             }
 
             if game_type == MineOption.MINE:
