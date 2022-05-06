@@ -37,6 +37,7 @@ class ConfigManagerFirebase(ConfigManager):
         self.db = firestore.client()
         self.users_ref = self.db.collection("users")
         self.user_doc = self._get_user_document(self.config)
+        assert self.user_doc is not None, "user not found in database"
         self.verbose = verbose
 
     def init(self) -> None:
