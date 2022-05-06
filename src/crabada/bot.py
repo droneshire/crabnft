@@ -129,6 +129,7 @@ class CrabadaMineBot:
             email_accounts,
             encrypt_password,
             dry_run=dry_run,
+            verbose=True,
         )
         self.config_mgr.init()
 
