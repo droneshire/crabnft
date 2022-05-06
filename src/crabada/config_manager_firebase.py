@@ -80,7 +80,7 @@ class ConfigManagerFirebase(ConfigManager):
             doc = self._get_user_document(config)
             if doc is not None:
                 db_config = doc.get().to_dict()
-                logger.print_ok(f"Found email: {email}")
+                logger.print_ok(f"Found email: {config['email']}")
                 db_config["preferences"] = {
                     "notifications": {
                         "email": {
@@ -118,7 +118,7 @@ class ConfigManagerFirebase(ConfigManager):
 
                 for crab, group in config["reinforcing_crabs"].items():
                     action = "MINING" if group < 10 else "LOOTING"
-                    crab_class = self.crab_classes.get(crab, self._get_crab_class(crab))
+                    crab_class = self.crab_classes.get(crab, self._get_crab_class(crab, config))
                     db_config["strategy"]["reinforcingCrabs"][crab] = {
                         "action": action,
                         "class": [crab_class.strip()],
