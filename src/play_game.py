@@ -254,12 +254,6 @@ def run_bot() -> None:
                 group=id_string,
             )
 
-            downsample_count += 1
-            if downsample_count > GAS_DOWNSAMPLE_COUNT:
-                downsample_count = 0
-                avg_gas_avax.reset(avg_gas_avax.get_avg())
-                avg_gas_gwei.reset(avg_gas_gwei.get_avg())
-
             if not should_post_updates:
                 continue
 
@@ -287,6 +281,12 @@ def run_bot() -> None:
                 total_users, total_teams = get_users_teams()
                 message += f"**Users: {total_users} Teams: {total_teams}**\n"
                 logger.print_normal(message)
+
+            downsample_count += 1
+            if downsample_count > GAS_DOWNSAMPLE_COUNT:
+                downsample_count = 0
+                avg_gas_avax.reset(avg_gas_avax.get_avg())
+                avg_gas_gwei.reset(avg_gas_gwei.get_avg())
 
     except KeyboardInterrupt:
         pass

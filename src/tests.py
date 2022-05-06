@@ -149,7 +149,7 @@ def test_config_manager_firebase() -> None:
 
     cm = ConfigManagerFirebase("TEST", TEST_CONFIG, email_accounts, encrypt_password, dry_run=False)
     cm.update_all_users_from_local_config()
-    cm.check_for_config_updates()
+    # cm.check_for_config_updates()
 
 
 def test_config_manager_sheets() -> None:
