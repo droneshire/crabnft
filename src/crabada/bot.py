@@ -451,9 +451,19 @@ class CrabadaMineBot:
 
         if game_stage == GameStage.START:
             stats = self.get_lifetime_stats()
+            if math.isclose(stats[MineOption.MINE]["game_win_percent"], 0.0, abs_tol=1.0):
+                mine_win = 40.0
+            else:
+                mine_win = stats[MineOption.MINE]["game_win_percent"]
+
+            if math.isclose(stats[MineOption.LOOT]["game_win_percent"], 0.0, abs_tol=1.0):
+                loot_win = 60.0
+            else:
+                loot_win = stats[MineOption.LOOT]["game_win_percent"]
+
             win_percentages = {
-                MineOption.MINE: stats[MineOption.MINE]["game_win_percent"],
-                MineOption.LOOT: stats[MineOption.LOOT]["game_win_percent"],
+                MineOption.MINE: mine_win,
+                MineOption.LOOT: loot_win,
             }
 
             if game_type == MineOption.MINE:
