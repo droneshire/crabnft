@@ -128,9 +128,10 @@ class ConfigManagerSheets(ConfigManager):
         user: str,
         config: UserConfig,
         send_email_accounts: T.List[Email],
+        encrypt_password: str,
         dry_run: bool = False,
     ):
-        super().__init__(user, config, send_email_accounts, dry_run)
+        super().__init__(user, config, send_email_accounts, encrypt_password, dry_run)
 
         self.backoff = self.DEFAULT_BACKOFF_OPTION
         self.google_api_success = False
@@ -365,12 +366,16 @@ class ConfigManagerSheets(ConfigManager):
         values = []
         for team, _ in self.config["mining_teams"].items():
             game_type = MineOption.MINE
-            composition = self.team_composition.get(team, self._get_team_composition(team, self.config))
+            composition = self.team_composition.get(
+                team, self._get_team_composition(team, self.config)
+            )
             cell_values.extend(get_full_row([team, game_type, composition]))
 
         for team, _ in self.config["looting_teams"].items():
             game_type = MineOption.LOOT
-            composition = self.team_composition.get(team, self._get_team_composition(team, self.config))
+            composition = self.team_composition.get(
+                team, self._get_team_composition(team, self.config)
+            )
             cell_values.extend(get_full_row([team, game_type, composition]))
 
         cell_values.extend(get_full_row([]))
@@ -571,23 +576,6 @@ class ConfigManagerSheets(ConfigManager):
                 logger.print_fail(f"{e.args[0]['message']}\n")
             except:
                 pass
-
-    def _get_empty_new_config(self) -> UserConfig:
-        new_config = copy.deepcopy(self.config)
-
-        delete_keys = ["mining_teams", "looting_teams", "reinforcing_crabs"]
-        delete_keys.extend([v["config_key"] for _, v in INPUT_VERIFY.items()])
-        for del_key in delete_keys:
-            del new_config[del_key]
-            if isinstance(self.config[del_key], dict):
-                new_config[del_key] = {}
-            if isinstance(self.config[del_key], bool):
-                new_config[del_key] = False
-            if isinstance(self.config[del_key], int):
-                new_config[del_key] = 0
-            if isinstance(self.config[del_key], float):
-                new_config[del_key] = 0.0
-        return new_config
 
     def _get_rows_cols(self) -> T.Tuple[int, int]:
         rows = 1  # title

@@ -145,7 +145,9 @@ def test_miners_revenge() -> None:
 def test_config_manager_firebase() -> None:
     email_accounts = []
 
-    cm = ConfigManagerFirebase("TEST", TEST_CONFIG, email_accounts, dry_run=False)
+    encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
+
+    cm = ConfigManagerFirebase("TEST", TEST_CONFIG, email_accounts, encrypt_password, dry_run=False)
     cm.update_all_users_from_local_config()
     cm._read_database()
 
@@ -154,7 +156,8 @@ def test_config_manager_sheets() -> None:
     dry_run = False
     email_accounts = []
 
-    cm = ConfigManagerSheets("TEST", TEST_CONFIG, email_accounts, dry_run=False)
+    encrypt_password = ""
+    cm = ConfigManagerSheets("TEST", TEST_CONFIG, email_accounts, encrypt_password, dry_run=False)
     cm._delete_sheet()
     cm._create_sheet_if_needed()
     new_config = cm._read_sheets_config()
@@ -371,6 +374,6 @@ def test_profitability_calc() -> None:
 
 if __name__ == "__main__":
     test_config_manager_firebase()
-    test_config_manager_sheets()
-    test_miners_revenge()
-    test_profitability_calc()
+    # test_config_manager_sheets()
+    # test_miners_revenge()
+    # test_profitability_calc()

@@ -8,6 +8,7 @@ import typing as T
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from utils import logger
 from utils.config_types import UserConfig
+from utils.security import decrypt, encrypt
 from utils.email import Email, send_email
 from utils.user import get_alias_from_user
 
@@ -20,12 +21,14 @@ class ConfigManager:
         user: str,
         config: UserConfig,
         send_email_accounts: T.List[Email],
-        allow_sheets_config: bool = False,
+        encrypt_password: str,
         dry_run: bool = False,
     ):
         self.config = config
         self.user = user
         self.alias = get_alias_from_user(user)
+
+        self.encrypt_password = encrypt_password
 
         self.crabada_w2 = CrabadaWeb2Client()
         self.team_composition = self.crabada_w2.get_team_compositions(self.config["address"])
@@ -41,18 +44,25 @@ class ConfigManager:
     def check_for_config_updates(self) -> None:
         raise NotImplementedError
 
+    def close(self) -> None:
+        self._save_config()
+
     def _get_team_composition(self, team: int, config: UserConfig) -> str:
         self.team_composition = {}
         self.team_composition = self.crabada_w2.get_team_compositions(config["address"])
         return self.team_composition.get(team, "UNKNOWN")
 
-    def _get_crab_class(self, crab: int,config: UserConfig) -> str:
+    def _get_crab_class(self, crab: int, config: UserConfig) -> str:
         self.crab_classes = {}
         self.crab_classes = self.crabada_w2.get_crab_classes(config["address"])
         return self.crab_classes.get(crab, "UNKNOWN")
 
     def _get_save_config(self) -> T.Dict[T.Any, T.Any]:
         save_config = copy.deepcopy(self.config)
+        byte_key = str.encode(self.encrypt_password)
+        save_config["crabada_key"] = encrypt(
+            byte_key, str.encode(self.config["crabada_key"]), encode=True
+        )
         return json.loads(json.dumps(save_config))
 
     def _save_config(self) -> None:
@@ -65,18 +75,46 @@ class ConfigManager:
         with open(config_file, "w") as outfile:
             json.dump(config, outfile, indent=4)
 
-    def _load_config(self) -> T.Dict[T.Any, T.Any]:
+    def _load_config(self) -> UserConfig:
         log_dir = logger.get_logging_dir()
         config_file = os.path.join(logger.get_logging_dir(), f"{self.user.lower()}_config.json")
         try:
             with open(config_file, "r") as infile:
-                return json.load(infile)
+                byte_key = str.encode(self.encrypt_password)
+                load_config = json.load(infile)
+                load_config["crabada_key"] = decrypt(
+                    byte_key, load_config["crabada_key"], decode=True
+                ).decode()
+                return load_config
         except:
             return {}
 
-    def _get_email_config(self) -> str:
+    def _get_empty_new_config(self) -> UserConfig:
+        new_config = copy.deepcopy(self.config)
+
+        delete_keys = [
+            "mining_teams",
+            "looting_teams",
+            "reinforcing_crabs",
+            "max_gas_price_gwei",
+            "max_reinforcement_price_tus",
+            "should_reinforce",
+        ]
+        for del_key in delete_keys:
+            del new_config[del_key]
+            if isinstance(self.config[del_key], dict):
+                new_config[del_key] = {}
+            if isinstance(self.config[del_key], bool):
+                new_config[del_key] = False
+            if isinstance(self.config[del_key], int):
+                new_config[del_key] = 0
+            if isinstance(self.config[del_key], float):
+                new_config[del_key] = 0.0
+        return new_config
+
+    def _get_email_config(self, config) -> str:
         content = ""
-        for config_key, value in self._get_save_config().items():
+        for config_key, value in config.items():
             new_value = value
 
             if config_key in [
@@ -112,7 +150,7 @@ class ConfigManager:
         current = self._get_save_config()
         old = self._load_config()
 
-        diff = deepdiff.DeepDiff(old, current)
+        diff = deepdiff.DeepDiff(self._get_email_config(old), self._get_email_config(current))
         if diff:
             logger.print_normal(f"{diff}")
             return True
@@ -137,7 +175,7 @@ class ConfigManager:
         if not self.config["get_email_updates"]:
             return
 
-        content = self._get_email_config()
+        content = self._get_email_config(self.config)
 
         email_message = f"Hello {self.alias}!\n\n"
         email_message += "Here is your updated bot configuration:\n\n"
