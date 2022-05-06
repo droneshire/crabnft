@@ -89,7 +89,7 @@ class ConfigManager:
                 ).decode()
                 return load_config
         except:
-            return {}
+            return self.config
 
     def _get_empty_new_config(self) -> UserConfig:
         new_config = copy.deepcopy(self.config)

@@ -42,6 +42,7 @@ class ConfigManagerFirebase(ConfigManager):
 
     def init(self) -> None:
         self._print_out_config()
+        self._load_config()
         self._send_email_config_if_needed()
         self._save_config()
 
