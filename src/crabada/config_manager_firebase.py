@@ -124,7 +124,7 @@ class ConfigManagerFirebase(ConfigManager):
             logger.print_normal(f"Saving new config to disk")
             self._save_config()
             logger.print_normal(f"Updating firebase db")
-            self.user_doc.set(json.loads(json.dumps(new_config)))
+            self.user_doc.set(json.loads(json.dumps(db_config)))
 
     def _get_user_document(self, config: UserConfig) -> T.Optional[T.Any]:
         db_setup = {}
