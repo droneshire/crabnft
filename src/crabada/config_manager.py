@@ -69,6 +69,7 @@ class ConfigManager:
         if self.dry_run:
             return
 
+        logger.print_normal(f"Saving config file to disk")
         config = self._get_save_config()
         log_dir = logger.get_logging_dir()
         config_file = os.path.join(logger.get_logging_dir(), f"{self.user.lower()}_config.json")
