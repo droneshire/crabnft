@@ -96,7 +96,7 @@ class CrabadaMineBot:
 
         self.prices: Prices = Prices(0.0, 0.0, 0.0)
         self.avg_gas_used: Average = Average()
-        self.fast_avg_gas_used_avax: Average = Average()
+        self.fast_avg_gas_used: Average = Average()
         self.avg_reinforce_tus: Average = Average(15.0)
         self.avg_gas_gwei: Average = Average(60.0)
 
@@ -343,9 +343,8 @@ class CrabadaMineBot:
 
         self.time_since_last_alert = now
 
-    def _get_gas_avax(self, gas_avax: float) -> T.Optional[float]:
+    def _get_gas_avax(self, gas_used: float) -> T.Optional[float]:
         gas_price_wei = self.crabada_w3.get_gas_price("wei")
-        gas_used = gas_avax
         if gas_used is None or gas_price_wei is None:
             return None
         return wei_to_tus_raw(gas_price_wei * gas_used)
@@ -355,7 +354,7 @@ class CrabadaMineBot:
             return 0.0
 
         self.avg_gas_used.update(tx.tx_gas_used)
-        self.fast_avg_gas_used_avax.update(tx.tx_gas_used)
+        self.fast_avg_gas_used.update(tx.tx_gas_used)
 
         avax_gas_usd = self.prices.avax_usd * tx.gas
 
@@ -493,13 +492,13 @@ class CrabadaMineBot:
                 [c for c, v in self.config_mgr.config["reinforcing_crabs"].items() if v == group]
             )
 
-            if self.fast_avg_gas_used_avax.get_avg() is not None:
-                avg_gas_price_avax = self._get_gas_avax(self.fast_avg_gas_used_avax.get_avg())
+            if self.fast_avg_gas_used.get_avg() is not None:
+                avg_gas_price_avax = self._get_gas_avax(self.fast_avg_gas_used.get_avg())
             else:
                 avg_gas_price_avax = 0.02
 
-            if self.fast_avg_gas_used_avax.count >= 5:
-                self.fast_avg_gas_used_avax.reset(self.fast_avg_gas_used_avax.get_avg())
+            if self.fast_avg_gas_used.count >= 5:
+                self.fast_avg_gas_used.reset(self.fast_avg_gas_used.get_avg())
 
             if not is_profitable_to_take_action(
                 team=team,
