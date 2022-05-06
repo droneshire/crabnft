@@ -113,22 +113,27 @@ class ConfigManager:
                 new_config[del_key] = 0.0
         return new_config
 
-    def _is_config_item_diffable(self, item_key: str) -> bool:
-        return item_key not in ["crabada_key",
+    def _should_ignore_config_key(self, item_key: str) -> bool:
+        return item_key in self._get_ignore_config_keys()
+
+    def _get_ignore_config_keys(self) -> T.List[str]:
+        return [
+            "crabada_key",
             "address",
             "commission_percent_per_mine",
             "discord_handle",
             "get_sms_updates",
             "get_sms_updates_loots",
             "get_sms_updates_alerts",
-            "group",]
+            "group",
+        ]
 
     def _get_email_config(self, config) -> str:
         content = ""
         for config_key, value in config.items():
             new_value = value
 
-            if not self._is_config_item_diffable(config_key):
+            if self._should_ignore_config_key(config_key):
                 continue
 
             if isinstance(value, T.List):
@@ -148,6 +153,18 @@ class ConfigManager:
     def _did_config_change(self) -> bool:
         current = self._get_save_config()
         old = self._load_config()
+
+        for config in [current, old]:
+            for del_key in self._get_ignore_config_keys():
+                del config[del_key]
+                if isinstance(config.get(del_key), dict):
+                    config[del_key] = {}
+                if isinstance(config.get(del_key), bool):
+                    config[del_key] = False
+                if isinstance(config.get(del_key), int):
+                    config[del_key] = 0
+                if isinstance(config.get(del_key), float):
+                    config[del_key] = 0.0
 
         diff = deepdiff.DeepDiff(old, current)
         if diff:
