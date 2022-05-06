@@ -14,8 +14,7 @@ from crabada.types import MineOption
 from crabada.config_manager import ConfigManager
 from utils import logger
 from utils.config_types import UserConfig
-from utils.email import Email, send_email
-from utils.user import BETA_TEST_LIST
+from utils.email import Email
 
 
 class ConfigManagerFirebase(ConfigManager):
@@ -47,9 +46,6 @@ class ConfigManagerFirebase(ConfigManager):
         self._save_config()
 
     def check_for_config_updates(self) -> None:
-        if self.user not in BETA_TEST_LIST:
-            return
-
         now = time.time()
 
         if now - self.last_config_update_time < self.CONFIG_UPDATE_TIME:
