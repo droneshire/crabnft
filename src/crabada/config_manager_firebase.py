@@ -56,6 +56,12 @@ class ConfigManagerFirebase(ConfigManager):
 
         self.last_config_update_time = now
 
+        try:
+            self._read_and_update_config()
+        except:
+            logger.print_fail(f"Failed to read and translate updated config from database")
+
+    def _read_and_update_config(self) -> None:
         db_config = self.user_doc.get().to_dict()
 
         new_config: UserConfig = self._get_empty_new_config()
@@ -71,8 +77,8 @@ class ConfigManagerFirebase(ConfigManager):
 
         logger.print_ok_blue(f"Checking database for strategy setting changes...")
         new_config["should_reinforce"] = db_config["strategy"]["reinforceEnabled"]
-        new_config["max_gas_price_gwei"] = db_config["strategy"]["maxGas"]
-        new_config["max_reinforcement_price_tus"] = db_config["strategy"]["maxReinforcement"]
+        new_config["max_gas_price_gwei"] = float(db_config["strategy"]["maxGas"])
+        new_config["max_reinforcement_price_tus"] = float(db_config["strategy"]["maxReinforcement"])
 
         logger.print_ok_blue(f"Checking database for team changes...")
 
