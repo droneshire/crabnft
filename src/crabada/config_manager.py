@@ -112,24 +112,22 @@ class ConfigManager:
                 new_config[del_key] = 0.0
         return new_config
 
+    def _is_config_item_diffable(self, item_key: str) -> bool:
+        return item_key not in ["crabada_key",
+            "address",
+            "commission_percent_per_mine",
+            "discord_handle",
+            "get_sms_updates",
+            "get_sms_updates_loots",
+            "get_sms_updates_alerts",
+            "group",]
+
     def _get_email_config(self, config) -> str:
         content = ""
         for config_key, value in config.items():
             new_value = value
 
-            if config_key in [
-                "crabada_key",
-                "address",
-                "commission_percent_per_mine",
-                "discord_handle",
-                "get_sms_updates",
-                "get_sms_updates_loots",
-                "get_sms_updates_alerts",
-                "get_email_updates",
-                "sms_number",
-                "email",
-                "group",
-            ]:
+            if not self._is_config_item_diffable(config_key):
                 continue
 
             if isinstance(value, T.List):
@@ -150,7 +148,7 @@ class ConfigManager:
         current = self._get_save_config()
         old = self._load_config()
 
-        diff = deepdiff.DeepDiff(self._get_email_config(old), self._get_email_config(current))
+        diff = deepdiff.DeepDiff(old, current)
         if diff:
             logger.print_normal(f"{diff}")
             return True
