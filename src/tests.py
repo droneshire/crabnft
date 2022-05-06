@@ -374,6 +374,6 @@ def test_profitability_calc() -> None:
 
 if __name__ == "__main__":
     test_config_manager_firebase()
-    # test_config_manager_sheets()
-    # test_miners_revenge()
-    # test_profitability_calc()
+    test_config_manager_sheets()
+    test_miners_revenge()
+    test_profitability_calc()
