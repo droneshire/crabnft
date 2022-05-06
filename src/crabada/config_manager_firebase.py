@@ -32,20 +32,47 @@ class ConfigManagerFirebase(ConfigManager):
         self.app = firebase_admin.initialize_app(auth)
         self.db = firestore.client()
         self.users_ref = self.db.collection("users")
+        self.user_doc = self._get_user_document()
 
     def init(self) -> None:
         self._print_out_config()
 
-        self._update_database_from_local_config()
-        # self._send_email_config_if_needed()
-        # self._save_config()
-        # self._update_config_from_database()
+        if self.user_doc is None:
+            self._load_config()
+
+        self._send_email_config_if_needed()
+        self._save_config()
+        self._update_config_from_database()
 
     # def check_for_config_updates(self) -> None:
 
     # def _read_database(self) -> None:
 
-    def _update_database_from_local_config(self) -> None:
+    def _get_user_document(self) -> T.Optional[T.Any]:
+        db_setup = {}
+        for doc in self.users_ref.stream():
+            db_setup[doc.id] = doc.to_dict()
+
+        email = self.config["email"].lower()
+        for db_email, db_config in db_setup.items():
+            try:
+                notification_email = db_config["preferences"]["notifications"]["email"][
+                    "email"
+                ].lower()
+            except:
+                continue
+
+            if notification_email == email:
+                email = db_email.lower()
+                break
+
+        if self.config["email"].lower() in db_setup or notification_email == self.config["email"].lower():
+            return self.users_ref.document(email)
+        else:
+            return None
+
+
+    def update_all_users_from_local_config(self) -> None:
         db_setup = {}
         for doc in self.users_ref.stream():
             db_setup[doc.id] = doc.to_dict()
@@ -87,16 +114,15 @@ class ConfigManagerFirebase(ConfigManager):
                     "maxGas": config["max_gas_price_gwei"],
                 }
 
-                self.config = config
                 for team, _ in config["mining_teams"].items():
-                    composition = self._get_team_composition(team)
+                    composition = self._get_team_composition(team, config)
                     db_setup[email]["strategy"]["teams"][team] = {
                         "action": "MINING",
                         "composition": [c.strip() for c in composition.split(",")],
                     }
 
                 for team, _ in config["looting_teams"].items():
-                    composition = self._get_team_composition(team)
+                    composition = self._get_team_composition(team, config)
                     db_setup[email]["strategy"]["teams"][team] = {
                         "action": "LOOTING",
                         "composition": [c.strip() for c in composition.split(",")],

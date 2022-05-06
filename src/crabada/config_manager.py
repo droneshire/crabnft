@@ -41,14 +41,14 @@ class ConfigManager:
     def check_for_config_updates(self) -> None:
         raise NotImplementedError
 
-    def _get_team_composition(self, team: int) -> str:
+    def _get_team_composition(self, team: int, config: UserConfig) -> str:
         self.team_composition = {}
-        self.team_composition = self.crabada_w2.get_team_compositions(self.config["address"])
+        self.team_composition = self.crabada_w2.get_team_compositions(config["address"])
         return self.team_composition.get(team, "UNKNOWN")
 
-    def _get_crab_class(self, crab: int) -> str:
+    def _get_crab_class(self, crab: int,config: UserConfig) -> str:
         self.crab_classes = {}
-        self.crab_classes = self.crabada_w2.get_crab_classes(self.config["address"])
+        self.crab_classes = self.crabada_w2.get_crab_classes(config["address"])
         return self.crab_classes.get(crab, "UNKNOWN")
 
     def _get_save_config(self) -> T.Dict[T.Any, T.Any]:

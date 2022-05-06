@@ -365,12 +365,12 @@ class ConfigManagerSheets(ConfigManager):
         values = []
         for team, _ in self.config["mining_teams"].items():
             game_type = MineOption.MINE
-            composition = self.team_composition.get(team, self._get_team_composition(team))
+            composition = self.team_composition.get(team, self._get_team_composition(team, self.config))
             cell_values.extend(get_full_row([team, game_type, composition]))
 
         for team, _ in self.config["looting_teams"].items():
             game_type = MineOption.LOOT
-            composition = self.team_composition.get(team, self._get_team_composition(team))
+            composition = self.team_composition.get(team, self._get_team_composition(team, self.config))
             cell_values.extend(get_full_row([team, game_type, composition]))
 
         cell_values.extend(get_full_row([]))
