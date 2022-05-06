@@ -345,7 +345,6 @@ class CrabadaMineBot:
 
     def _get_gas_avax(self, gas_used: T.Optional[float]) -> T.Optional[float]:
         gas_price_wei = self.crabada_w3.get_gas_price("wei")
-        print(gas_used, gas_price_wei)
         if gas_used is None or gas_price_wei is None:
             return None
         return wei_to_tus_raw(gas_price_wei * gas_used)

@@ -28,7 +28,7 @@ from utils.price import get_avax_price_usd, get_token_price_usd, DEFAULT_GAS_USE
 PRICE_UPDATE_TIME = 60.0 * 60.0
 BOT_TOTALS_UPDATE = 60.0 * 5
 PROFITABILITY_UPDATE_TIME = 60.0 * 10.0
-GAS_DOWNSAMPLE_COUNT = 3
+GAS_DOWNSAMPLE_COUNT = 8
 
 
 def parse_args() -> argparse.Namespace:
@@ -185,7 +185,6 @@ def run_bot() -> None:
     last_price_update = 0.0
     last_discord_update = time.time()
     last_profitability_update = time.time()
-    downsample_count = 0
     avg_gas_avax = Average(DEFAULT_GAS_USED)
     avg_reinforce_tus = Average(9.0)
     avg_gas_gwei = Average(50.0)
@@ -282,9 +281,7 @@ def run_bot() -> None:
                 message += f"**Users: {total_users} Teams: {total_teams}**\n"
                 logger.print_normal(message)
 
-            downsample_count += 1
-            if downsample_count > GAS_DOWNSAMPLE_COUNT:
-                downsample_count = 0
+            if avg_gas_avax.count > GAS_DOWNSAMPLE_COUNT:
                 avg_gas_avax.reset(avg_gas_avax.get_avg())
                 avg_gas_gwei.reset(avg_gas_gwei.get_avg())
 

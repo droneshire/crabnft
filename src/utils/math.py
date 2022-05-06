@@ -8,6 +8,7 @@ class Average:
         self.count = 0 if value is None else 1
 
     def reset(self, value: T.Optional[T.Any] = None) -> None:
+        print("avg reset: ", value)
         if value:
             self.total = value
             self.count = 1
