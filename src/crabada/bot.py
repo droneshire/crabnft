@@ -309,12 +309,32 @@ class CrabadaMineBot:
         message = f"Unable to complete bot transaction due to insufficient gas \U000026FD!\n"
         message += f"Please add AVAX to your wallet ASAP to avoid delay in mining!\n"
         logger.print_fail(message)
-        self._send_status_update(
-            self.config_mgr.config["get_sms_updates_alerts"],
-            self.config_mgr.config["get_email_updates"],
-            message,
-            f"\U0001F980 Out of Gas Notification!",
-        )
+
+        # always send the email
+        email_message = f"Hello {self.alias}!\n"
+        email_message += message
+        try:
+            send_email(
+                self.emails,
+                self.config_mgr.config["email"],
+                f"\U0001F980 Out of Gas Notification!",
+                email_message,
+            )
+        except:
+            logger.print_warn(f"Failed to send out of gas email alert to {self.config_mgr.config['email']}")
+
+        if self.config_mgr.config["get_sms_updates_alerts"]:
+            sms_message = f"\U0001F980 Out of Gas Alert \U0001F980\n\n"
+            sms_message += message
+            try:
+                self.sms.messages.create(
+                    body=sms_message,
+                    from_=self.from_sms_number,
+                    to=self.config_mgr.config["sms_number"],
+                )
+            except:
+                logger.print_warn(f"Failed to send out of gas sms alert to {self.config_mgr.config['sms_number']}")
+
         self.time_since_last_alert = now
 
     def _get_gas_avax(self, gas_avax: float) -> T.Optional[float]:
