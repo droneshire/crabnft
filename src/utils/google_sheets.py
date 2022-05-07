@@ -24,7 +24,6 @@ class GoogleSheets:
         self.sheet = self.gspread_client.create(title)
         self.sheet.add_worksheet(worksheet, rows=100, cols=40)
         for email, role in share_emails.items():
-            print(email, role)
             self.sheet.share(
                 email, perm_type="user", role=role, notify=True, email_message=SHARE_MESSAGE
             )
@@ -46,7 +45,6 @@ class GoogleSheets:
         if ":" in cell_range:
             assert isinstance(value, list), "value not a range"
             data = [{"range": cell_range, "values": value}]
-            print(data)
             worksheet.batch_update(data)
         else:
             worksheet.update(cell_range, value)

@@ -17,6 +17,7 @@ from utils.config_types import UserConfig
 from utils.email import Email
 from utils.user import BETA_TEST_LIST
 
+
 class ConfigManagerFirebase(ConfigManager):
     def __init__(
         self,
@@ -108,12 +109,12 @@ class ConfigManagerFirebase(ConfigManager):
                 continue
 
             composition = self._get_team_composition(team_id, new_config)
-            db_config["strategy"]["teams"][team]["composition"] = [c.strip() for c in composition.split(",")]
+            db_config["strategy"]["teams"][team]["composition"] = [
+                c.strip() for c in composition.split(",")
+            ]
 
             if self.verbose:
-                logger.print_normal(
-                    f"Team: {team_id}, Composition: {composition}, Group: {group}"
-                )
+                logger.print_normal(f"Team: {team_id}, Composition: {composition}, Group: {group}")
 
         logger.print_ok_blue(f"Checking database for reinforcement crab changes...")
 

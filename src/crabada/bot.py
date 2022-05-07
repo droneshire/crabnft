@@ -428,10 +428,10 @@ class CrabadaMineBot:
                     reinforments_used_str += logger.format_normal(f"{crab} ")
             reinforments_used_str += logger.format_normal("]")
 
-            if len(mine.get("process", [])) > 1:
+            if len(mine.get("process", [])) > 0:
                 round_str = mine["process"][-1].get("action", "unknown")
             else:
-                round_str = "uknown"
+                round_str = "unknown"
 
             logger.print_normal(
                 "#{:3s}{:10s}{:6s}{:10s}{:20s}{:25s}{:15s}{:15s}{:20s}\t{:25s}".format(
@@ -811,8 +811,7 @@ class CrabadaMineBot:
         return self.reinforcement_search_backoff
 
     def get_avg_gas_avax(self) -> T.Optional[float]:
-        print(self.avg_gas_used.get_avg(), self.avg_gas_used.count, "*" * 100)
-        self._get_gas_avax(self.avg_gas_used.get_avg())
+        return self._get_gas_avax(self.avg_gas_used.get_avg())
 
     def get_avg_reinforce_tus(self) -> T.Optional[float]:
         return self.avg_reinforce_tus.get_avg()

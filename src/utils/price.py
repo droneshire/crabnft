@@ -13,7 +13,8 @@ Tus = T.NewType("Tus", int)
 Cra = T.NewType("Cra", int)
 Avax = T.NewType("Avax", int)
 
-DEFAULT_GAS_USED = 0.2
+DEFAULT_GAS_USED = 0.01259
+
 
 class Prices:
     def __init__(self, avax_usd, tus_usd, cra_usd):
