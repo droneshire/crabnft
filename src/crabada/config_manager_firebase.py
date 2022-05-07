@@ -10,15 +10,33 @@ from firebase_admin import firestore
 from firebase_admin import credentials
 
 from config import USERS
+from crabada.game_stats import get_game_stats
 from crabada.types import MineOption
 from crabada.config_manager import ConfigManager
 from utils import logger
 from utils.config_types import UserConfig
 from utils.email import Email
-from utils.user import BETA_TEST_LIST
+from utils.user import BETA_TEST_LIST, get_alias_from_user
 
+def dict_keys_snake_to_camel(d: T.Dict[T.Any, T.Any]) -> T.Dict[T.Any, T.Any]:
+    if not isinstance(d, dict):
+        return {}
+
+    new = {}
+    for k, v in d.items():
+        if isinstance(k, str) and len(k) > 1:
+            split_k = k.split("_")
+            k = split_k[0] + "".join(s.title() for s in split_k[1:])
+
+        if isinstance(v, T.Dict):
+            new[k] = dict_keys_snake_to_camel(v)
+        else:
+            new[k] = v
+    return new
 
 class ConfigManagerFirebase(ConfigManager):
+    MULTI_WALLET_KEYS = ["mining_teams", "looting_teams", "reinforcing_crabs"]
+
     def __init__(
         self,
         user: str,
@@ -64,6 +82,26 @@ class ConfigManagerFirebase(ConfigManager):
             self._read_and_update_config()
         except:
             logger.print_fail(f"Failed to read and translate updated config from database")
+
+        try:
+            self._update_game_stats()
+        except:
+            logger.print_fail(f"Failed to upload game stats to database")
+
+    def _update_game_stats(self) -> None:
+        log_dir = logger.get_logging_dir()
+        game_stats = copy.deepcopy(get_game_stats(self.alias, log_dir))
+
+        commission_tus = 0.0
+        for _, commission in game_stats["commission_tus"].items():
+            commission_tus += commission
+        game_stats["commission_tus"] = commission_tus
+        db_config = self.user_doc.get().to_dict()
+        if "stats" not in db_config:
+            db_config["stats"] = {}
+
+        db_config["stats"] = dict_keys_snake_to_camel(game_stats)
+        self.user_doc.set(json.loads(json.dumps(db_config)))
 
     def _read_and_update_config(self) -> None:
         if self.user_doc is None:
@@ -181,11 +219,35 @@ class ConfigManagerFirebase(ConfigManager):
             return None
 
     def update_all_users_from_local_config(self) -> None:
+        aliases = set([get_alias_from_user(u) for u in USERS])
+
+        alias_configs = {}
         for user, config in USERS.items():
+            alias = get_alias_from_user(user)
+
+            # mark users with multi wallet items
+            for k, v in config.items():
+                if k in self.MULTI_WALLET_KEYS:
+                    for item_id, value in config[k].items():
+                        config[k][item_id] = (value, user)
+
+
+            # merge wallet configs if already have one multi-wallet entry
+            if alias in alias_configs:
+                for k in self.MULTI_WALLET_KEYS:
+                    if k not in alias_configs[alias]:
+                        continue
+                    alias_configs[alias][k].update(config[k])
+            else:
+                alias_configs[alias] = config
+
+        for alias, config in alias_configs.items():
             doc = self._get_user_document(config)
+
             if doc is not None:
                 db_config = doc.get().to_dict()
                 logger.print_ok(f"Found email: {config['email']}")
+                db_config["user"] = alias
                 db_config["preferences"] = {
                     "notifications": {
                         "email": {
@@ -207,28 +269,32 @@ class ConfigManagerFirebase(ConfigManager):
                     "maxGas": config["max_gas_price_gwei"],
                 }
 
-                for team, _ in config["mining_teams"].items():
+                for team, value in config["mining_teams"].items():
                     composition = self._get_team_composition(team, config)
                     db_config["strategy"]["teams"][team] = {
                         "action": "MINING",
                         "composition": [c.strip() for c in composition.split(",")],
+                        "user": value[1],
                     }
 
-                for team, _ in config["looting_teams"].items():
+                for team, value in config["looting_teams"].items():
                     composition = self._get_team_composition(team, config)
                     db_config["strategy"]["teams"][team] = {
                         "action": "LOOTING",
                         "composition": [c.strip() for c in composition.split(",")],
+                        "user": value[1],
                     }
 
-                for crab, group in config["reinforcing_crabs"].items():
-                    action = "MINING" if group < 10 else "LOOTING"
+                for crab, value in config["reinforcing_crabs"].items():
+                    action = "MINING" if value[0] < 10 else "LOOTING"
                     crab_class = self.crab_classes.get(crab, self._get_crab_class(crab, config))
                     db_config["strategy"]["reinforcingCrabs"][crab] = {
                         "action": action,
                         "class": [crab_class.strip()],
+                        "user": value[1],
                     }
 
                 if self.verbose:
                     logger.print_normal(f"{json.dumps(db_config, indent=4)}")
+
                 doc.set(json.loads(json.dumps(db_config)))
