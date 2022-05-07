@@ -87,7 +87,6 @@ class ConfigManager:
             with open(config_file, "r") as infile:
                 byte_key = str.encode(self.encrypt_password)
                 load_config = json.load(infile)
-                print(json.dumps(load_config, indent=4))
                 load_config["crabada_key"] = decrypt(
                     byte_key, load_config["crabada_key"], decode=True
                 ).decode()
