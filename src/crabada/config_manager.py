@@ -75,6 +75,7 @@ class ConfigManager:
             return
 
         config = self._get_save_config()
+        print(json.dumps(config, indent=4))
         log_dir = logger.get_logging_dir()
         config_file = os.path.join(logger.get_logging_dir(), f"{self.user.lower()}_config.json")
         with open(config_file, "w") as outfile:
