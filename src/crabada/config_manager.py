@@ -66,7 +66,7 @@ class ConfigManager:
             byte_key, str.encode(self.config["crabada_key"]), encode=True
         )
         for config_key in ["mining_teams", "looting_teams", "reinforcing_crabs"]:
-            for k, v in save_config.get(config_key, {}).items():
+            for k, v in self.config.get(config_key, {}).items():
                 save_config[config_key][int(k)] = v
         return save_config
 
