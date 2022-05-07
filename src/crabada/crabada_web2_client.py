@@ -309,6 +309,8 @@ class CrabadaWeb2Client:
             return 0
 
         process = mine.get("process", [])
+        if process is None:
+            return 0
         return len([p for p in process if p["action"] == "reinforce-attack"])
 
     def get_cheapest_best_crab_from_list_for_lending(
