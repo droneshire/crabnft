@@ -144,7 +144,6 @@ def test_config_manager_firebase() -> None:
 
     encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
 
-
     cm = ConfigManagerFirebase("TEST", TEST_CONFIG, email_accounts, encrypt_password, dry_run=False)
     cm.update_all_users_from_local_config()
     # cm.check_for_config_updates()

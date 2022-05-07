@@ -18,6 +18,7 @@ from utils.config_types import UserConfig
 from utils.email import Email
 from utils.user import BETA_TEST_LIST, get_alias_from_user
 
+
 def dict_keys_snake_to_camel(d: T.Dict[T.Any, T.Any]) -> T.Dict[T.Any, T.Any]:
     if not isinstance(d, dict):
         return {}
@@ -36,6 +37,7 @@ def dict_keys_snake_to_camel(d: T.Dict[T.Any, T.Any]) -> T.Dict[T.Any, T.Any]:
         else:
             new[k] = v
     return new
+
 
 class ConfigManagerFirebase(ConfigManager):
     MULTI_WALLET_KEYS = ["mining_teams", "looting_teams", "reinforcing_crabs"]
@@ -160,7 +162,7 @@ class ConfigManagerFirebase(ConfigManager):
 
             if self.verbose:
                 logger.print_normal(
-                    f"Team: {team_id}, Composition: {composition}, Group: {'MINING' if group == 0 else 'LOOTING'}"
+                    f"Team: {team_id}, Composition: {composition}, Group: {'MINING' if group == self.MINING_GROUP_NUM else 'LOOTING'}"
                 )
 
         logger.print_ok_blue(f"Checking database for reinforcement crab changes...")
@@ -189,7 +191,7 @@ class ConfigManagerFirebase(ConfigManager):
 
             if self.verbose:
                 logger.print_normal(
-                    f"Crab: {crab_id}, Composition: {crab_class}, Action: {'MINING' if group == 0 else 'LOOTING'}"
+                    f"Crab: {crab_id}, Composition: {crab_class}, Action: {'MINING' if group == self.MINING_GROUP_NUM else 'LOOTING'}"
                 )
 
         diff = deepdiff.DeepDiff(self.config, new_config, ignore_order=True)
@@ -239,7 +241,6 @@ class ConfigManagerFirebase(ConfigManager):
                 if k in self.MULTI_WALLET_KEYS:
                     for item_id, value in config[k].items():
                         config[k][item_id] = (value, user)
-
 
             # merge wallet configs if already have one multi-wallet entry
             if alias in alias_configs:
