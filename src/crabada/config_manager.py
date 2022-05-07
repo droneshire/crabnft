@@ -75,7 +75,6 @@ class ConfigManager:
             return
 
         config = self._get_save_config()
-        print(json.dumps(config, indent=4))
         log_dir = logger.get_logging_dir()
         config_file = os.path.join(logger.get_logging_dir(), f"{self.user.lower()}_config.json")
         with open(config_file, "w") as outfile:
@@ -88,6 +87,7 @@ class ConfigManager:
             with open(config_file, "r") as infile:
                 byte_key = str.encode(self.encrypt_password)
                 load_config = json.load(infile)
+                print(json.dumps(load_config, indent=4))
                 load_config["crabada_key"] = decrypt(
                     byte_key, load_config["crabada_key"], decode=True
                 ).decode()
