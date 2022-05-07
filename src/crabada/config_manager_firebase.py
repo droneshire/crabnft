@@ -194,6 +194,8 @@ class ConfigManagerFirebase(ConfigManager):
             self._save_config()
             logger.print_normal(f"Updating firebase db")
             self.user_doc.set(json.loads(json.dumps(db_config)))
+            logger.print_normal(f"Sending config update email")
+            self._send_email_config()
 
     def _get_user_document(self, config: UserConfig) -> T.Optional[T.Any]:
         db_setup = {}
