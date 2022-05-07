@@ -65,9 +65,6 @@ class ConfigManager:
         save_config["crabada_key"] = encrypt(
             byte_key, str.encode(self.config["crabada_key"]), encode=True
         )
-        for config_key in ["mining_teams", "looting_teams", "reinforcing_crabs"]:
-            for k, v in self.config.get(config_key, {}).items():
-                save_config[config_key][int(k)] = v
         return save_config
 
     def _save_config(self) -> None:
@@ -87,12 +84,16 @@ class ConfigManager:
             with open(config_file, "r") as infile:
                 byte_key = str.encode(self.encrypt_password)
                 load_config = json.load(infile)
+                copy_config = copy.deepcopy(load_config)
                 load_config["crabada_key"] = decrypt(
                     byte_key, load_config["crabada_key"], decode=True
                 ).decode()
+                for config_key in ["mining_teams", "looting_teams", "reinforcing_crabs"]:
+                    for k, v in copy_config.get(config_key, {}).items():
+                        load_config[config_key][int(k)] = v
                 return load_config
         except:
-            return self.config
+            return copy.deepcopy(self.config)
 
     def _get_empty_new_config(self) -> UserConfig:
         new_config = copy.deepcopy(self.config)

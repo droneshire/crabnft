@@ -34,13 +34,14 @@ def send_sms_message(encrypt_password: str, to_email: str, to_number: str, messa
     sms_client = Client(TWILIO_CONFIG["account_sid"], TWILIO_CONFIG["account_auth_token"])
 
     try:
-        sms_client.messages.create(
-            body=message,
-            from_=TWILIO_CONFIG["from_sms_number"],
-            to=to_number,
-        )
+        if to_number:
+            sms_client.messages.create(
+                body=message,
+                from_=TWILIO_CONFIG["from_sms_number"],
+                to=to_number,
+            )
     except:
-        logger.print_warn(f"Failed to send message to {to_number}")
+        logger.print_warn(f"Failed to send sms message to {to_number}")
 
     try:
         email_accounts = []
@@ -51,9 +52,10 @@ def send_sms_message(encrypt_password: str, to_email: str, to_number: str, messa
             email_accounts.append(
                 email.Email(address=email_account["user"], password=email_password)
             )
-        email.send_email(email_accounts, to_email, COMMISSION_SUBJECT, message)
+        if to_email:
+            email.send_email(email_accounts, to_email, COMMISSION_SUBJECT, message)
     except:
-        logger.print_warn(f"Failed to send message to {to_email}")
+        logger.print_warn(f"Failed to send email message to {to_email}")
 
 
 def setup_log(log_level: str, log_dir: str) -> None:
@@ -86,6 +88,7 @@ def send_collection_notice(
 
     aliases = set([get_alias_from_user(u) for u in USERS])
 
+    total_tus = 0
     for user, config in USERS.items():
         if not run_all_users and user not in from_users:
             continue
@@ -128,6 +131,7 @@ def send_collection_notice(
         if commission_tus > available_tus:
             logger.print_fail(f"WARNING: {commission_tus:.2f} from {alias}: insufficient funds!")
 
+        total_tus += commission_tus
         message = f"\U0000203C  COURTESY NOTICE  \U0000203C\n"
         message += f"Hey {alias}!\nCollecting Crabada commission at next low gas period.\n"
         message += f"Please ensure {commission_tus:.2f} TUS are in wallet.\n"
@@ -138,6 +142,8 @@ def send_collection_notice(
             send_sms_message(encrypt_password, config["email"], config["sms_number"], message)
 
         aliases.remove(alias)
+
+    logger.print_bold(f"Projected to collect {total_tus:.2f} TUS in commission")
 
     if not dry_run and run_all_users:
         discord.get_discord_hook("HOLDERS").send(DISCORD_TRANSFER_NOTICE)

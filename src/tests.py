@@ -22,17 +22,14 @@ from utils import logger
 
 TEST_CONFIG = UserConfig(
     group=1,
-    crabada_key="deadbeef",
-    address=Address("0xfoobar"),
+    crabada_key="OzNlfYgu2jDLbjUBsNFmfPySz/QwRO3lbx+DjVmR7IQ=",  # deadbeef
+    address=Address("0xae55967c2c5fae2cf2529b12f5a7344e99037656"),
     mining_teams={
-        1234: 0,
-        8765: 0,
-        5678: 0,
-        4321: 0,
+        28201: 0,
+        28203: 0,
     },
     looting_teams={
-        9999: 10,
-        1111: 10,
+        28199: 0,
     },
     reinforcing_crabs={
         7777: 0,
@@ -47,7 +44,7 @@ TEST_CONFIG = UserConfig(
         "": 10.0,
     },
     sms_number="",
-    email="ryeager12@gmail.com",
+    email="info.crabada.bot@gmail.com",
     discord_handle="",
     get_sms_updates=False,
     get_sms_updates_loots=False,
@@ -372,7 +369,18 @@ def test_profitability_calc() -> None:
     assert math.isclose(profit_tus, 173.79, abs_tol=0.1), "Failed LOOT NO CONTEST test"
 
 
+def test_config_manager() -> None:
+    send_email_accounts = []
+    encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
+
+    cm = ConfigManager("TEST", TEST_CONFIG, send_email_accounts, encrypt_password)
+    cm._print_out_config()
+    cm._send_email_config_if_needed()
+    cm._save_config()
+
+
 if __name__ == "__main__":
+    test_config_manager()
     test_config_manager_firebase()
     test_config_manager_sheets()
     test_miners_revenge()

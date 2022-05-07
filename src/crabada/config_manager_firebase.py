@@ -114,7 +114,9 @@ class ConfigManagerFirebase(ConfigManager):
             ]
 
             if self.verbose:
-                logger.print_normal(f"Team: {team_id}, Composition: {composition}, Group: {group}")
+                logger.print_normal(
+                    f"Team: {team_id}, Composition: {composition}, Group: {'MINING' if group == 0 else 'LOOTING'}"
+                )
 
         logger.print_ok_blue(f"Checking database for reinforcement crab changes...")
 
@@ -141,7 +143,9 @@ class ConfigManagerFirebase(ConfigManager):
             db_config["strategy"]["reinforcingCrabs"][crab]["class"] = [crab_class.strip()]
 
             if self.verbose:
-                logger.print_normal(f"Crab: {crab_id}, Composition: {crab_class}, Group: {group}")
+                logger.print_normal(
+                    f"Crab: {crab_id}, Composition: {crab_class}, Action: {'MINING' if group == 0 else 'LOOTING'}"
+                )
 
         diff = deepdiff.DeepDiff(self.config, new_config, ignore_order=True)
         if diff:
