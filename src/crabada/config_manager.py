@@ -67,8 +67,8 @@ class ConfigManager:
         )
         for config_key in ["mining_teams", "looting_teams", "reinforcing_crabs"]:
             for k, v in save_config.get(config_key, {}).items():
-                save_config[int(k)] = v
-        return json.loads(json.dumps(save_config))
+                save_config[config_key][int(k)] = v
+        return save_config
 
     def _save_config(self) -> None:
         if self.dry_run:
