@@ -83,8 +83,10 @@ class ConfigManager:
         try:
             with open(config_file, "r") as infile:
                 byte_key = str.encode(self.encrypt_password)
-                load_config = json.load(infile)
+                load_config: UserConfig = json.load(infile)
                 copy_config = copy.deepcopy(load_config)
+                if load_config["sms_number"] == "+1":
+                    load_config["sms_number"] = ""
                 load_config["crabada_key"] = decrypt(
                     byte_key, load_config["crabada_key"], decode=True
                 ).decode()

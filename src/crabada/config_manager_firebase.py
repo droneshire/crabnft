@@ -92,6 +92,9 @@ class ConfigManagerFirebase(ConfigManager):
             logger.print_fail(f"Failed to upload game stats to database")
 
     def _update_game_stats(self) -> None:
+        if self.user_doc is None:
+            return
+
         log_dir = logger.get_logging_dir()
         game_stats = copy.deepcopy(get_game_stats(self.alias, log_dir))
 
@@ -119,9 +122,10 @@ class ConfigManagerFirebase(ConfigManager):
         new_config["get_email_updates"] = db_config["preferences"]["notifications"]["email"][
             "updatesEnabled"
         ]
-        new_config["sms_number"] = (
-            "+1" + db_config["preferences"]["notifications"]["sms"]["phoneNumber"]
-        )
+        if db_config["preferences"]["notifications"]["sms"]["phoneNumber"]:
+            new_config["sms_number"] = (
+                "+1" + db_config["preferences"]["notifications"]["sms"]["phoneNumber"]
+            )
 
         logger.print_ok_blue(f"Checking database for strategy setting changes...")
         new_config["should_reinforce"] = db_config["strategy"]["reinforceEnabled"]
