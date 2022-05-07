@@ -90,6 +90,7 @@ class ConfigManager:
                 ).decode()
                 for config_key in ["mining_teams", "looting_teams", "reinforcing_crabs"]:
                     for k, v in copy_config.get(config_key, {}).items():
+                        del load_config[config_key][k]
                         load_config[config_key][int(k)] = v
                 return load_config
         except:
