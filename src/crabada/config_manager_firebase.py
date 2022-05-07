@@ -24,9 +24,12 @@ def dict_keys_snake_to_camel(d: T.Dict[T.Any, T.Any]) -> T.Dict[T.Any, T.Any]:
 
     new = {}
     for k, v in d.items():
-        if isinstance(k, str) and len(k) > 1:
-            split_k = k.split("_")
-            k = split_k[0] + "".join(s.title() for s in split_k[1:])
+        if isinstance(k, str):
+            if len(k) > 1:
+                split_k = k.split("_")
+                k = split_k[0] + "".join(s.title() for s in split_k[1:])
+            else:
+                k = k.lower()
 
         if isinstance(v, T.Dict):
             new[k] = dict_keys_snake_to_camel(v)
