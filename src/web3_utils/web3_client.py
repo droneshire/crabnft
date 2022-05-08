@@ -174,11 +174,14 @@ class Web3Client:
     def get_nonce(self) -> Nonce:
         return self.w3.eth.get_transaction_count(self.user_address)
 
-    def get_gas_price(self, unit: str = "gwei") -> int:
-        if unit == "wei":
-            return self.w3.eth.gas_price
-        else:
-            return self.w3.fromWei(self.w3.eth.gas_price, unit)
+    def get_gas_price(self, unit: str = "gwei") -> T.Optional[int]:
+        try:
+            if unit == "wei":
+                return self.w3.eth.gas_price
+            else:
+                return self.w3.fromWei(self.w3.eth.gas_price, unit)
+        except:
+            return None
 
     def estimate_max_fee_per_gas_in_gwei(self) -> int:
         """

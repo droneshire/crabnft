@@ -126,8 +126,11 @@ def wei_to_cra_raw(wei: Wei) -> float:
 
 
 def is_gas_too_high(gas_price_gwei: float, max_price_gwei: float, margin: int = 0) -> bool:
+    if gas_price_gwei is None:
+        return True
+
     gas_price_limit = max_price_gwei + margin
-    if gas_price_gwei is not None and (int(gas_price_gwei) > int(gas_price_limit)):
+    if int(gas_price_gwei) > int(gas_price_limit):
         logger.print_warn(f"Warning: High Gas ({gas_price_gwei}) > {gas_price_limit}!")
         return True
     return False
