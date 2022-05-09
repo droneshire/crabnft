@@ -122,10 +122,11 @@ class Strategy:
         allowed_reinforcing_crabs = [c for c, v in self.reinforcing_crabs.items() if v == group_id]
 
         logger.print_normal(f"Mine[{mine['game_id']}]: using highest bp")
+        logger.print_normal(f"Reinforcements: {[self.reinforcing_crabs]}")
 
         if use_own_crabs:
             allowed_crabs_str = ", ".join([str(c) for c in allowed_reinforcing_crabs])
-            logger.print_normal(f"Checking from approved reinforcements {allowed_crabs_str}")
+            logger.print_normal(f"Checking from approved reinforcements {allowed_crabs_str} from group {group_id}")
             reinforcement_crab = self.crabada_w2.get_my_best_bp_crab_for_lending(self.address)
 
         now = time.time()
