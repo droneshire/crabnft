@@ -59,7 +59,6 @@ class Strategy:
         self.crabada_w2 = crabada_w2_client
         self.crabada_w3 = crabada_w3_client
 
-        self.max_reinforcement_price_tus = self.config["max_reinforcement_price_tus"]
         self.reinforcement_search_backoff = 0
         self.time_since_last_attack = None  # T.Optional[float]
 
@@ -122,6 +121,10 @@ class Strategy:
             c for c, v in self.config["reinforcing_crabs"].items() if v == group_id
         ]
 
+        for crab in allowed_reinforcing_crabs:
+            if crab not in self.reinforce_time_cache:
+                self.reinforce_time_cache[crab] = 0.0
+
         logger.print_normal(f"Mine[{mine['game_id']}]: using highest bp")
         if self.config["reinforcing_crabs"]:
             logger.print_normal(f"Total reinforcements: {self.config['reinforcing_crabs']}")
@@ -144,7 +147,7 @@ class Strategy:
             logger.print_bold(f"Mine[{mine['game_id']}]: using our own crab to reinforce!")
         else:
             reinforcement_crab = self.crabada_w2.get_best_high_bp_crab_for_lending(
-                mine, self.max_reinforcement_price_tus, self.reinforcement_search_backoff
+                mine, self.config["max_reinforcement_price_tus"], self.reinforcement_search_backoff
             )
 
         return reinforcement_crab
@@ -153,9 +156,14 @@ class Strategy:
         self, mine: IdleGame, group_id: int, use_own_crabs: bool = False
     ) -> T.Optional[TeamMember]:
         reinforcement_crab = None
+
         allowed_reinforcing_crabs = [
             c for c, v in self.config["reinforcing_crabs"].items() if v == group_id
         ]
+
+        for crab in allowed_reinforcing_crabs:
+            if crab not in self.reinforce_time_cache:
+                self.reinforce_time_cache[crab] = 0.0
 
         logger.print_normal(f"Mine[{mine['game_id']}]: using highest mp")
         if self.config["reinforcing_crabs"]:
@@ -181,7 +189,7 @@ class Strategy:
             logger.print_bold(f"Mine[{mine['game_id']}]: using our own crab to reinforce!")
         else:
             reinforcement_crab = self.crabada_w2.get_best_high_mp_crab_for_lending(
-                mine, self.max_reinforcement_price_tus, self.reinforcement_search_backoff
+                mine, self.config["max_reinforcement_price_tus"], self.reinforcement_search_backoff
             )
 
         return reinforcement_crab
