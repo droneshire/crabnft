@@ -194,6 +194,7 @@ class ConfigManagerFirebase(ConfigManager):
                     f"Crab: {crab_id}, Composition: {crab_class}, Action: {'MINING' if group == self.MINING_GROUP_NUM else 'LOOTING'}"
                 )
 
+        print(json.dumps(new_config, indent=4))
         diff = deepdiff.DeepDiff(self.config, new_config, ignore_order=True)
         if diff:
             logger.print_ok_blue(f"Detected changes in config from firebase database")
