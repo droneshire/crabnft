@@ -170,9 +170,7 @@ class Strategy:
             logger.print_normal(f"Total reinforcements: {self.config['reinforcing_crabs']}")
 
         if use_own_crabs:
-            allowed_crabs_str = ", ".join(
-                [str(c) for c in allowed_reinforcing_crabs] if allowed_reinforcing_crabs else "[]"
-            )
+            allowed_crabs_str = ", ".join([str(c) for c in allowed_reinforcing_crabs])
             logger.print_normal(
                 f"Checking from approved reinforcements {allowed_crabs_str} from group {group_id}"
             )
