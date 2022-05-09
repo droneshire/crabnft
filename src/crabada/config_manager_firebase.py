@@ -18,6 +18,10 @@ from utils.config_types import UserConfig
 from utils.email import Email
 from utils.user import BETA_TEST_LIST, get_alias_from_user
 
+class StrategyActions:
+    MINING = "MINING"
+    LOOTING = "LOOTING"
+    INACTIVE = "INACTIVE"
 
 def dict_keys_snake_to_camel(d: T.Dict[T.Any, T.Any]) -> T.Dict[T.Any, T.Any]:
     if not isinstance(d, dict):
@@ -145,12 +149,14 @@ class ConfigManagerFirebase(ConfigManager):
                 logger.print_warn(f"Team not associated with user, not adding from database")
                 continue
 
-            if details["action"] == "MINING":
+            if details["action"] == StrategyActions.MINING:
                 group = self.MINING_GROUP_NUM
                 new_config["mining_teams"][team_id] = group
-            elif details["action"] == "LOOTING":
+            elif details["action"] == StrategyActions.LOOTING:
                 group = self.LOOTING_GROUP_NUM
                 new_config["looting_teams"][team_id] = group
+            elif details["action"] == StrategyActions.INACTIVE:
+                logger.print_fail(f"Detected inactive team {team_id}!")
             else:
                 logger.print_fail(f"Unknown action from teams!")
                 continue
@@ -162,7 +168,7 @@ class ConfigManagerFirebase(ConfigManager):
 
             if self.verbose:
                 logger.print_normal(
-                    f"Team: {team_id}, Composition: {composition}, Group: {'MINING' if group == self.MINING_GROUP_NUM else 'LOOTING'}"
+                    f"Team: {team_id}, Composition: {composition}, Group: {detils['action']}"
                 )
 
         logger.print_ok_blue(f"Checking database for reinforcement crab changes...")
@@ -173,15 +179,17 @@ class ConfigManagerFirebase(ConfigManager):
             crab_id = int(crab)
 
             if crab_id not in [c["crabada_id"] for c in crabs]:
-                logger.print_warn(f"Crab not associated with user, not adding from database")
+                logger.print_warn(f"Crab {crab_id} not associated with user, not adding from database")
                 continue
 
-            if details["action"] == "MINING":
+            if details["action"] == StrategyActions.MINING:
                 group = self.MINING_GROUP_NUM
                 new_config["reinforcing_crabs"][crab_id] = group
-            elif details["action"] == "LOOTING":
+            elif details["action"] == StrategyActions.LOOTING:
                 group = self.LOOTING_GROUP_NUM
                 new_config["reinforcing_crabs"][crab_id] = group
+            elif details["action"] == StrategyActions.INACTIVE:
+                logger.print_normal(f"Detected inactive crab")
             else:
                 logger.print_fail(f"Unknown action from reinforcingCrabs!")
                 continue
@@ -191,7 +199,7 @@ class ConfigManagerFirebase(ConfigManager):
 
             if self.verbose:
                 logger.print_normal(
-                    f"Crab: {crab_id}, Composition: {crab_class}, Action: {'MINING' if group == self.MINING_GROUP_NUM else 'LOOTING'}"
+                    f"Crab: {crab_id}, Composition: {crab_class}, Action: {details['action']}"
                 )
 
         diff = deepdiff.DeepDiff(self.config, new_config, ignore_order=True)
@@ -290,7 +298,7 @@ class ConfigManagerFirebase(ConfigManager):
             for team, value in config["mining_teams"].items():
                 composition = self._get_team_composition(team, config)
                 db_config["strategy"]["teams"][team] = {
-                    "action": "MINING",
+                    "action": StrategyActions.MINING,
                     "composition": [c.strip() for c in composition.split(",")],
                     "user": value[1],
                 }
@@ -298,13 +306,13 @@ class ConfigManagerFirebase(ConfigManager):
             for team, value in config["looting_teams"].items():
                 composition = self._get_team_composition(team, config)
                 db_config["strategy"]["teams"][team] = {
-                    "action": "LOOTING",
+                    "action": StrategyActions.LOOTING,
                     "composition": [c.strip() for c in composition.split(",")],
                     "user": value[1],
                 }
 
             for crab, value in config["reinforcing_crabs"].items():
-                action = "MINING" if value[0] < 10 else "LOOTING"
+                action = StrategyActions.MINING if value[0] < 10 else StrategyActions.LOOTING
                 crab_class = self.crab_classes.get(crab, self._get_crab_class(crab, config))
                 db_config["strategy"]["reinforcingCrabs"][crab] = {
                     "action": action,
