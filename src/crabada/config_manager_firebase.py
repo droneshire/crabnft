@@ -168,7 +168,7 @@ class ConfigManagerFirebase(ConfigManager):
 
             if self.verbose:
                 logger.print_normal(
-                    f"Team: {team_id}, Composition: {composition}, Group: {detils['action']}"
+                    f"Team: {team_id}, Composition: {composition}, Group: {details['action']}"
                 )
 
         logger.print_ok_blue(f"Checking database for reinforcement crab changes...")
