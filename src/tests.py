@@ -142,11 +142,10 @@ def test_miners_revenge() -> None:
 def test_config_manager_firebase() -> None:
     email_accounts = []
 
-    encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
+    encrypt_password = ""
 
     cm = ConfigManagerFirebase("TEST", TEST_CONFIG, email_accounts, encrypt_password, dry_run=False)
-    cm.update_all_users_from_local_config()
-    # cm.check_for_config_updates()
+    cm.update_user_from_local_config("TEST")
 
 
 def test_config_manager_sheets() -> None:
@@ -380,8 +379,8 @@ def test_config_manager() -> None:
 
 
 if __name__ == "__main__":
-    test_config_manager()
     test_config_manager_firebase()
+    test_config_manager()
     test_config_manager_sheets()
     test_miners_revenge()
     test_profitability_calc()

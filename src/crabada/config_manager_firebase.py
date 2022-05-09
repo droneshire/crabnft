@@ -229,18 +229,18 @@ class ConfigManagerFirebase(ConfigManager):
         else:
             return None
 
-    def update_all_users_from_local_config(self) -> None:
-        aliases = set([get_alias_from_user(u) for u in USERS])
-
+    def update_user_from_local_config(self, local_user) -> None:
         alias_configs = {}
-        for user, config in USERS.items():
+        users = copy.deepcopy(USERS)
+        for user, config in users.items():
             alias = get_alias_from_user(user)
 
             # mark users with multi wallet items
             for k, v in config.items():
                 if k in self.MULTI_WALLET_KEYS:
-                    for item_id, value in config[k].items():
-                        config[k][item_id] = (value, user)
+                    for game_id, group in v.items():
+                        config[k][game_id] = (group, user)
+                        print(game_id, config[k][game_id])
 
             # merge wallet configs if already have one multi-wallet entry
             if alias in alias_configs:
@@ -252,59 +252,70 @@ class ConfigManagerFirebase(ConfigManager):
                 alias_configs[alias] = config
 
         for alias, config in alias_configs.items():
+            if get_alias_from_user(local_user) != alias:
+                continue
+
             doc = self._get_user_document(config)
 
             if doc is not None:
                 db_config = doc.get().to_dict()
-                logger.print_ok(f"Found email: {config['email']}")
-                db_config["user"] = alias
-                db_config["preferences"] = {
-                    "notifications": {
-                        "email": {
-                            "updatesEnabled": config["get_email_updates"],
-                            "email": config["email"],
-                        },
-                        "sms": {
-                            "lootUpdatesEnabled": config["get_sms_updates_loots"],
-                            "phoneNumber": config["sms_number"].lstrip("+1"),
-                            "alertUpdatesEnabled": config["get_sms_updates"],
-                        },
-                    }
+                logger.print_normal(f"Skipping {alias} b/c already in DB")
+                return
+            else:
+                db_config = {}
+
+            logger.print_ok(f"Found email: {config['email']}")
+            db_config["user"] = alias
+            db_config["preferences"] = {
+                "notifications": {
+                    "email": {
+                        "updatesEnabled": config["get_email_updates"],
+                        "email": config["email"],
+                    },
+                    "sms": {
+                        "lootUpdatesEnabled": config["get_sms_updates_loots"],
+                        "phoneNumber": config["sms_number"].lstrip("+1"),
+                        "alertUpdatesEnabled": config["get_sms_updates"],
+                    },
                 }
-                db_config["strategy"] = {
-                    "reinforceEnabled": config["should_reinforce"],
-                    "reinforcingCrabs": {},
-                    "teams": {},
-                    "maxReinforcement": config["max_reinforcement_price_tus"],
-                    "maxGas": config["max_gas_price_gwei"],
+            }
+            db_config["strategy"] = {
+                "reinforceEnabled": config["should_reinforce"],
+                "reinforcingCrabs": {},
+                "teams": {},
+                "maxReinforcement": config["max_reinforcement_price_tus"],
+                "maxGas": config["max_gas_price_gwei"],
+            }
+
+            for team, value in config["mining_teams"].items():
+                composition = self._get_team_composition(team, config)
+                db_config["strategy"]["teams"][team] = {
+                    "action": "MINING",
+                    "composition": [c.strip() for c in composition.split(",")],
+                    "user": value[1],
                 }
 
-                for team, value in config["mining_teams"].items():
-                    composition = self._get_team_composition(team, config)
-                    db_config["strategy"]["teams"][team] = {
-                        "action": "MINING",
-                        "composition": [c.strip() for c in composition.split(",")],
-                        "user": value[1],
-                    }
+            for team, value in config["looting_teams"].items():
+                composition = self._get_team_composition(team, config)
+                db_config["strategy"]["teams"][team] = {
+                    "action": "LOOTING",
+                    "composition": [c.strip() for c in composition.split(",")],
+                    "user": value[1],
+                }
 
-                for team, value in config["looting_teams"].items():
-                    composition = self._get_team_composition(team, config)
-                    db_config["strategy"]["teams"][team] = {
-                        "action": "LOOTING",
-                        "composition": [c.strip() for c in composition.split(",")],
-                        "user": value[1],
-                    }
+            for crab, value in config["reinforcing_crabs"].items():
+                action = "MINING" if value[0] < 10 else "LOOTING"
+                crab_class = self.crab_classes.get(crab, self._get_crab_class(crab, config))
+                db_config["strategy"]["reinforcingCrabs"][crab] = {
+                    "action": action,
+                    "class": [crab_class.strip()],
+                    "user": value[1],
+                }
 
-                for crab, value in config["reinforcing_crabs"].items():
-                    action = "MINING" if value[0] < 10 else "LOOTING"
-                    crab_class = self.crab_classes.get(crab, self._get_crab_class(crab, config))
-                    db_config["strategy"]["reinforcingCrabs"][crab] = {
-                        "action": action,
-                        "class": [crab_class.strip()],
-                        "user": value[1],
-                    }
+            if self.verbose:
+                logger.print_normal(f"{json.dumps(db_config, indent=4)}")
 
-                if self.verbose:
-                    logger.print_normal(f"{json.dumps(db_config, indent=4)}")
-
+            if doc is None:
+                self.users_ref.document(config["email"]).set(db_config)
+            else:
                 doc.set(json.loads(json.dumps(db_config)))

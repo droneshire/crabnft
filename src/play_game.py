@@ -253,6 +253,16 @@ def run_bot() -> None:
                 group=id_string,
             )
 
+            if now - last_discord_update > BOT_TOTALS_UPDATE:
+                last_discord_update = now
+                groups = ", ".join(args.groups)
+                message = f"\U0001F980\t**Total TUS mined by groups {groups} bot: {int(gross_tus):,} TUS**\n"
+                for k in totals.keys():
+                    message += f"\U0001F916\t**Bot {k.lower()} win percentage: {win_percentages[k]:.2f}%**\n"
+                total_users, total_teams = get_users_teams()
+                message += f"**Users: {total_users} Teams: {total_teams}**\n"
+                logger.print_normal(message)
+
             if not should_post_updates:
                 continue
 
@@ -270,16 +280,6 @@ def run_bot() -> None:
                     avg_gas_gwei.get_avg(),
                     avg_reinforce_tus.get_avg(),
                 )
-
-            if alerts_enabled and now - last_discord_update > BOT_TOTALS_UPDATE:
-                last_discord_update = now
-                groups = ", ".join(args.groups)
-                message = f"\U0001F980\t**Total TUS mined by groups {groups} bot: {int(gross_tus):,} TUS**\n"
-                for k in totals.keys():
-                    message += f"\U0001F916\t**Bot {k.lower()} win percentage: {win_percentages[k]:.2f}%**\n"
-                total_users, total_teams = get_users_teams()
-                message += f"**Users: {total_users} Teams: {total_teams}**\n"
-                logger.print_normal(message)
 
             if avg_gas_avax.count > GAS_DOWNSAMPLE_COUNT:
                 avg_gas_avax_val = avg_gas_avax.get_avg()
