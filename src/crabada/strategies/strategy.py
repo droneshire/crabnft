@@ -128,6 +128,8 @@ class Strategy:
             allowed_crabs_str = ", ".join([str(c) for c in allowed_reinforcing_crabs])
             logger.print_normal(f"Checking from approved reinforcements {allowed_crabs_str} from group {group_id}")
             reinforcement_crab = self.crabada_w2.get_my_best_bp_crab_for_lending(self.address)
+            if reinforcement_crab is not None:
+                logger.print_normal(f"Trying our own crab {reinforcement_crab['crabada_id']}")
 
         now = time.time()
         if (
@@ -158,6 +160,8 @@ class Strategy:
             allowed_crabs_str = ", ".join([str(c) for c in allowed_reinforcing_crabs])
             logger.print_normal(f"Checking from approved reinforcements {allowed_crabs_str} from group {group_id}")
             reinforcement_crab = self.crabada_w2.get_my_best_mp_crab_for_lending(self.address)
+            if reinforcement_crab is not None:
+                logger.print_normal(f"Trying our own crab {reinforcement_crab['crabada_id']}")
 
         now = time.time()
         if (

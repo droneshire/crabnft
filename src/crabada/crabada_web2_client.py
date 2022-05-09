@@ -437,7 +437,9 @@ class CrabadaWeb2Client:
         if not my_crabs:
             return None
 
-        sorted_crabs = sorted(my_crabs, key=lambda c: c["battle_point"])
+        point_type = params.get("orderBy", "mine_point")
+
+        sorted_crabs = sorted(my_crabs, key=lambda c: c[point_type])
         best_crab = sorted_crabs[0]
         best_crab["price"] = 0
         return best_crab
