@@ -185,7 +185,6 @@ class ConfigManagerFirebase(ConfigManager):
             else:
                 logger.print_fail(f"Unknown action from reinforcingCrabs!")
                 continue
-            print(new_config["reinforcing_crabs"])
 
             crab_class = self._get_crab_class(crab_id, new_config)
             db_config["strategy"]["reinforcingCrabs"][crab]["class"] = [crab_class.strip()]
