@@ -100,17 +100,26 @@ class CrabadaMineBot:
         self.avg_reinforce_tus: Average = Average(15.0)
         self.avg_gas_gwei: Average = Average(60.0)
 
+        self.config_mgr = ConfigManagerFirebase(
+            user,
+            config,
+            email_accounts,
+            encrypt_password,
+            dry_run=dry_run,
+            verbose=True,
+        )
+
         self.mining_strategy = STRATEGY_SELECTION[config["mining_strategy"]](
             self.address,
             self.crabada_w2,
             self.crabada_w3,
-            config,
+            self.config_mgr.config,
         )
         self.looting_strategy = STRATEGY_SELECTION[config["looting_strategy"]](
             self.address,
             self.crabada_w2,
             self.crabada_w3,
-            config,
+            self.config_mgr.config,
         )
 
         self.alias = get_alias_from_user(self.user)
@@ -123,14 +132,6 @@ class CrabadaMineBot:
 
         logger.print_ok_blue(f"Adding bot for user {self.alias} with address {self.address}")
 
-        self.config_mgr = ConfigManagerFirebase(
-            user,
-            config,
-            email_accounts,
-            encrypt_password,
-            dry_run=dry_run,
-            verbose=True,
-        )
         self.config_mgr.init()
 
     def _check_calc_and_send_daily_update_message(self) -> None:
