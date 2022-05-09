@@ -159,8 +159,6 @@ class ConfigManagerFirebase(ConfigManager):
             db_config["strategy"]["teams"][team]["composition"] = [
                 c.strip() for c in composition.split(",")
             ]
-            print(new_config["mining_teams"])
-            print(new_config["looting_teams"])
 
             if self.verbose:
                 logger.print_normal(
