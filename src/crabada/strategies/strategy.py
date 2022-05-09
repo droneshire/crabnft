@@ -60,11 +60,11 @@ class Strategy:
         self.crabada_w3 = crabada_w3_client
 
         self.max_reinforcement_price_tus = self.config["max_reinforcement_price_tus"]
-        self.reinforcing_crabs = self.config["reinforcing_crabs"]
+        self.config["reinforcing_crabs"] = self.config["reinforcing_crabs"]
         self.reinforcement_search_backoff = 0
         self.time_since_last_attack = None  # T.Optional[float]
 
-        self.reinforce_time_cache = {c: 0.0 for c in self.reinforcing_crabs.keys()}
+        self.reinforce_time_cache = {c: 0.0 for c in self.config["reinforcing_crabs"].keys()}
 
     def get_reinforcement_crab(
         self, team: Team, mine: IdleGame, reinforcement_search_backoff: int = 0
@@ -119,17 +119,20 @@ class Strategy:
         self, mine: IdleGame, group_id: int, use_own_crabs: bool = False
     ) -> T.Optional[TeamMember]:
         reinforcement_crab = None
-        allowed_reinforcing_crabs = [c for c, v in self.reinforcing_crabs.items() if v == group_id]
+        allowed_reinforcing_crabs = [
+            c for c, v in self.config["reinforcing_crabs"].items() if v == group_id
+        ]
 
         logger.print_normal(f"Mine[{mine['game_id']}]: using highest bp")
-        logger.print_normal(f"Total reinforcements: {self.reinforcing_crabs}")
+        if self.config["reinforcing_crabs"]:
+            logger.print_normal(f"Total reinforcements: {self.config['reinforcing_crabs']}")
 
         if use_own_crabs:
-            allowed_crabs_str = ", ".join([str(c) for c in allowed_reinforcing_crabs] if allowed_reinforcing_crabs else "[]")
-            logger.print_normal(f"Checking from approved reinforcements {allowed_crabs_str} from group {group_id}")
+            allowed_crabs_str = ", ".join([str(c) for c in allowed_reinforcing_crabs])
+            logger.print_normal(
+                f"Checking from approved reinforcements {allowed_crabs_str} from group {group_id}"
+            )
             reinforcement_crab = self.crabada_w2.get_my_best_bp_crab_for_lending(self.address)
-            if reinforcement_crab is not None:
-                logger.print_normal(f"Trying our own crab {reinforcement_crab['crabada_id']}")
 
         now = time.time()
         if (
@@ -151,17 +154,22 @@ class Strategy:
         self, mine: IdleGame, group_id: int, use_own_crabs: bool = False
     ) -> T.Optional[TeamMember]:
         reinforcement_crab = None
-        allowed_reinforcing_crabs = [c for c, v in self.reinforcing_crabs.items() if v == group_id]
+        allowed_reinforcing_crabs = [
+            c for c, v in self.config["reinforcing_crabs"].items() if v == group_id
+        ]
 
         logger.print_normal(f"Mine[{mine['game_id']}]: using highest mp")
-        logger.print_normal(f"Total reinforcements: {self.reinforcing_crabs}")
+        if self.config["reinforcing_crabs"]:
+            logger.print_normal(f"Total reinforcements: {self.config['reinforcing_crabs']}")
 
         if use_own_crabs:
-            allowed_crabs_str = ", ".join([str(c) for c in allowed_reinforcing_crabs] if allowed_reinforcing_crabs else "[]")
-            logger.print_normal(f"Checking from approved reinforcements {allowed_crabs_str} from group {group_id}")
+            allowed_crabs_str = ", ".join(
+                [str(c) for c in allowed_reinforcing_crabs] if allowed_reinforcing_crabs else "[]"
+            )
+            logger.print_normal(
+                f"Checking from approved reinforcements {allowed_crabs_str} from group {group_id}"
+            )
             reinforcement_crab = self.crabada_w2.get_my_best_mp_crab_for_lending(self.address)
-            if reinforcement_crab is not None:
-                logger.print_normal(f"Trying our own crab {reinforcement_crab['crabada_id']}")
 
         now = time.time()
         if (
