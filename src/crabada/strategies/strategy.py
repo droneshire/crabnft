@@ -60,7 +60,6 @@ class Strategy:
         self.crabada_w3 = crabada_w3_client
 
         self.max_reinforcement_price_tus = self.config["max_reinforcement_price_tus"]
-        self.config["reinforcing_crabs"] = self.config["reinforcing_crabs"]
         self.reinforcement_search_backoff = 0
         self.time_since_last_attack = None  # T.Optional[float]
 
