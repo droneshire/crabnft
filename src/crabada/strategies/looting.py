@@ -26,13 +26,13 @@ class LootingStrategy(Strategy):
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
         crabada_w3_client: CrabadaWeb3Client,
-        config: UserConfig,
+        config_mgr: ConfigManager,
     ) -> None:
         super().__init__(
             address,
             crabada_w2_client,
             crabada_w3_client,
-            config,
+            config_mgr,
         )
 
     def start(self, team_id: int) -> CrabadaTransaction:
@@ -117,7 +117,7 @@ class LootingStrategy(Strategy):
             logger.print_normal(f"Loot[{mine['game_id']}]: not reinforcing since we're winning!")
             return None
 
-        group_id = self.config["looting_teams"].get(team["team_id"], -1)
+        group_id = self.config_mgr.config["looting_teams"].get(team["team_id"], -1)
         reinforcement_crab = super()._use_bp_reinforcement(
             mine, group_id, use_own_crabs=use_own_crabs
         )
@@ -144,13 +144,13 @@ class PreferOtherBpCrabs(LootingStrategy):
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
         crabada_w3_client: CrabadaWeb3Client,
-        config: UserConfig,
+        config_mgr: ConfigManager,
     ) -> None:
         super().__init__(
             address,
             crabada_w2_client,
             crabada_w3_client,
-            config,
+            config_mgr,
         )
 
     def get_reinforcement_crab(
@@ -169,13 +169,13 @@ class PreferOwnBpCrabs(LootingStrategy):
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
         crabada_w3_client: CrabadaWeb3Client,
-        config: UserConfig,
+        config_mgr: ConfigManager,
     ) -> None:
         super().__init__(
             address,
             crabada_w2_client,
             crabada_w3_client,
-            config,
+            config_mgr,
         )
 
     def get_reinforcement_crab(

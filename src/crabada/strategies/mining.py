@@ -26,13 +26,13 @@ class MiningStrategy(Strategy):
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
         crabada_w3_client: CrabadaWeb3Client,
-        config: UserConfig,
+        config_mgr: ConfigManager,
     ) -> None:
         super().__init__(
             address,
             crabada_w2_client,
             crabada_w3_client,
-            config,
+            config_mgr,
         )
 
     def start(self, team_id: int) -> CrabadaTransaction:
@@ -136,7 +136,7 @@ class MiningStrategy(Strategy):
             logger.print_normal(f"Mine[{mine['game_id']}]: not reinforcing since we're winning!")
             return None
 
-        group_id = self.config["mining_teams"].get(team["team_id"], -1)
+        group_id = self.config_mgr.config["mining_teams"].get(team["team_id"], -1)
         if attack_battle_point - defense_battle_point < self.MAX_BP_DELTA:
             reinforcement_crab = super()._use_bp_reinforcement(
                 mine, group_id, use_own_crabs=use_own_crabs
@@ -168,13 +168,13 @@ class PreferOtherMpCrabs(MiningStrategy):
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
         crabada_w3_client: CrabadaWeb3Client,
-        config: UserConfig,
+        config_mgr: ConfigManager,
     ) -> None:
         super().__init__(
             address,
             crabada_w2_client,
             crabada_w3_client,
-            config,
+            config_mgr,
         )
 
     def get_reinforcement_crab(
@@ -190,13 +190,13 @@ class PreferOwnMpCrabs(MiningStrategy):
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
         crabada_w3_client: CrabadaWeb3Client,
-        config: UserConfig,
+        config_mgr: ConfigManager,
     ) -> None:
         super().__init__(
             address,
             crabada_w2_client,
             crabada_w3_client,
-            config,
+            config_mgr,
         )
 
     def get_reinforcement_crab(

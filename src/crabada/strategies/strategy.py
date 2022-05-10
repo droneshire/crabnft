@@ -4,6 +4,7 @@ import typing as T
 from eth_typing import Address
 from web3.types import Wei
 
+from crabada.config_manager import ConfigManager
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
 from crabada.profitability import REWARDS_TUS, Result, Scenarios
@@ -52,9 +53,9 @@ class Strategy:
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
         crabada_w3_client: CrabadaWeb3Client,
-        config: UserConfig,
+        config_mgr: ConfigManager,
     ) -> None:
-        self.config = config
+        self.config_mgr.config = config_mgr
         self.address = address
         self.crabada_w2 = crabada_w2_client
         self.crabada_w3 = crabada_w3_client
@@ -62,7 +63,9 @@ class Strategy:
         self.reinforcement_search_backoff = 0
         self.time_since_last_attack = None  # T.Optional[float]
 
-        self.reinforce_time_cache = {c: 0.0 for c in self.config["reinforcing_crabs"].keys()}
+        self.reinforce_time_cache = {
+            c: 0.0 for c in self.config_mgr.config["reinforcing_crabs"].keys()
+        }
 
     def get_reinforcement_crab(
         self, team: Team, mine: IdleGame, reinforcement_search_backoff: int = 0
@@ -118,7 +121,7 @@ class Strategy:
     ) -> T.Optional[TeamMember]:
         reinforcement_crab = None
         allowed_reinforcing_crabs = [
-            c for c, v in self.config["reinforcing_crabs"].items() if v == group_id
+            c for c, v in self.config_mgr.config["reinforcing_crabs"].items() if v == group_id
         ]
 
         for crab in allowed_reinforcing_crabs:
@@ -126,8 +129,10 @@ class Strategy:
                 self.reinforce_time_cache[crab] = 0.0
 
         logger.print_normal(f"Mine[{mine['game_id']}]: using highest bp")
-        if self.config["reinforcing_crabs"]:
-            logger.print_normal(f"Total reinforcements: {self.config['reinforcing_crabs']}")
+        if self.config_mgr.config["reinforcing_crabs"]:
+            logger.print_normal(
+                f"Total reinforcements: {self.config_mgr.config['reinforcing_crabs'].keys()}"
+            )
 
         if use_own_crabs:
             allowed_crabs_str = ", ".join([str(c) for c in allowed_reinforcing_crabs])
@@ -147,7 +152,9 @@ class Strategy:
             logger.print_bold(f"Mine[{mine['game_id']}]: using our own crab to reinforce!")
         else:
             reinforcement_crab = self.crabada_w2.get_best_high_bp_crab_for_lending(
-                mine, self.config["max_reinforcement_price_tus"], self.reinforcement_search_backoff
+                mine,
+                self.config_mgr.config["max_reinforcement_price_tus"],
+                self.reinforcement_search_backoff,
             )
 
         return reinforcement_crab
@@ -158,7 +165,7 @@ class Strategy:
         reinforcement_crab = None
 
         allowed_reinforcing_crabs = [
-            c for c, v in self.config["reinforcing_crabs"].items() if v == group_id
+            c for c, v in self.config_mgr.config["reinforcing_crabs"].items() if v == group_id
         ]
 
         for crab in allowed_reinforcing_crabs:
@@ -166,8 +173,10 @@ class Strategy:
                 self.reinforce_time_cache[crab] = 0.0
 
         logger.print_normal(f"Mine[{mine['game_id']}]: using highest mp")
-        if self.config["reinforcing_crabs"]:
-            logger.print_normal(f"Total reinforcements: {self.config['reinforcing_crabs']}")
+        if self.config_mgr.config["reinforcing_crabs"]:
+            logger.print_normal(
+                f"Total reinforcements: {self.config_mgr.config['reinforcing_crabs'].keys()}"
+            )
 
         if use_own_crabs:
             allowed_crabs_str = ", ".join([str(c) for c in allowed_reinforcing_crabs])
@@ -187,7 +196,9 @@ class Strategy:
             logger.print_bold(f"Mine[{mine['game_id']}]: using our own crab to reinforce!")
         else:
             reinforcement_crab = self.crabada_w2.get_best_high_mp_crab_for_lending(
-                mine, self.config["max_reinforcement_price_tus"], self.reinforcement_search_backoff
+                mine,
+                self.config_mgr.config["max_reinforcement_price_tus"],
+                self.reinforcement_search_backoff,
             )
 
         return reinforcement_crab

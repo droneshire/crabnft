@@ -19,13 +19,13 @@ class MiningDelayReinforcementStrategy(MiningStrategy):
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
         crabada_w3_client: CrabadaWeb3Client,
-        config: UserConfig,
+        config_mgr: ConfigManager,
     ) -> None:
         super().__init__(
             address,
             crabada_w2_client,
             crabada_w3_client,
-            config,
+            config_mgr,
         )
 
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:
@@ -58,13 +58,13 @@ class PreferOtherMpCrabsAndDelayReinforcement(MiningDelayReinforcementStrategy):
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
         crabada_w3_client: CrabadaWeb3Client,
-        config: UserConfig,
+        config_mgr: ConfigManager,
     ) -> None:
         super().__init__(
             address,
             crabada_w2_client,
             crabada_w3_client,
-            config,
+            config_mgr,
         )
 
     def get_reinforcement_crab(
@@ -80,13 +80,13 @@ class PreferOwnMpCrabsAndDelayReinforcement(MiningDelayReinforcementStrategy):
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
         crabada_w3_client: CrabadaWeb3Client,
-        config: UserConfig,
+        config_mgr: ConfigManager,
     ) -> None:
         super().__init__(
             address,
             crabada_w2_client,
             crabada_w3_client,
-            config,
+            config_mgr,
         )
 
     def get_reinforcement_crab(

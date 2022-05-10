@@ -18,10 +18,12 @@ from utils.config_types import UserConfig
 from utils.email import Email
 from utils.user import BETA_TEST_LIST, get_alias_from_user
 
+
 class StrategyActions:
     MINING = "MINE"
     LOOTING = "LOOT"
     INACTIVE = "INACTIVE"
+
 
 def dict_keys_snake_to_camel(d: T.Dict[T.Any, T.Any]) -> T.Dict[T.Any, T.Any]:
     if not isinstance(d, dict):
@@ -182,7 +184,9 @@ class ConfigManagerFirebase(ConfigManager):
             crab_id = int(crab)
 
             if crab_id not in [c["crabada_id"] for c in crabs]:
-                logger.print_warn(f"Crab {crab_id} not associated with user, not adding from database")
+                logger.print_warn(
+                    f"Crab {crab_id} not associated with user, not adding from database"
+                )
                 continue
 
             if details["action"] == StrategyActions.MINING or details["action"] == "MINING":

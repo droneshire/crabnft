@@ -21,13 +21,13 @@ class ScatteredReinforcement(MiningStrategy):
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
         crabada_w3_client: CrabadaWeb3Client,
-        config: UserConfig,
+        config_mgr: ConfigManager,
     ) -> None:
         super().__init__(
             address,
             crabada_w2_client,
             crabada_w3_client,
-            config,
+            config_mgr,
         )
 
     def get_gas_margin(self, game_stage: GameStage, mine: T.Optional[IdleGame] = None) -> int:
@@ -45,14 +45,14 @@ class ScatteredReinforcement(MiningStrategy):
 
     def _get_mine_per_group(self, mine_group: int) -> T.List[IdleGame]:
         mines = []
-        for open_mine in self.crabada_w2.list_my_open_mines(self.config["address"]):
-            group = self.config["mining_teams"].get(open_mine["team_id"], -1)
+        for open_mine in self.crabada_w2.list_my_open_mines(self.config_mgr.config["address"]):
+            group = self.config_mgr.config["mining_teams"].get(open_mine["team_id"], -1)
             if group == mine_group:
                 mines.append(open_mine)
         return mines
 
     def should_start(self, team: Team) -> bool:
-        mine_group = self.config["mining_teams"].get(team["team_id"], -1)
+        mine_group = self.config_mgr.config["mining_teams"].get(team["team_id"], -1)
 
         if mine_group == -1:
             return True
@@ -91,17 +91,17 @@ class ScatteredDelayReinforcement(ScatteredReinforcement):
         address: Address,
         crabada_w2_client: CrabadaWeb2Client,
         crabada_w3_client: CrabadaWeb3Client,
-        config: UserConfig,
+        config_mgr: ConfigManager,
     ) -> None:
         super().__init__(
             address,
             crabada_w2_client,
             crabada_w3_client,
-            config,
+            config_mgr,
         )
 
     def should_start(self, team: Team) -> bool:
-        mine_group = self.config["mining_teams"].get(team["team_id"], -1)
+        mine_group = self.config_mgr.config["mining_teams"].get(team["team_id"], -1)
 
         if mine_group == -1:
             return True
