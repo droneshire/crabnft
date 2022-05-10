@@ -149,14 +149,17 @@ class ConfigManagerFirebase(ConfigManager):
                 logger.print_warn(f"Team not associated with user, not adding from database")
                 continue
 
-            if details["action"] == StrategyActions.MINING:
+            if details["action"] == StrategyActions.MINING or details["action"] == "MINING":
                 group = self.MINING_GROUP_NUM
                 new_config["mining_teams"][team_id] = group
-            elif details["action"] == StrategyActions.LOOTING:
+                db_config["strategy"]["teams"][team]["action"] = StrategyActions.MINING
+            elif details["action"] == StrategyActions.LOOTING or details["action"] == "LOOTING":
                 group = self.LOOTING_GROUP_NUM
                 new_config["looting_teams"][team_id] = group
+                db_config["strategy"]["teams"][team]["action"] = StrategyActions.LOOTING
             elif details["action"] == StrategyActions.INACTIVE:
                 logger.print_fail(f"Detected inactive team {team_id}!")
+                db_config["strategy"]["teams"][team]["action"] = StrategyActions.INACTIVE
             else:
                 logger.print_fail(f"Unknown action from teams!")
                 continue
@@ -182,14 +185,17 @@ class ConfigManagerFirebase(ConfigManager):
                 logger.print_warn(f"Crab {crab_id} not associated with user, not adding from database")
                 continue
 
-            if details["action"] == StrategyActions.MINING:
+            if details["action"] == StrategyActions.MINING or details["action"] == "MINING":
                 group = self.MINING_GROUP_NUM
                 new_config["reinforcing_crabs"][crab_id] = group
-            elif details["action"] == StrategyActions.LOOTING:
+                db_config["strategy"]["teams"][crab_id]["action"] = StrategyActions.MINING
+            elif details["action"] == StrategyActions.LOOTING or details["action"] == "LOOTING":
                 group = self.LOOTING_GROUP_NUM
                 new_config["reinforcing_crabs"][crab_id] = group
+                db_config["strategy"]["teams"][crab_id]["action"] = StrategyActions.LOOTING
             elif details["action"] == StrategyActions.INACTIVE:
                 logger.print_normal(f"Detected inactive crab")
+                db_config["strategy"]["teams"][crab_id]["action"] = StrategyActions.INACTIVE
             else:
                 logger.print_fail(f"Unknown action from reinforcingCrabs!")
                 continue
