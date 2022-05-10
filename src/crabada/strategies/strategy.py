@@ -10,7 +10,6 @@ from crabada.crabada_web3_client import CrabadaWeb3Client
 from crabada.profitability import REWARDS_TUS, Result, Scenarios
 from crabada.types import IdleGame, Team, TeamMember
 from utils import logger
-from utils.config_types import UserConfig
 from utils.price import Tus, wei_to_cra_raw, wei_to_tus_raw
 
 
@@ -55,7 +54,7 @@ class Strategy:
         crabada_w3_client: CrabadaWeb3Client,
         config_mgr: ConfigManager,
     ) -> None:
-        self.config_mgr.config = config_mgr
+        self.config_mgr = config_mgr
         self.address = address
         self.crabada_w2 = crabada_w2_client
         self.crabada_w3 = crabada_w3_client

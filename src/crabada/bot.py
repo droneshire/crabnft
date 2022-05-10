@@ -113,13 +113,13 @@ class CrabadaMineBot:
             self.address,
             self.crabada_w2,
             self.crabada_w3,
-            self.config_mgr.config,
+            self.config_mgr,
         )
         self.looting_strategy = STRATEGY_SELECTION[config["looting_strategy"]](
             self.address,
             self.crabada_w2,
             self.crabada_w3,
-            self.config_mgr.config,
+            self.config_mgr,
         )
 
         self.alias = get_alias_from_user(self.user)
