@@ -34,7 +34,7 @@ class ScatteredReinforcement(MiningStrategy):
         if game_stage == GameStage.START:
             return 10
         elif game_stage == GameStage.CLOSE:
-            return 10
+            return 0
         elif game_stage == GameStage.REINFORCE:
             if mine is None:
                 return 0

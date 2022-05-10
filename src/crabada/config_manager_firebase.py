@@ -19,8 +19,8 @@ from utils.email import Email
 from utils.user import BETA_TEST_LIST, get_alias_from_user
 
 class StrategyActions:
-    MINING = "MINING"
-    LOOTING = "LOOTING"
+    MINING = "MINE"
+    LOOTING = "LOOT"
     INACTIVE = "INACTIVE"
 
 def dict_keys_snake_to_camel(d: T.Dict[T.Any, T.Any]) -> T.Dict[T.Any, T.Any]:
