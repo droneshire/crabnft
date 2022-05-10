@@ -669,6 +669,9 @@ class CrabadaWeb2Client:
         now = time.time()
 
         start_time = game.get("start_time", now)
+        if game is None or game.get("process") is None:
+            return now + self.MIN_LOOT_GAME_TIME * 1.1
+
         for p in game.get("process", []):
             if p["action"] == "attack":
                 start_time = p["transaction_time"]
