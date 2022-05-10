@@ -188,14 +188,14 @@ class ConfigManagerFirebase(ConfigManager):
             if details["action"] == StrategyActions.MINING or details["action"] == "MINING":
                 group = self.MINING_GROUP_NUM
                 new_config["reinforcing_crabs"][crab_id] = group
-                db_config["strategy"]["teams"][crab_id]["action"] = StrategyActions.MINING
+                db_config["strategy"]["teams"][crab]["action"] = StrategyActions.MINING
             elif details["action"] == StrategyActions.LOOTING or details["action"] == "LOOTING":
                 group = self.LOOTING_GROUP_NUM
                 new_config["reinforcing_crabs"][crab_id] = group
-                db_config["strategy"]["teams"][crab_id]["action"] = StrategyActions.LOOTING
+                db_config["strategy"]["teams"][crab]["action"] = StrategyActions.LOOTING
             elif details["action"] == StrategyActions.INACTIVE:
                 logger.print_normal(f"Detected inactive crab")
-                db_config["strategy"]["teams"][crab_id]["action"] = StrategyActions.INACTIVE
+                db_config["strategy"]["teams"][crab]["action"] = StrategyActions.INACTIVE
             else:
                 logger.print_fail(f"Unknown action from reinforcingCrabs!")
                 continue
