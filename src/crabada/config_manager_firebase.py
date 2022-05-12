@@ -89,15 +89,17 @@ class ConfigManagerFirebase(ConfigManager):
 
         self.last_config_update_time = now
 
-        try:
-            self._read_and_update_config()
-        except:
-            logger.print_fail(f"Failed to read and translate updated config from database")
+        self._read_and_update_config()
+        self._update_game_stats()
+        # try:
+        #     self._read_and_update_config()
+        # except:
+        #     logger.print_fail(f"Failed to read and translate updated config from database")
 
-        try:
-            self._update_game_stats()
-        except:
-            logger.print_fail(f"Failed to upload game stats to database")
+        # try:
+        #     self._update_game_stats()
+        # except:
+        #     logger.print_fail(f"Failed to upload game stats to database")
 
     def _update_game_stats(self) -> None:
         if self.user_doc is None:
