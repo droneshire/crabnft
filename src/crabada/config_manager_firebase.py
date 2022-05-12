@@ -128,9 +128,6 @@ class ConfigManagerFirebase(ConfigManager):
         new_config: UserConfig = self._get_empty_new_config()
 
         logger.print_ok_blue(f"Checking database for preferences changes...")
-        print(new_config)
-        print()
-        print(self.config)
         new_config["email"] = db_config["preferences"]["notifications"]["email"]["email"]
         new_config["get_email_updates"] = db_config["preferences"]["notifications"]["email"][
             "updatesEnabled"
@@ -292,7 +289,7 @@ class ConfigManagerFirebase(ConfigManager):
                 "notifications": {
                     "email": {
                         "updatesEnabled": config["get_email_updates"],
-                        "email": config["email"],
+                        "email": config["email"].lower(),
                     },
                     "sms": {
                         "lootUpdatesEnabled": config["get_sms_updates_loots"],
@@ -338,6 +335,6 @@ class ConfigManagerFirebase(ConfigManager):
                 logger.print_normal(f"{json.dumps(db_config, indent=4)}")
 
             if doc is None:
-                self.users_ref.document(config["email"]).create(json.loads(json.dumps(db_config)))
+                self.users_ref.document(config["email"].lower()).create(json.loads(json.dumps(db_config)))
             else:
                 doc.set(json.loads(json.dumps(db_config)))
