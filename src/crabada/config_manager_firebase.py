@@ -258,7 +258,6 @@ class ConfigManagerFirebase(ConfigManager):
                 if k in self.MULTI_WALLET_KEYS:
                     for game_id, group in v.items():
                         config[k][game_id] = (group, user)
-                        print(game_id, config[k][game_id])
 
             # merge wallet configs if already have one multi-wallet entry
             if alias in alias_configs:
@@ -334,6 +333,6 @@ class ConfigManagerFirebase(ConfigManager):
                 logger.print_normal(f"{json.dumps(db_config, indent=4)}")
 
             if doc is None:
-                self.users_ref.document(config["email"]).set(db_config)
+                self.users_ref.document(config["email"]).create(json.loads(json.dumps(db_config)))
             else:
                 doc.set(json.loads(json.dumps(db_config)))
