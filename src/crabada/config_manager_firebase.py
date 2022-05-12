@@ -128,6 +128,9 @@ class ConfigManagerFirebase(ConfigManager):
         new_config: UserConfig = self._get_empty_new_config()
 
         logger.print_ok_blue(f"Checking database for preferences changes...")
+        print(new_config)
+        print()
+        print(self.config)
         new_config["email"] = db_config["preferences"]["notifications"]["email"]["email"]
         new_config["get_email_updates"] = db_config["preferences"]["notifications"]["email"][
             "updatesEnabled"
