@@ -161,6 +161,7 @@ def collect_tus_commission(
     run_all_users = "ALL" in from_users
 
     aliases = set([get_alias_from_user(u) for u in USERS])
+    failed_to_collect = []
 
     for user, config in USERS.items():
         if not run_all_users and user not in from_users:
@@ -211,6 +212,7 @@ def collect_tus_commission(
             logger.print_fail(
                 f"Skipping transfer of {commission_tus:.2f} from {alias}: insufficient funds!"
             )
+            failed_to_collect.append(alias)
             continue
 
         if is_gas_too_high(
@@ -231,12 +233,14 @@ def collect_tus_commission(
                 tx_receipt = tus_w3.get_transaction_receipt(tx_hash)
             except:
                 logger.print_fail(f"Failed to collect from {alias}")
+                failed_to_collect.append(alias)
                 continue
 
             if tx_receipt["status"] != 1:
                 logger.print_fail_arrow(
                     f"Error in tx {commission:.2f} TUS from {from_address}->{to_address}"
                 )
+                failed_to_collect.append(alias)
                 did_fail = True
             else:
                 logger.print_ok_arrow(
@@ -265,6 +269,7 @@ def collect_tus_commission(
     logger.print_bold(
         f"Collected {sum([c for _, c in total_stats['total_commission_tus'].items()])} TUS in commission!!!"
     )
+    logger.print_warn(f"Failed to collect from the following users: {', '.join(failed_to_collect)}")
 
     if dry_run:
         return
