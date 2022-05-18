@@ -30,6 +30,7 @@ class MineLootGameStats(T.TypedDict):
 class LifetimeGameStats(T.TypedDict):
     commission_tus: float
     avax_gas_usd: float
+    gas_tus: float
     MINE: MineLootGameStats
     LOOT: MineLootGameStats
 
@@ -57,6 +58,7 @@ NULL_GAME_STATS = LifetimeGameStats(
     ),
     commission_tus=dict(),
     avax_gas_usd=0.0,
+    gas_tus=0.0,
 )
 
 
@@ -211,19 +213,11 @@ def update_lifetime_stats_format(game_stats: LifetimeGameStats) -> LifetimeGameS
     new_game_stats["MINE"] = MineLootGameStats()
     new_game_stats["LOOT"] = MineLootGameStats()
 
-    if "MINE" in game_stats or "LOOT" in game_stats:
+    if "gas_tus" in game_stats:
         return game_stats
 
-    for k, v in game_stats.items():
-        if k in ["commission_tus", "avax_gas_usd"]:
-            new_game_stats[k] = v
-        elif k not in NULL_GAME_STATS["MINE"].keys():
-            continue
-        elif isinstance(v, (float, int)):
-            new_game_stats["MINE"][k] = v
-            new_game_stats["LOOT"][k] = 0.0
-        else:
-            return game_stats
+    new_game_stats = copy.deepcopy(game_stats)
+    new_game_stats["gas_tus"] = 0.0
     logger.print_normal(f"Old:\n{json.dumps(game_stats, indent=4)}")
     logger.print_bold(f"New:\n{json.dumps(new_game_stats, indent=4)}")
     return new_game_stats
@@ -264,7 +258,7 @@ def delta_game_stats(
 
     diffed_stats = copy.deepcopy(NULL_GAME_STATS)
 
-    for item in ["avax_gas_usd"]:
+    for item in ["avax_gas_usd", "gas_tus"]:
         diffed_stats[item] = user_a_stats[item] - user_b_stats[item]
 
     for item in ["commission_tus"]:
@@ -296,7 +290,7 @@ def merge_game_stats(
 
     merged_stats = copy.deepcopy(NULL_GAME_STATS)
 
-    for item in ["avax_gas_usd"]:
+    for item in ["avax_gas_usd", "gas_tus"]:
         merged_stats[item] += user_a_stats[item]
         merged_stats[item] += user_b_stats[item]
 

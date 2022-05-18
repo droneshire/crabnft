@@ -76,7 +76,7 @@ def get_users_teams() -> T.Tuple[int, int]:
 
 
 def handle_subscription_posts(
-    prices: price.Prices, avg_gas_avax: float, gas_price_gwei: float, avg_reinforce_tus: float
+    prices: price.Prices, avg_gas_tus: float, gas_price_gwei: float, avg_reinforce_tus: float
 ) -> None:
     subscriptions = {
         "HEYA_SUBSCRIPTION": {
@@ -91,7 +91,7 @@ def handle_subscription_posts(
         logger.print_normal(f"Sending subscription profitability update to {subscription}")
         message = get_profitability_message(
             prices,
-            avg_gas_avax,
+            avg_gas_tus,
             gas_price_gwei,
             avg_reinforce_tus,
             details["win_percentages"],
@@ -185,7 +185,7 @@ def run_bot() -> None:
     last_price_update = 0.0
     last_discord_update = time.time()
     last_profitability_update = time.time()
-    avg_gas_avax = Average(DEFAULT_GAS_USED)
+    avg_gas_tus = Average(DEFAULT_GAS_USED)
     avg_reinforce_tus = Average(9.0)
     avg_gas_gwei = Average(50.0)
 
@@ -208,7 +208,7 @@ def run_bot() -> None:
             for bot in bots:
                 bot.set_backoff(reinforcement_backoff)
                 bot.run()
-                avg_gas_avax.update(bot.get_avg_gas_avax())
+                avg_gas_tus.update(bot.get_avg_gas_tus())
                 avg_reinforce_tus.update(bot.get_avg_reinforce_tus())
                 avg_gas_gwei.update(bot.get_avg_gas_gwei())
                 reinforcement_backoff = bot.get_backoff()
@@ -230,7 +230,7 @@ def run_bot() -> None:
                     bot.update_prices(prices.avax_usd, prices.tus_usd, prices.cra_usd)
                     last_price_update = now
 
-            circuit_breaker.end()
+            # circuit_breaker.end()
 
             win_percentages = {}
             for k in totals.keys():
@@ -242,7 +242,7 @@ def run_bot() -> None:
                     )
             profitability_message = get_profitability_message(
                 prices,
-                avg_gas_avax.get_avg(),
+                avg_gas_tus.get_avg(),
                 avg_gas_gwei.get_avg(),
                 avg_reinforce_tus.get_avg(),
                 win_percentages,
@@ -255,7 +255,7 @@ def run_bot() -> None:
 
             if now - last_discord_update > BOT_TOTALS_UPDATE:
                 last_discord_update = now
-                groups = ", ".join(args.groups)
+                groups = ", ".join([str(g) for g in args.groups])
                 message = f"\U0001F980\t**Total TUS mined by groups {groups} bot: {int(gross_tus):,} TUS**\n"
                 for k in totals.keys():
                     message += f"\U0001F916\t**Bot {k.lower()} win percentage: {win_percentages[k]:.2f}%**\n"
@@ -276,17 +276,17 @@ def run_bot() -> None:
 
                 handle_subscription_posts(
                     prices,
-                    avg_gas_avax.get_avg(),
+                    avg_gas_tus.get_avg(),
                     avg_gas_gwei.get_avg(),
                     avg_reinforce_tus.get_avg(),
                 )
 
-            if avg_gas_avax.count > GAS_DOWNSAMPLE_COUNT:
-                avg_gas_avax_val = avg_gas_avax.get_avg()
+            if avg_gas_tus.count > GAS_DOWNSAMPLE_COUNT:
+                avg_gas_tus_val = avg_gas_tus.get_avg()
                 avg_gas_gwei_val = avg_gas_gwei.get_avg()
 
-                if avg_gas_avax_val is not None:
-                    avg_gas_avax.reset(avg_gas_avax.get_avg())
+                if avg_gas_tus_val is not None:
+                    avg_gas_tus.reset(avg_gas_tus.get_avg())
                 if avg_gas_gwei_val is not None:
                     avg_gas_gwei.reset(avg_gas_gwei.get_avg())
 

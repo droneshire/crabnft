@@ -10,6 +10,7 @@ from eth_typing.encoding import HexStr
 from utils import logger
 from web3 import eth, exceptions, Web3
 from web3.contract import Contract, ContractFunction
+from web3.gas_strategies import rpc
 from web3.types import BlockData, Nonce, TxParams, TxReceipt, TxData, Wei
 
 
@@ -17,6 +18,8 @@ from web3.types import BlockData, Nonce, TxParams, TxReceipt, TxData, Wei
 def web3_transaction(err_string_compare: str, handler: T.Callable) -> T.Iterator[None]:
     try:
         yield
+    except exceptions.ContractLogicError as e:
+        logger.print_fail(f"{e}")
     except ValueError as e:
         logger.print_fail(f"{e.args[0]['message']} COMPARE: {err_string_compare}")
         if err_string_compare in e.args[0]["message"]:
@@ -71,34 +74,67 @@ class Web3Client:
         maxMaxFeePerGas = 2 * baseFee + maxPriorityFeePerGas.
         """
         tx: TxParams = {
-            "type": 0x2,
+            "type": self.tx_type,
             "chainId": self.chain_id,
-            "gas": self.gas_limit,
-            "maxFeePerGas": Web3.toWei(self.estimate_max_fee_per_gas_in_gwei(), "gwei"),
-            "maxPriorityFeePerGas": Web3.toWei(self.max_priority_fee_per_gas_in_gwei, "gwei"),
-            "nonce": self.get_nonce(),
+            "from": self.user_address,
         }
+        gas_fee_gwei: T.Optional[float] = None
+
+        if self.tx_type == 1:
+            self.w3.eth.set_gas_price_strategy(rpc.rpc_gas_price_strategy)
+            tx["gasPrice"] = self.w3.eth.generate_gas_price()
+            gas_fee_gwei = float(Web3.fromWei(tx["gasPrice"], "gwei"))
+        elif self.tx_type == 2:
+            tx["maxFeePerGas"] = (Web3.toWei(self.estimate_max_fee_per_gas_in_gwei(), "gwei"),)
+            tx["maxPriorityFeePerGas"] = (
+                Web3.toWei(self.max_priority_fee_per_gas_in_gwei, "gwei"),
+            )
+
+        tx["nonce"] = self.get_nonce()
+
         return tx
 
     def build_transaction_with_value(self, to: Address, value_in_eth: float) -> TxParams:
         """
         Build a transaction involving a transfer of value to an address,
-        where the value is expressed in the blockchain token (e.g. ETH or AVAX).
+        where the value is expressed in the blockchain token (e.g. ETH or AVAX or TUS).
         """
         tx = self.build_base_transaction()
         tx_value: TxParams = {"to": to, "value": self.w3.toWei(value_in_eth, "ether")}
         tx.update(tx_value)
         return tx
 
-    def build_contract_transaction(self, contractFunction: ContractFunction) -> TxParams:
+    def build_transaction_with_value_in_wei(
+        self,
+        to: Address,
+        value_in_wei: Wei,
+    ) -> TxParams:
+        """
+        Build a transaction involving a transfer of value (in Wei) to an address,
+        where the value is expressed in the blockchain token (e.g. ETH or AVAX or TUS).
+        """
+        tx = self.build_base_transaction()
+        extra_params: TxParams = {
+            "to": to,
+            "value": value_in_wei,
+            "gas": self.estimate_gas_for_transfer(to, value_in_wei),  # type: ignore
+        }
+        tx.update(extra_params)
+        return tx
+
+    def build_contract_transaction(
+        self, contractFunction: ContractFunction, value_in_wei: Wei = None
+    ) -> TxParams:
         """
         Build a transaction that involves a contract interation.
 
         Requires passing the contract function as detailed in the docs:
         https://web3py.readthedocs.io/en/stable/web3.eth.account.html#sign-a-contract-transaction
         """
-        baseTx = self.build_base_transaction()
-        return contractFunction.buildTransaction(baseTx)
+        base_tx = self.build_base_transaction()
+        if value_in_wei:
+            base_tx["value"] = value_in_wei
+        return contractFunction.buildTransaction(base_tx)
 
     ####################
     # Sign & send Tx
@@ -214,6 +250,19 @@ class Web3Client:
         self, gas_used_wei: float, gas_price_wei: T.Optional[float] = None
     ) -> Wei:
         return gas_used_wei * gas_price_wei if gas_price_wei is not None else self.w3.eth.gas_price
+
+    def estimate_gas_for_transfer(self, to: Address, value_in_wei: Wei) -> int:
+        """
+        Return the gas that would be required to send some ETH
+        (expressed in Wei) to an address
+        """
+        return self.w3.eth.estimate_gas(
+            {
+                "from": self.user_address,
+                "to": to,
+                "value": value_in_wei,
+            }
+        )
 
     ####################
     # Setters

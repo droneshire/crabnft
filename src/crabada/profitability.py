@@ -9,6 +9,9 @@ from utils.price import Prices
 
 NORMALIZED_TIME = 4.0
 
+CRA_MULTIPLIER = 3.0
+TUS_TO_CRA_RATIO: int = int(334.125 / (4.125 * CRA_MULTIPLIER))
+
 
 class Result:
     WIN = "WIN"
@@ -296,7 +299,7 @@ def get_expected_tus(game_type: Scenarios, prices: Prices, win_percent: float) -
 def get_expected_game_profit(
     game_type: str,
     prices: Prices,
-    avg_gas_price_avax: float,
+    avg_gas_price_tus: float,
     avg_reinforce_tus: float,
     win_percent: float,
     commission_percent: float,
@@ -304,15 +307,14 @@ def get_expected_game_profit(
     verbose: bool = False,
 ) -> float:
     revenue_tus = get_expected_tus(game_type, prices, win_percent)
-    avg_gas_per_game_avax = avg_gas_price_avax * (4 if do_reinforce else 2)
-    avg_gas_per_game_tus = prices.avax_to_tus(avg_gas_per_game_avax)
+    avg_gas_per_game_tus = avg_gas_price_tus * (4 if do_reinforce else 2)
     reinforcement_per_game_tus = 2.0 * avg_reinforce_tus if do_reinforce else 0.0
     commission_tus = (commission_percent / 100.0) * revenue_tus
 
     profit_tus = revenue_tus - avg_gas_per_game_tus - reinforcement_per_game_tus - commission_tus
     if verbose:
         logger.print_normal(
-            f"[{game_type}]: Win %: {win_percent:.2f}%, AVAX Per Game: {avg_gas_per_game_avax:.2f}, AVAX: ${prices.avax_usd:.2f}, TUS: ${prices.tus_usd:.2f}, CRA: ${prices.cra_usd:.2f}"
+            f"[{game_type}]: Win %: {win_percent:.2f}%, AVAX: ${prices.avax_usd:.2f}, TUS: ${prices.tus_usd:.2f}, CRA: ${prices.cra_usd:.2f}"
         )
         logger.print_normal(
             f"[{game_type}]: Revenue: {revenue_tus:.2f}, Gas: {avg_gas_per_game_tus:.2f}, Commission: {commission_tus:.2f}, Reinforce: {reinforcement_per_game_tus:.2f}, Profit: {profit_tus:.2f}\n"
@@ -328,10 +330,9 @@ def get_actual_game_profit(
     prices = Prices(game_stats["avax_usd"], game_stats["tus_usd"], game_stats["cra_usd"])
     revenue_tus = game_stats["reward_tus"] + prices.cra_to_tus(game_stats["reward_cra"])
 
-    gas_used_avax = sum(
+    gas_used_tus = sum(
         [game_stats[g] for g in ["gas_close", "gas_start", "gas_reinforce1", "gas_reinforce2"]]
     )
-    gas_used_tus = prices.avax_to_tus(gas_used_avax)
 
     reinforcement_used_tus = game_stats["reinforce1"] + game_stats["reinforce2"]
 
@@ -348,10 +349,34 @@ def get_actual_game_profit(
     return profit_tus, profit_usd
 
 
+def get_rewards_from_tx_receipt(
+    tx_receipt: T.Any, address: Address, key: str
+) -> T.Tuple[T.Optional[float], T.Optional[float]]:
+    tus_rewards = None
+    cra_rewards = None
+
+    cra_w3 = T.cast(
+        CraSwimmerWeb3Client,
+        (
+            CraSwimmerWeb3Client()
+            .set_credentials(address, key)
+            .set_node_uri(CraSwimmerWeb3Client.NODE_URL)
+        ),
+    )
+    logs = cra_w3.contract.events.Transfer().processReceipt(tx_receipt)
+
+    for log in logs:
+        if log.get("address", "").lower() == CrabadaWeb3Client.CRA_CONTRACT_ADDRESS.lower():
+            cra_rewards = wei_to_cra_raw(int(log["args"]["value"]))
+            tus_rewards = int(cra_rewards * TUS_TO_CRA_RATIO)
+
+    return (tus_rewards, cra_rewards)
+
+
 def is_idle_game_transaction_profitable(
     game_type: str,
     prices: Prices,
-    avg_gas_price_avax: float,
+    avg_gas_price_tus: float,
     avg_reinforce_tus: float,
     win_percent: float,
     commission_percent: float,
@@ -362,7 +387,7 @@ def is_idle_game_transaction_profitable(
         get_expected_game_profit(
             game_type,
             prices,
-            avg_gas_price_avax,
+            avg_gas_price_tus,
             avg_reinforce_tus,
             win_percent,
             commission_percent,
@@ -376,7 +401,7 @@ def is_idle_game_transaction_profitable(
 def get_scenario_profitability(
     team: Team,
     prices: Prices,
-    avg_gas_price_avax: float,
+    avg_gas_price_tus: float,
     avg_reinforce_tus: float,
     win_percentages: T.Dict[MineOption, float],
     commission_percent: float,
@@ -435,13 +460,13 @@ def get_scenario_profitability(
         if verbose:
             logger.print_normal(f"Testing scenario: {scenario_to_check}")
             logger.print_normal(f"Do reinforce: {do_reinforce}")
-            logger.print_normal(f"Gas: {avg_gas_price_avax}")
+            logger.print_normal(f"Gas: {avg_gas_price_tus}")
             logger.print_normal(f"Reinforce cost (TUS): {reinforce_tus:.2f}")
 
         profit_tus = get_expected_game_profit(
             scenario_to_check,
             prices,
-            avg_gas_price_avax,
+            avg_gas_price_tus,
             reinforce_tus,
             win_percentages[MineOption.LOOT if is_looting else MineOption.MINE],
             commission_percent,
@@ -459,7 +484,7 @@ def get_scenario_profitability(
 def is_profitable_to_take_action(
     team: Team,
     prices: Prices,
-    avg_gas_price_avax: float,
+    avg_gas_price_tus: float,
     avg_reinforce_tus: float,
     win_percentages: T.Dict[MineOption, float],
     commission_percent: float,
@@ -472,7 +497,7 @@ def is_profitable_to_take_action(
     profit_tus = get_scenario_profitability(
         team,
         prices,
-        avg_gas_price_avax,
+        avg_gas_price_tus,
         avg_reinforce_tus,
         win_percentages,
         commission_percent,
@@ -486,7 +511,7 @@ def is_profitable_to_take_action(
 
 def get_profitability_message(
     prices: Prices,
-    avg_gas_avax: float,
+    avg_gas_tus: float,
     gas_price_gwei: float,
     avg_reinforce_tus: float,
     win_percentages: T.Dict[str, float],
@@ -499,7 +524,7 @@ def get_profitability_message(
     PROFIT_HYSTERESIS = 10
 
     data_points = {
-        "avg_tx_gas_avax": avg_gas_avax,
+        "avg_tx_gas_tus": avg_gas_tus,
         "avg_gas_price_gwei": gas_price_gwei,
         "avg_mining_win": win_percentages["MINE"],
         "avg_loot_win": win_percentages["LOOT"],
@@ -519,8 +544,10 @@ def get_profitability_message(
         return ""
 
     message = "**Profitability Update**\n"
-    message += "{}\t\t{}\n".format(f"**Avg Tx Gas \U000026FD**:", f"{avg_gas_avax:.5f} AVAX")
-    message += "{}\t\t{}\n".format(f"**Avg Gas Price \U000026FD**:", f"{gas_price_gwei:.6f} gwei")
+    message += "{}\t\t{}\n".format(f"**Avg Tx Gas \U000026FD**:", f"{avg_gas_tus:.3f} TUS")
+    message += "{}\t\t{}\n".format(
+        f"**Avg Gas Price \U000026FD**:", f"{gas_price_gwei/1000.0:.2f} TUS"
+    )
     message += "{}\t{}\n".format(f"**Avg Mining Win % \U0001F3C6**:", f"{percentages['MINE']:.2f}%")
     message += "{}\t{}\n".format(
         f"**Avg Looting Win % \U0001F480**:", f"{percentages['LOOT']:.2f}%"
@@ -531,7 +558,7 @@ def get_profitability_message(
 
     message += f"**Prices**\n"
     message += (
-        f"AVAX: ${prices.avax_usd:.3f}, TUS: ${prices.tus_usd:.3f}, CRA: ${prices.cra_usd:.3f}\n\n"
+        f"AVAX: ${prices.avax_usd:.2f}, TUS: ${prices.tus_usd:.2f}, CRA: ${prices.cra_usd:.2f}\n\n"
     )
 
     message += f"**Expected Profit (EP)**\n"
@@ -562,7 +589,7 @@ def get_profitability_message(
             win_percent = percentages["MINE"]
 
         if game == Scenarios.TavernThreeMpCrabs:
-            profit_tus = avg_reinforce_tus * 3 - prices.avax_to_tus(avg_gas_avax) / 6
+            profit_tus = avg_reinforce_tus * 3 - avg_gas_tus / 6
         else:
             do_reinforce = game in REINFORCE_SCENARIOS
             dont_pay_for_reinforcements = game in NO_REINFORCE_PAY_SCENARIOS
@@ -570,7 +597,7 @@ def get_profitability_message(
             profit_tus = get_expected_game_profit(
                 game,
                 prices,
-                avg_gas_avax,
+                avg_gas_tus,
                 reinforce_tus,
                 win_percent,
                 commission_percent,

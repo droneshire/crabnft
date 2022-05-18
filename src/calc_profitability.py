@@ -11,7 +11,7 @@ from utils.user import get_alias_from_user
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--avg-gas-avax", type=float, default=0.01)
+    parser.add_argument("--avg-gas-tus", type=float, default=2.03)
     parser.add_argument("--avg-reinforce-tus", type=float, default=14.0)
     parser.add_argument("--commission-percent", type=float, default=10.0)
     parser.add_argument("--gas-price-gwei", type=float, default=STATIC_WIN_PERCENTAGES["MINE"])
@@ -40,7 +40,7 @@ def calc_profits() -> None:
         commission_percent = args.commission_percent
         get_profitability_message(
             prices,
-            args.avg_gas_avax,
+            args.avg_gas_tus,
             args.gas_price_gwei,
             args.avg_reinforce_tus,
             win_percentages,
@@ -71,7 +71,7 @@ def calc_profits() -> None:
 
         get_profitability_message(
             prices,
-            args.avg_gas_avax,
+            args.avg_gas_tus,
             args.gas_price_gwei,
             args.avg_reinforce_tus,
             win_percentages,

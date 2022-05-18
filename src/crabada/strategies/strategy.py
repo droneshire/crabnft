@@ -11,6 +11,7 @@ from crabada.profitability import REWARDS_TUS, Result, Scenarios
 from crabada.types import IdleGame, Team, TeamMember
 from utils import logger
 from utils.price import Tus, wei_to_cra_raw, wei_to_tus_raw
+from web3_utils.cra_swimmer_web3_client import CraSwimmerWeb3Client
 
 
 class GameStage:
@@ -101,19 +102,6 @@ class Strategy:
 
     def have_reinforced_at_least_once(self, mine: IdleGame) -> bool:
         raise NotImplementedError
-
-    def _get_rewards_from_tx_receipt(
-        self, tx_receipt: T.Any
-    ) -> T.Tuple[T.Optional[float], T.Optional[float]]:
-        tus_rewards = None
-        cra_rewards = None
-
-        for log in tx_receipt.get("logs", []):
-            if log.get("address", "") == CrabadaWeb3Client.TUS_CONTRACT_ADDRESS:
-                tus_rewards = wei_to_tus_raw(int(log["data"], 16))
-            elif log.get("address", "") == CrabadaWeb3Client.CRA_CONTRACT_ADDRESS:
-                cra_rewards = wei_to_cra_raw(int(log["data"], 16))
-        return (tus_rewards, cra_rewards)
 
     def _use_bp_reinforcement(
         self, mine: IdleGame, group_id: int, use_own_crabs: bool = False

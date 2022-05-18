@@ -45,16 +45,15 @@ class MiningStrategy(Strategy):
             except:
                 pass
 
-        avax_gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
-        tus, cra = self._get_rewards_from_tx_receipt(tx_receipt)
+        gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         return CrabadaTransaction(
             tx_hash,
             "MINE",
-            tus,
-            cra,
+            None,
+            None,
             tx_receipt["status"] == 1,
             None,
-            avax_gas,
+            gas,
             tx_receipt.get("gasUsed", 0.0),
         )
 
@@ -69,8 +68,10 @@ class MiningStrategy(Strategy):
             except:
                 pass
 
-        avax_gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
-        tus, cra = self._get_rewards_from_tx_receipt(tx_receipt)
+        gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        tus, cra = self._get_rewards_from_tx_receipt(
+            tx_receipt, self.config_mgr.config["address"], self.config_mgr.config["crabada_key"]
+        )
         if tus is not None:
             result = self._get_game_result(tus)
         else:
@@ -82,7 +83,7 @@ class MiningStrategy(Strategy):
             cra,
             tx_receipt["status"] == 1,
             result,
-            avax_gas,
+            gas,
             tx_receipt.get("gasUsed", 0.0),
         )
 
@@ -97,17 +98,16 @@ class MiningStrategy(Strategy):
             except:
                 pass
 
-        avax_gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
-        tus, cra = self._get_rewards_from_tx_receipt(tx_receipt)
+        gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
 
         return CrabadaTransaction(
             tx_hash,
             "MINE",
-            tus,
-            cra,
+            None,
+            None,
             tx_receipt["status"] == 1,
             None,
-            avax_gas,
+            gas,
             tx_receipt.get("gasUsed", 0.0),
         )
 

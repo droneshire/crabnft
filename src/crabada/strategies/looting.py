@@ -43,8 +43,10 @@ class LootingStrategy(Strategy):
         tx_hash = self.crabada_w3.settle_game(game_id)
         tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
 
-        avax_gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
-        tus, cra = self._get_rewards_from_tx_receipt(tx_receipt)
+        gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        tus, cra = self._get_rewards_from_tx_receipt(
+            tx_receipt, self.config_mgr.config["address"], self.config_mgr.config["crabada_key"]
+        )
         if tus is not None:
             result = self._get_game_result(tus)
         else:
@@ -56,7 +58,7 @@ class LootingStrategy(Strategy):
             cra,
             tx_receipt["status"] == 1,
             result,
-            avax_gas,
+            gas,
             tx_receipt.get("gasUsed", 0.0),
         )
 
@@ -65,16 +67,15 @@ class LootingStrategy(Strategy):
         tx_hash = self.crabada_w3.reinforce_attack(game_id, crabada_id, borrow_price)
         tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
 
-        avax_gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
-        tus, cra = self._get_rewards_from_tx_receipt(tx_receipt)
+        gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         return CrabadaTransaction(
             tx_hash,
             "LOOT",
-            tus,
-            cra,
+            None,
+            None,
             tx_receipt["status"] == 1,
             None,
-            avax_gas,
+            gas,
             tx_receipt.get("gasUsed", 0.0),
         )
 
