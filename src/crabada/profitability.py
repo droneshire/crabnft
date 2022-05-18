@@ -7,9 +7,8 @@ from eth_typing import Address
 from crabada.types import Team, CrabadaClass, MineOption, CRABADA_ID_TO_CLASS
 from utils import csv_logger, logger
 from utils.general import TIMESTAMP_FORMAT
-from utils.price import Prices
+from utils.price import Prices, wei_to_cra_raw, wei_to_tus_raw
 from web3_utils.cra_swimmer_web3_client import CraSwimmerWeb3Client
-
 
 NORMALIZED_TIME = 4.0
 
