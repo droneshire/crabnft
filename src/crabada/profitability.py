@@ -371,6 +371,8 @@ def get_rewards_from_tx_receipt(
     try:
         logs = cra_w3.contract.events.Transfer().processReceipt(tx_receipt)
     except:
+        logger.print_fail(f"Failed to parse TX Receipt")
+        logger.print_normal(f"{tx_receipt}")
         logs = []
 
     for log in logs:
