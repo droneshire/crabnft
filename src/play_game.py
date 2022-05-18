@@ -230,7 +230,7 @@ def run_bot() -> None:
                     bot.update_prices(prices.avax_usd, prices.tus_usd, prices.cra_usd)
                     last_price_update = now
 
-            # circuit_breaker.end()
+            circuit_breaker.end()
 
             win_percentages = {}
             for k in totals.keys():
