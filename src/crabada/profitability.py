@@ -2,6 +2,8 @@ import datetime
 import os
 import typing as T
 
+from eth_typing import Address
+
 from crabada.types import Team, CrabadaClass, MineOption, CRABADA_ID_TO_CLASS
 from utils import csv_logger, logger
 from utils.general import TIMESTAMP_FORMAT
