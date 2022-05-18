@@ -5,7 +5,7 @@ from web3.types import Wei
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
 from crabada.factional_advantage import get_faction_adjusted_battle_point
-from crabada.profitability import REWARDS_TUS, Result
+from crabada.profitability import get_rewards_from_tx_receipt, REWARDS_TUS, Result
 from crabada.strategies.strategy import CrabadaTransaction, GameStage, Strategy
 from crabada.types import IdleGame, Team, TeamMember
 from utils import logger
@@ -44,7 +44,7 @@ class LootingStrategy(Strategy):
         tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
 
         gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
-        tus, cra = self._get_rewards_from_tx_receipt(
+        tus, cra = get_rewards_from_tx_receipt(
             tx_receipt, self.config_mgr.config["address"], self.config_mgr.config["crabada_key"]
         )
         if tus is not None:
