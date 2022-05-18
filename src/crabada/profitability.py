@@ -370,7 +370,7 @@ def get_rewards_from_tx_receipt(
     logs = cra_w3.contract.events.Transfer().processReceipt(tx_receipt)
 
     for log in logs:
-        if log.get("address", "").lower() == CrabadaWeb3Client.CRA_CONTRACT_ADDRESS.lower():
+        if log.get("address", "").lower() == CraSwimmerWeb3Client.CRA_CONTRACT_ADDRESS.lower():
             cra_rewards = wei_to_cra_raw(int(log["args"]["value"]))
             tus_rewards = int(cra_rewards * TUS_TO_CRA_RATIO)
 
