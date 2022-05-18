@@ -294,8 +294,8 @@ def merge_game_stats(
     merged_stats = copy.deepcopy(NULL_GAME_STATS)
 
     for item in ["avax_gas_usd", "gas_tus"]:
-        merged_stats[item] = merged_stats.get(item, 0) + user_a_stats[item]
-        merged_stats[item] = merged_stats.get(item, 0) + user_b_stats[item]
+        merged_stats[item] = merged_stats.get(item, 0.0) + user_a_stats.get(item, 0.0)
+        merged_stats[item] = merged_stats.get(item, 0.0) + user_b_stats.get(item, 0.0)
 
     for item in ["commission_tus"]:
         for k, v in user_a_stats[item].items():
