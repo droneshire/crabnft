@@ -11,7 +11,6 @@ from crabada.profitability import REWARDS_TUS, Result, Scenarios
 from crabada.types import IdleGame, Team, TeamMember
 from utils import logger
 from utils.price import Tus, wei_to_cra_raw, wei_to_tus_raw
-from web3_utils.cra_swimmer_web3_client import CraSwimmerWeb3Client
 
 
 class GameStage:

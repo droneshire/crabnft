@@ -8,6 +8,8 @@ from crabada.types import Team, CrabadaClass, MineOption, CRABADA_ID_TO_CLASS
 from utils import csv_logger, logger
 from utils.general import TIMESTAMP_FORMAT
 from utils.price import Prices
+from web3_utils.cra_swimmer_web3_client import CraSwimmerWeb3Client
+
 
 NORMALIZED_TIME = 4.0
 
