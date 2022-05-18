@@ -259,7 +259,10 @@ def delta_game_stats(
     diffed_stats = copy.deepcopy(NULL_GAME_STATS)
 
     for item in ["avax_gas_usd", "gas_tus"]:
-        diffed_stats[item] = user_a_stats[item] - user_b_stats[item]
+        if item not in user_a_stats or item not in user_b_stats:
+            diffed_stats[item] = 0.0
+        else:
+            diffed_stats[item] = user_a_stats[item] - user_b_stats[item]
 
     for item in ["commission_tus"]:
         for k, v in user_a_stats[item].items():
@@ -291,8 +294,8 @@ def merge_game_stats(
     merged_stats = copy.deepcopy(NULL_GAME_STATS)
 
     for item in ["avax_gas_usd", "gas_tus"]:
-        merged_stats[item] += user_a_stats[item]
-        merged_stats[item] += user_b_stats[item]
+        merged_stats[item] = merged_stats.get(item, 0) + user_a_stats[item]
+        merged_stats[item] = merged_stats.get(item, 0) + user_b_stats[item]
 
     for item in ["commission_tus"]:
         for k, v in user_a_stats[item].items():
