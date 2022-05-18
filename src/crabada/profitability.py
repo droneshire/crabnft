@@ -331,6 +331,8 @@ def get_actual_game_profit(
     verbose: bool = False,
 ) -> T.Tuple[float, float]:
     prices = Prices(game_stats["avax_usd"], game_stats["tus_usd"], game_stats["cra_usd"])
+    if game_stats["reward_tus"] is None or game_stats["reward_cra"] is None:
+        return 0.0, 0.0
     revenue_tus = game_stats["reward_tus"] + prices.cra_to_tus(game_stats["reward_cra"])
 
     gas_used_tus = sum(
@@ -366,7 +368,10 @@ def get_rewards_from_tx_receipt(
             .set_node_uri(CraSwimmerWeb3Client.NODE_URL)
         ),
     )
-    logs = cra_w3.contract.events.Transfer().processReceipt(tx_receipt)
+    try:
+        logs = cra_w3.contract.events.Transfer().processReceipt(tx_receipt)
+    except:
+        logs = []
 
     for log in logs:
         if log.get("address", "").lower() == CraSwimmerWeb3Client.CRA_CONTRACT_ADDRESS.lower():
