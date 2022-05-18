@@ -24,21 +24,21 @@ class CrabadaWeb2Client:
     list for list endpoints, a dict for specific endpoints)
     """
 
-    BASE_URL = "https://idle-api.crabada.com/public/idle"
+    BASE_URL = "https://idle-game-api.crabada.com/public/idle"
 
     BROWSER_HEADERS = {
-        "authority": "idle-api.crabada.com",
+        "authority": "idle-game-api.crabada.com",
         "accept": "application/json, text/plain, */*",
         "accept-language": "en-GB,en-US;q=0.9,en;q=0.8",
         "cache-control": "no-cache",
-        "origin": "https://play.crabada.com",
+        "origin": "https://idle.crabada.com",
         "pragma": "no-cache",
-        "referer": "https://play.crabada.com/",
+        "referer": "https://idle.crabada.com/",
         "sec-fetch-dest": "empty",
         "sec-fetch-mode": "cors",
         "sec-fetch-site": "same-site",
         "sec-gpc": "1",
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.79 Safari/537.36",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36",
     }
 
     # reinforcement stuff

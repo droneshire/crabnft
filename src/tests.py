@@ -38,7 +38,7 @@ TEST_CONFIG = UserConfig(
     breed_crabs=[],
     mining_strategy="PreferOwnMpCrabsAndDelayReinforcement",
     looting_strategy="PreferOwnBpCrabsAndDelayReinforcement",
-    max_gas_price_gwei=95.0,
+    max_gas_price_gwei=15000.0,
     max_reinforcement_price_tus=24.0,
     commission_percent_per_mine={
         "": 10.0,
@@ -202,7 +202,7 @@ def test_profitability_calc() -> None:
     """
 
     prices = Prices(60.504, 0.021, 0.389)
-    avg_gas_price_avax = 0.01712
+    avg_gas_price_tus = 0.01712
     avg_reinforce_tus = 7.86
     win_percentages = {
         "MINE": 40.0,
@@ -217,7 +217,7 @@ def test_profitability_calc() -> None:
     profit_tus = get_scenario_profitability(
         test_team,
         prices,
-        avg_gas_price_avax,
+        avg_gas_price_tus,
         avg_reinforce_tus,
         win_percentages,
         0.0,
@@ -235,11 +235,11 @@ def test_profitability_calc() -> None:
         crabada_3_class=CrabadaClass.BULK,
     )
 
-    avg_gas_price_avax = 0.005
+    avg_gas_price_tus = 0.005
     profit_tus = get_scenario_profitability(
         test_team,
         prices,
-        avg_gas_price_avax,
+        avg_gas_price_tus,
         avg_reinforce_tus,
         win_percentages,
         0.0,
@@ -254,7 +254,7 @@ def test_profitability_calc() -> None:
     profit_tus = get_scenario_profitability(
         test_team,
         prices,
-        avg_gas_price_avax,
+        avg_gas_price_tus,
         avg_reinforce_tus,
         win_percentages,
         0.0,
@@ -265,11 +265,11 @@ def test_profitability_calc() -> None:
     )
     assert math.isclose(profit_tus, 207.36, abs_tol=0.1), "Failed MINE +10% SELF REINFORCE test"
 
-    avg_gas_price_avax = 0.01712
+    avg_gas_price_tus = 0.01712
     profit_tus = get_scenario_profitability(
         test_team,
         prices,
-        avg_gas_price_avax,
+        avg_gas_price_tus,
         avg_reinforce_tus,
         win_percentages,
         0.0,
@@ -285,7 +285,7 @@ def test_profitability_calc() -> None:
     profit_tus = get_scenario_profitability(
         test_team,
         prices,
-        avg_gas_price_avax,
+        avg_gas_price_tus,
         avg_reinforce_tus,
         win_percentages,
         0.0,
@@ -300,7 +300,7 @@ def test_profitability_calc() -> None:
     profit_tus = get_scenario_profitability(
         test_team,
         prices,
-        avg_gas_price_avax,
+        avg_gas_price_tus,
         avg_reinforce_tus,
         win_percentages,
         0.0,
@@ -314,7 +314,7 @@ def test_profitability_calc() -> None:
     profit_tus = get_scenario_profitability(
         test_team,
         prices,
-        avg_gas_price_avax,
+        avg_gas_price_tus,
         avg_reinforce_tus,
         win_percentages,
         0.0,
@@ -328,7 +328,7 @@ def test_profitability_calc() -> None:
     profit_tus = get_scenario_profitability(
         test_team,
         prices,
-        avg_gas_price_avax,
+        avg_gas_price_tus,
         avg_reinforce_tus,
         win_percentages,
         0.0,
@@ -342,7 +342,7 @@ def test_profitability_calc() -> None:
     profit_tus = get_scenario_profitability(
         test_team,
         prices,
-        avg_gas_price_avax,
+        avg_gas_price_tus,
         avg_reinforce_tus,
         win_percentages,
         0.0,
@@ -356,7 +356,7 @@ def test_profitability_calc() -> None:
     profit_tus = get_scenario_profitability(
         test_team,
         prices,
-        avg_gas_price_avax,
+        avg_gas_price_tus,
         avg_reinforce_tus,
         win_percentages,
         0.0,

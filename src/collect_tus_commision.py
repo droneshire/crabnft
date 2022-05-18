@@ -18,8 +18,8 @@ from utils.price import is_gas_too_high
 from utils.price import Tus
 from utils.security import decrypt
 from utils.user import get_alias_from_user
-from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
-from web3_utils.tus_web3_client import TusWeb3Client
+from web3_utils.swimmer_network_web3_client import SwimmerNetworkClient
+from web3_utils.tus_swimmer_web3_client import TusSwimmerWeb3Client
 
 MAX_COLLECTION_GAS_GWEI = 65
 MINIMUM_TUS_TO_TRANSFER = 25
@@ -112,11 +112,11 @@ def send_collection_notice(
         )
 
         tus_w3 = T.cast(
-            TusWeb3Client,
+            TusSwimmerWeb3Client,
             (
-                TusWeb3Client()
+                TusSwimmerWeb3Client()
                 .set_credentials(config["address"], config["crabada_key"])
-                .set_node_uri(AvalancheCWeb3Client.AVAX_NODE_URL)
+                .set_node_uri(SwimmerNetworkClient.NODE_URL)
                 .set_dry_run(dry_run)
             ),
         )
@@ -187,11 +187,11 @@ def collect_tus_commission(
         from_address = config["address"]
 
         tus_w3 = T.cast(
-            TusWeb3Client,
+            TusSwimmerWeb3Client,
             (
-                TusWeb3Client()
+                TusSwimmerWeb3Client()
                 .set_credentials(from_address, crabada_key)
-                .set_node_uri(AvalancheCWeb3Client.AVAX_NODE_URL)
+                .set_node_uri(AvalancheCWeb3Client.NODE_URL)
                 .set_dry_run(dry_run)
             ),
         )
@@ -224,12 +224,14 @@ def collect_tus_commission(
             continue
 
         did_fail = False
+        tx_hashes = []
         for to_address, commission in game_stats["commission_tus"].items():
             logger.print_bold(
                 f"Attempting to send commission of {commission_tus:.2f} TUS from {alias} -> {to_address}..."
             )
             try:
                 tx_hash = tus_w3.transfer_tus(to_address, commission)
+                tx_hashes.append(tx_hash)
                 tx_receipt = tus_w3.get_transaction_receipt(tx_hash)
             except:
                 logger.print_fail(f"Failed to collect from {alias}")
@@ -260,7 +262,10 @@ def collect_tus_commission(
             new_commission = sum([c for _, c in game_stats["commission_tus"].items()])
             message = f"\U0001F980  Commission Collection: \U0001F980\n"
             message += f"Successful tx of {commission_tus:.2f} TUS from {alias}\n"
-            message += f"Explorer: https://snowtrace.io/address/{from_address}\n\n"
+            transactions = "\n\t".join(
+                [f"https://explorer.swimmer.network/tx/{t}" for t in tx_hashes]
+            )
+            message += f"Explorer: {transactions}\n\n"
             message += f"New TUS commission balance: {new_commission} TUS\n"
             logger.print_ok_blue(message)
             if not dry_run:

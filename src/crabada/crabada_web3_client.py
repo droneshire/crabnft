@@ -6,22 +6,19 @@ from eth_typing import Address
 from eth_typing.encoding import HexStr
 from web3.types import TxParams, Wei
 from web3_utils.web3_client import Web3Client
-from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
+from web3_utils.swimmer_network_web3_client import SwimmerNetworkClient
 
 
-class CrabadaWeb3Client(AvalancheCWeb3Client):
+class CrabadaWeb3Client(SwimmerNetworkClient):
     """
     Interact with a smart contract of the game Crabada
 
-    The contract resides on the Avalanche blockchain; here's the
-    explorer URL:
-    https://snowtrace.io/address/0x82a85407bd612f52577909f4a58bfc6873f14da8#tokentxns
+    The contract resides on the Swimmer subnet blockchain; here's
+    the URL on Subnet explorer:
+    https://subnets.avax.network/swimmer/mainnet/explorer/address/0x9ab9e81Be39b73de3CCd9408862b1Fc6D2144d2B
     """
 
-    TUS_CONTRACT_ADDRESS = Address("0xf693248F96Fe03422FEa95aC0aFbBBc4a8FdD172")
-    CRA_CONTRACT_ADDRESS = Address("0xA32608e873F9DdEF944B24798db69d80Bbb4d1ed")
-
-    contract_address = T.cast(Address, "0x82a85407bd612f52577909f4a58bfc6873f14da8")
+    contract_address = T.cast(Address, "0x9ab9e81Be39b73de3CCd9408862b1Fc6D2144d2B")
     this_dir = os.path.dirname(os.path.realpath(__file__))
     abi_dir = os.path.join(os.path.dirname(this_dir), "web3_utils", "abi", "abi-crabada.json")
     abi = Web3Client._get_contract_abi_from_file(abi_dir)
@@ -33,12 +30,12 @@ class CrabadaWeb3Client(AvalancheCWeb3Client):
         tx: TxParams = self.build_contract_transaction(self.contract.functions.startGame(team_id))
         return self.sign_and_send_transaction(tx)
 
-    def attack(self, game_id: int, team_id: int) -> HexStr:
+    def attack(self, game_id: int, team_id: int, expired_time: int, certificate: int) -> HexStr:
         """
         Attack an open mine
         """
         tx: TxParams = self.build_contract_transaction(
-            self.contract.functions.attack(game_id, team_id)
+            self.contract.functions.attack(game_id, team_id, expired_time, certificate)
         )
         return self.sign_and_send_transaction(tx)
 
@@ -56,22 +53,24 @@ class CrabadaWeb3Client(AvalancheCWeb3Client):
         tx: TxParams = self.build_contract_transaction(self.contract.functions.settleGame(game_id))
         return self.sign_and_send_transaction(tx)
 
-    def reinforce_defense(self, game_id: int, crabadaId: int, borrowPrice: Wei) -> HexStr:
+    def reinforce_defense(self, game_id: int, crabadaId: int, borrow_price: Wei) -> HexStr:
         """
         Hire a crab from the tavern to reinforce the mining team; the
         price must be expressed in Wei (1 TUS = 10^18 Wei)
         """
         tx: TxParams = self.build_contract_transaction(
-            self.contract.functions.reinforceDefense(game_id, crabadaId, borrowPrice)
+            self.contract.functions.reinforceDefense(game_id, crabadaId, borrow_price),
+            value_in_wei=borrow_price,
         )
         return self.sign_and_send_transaction(tx)
 
-    def reinforce_attack(self, game_id: int, crabadaId: int, borrowPrice: Wei) -> HexStr:
+    def reinforce_attack(self, game_id: int, crabadaId: int, borrow_price: Wei) -> HexStr:
         """
         Hire a crab from the tavern to reinforce the looting team;
         the price must be expressed in Wei (1 TUS = 10^18 Wei)
         """
         tx: TxParams = self.build_contract_transaction(
-            self.contract.functions.reinforceAttack(game_id, crabadaId, borrowPrice)
+            self.contract.functions.reinforceAttack(game_id, crabadaId, borrow_price),
+            value_in_wei=borrow_price,
         )
         return self.sign_and_send_transaction(tx)

@@ -9,7 +9,7 @@ import typing as T
 from firebase_admin import firestore
 from firebase_admin import credentials
 
-from config import USERS
+from config import USERS, SMALL_TEAM_GAS_LIMIT
 from crabada.game_stats import get_game_stats
 from crabada.types import MineOption
 from crabada.config_manager import ConfigManager
@@ -139,7 +139,7 @@ class ConfigManagerFirebase(ConfigManager):
 
         logger.print_ok_blue(f"Checking database for strategy setting changes...")
         new_config["should_reinforce"] = db_config["strategy"]["reinforceEnabled"]
-        new_config["max_gas_price_gwei"] = float(db_config["strategy"]["maxGas"])
+        new_config["max_gas_price_gwei"] = SMALL_TEAM_GAS_LIMIT
         new_config["max_reinforcement_price_tus"] = float(db_config["strategy"]["maxReinforcement"])
 
         logger.print_ok_blue(f"Checking database for team changes...")
@@ -303,7 +303,7 @@ class ConfigManagerFirebase(ConfigManager):
                 "reinforcingCrabs": {},
                 "teams": {},
                 "maxReinforcement": config["max_reinforcement_price_tus"],
-                "maxGas": config["max_gas_price_gwei"],
+                "maxGas": 0,
             }
 
             for team, value in config["mining_teams"].items():
@@ -335,6 +335,8 @@ class ConfigManagerFirebase(ConfigManager):
                 logger.print_normal(f"{json.dumps(db_config, indent=4)}")
 
             if doc is None:
-                self.users_ref.document(config["email"].lower()).create(json.loads(json.dumps(db_config)))
+                self.users_ref.document(config["email"].lower()).create(
+                    json.loads(json.dumps(db_config))
+                )
             else:
                 doc.set(json.loads(json.dumps(db_config)))
