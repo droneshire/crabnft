@@ -546,7 +546,7 @@ def get_profitability_message(
     if prices.avax_usd is None or prices.tus_usd is None or prices.cra_usd is None:
         return ""
 
-    message = "**Profitability Update**\n"
+    message = "**Swimmer Profitability Update**\n"
     message += "{}\t\t{}\n".format(f"**Avg Tx Gas \U000026FD**:", f"{avg_gas_tus:.3f} TUS")
     message += "{}\t\t{}\n".format(
         f"**Avg Gas Price \U000026FD**:", f"{gas_price_gwei/1000.0:.2f} TUS"
