@@ -16,6 +16,9 @@ from utils.user import get_alias_from_user
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--user", choices=sorted(list(USERS.keys())) + ["ALL"], default="ALL")
+    parser.add_argument(
+        "--from-crabada", action="store_true", help="setup teams by querying address"
+    )
     return parser.parse_args()
 
 
@@ -31,7 +34,10 @@ def update_firebase_db() -> None:
 
     for user in users:
         cm = ConfigManagerFirebase(user, USERS[user], [], "")
-        cm.update_user_from_local_config(user)
+        if args.from_crabada:
+            cm.update_user_from_crabada(user)
+        else:
+            cm.update_user_from_local_config(user)
 
 
 if __name__ == "__main__":

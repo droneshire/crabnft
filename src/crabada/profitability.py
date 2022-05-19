@@ -289,11 +289,11 @@ REWARDS_TUS: T.Dict[str, T.Dict[str, float]] = {
 def get_expected_tus(game_type: Scenarios, prices: Prices, win_percent: float) -> float:
     win_decimal = win_percent / 100.0
     winnings_tus = REWARDS_TUS[game_type][Result.WIN]["TUS"]
-    winnings_cra = REWARDS_TUS[game_type][Result.WIN]["CRA"]
+    winnings_cra = REWARDS_TUS[game_type][Result.WIN]["CRA"] * CRA_MULTIPLIER
     winnings_tus += prices.cra_to_tus(winnings_cra)
 
     losings_tus = REWARDS_TUS[game_type][Result.LOSE]["TUS"]
-    losings_cra = REWARDS_TUS[game_type][Result.LOSE]["CRA"]
+    losings_cra = REWARDS_TUS[game_type][Result.LOSE]["CRA"] * CRA_MULTIPLIER
     losings_tus += prices.cra_to_tus(losings_cra)
 
     return win_decimal * winnings_tus + (1 - win_decimal) * losings_tus

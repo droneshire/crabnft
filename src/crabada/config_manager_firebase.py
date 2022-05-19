@@ -247,7 +247,7 @@ class ConfigManagerFirebase(ConfigManager):
         else:
             return None
 
-    def update_user_from_local_config(self, local_user) -> None:
+    def _get_alias_configs(self) -> T.Dict[str, T.Any]:
         alias_configs = {}
         users = copy.deepcopy(USERS)
         for user, config in users.items():
@@ -267,6 +267,83 @@ class ConfigManagerFirebase(ConfigManager):
                     alias_configs[alias][k].update(config[k])
             else:
                 alias_configs[alias] = config
+        return alias_configs
+
+    def update_user_from_crabada(self, local_user) -> None:
+        user = local_user
+        config = USERS[local_user]
+
+        doc = self._get_user_document(config)
+
+        if doc is not None:
+            logger.print_normal(f"Using previous preferences from database")
+            db_config = doc.get().to_dict()
+            db_config["strategy"] = {
+                "reinforceEnabled": db_config["strategy"]["reinforceEnabled"],
+                "reinforcingCrabs": {},
+                "teams": {},
+                "maxReinforcement": db_config["strategy"]["maxReinforcement"],
+                "maxGas": 0,
+            }
+        else:
+            logger.print_normal(f"Creating new database")
+            db_config = {}
+            db_config["user"] = get_alias_from_user(user)
+            db_config["preferences"] = {
+                "notifications": {
+                    "email": {
+                        "updatesEnabled": config["get_email_updates"],
+                        "email": config["email"].lower(),
+                    },
+                    "sms": {
+                        "lootUpdatesEnabled": config["get_sms_updates_loots"],
+                        "phoneNumber": config["sms_number"].lstrip("+1"),
+                        "alertUpdatesEnabled": config["get_sms_updates"],
+                    },
+                }
+            }
+            db_config["strategy"] = {
+                "reinforceEnabled": config["should_reinforce"],
+                "reinforcingCrabs": {},
+                "teams": {},
+                "maxReinforcement": config["max_reinforcement_price_tus"],
+                "maxGas": 0,
+            }
+
+        logger.print_ok(f"Found email: {config['email']}")
+
+        teams = self.crabada_w2.list_teams(config["address"])
+        for team in teams:
+            team_id = team["team_id"]
+            composition = self._get_team_composition(team_id, config)
+            db_config["strategy"]["teams"][str(team_id)] = {
+                "action": StrategyActions.MINING,
+                "composition": [c.strip() for c in composition.split(",")],
+                "user": user,
+            }
+
+        crabs = self.crabada_w2.list_my_available_crabs_for_reinforcement(config["address"])
+        for crab in crabs:
+            crab_id = crab["crabada_id"]
+            crab_class = self.crab_classes.get(crab_id, self._get_crab_class(crab_id, config))
+            db_config["strategy"]["reinforcingCrabs"][str(crab_id)] = {
+                "action": StrategyActions.MINING,
+                "class": [crab_class.strip()],
+                "user": user,
+            }
+
+        if self.verbose:
+            logger.print_normal(f"{json.dumps(db_config, indent=4)}")
+
+        if doc is None:
+            self.users_ref.document(config["email"].lower()).create(
+                json.loads(json.dumps(db_config))
+            )
+        else:
+            doc.set(json.loads(json.dumps(db_config)))
+
+    def update_user_from_local_config(self, local_user) -> None:
+        alias_configs = self._get_alias_configs()
 
         for alias, config in alias_configs.items():
             if get_alias_from_user(local_user) != alias:
