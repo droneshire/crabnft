@@ -58,7 +58,6 @@ class ConfigManagerFirebase(ConfigManager):
         verbose: bool = False,
     ):
         super().__init__(user, config, send_email_accounts, encrypt_password, dry_run)
-        return
         this_dir = os.path.dirname(os.path.realpath(__file__))
         creds_dir = os.path.dirname(this_dir)
         credentials_file = os.path.join(creds_dir, "firebase_credentials.json")
@@ -80,7 +79,6 @@ class ConfigManagerFirebase(ConfigManager):
         self._save_config()
 
     def check_for_config_updates(self) -> None:
-        return
         if self.user not in BETA_TEST_LIST:
             return
 
