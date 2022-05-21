@@ -11,6 +11,8 @@ from firebase_admin import credentials
 
 from config import USERS, SMALL_TEAM_GAS_LIMIT
 from crabada.game_stats import get_game_stats
+from crabada.teams import assign_crabs_to_groups, assign_teams_to_groups
+from crabada.teams import LOOTING_GROUP_NUM, MINING_GROUP_NUM, INACTIVE_GROUP_NUM
 from crabada.types import MineOption
 from crabada.config_manager import ConfigManager
 from utils import logger
@@ -144,6 +146,8 @@ class ConfigManagerFirebase(ConfigManager):
 
         teams = self.crabada_w2.list_teams(self.config["address"])
 
+        team_group_assignment = {}
+
         for team, details in db_config["strategy"]["teams"].items():
             team_id = int(team)
 
@@ -152,29 +156,39 @@ class ConfigManagerFirebase(ConfigManager):
                 continue
 
             if details["action"] == StrategyActions.MINING or details["action"] == "MINING":
-                group = self.MINING_GROUP_NUM
-                new_config["mining_teams"][team_id] = group
+                group_base = MINING_GROUP_NUM
                 db_config["strategy"]["teams"][team]["action"] = StrategyActions.MINING
             elif details["action"] == StrategyActions.LOOTING or details["action"] == "LOOTING":
-                group = self.LOOTING_GROUP_NUM
-                new_config["looting_teams"][team_id] = group
+                group_base = LOOTING_GROUP_NUM
                 db_config["strategy"]["teams"][team]["action"] = StrategyActions.LOOTING
             elif details["action"] == StrategyActions.INACTIVE:
                 logger.print_fail(f"Detected inactive team {team_id}!")
+                group_base = self.INACTIVE_GROUP_NUM
                 db_config["strategy"]["teams"][team]["action"] = StrategyActions.INACTIVE
             else:
                 logger.print_fail(f"Unknown action from teams!")
                 continue
 
-            composition = self._get_team_composition(team_id, new_config)
-            db_config["strategy"]["teams"][team]["composition"] = [
-                c.strip() for c in composition.split(",")
-            ]
+            composition, mp = self._get_team_composition_and_mp(team_id, new_config)
+
+            team_group_assignment[team_id] = (group_base, mp)
+
+            db_config["strategy"]["teams"][team]["composition"] = composition
 
             if self.verbose:
                 logger.print_normal(
-                    f"Team: {team_id}, Composition: {composition}, Group: {details['action']}"
+                    f"Team: {team_id}, Composition: {composition}, Action: {details['action']}"
                 )
+
+        groups = set()
+        for team, group in assign_teams_to_groups(team_group_assignment).items():
+            groups.add(group)
+            if group >= MINING_GROUP_NUM:
+                new_config["mining_teams"][team] = group
+            elif group >= LOOTING_GROUP_NUM:
+                new_config["looting_teams"][team] = group
+
+            logger.print_normal(f"Assigning team {team} to group {group}")
 
         logger.print_ok_blue(f"Checking database for reinforcement crab changes...")
 
@@ -190,15 +204,16 @@ class ConfigManagerFirebase(ConfigManager):
                 continue
 
             if details["action"] == StrategyActions.MINING or details["action"] == "MINING":
-                group = self.MINING_GROUP_NUM
-                new_config["reinforcing_crabs"][crab_id] = group
+                group_base = MINING_GROUP_NUM
+                new_config["reinforcing_crabs"][crab_id] = group_base
                 db_config["strategy"]["reinforcingCrabs"][crab]["action"] = StrategyActions.MINING
             elif details["action"] == StrategyActions.LOOTING or details["action"] == "LOOTING":
-                group = self.LOOTING_GROUP_NUM
-                new_config["reinforcing_crabs"][crab_id] = group
+                group_base = LOOTING_GROUP_NUM
+                new_config["reinforcing_crabs"][crab_id] = group_base
                 db_config["strategy"]["reinforcingCrabs"][crab]["action"] = StrategyActions.LOOTING
             elif details["action"] == StrategyActions.INACTIVE:
                 logger.print_normal(f"Detected inactive crab")
+                group_base = self.INACTIVE_GROUP_NUM
                 db_config["strategy"]["reinforcingCrabs"][crab]["action"] = StrategyActions.INACTIVE
             else:
                 logger.print_fail(f"Unknown action from reinforcingCrabs!")
@@ -211,6 +226,12 @@ class ConfigManagerFirebase(ConfigManager):
                 logger.print_normal(
                     f"Crab: {crab_id}, Composition: {crab_class}, Action: {details['action']}"
                 )
+
+        groups = list(groups)
+        crabs = [c for c in db_config["strategy"]["reinforcingCrabs"]]
+        for crab, group in assign_crabs_to_groups(crabs, groups).items():
+            new_config["reinforcing_crabs"][crab] = group
+            logger.print_normal(f"Assigning crab {crab} to group {group}")
 
         diff = deepdiff.DeepDiff(self.config, new_config, ignore_order=True)
         if diff:
@@ -269,7 +290,7 @@ class ConfigManagerFirebase(ConfigManager):
                 alias_configs[alias] = config
         return alias_configs
 
-    def update_user_from_crabada(self, local_user: str, erase_old_config: bool=True) -> None:
+    def update_user_from_crabada(self, local_user: str, erase_old_config: bool = True) -> None:
         user = local_user
         config = USERS[local_user]
 
@@ -280,7 +301,9 @@ class ConfigManagerFirebase(ConfigManager):
             db_config = doc.get().to_dict()
             db_config["strategy"] = {
                 "reinforceEnabled": db_config["strategy"]["reinforceEnabled"],
-                "reinforcingCrabs": {} if erase_old_config else db_config["strategy"]["reinforcingCrabs"],
+                "reinforcingCrabs": {}
+                if erase_old_config
+                else db_config["strategy"]["reinforcingCrabs"],
                 "teams": {} if erase_old_config else db_config["strategy"]["teams"],
                 "maxReinforcement": db_config["strategy"]["maxReinforcement"],
                 "maxGas": 0,
@@ -315,10 +338,10 @@ class ConfigManagerFirebase(ConfigManager):
         teams = self.crabada_w2.list_teams(config["address"])
         for team in teams:
             team_id = team["team_id"]
-            composition = self._get_team_composition(team_id, config)
+            composition, _ = self._get_team_composition_and_mp(team_id, config)
             db_config["strategy"]["teams"][str(team_id)] = {
                 "action": StrategyActions.MINING,
-                "composition": [c.strip() for c in composition.split(",")],
+                "composition": composition,
                 "user": user,
             }
 
@@ -382,18 +405,18 @@ class ConfigManagerFirebase(ConfigManager):
             }
 
             for team, value in config["mining_teams"].items():
-                composition = self._get_team_composition(team, config)
+                composition, _ = self._get_team_composition_and_mp(team, config)
                 db_config["strategy"]["teams"][team] = {
                     "action": StrategyActions.MINING,
-                    "composition": [c.strip() for c in composition.split(",")],
+                    "composition": composition,
                     "user": value[1],
                 }
 
             for team, value in config["looting_teams"].items():
-                composition = self._get_team_composition(team, config)
+                composition, _ = self._get_team_composition_and_mp(team, config)
                 db_config["strategy"]["teams"][team] = {
                     "action": StrategyActions.LOOTING,
-                    "composition": [c.strip() for c in composition.split(",")],
+                    "composition": composition,
                     "user": value[1],
                 }
 

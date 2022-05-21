@@ -6,6 +6,7 @@ import time
 import typing as T
 
 from crabada.crabada_web2_client import CrabadaWeb2Client
+from crabada.types import CrabadaClass
 from utils import logger
 from utils.config_types import UserConfig
 from utils.security import decrypt, encrypt
@@ -15,8 +16,6 @@ from utils.user import get_alias_from_user
 
 class ConfigManager:
     CONFIG_UPDATE_TIME = 60.0 * 10.0
-    LOOTING_GROUP_NUM = 0
-    MINING_GROUP_NUM = 1
 
     def __init__(
         self,
@@ -33,7 +32,9 @@ class ConfigManager:
         self.encrypt_password = encrypt_password
 
         self.crabada_w2 = CrabadaWeb2Client()
-        self.team_composition = self.crabada_w2.get_team_compositions(self.config["address"])
+        self.team_composition_and_mp = self.crabada_w2.get_team_compositions_and_mp(
+            self.config["address"]
+        )
         self.crab_classes = self.crabada_w2.get_crab_classes(self.config["address"])
         self.send_email_accounts = send_email_accounts
 
@@ -49,10 +50,14 @@ class ConfigManager:
     def close(self) -> None:
         self._save_config()
 
-    def _get_team_composition(self, team: int, config: UserConfig) -> str:
-        self.team_composition = {}
-        self.team_composition = self.crabada_w2.get_team_compositions(config["address"])
-        return self.team_composition.get(team, "UNKNOWN")
+    def _get_team_composition_and_mp(
+        self, team: int, config: UserConfig
+    ) -> T.Tuple[CrabadaClass, int]:
+        self.team_composition_and_mp = {}
+        self.team_composition_and_mp = self.crabada_w2.get_team_compositions_and_mp(
+            config["address"]
+        )
+        return self.team_composition_and_mp.get(team, (["UNKNOWN"] * 3, 0))
 
     def _get_crab_class(self, crab: int, config: UserConfig) -> str:
         self.crab_classes = {}

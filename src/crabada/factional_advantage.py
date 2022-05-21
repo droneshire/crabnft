@@ -68,9 +68,20 @@ def get_bp_mp_from_mine(
 
 
 def get_bp_mp_from_crab(crab: TeamMember) -> T.Tuple[int, int]:
-    bp = crab["hp"] + crab["damage"] + crab["armor"]
-    mp = crab["speed"] + crab["critical"]
-    return (bp, mp)
+    battle_point = crab["hp"] + crab["damage"] + crab["armor"]
+    mine_point = crab["speed"] + crab["critical"]
+    return battle_point, mine_point
+
+
+def get_bp_mp_from_team(team: Team) -> T.Tuple[int, int]:
+    battle_point = 0
+    mine_point = 0
+    for i in range(1, 4):
+        battle_point += (
+            team[f"crabada_{i}_hp"] + team[f"crabada_{i}_damage"] + team[f"crabada_{i}_armor"]
+        )
+        mine_point += team[f"crabada_{i}_speed"] + team[f"crabada_{i}_critical"]
+    return battle_point, mine_point
 
 
 def get_attack_faction(game: IdleGame) -> Faction:

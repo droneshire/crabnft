@@ -5,7 +5,7 @@ import time
 
 from eth_typing import Address
 
-from crabada.factional_advantage import get_faction_adjusted_battle_point
+from crabada.factional_advantage import get_faction_adjusted_battle_point, get_bp_mp_from_team
 from crabada.miners_revenge import calc_miners_revenge
 from crabada.types import Crab, CrabadaClass, CrabForLending, IdleGame, LendingCategories, Team
 from crabada.types import CRABADA_ID_TO_CLASS
@@ -92,9 +92,9 @@ class CrabadaWeb2Client:
         except:
             return {}
 
-    def get_team_compositions(
+    def get_team_compositions_and_mp(
         self, user_address: Address, params: T.Dict[str, T.Any] = {}
-    ) -> T.Dict[int, str]:
+    ) -> T.Dict[int, T.Tuple[T.List[CrabadaClass], int]]:
         teams = self.list_teams(user_address)
         team_composition = {}
         for team in teams:
@@ -103,8 +103,9 @@ class CrabadaWeb2Client:
                 if f"crabada_{i}_class" not in team:
                     break
                 comp.append(CRABADA_ID_TO_CLASS[team[f"crabada_{i}_class"]])
+            _, mp = get_bp_mp_from_team(team)
             if len(comp) == 3:
-                team_composition[team["team_id"]] = ", ".join(comp)
+                team_composition[team["team_id"]] = (comp, mp)
 
         return team_composition
 
