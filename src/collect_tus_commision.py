@@ -21,8 +21,8 @@ from utils.user import get_alias_from_user
 from web3_utils.swimmer_network_web3_client import SwimmerNetworkClient
 from web3_utils.tus_swimmer_web3_client import TusSwimmerWeb3Client
 
-MAX_COLLECTION_GAS_GWEI = 65
-MINIMUM_TUS_TO_TRANSFER = 25
+MAX_COLLECTION_GAS_GWEI = 25000
+MINIMUM_TUS_TO_TRANSFER = 15
 DISCORD_TRANSFER_NOTICE = """\U0000203C  **COURTESY NOTICE**  \U0000203C
 @here, collecting Crabada commission at next low gas period. Please ensure TUS are in wallet.
 Confirmation will be sent after successful tx.
