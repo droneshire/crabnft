@@ -182,8 +182,8 @@ class ConfigManagerFirebase(ConfigManager):
 
         groups = set()
         for team, group in assign_teams_to_groups(team_group_assignment).items():
-            groups.add(group)
             if group >= MINING_GROUP_NUM:
+                groups.add(group)
                 new_config["mining_teams"][team] = group
             elif group >= LOOTING_GROUP_NUM:
                 new_config["looting_teams"][team] = group
@@ -194,6 +194,7 @@ class ConfigManagerFirebase(ConfigManager):
 
         crabs = self.crabada_w2.get_crabs(self.config["address"])
 
+        crab_assignment = {}
         for crab, details in db_config["strategy"]["reinforcingCrabs"].items():
             crab_id = int(crab)
 
@@ -220,6 +221,8 @@ class ConfigManagerFirebase(ConfigManager):
                 continue
 
             crab_class = self._get_crab_class(crab_id, new_config)
+
+            crab_assignment[crab_id] = group_base
             db_config["strategy"]["reinforcingCrabs"][crab]["class"] = [crab_class.strip()]
 
             if self.verbose:
@@ -229,7 +232,7 @@ class ConfigManagerFirebase(ConfigManager):
 
         groups = list(groups)
         crabs = [c for c in db_config["strategy"]["reinforcingCrabs"]]
-        for crab, group in assign_crabs_to_groups(crabs, groups).items():
+        for crab, group in assign_crabs_to_groups(crab_assignment, groups).items():
             new_config["reinforcing_crabs"][crab] = group
             logger.print_normal(f"Assigning crab {crab} to group {group}")
 

@@ -36,11 +36,14 @@ def assign_teams_to_groups(teams_info: T.Dict[int, T.Tuple[int, int]]) -> T.Dict
     return team_assignments
 
 
-def assign_crabs_to_groups(crabs: T.List[int], groups: T.List[int]) -> T.Dict[int, int]:
+def assign_crabs_to_groups(crabs: T.Dict[int, int], groups: T.List[int]) -> T.Dict[int, int]:
     crab_assignments = {}
     num_crabs = 0
     group_inx = 0
-    for crab in crabs:
+    for crab, group in crabs.items():
+        if group in [LOOTING_GROUP_NUM, INACTIVE_GROUP_NUM]:
+            crab_assignments[crab] = group
+            continue
         num_crabs += 1
         crab_assignments[crab] = groups[group_inx]
         if num_crabs > CRABS_PER_GROUP:
