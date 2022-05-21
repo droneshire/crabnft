@@ -591,7 +591,7 @@ class CrabadaWeb2Client:
 
         # make sure we don't reinforce to a legendary when we can't win
         if not self._can_loot_reinforcement_win(mine):
-            logger.print_warn(f"Not reinforcing due to LEGENDARY reinforcement")
+            logger.print_warn(f"Not reinforcing mine {mine['game_id']} due to LEGENDARY reinforcement")
             return False
 
         defense_start_time = process[-1]["transaction_time"]
