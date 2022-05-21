@@ -19,6 +19,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--from-crabada", action="store_true", help="setup teams by querying address"
     )
+    parser.add_argument(
+        "--force-erase", action="store_true", help="erase existing config regardless of alias"
+    )
     return parser.parse_args()
 
 
@@ -35,7 +38,8 @@ def update_firebase_db() -> None:
     for user in users:
         cm = ConfigManagerFirebase(user, USERS[user], [], "")
         if args.from_crabada:
-            cm.update_user_from_crabada(user)
+            erase_configs = args.force_erase or get_alias_from_user(user) == user
+            cm.update_user_from_crabada(user, erase_configs)
         else:
             cm.update_user_from_local_config(user)
 

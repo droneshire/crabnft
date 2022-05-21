@@ -269,7 +269,7 @@ class ConfigManagerFirebase(ConfigManager):
                 alias_configs[alias] = config
         return alias_configs
 
-    def update_user_from_crabada(self, local_user) -> None:
+    def update_user_from_crabada(self, local_user: str, erase_old_config: bool=True) -> None:
         user = local_user
         config = USERS[local_user]
 
@@ -280,8 +280,8 @@ class ConfigManagerFirebase(ConfigManager):
             db_config = doc.get().to_dict()
             db_config["strategy"] = {
                 "reinforceEnabled": db_config["strategy"]["reinforceEnabled"],
-                "reinforcingCrabs": {},
-                "teams": {},
+                "reinforcingCrabs": {} if erase_old_config else db_config["strategy"]["reinforcingCrabs"],
+                "teams": {} if erase_old_config else db_config["strategy"]["teams"],
                 "maxReinforcement": db_config["strategy"]["maxReinforcement"],
                 "maxGas": 0,
             }
@@ -342,7 +342,7 @@ class ConfigManagerFirebase(ConfigManager):
         else:
             doc.set(json.loads(json.dumps(db_config)))
 
-    def update_user_from_local_config(self, local_user) -> None:
+    def update_user_from_local_config(self, local_user: str) -> None:
         alias_configs = self._get_alias_configs()
 
         for alias, config in alias_configs.items():

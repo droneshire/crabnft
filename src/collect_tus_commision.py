@@ -191,7 +191,7 @@ def collect_tus_commission(
             (
                 TusSwimmerWeb3Client()
                 .set_credentials(from_address, crabada_key)
-                .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+                .set_node_uri(SwimmerNetworkClient.NODE_URL)
                 .set_dry_run(dry_run)
             ),
         )
