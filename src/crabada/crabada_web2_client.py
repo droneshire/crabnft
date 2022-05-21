@@ -440,6 +440,7 @@ class CrabadaWeb2Client:
         if not my_crabs:
             return None
 
+        logger.print_normal(f"Found {len(my_crabs)} of own crabs that can reinforce")
         point_type = params.get("orderBy", "mine_point")
 
         sorted_crabs = sorted(my_crabs, key=lambda c: c[point_type])
