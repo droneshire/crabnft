@@ -76,6 +76,7 @@ def get_bp_mp_from_crab(crab: TeamMember) -> T.Tuple[int, int]:
 def get_bp_mp_from_team(team: Team) -> T.Tuple[int, int]:
     battle_point = 0
     mine_point = 0
+    print(team)
     for i in range(1, 4):
         battle_point += (
             team[f"crabada_{i}_hp"] + team[f"crabada_{i}_damage"] + team[f"crabada_{i}_armor"]

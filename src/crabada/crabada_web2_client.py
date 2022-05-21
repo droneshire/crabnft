@@ -98,6 +98,8 @@ class CrabadaWeb2Client:
         teams = self.list_teams(user_address)
         team_composition = {}
         for team in teams:
+            if team is None:
+                continue
             comp = []
             for i in range(1, 4):
                 if f"crabada_{i}_class" not in team:
