@@ -33,11 +33,6 @@ def assign_teams_to_groups(teams_info: T.Dict[int, T.Tuple[int, int]]) -> T.Dict
             if num_teams > TEAMS_PER_GROUP:
                 num_teams = 0
                 group += 1
-    import json
-
-    print(json.dumps(team_assignments, indent=4))
-    print(fast_mine_teams)
-    print(slow_mine_teams)
     return team_assignments
 
 
@@ -50,7 +45,4 @@ def assign_crabs_to_groups(crabs: T.List[int], groups: T.List[int]) -> T.Dict[in
         crab_assignments[crab] = groups[group_inx]
         if num_crabs > CRABS_PER_GROUP:
             num_crabs = 0
-    import json
-
-    print(json.dumps(crab_assignments, indent=4))
     return crab_assignments
