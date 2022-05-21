@@ -163,7 +163,7 @@ class ConfigManagerFirebase(ConfigManager):
                 db_config["strategy"]["teams"][team]["action"] = StrategyActions.LOOTING
             elif details["action"] == StrategyActions.INACTIVE:
                 logger.print_fail(f"Detected inactive team {team_id}!")
-                group_base = self.INACTIVE_GROUP_NUM
+                group_base = INACTIVE_GROUP_NUM
                 db_config["strategy"]["teams"][team]["action"] = StrategyActions.INACTIVE
             else:
                 logger.print_fail(f"Unknown action from teams!")
@@ -214,7 +214,7 @@ class ConfigManagerFirebase(ConfigManager):
                 db_config["strategy"]["reinforcingCrabs"][crab]["action"] = StrategyActions.LOOTING
             elif details["action"] == StrategyActions.INACTIVE:
                 logger.print_normal(f"Detected inactive crab")
-                group_base = self.INACTIVE_GROUP_NUM
+                group_base = INACTIVE_GROUP_NUM
                 db_config["strategy"]["reinforcingCrabs"][crab]["action"] = StrategyActions.INACTIVE
             else:
                 logger.print_fail(f"Unknown action from reinforcingCrabs!")
