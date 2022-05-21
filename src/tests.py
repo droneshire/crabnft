@@ -227,7 +227,7 @@ def test_profitability_calc() -> None:
         verbose=False,
     )
 
-    assert math.isclose(profit_tus, 311.88, abs_tol=0.1), "Failed MINE +10% NO CONTEST test"
+    assert math.isclose(profit_tus, 563.32, abs_tol=0.1), "Failed MINE +10% NO CONTEST test"
 
     test_team = Team(
         crabada_1_class=CrabadaClass.PRIME,
@@ -249,7 +249,7 @@ def test_profitability_calc() -> None:
         verbose=False,
     )
 
-    assert math.isclose(profit_tus, 191.64, abs_tol=0.1), "Failed MINE +10% REINFORCE test"
+    assert math.isclose(profit_tus, 347.88, abs_tol=0.1), "Failed MINE +10% REINFORCE test"
 
     profit_tus = get_scenario_profitability(
         test_team,
@@ -263,7 +263,7 @@ def test_profitability_calc() -> None:
         can_self_reinforce=True,
         verbose=False,
     )
-    assert math.isclose(profit_tus, 207.36, abs_tol=0.1), "Failed MINE +10% SELF REINFORCE test"
+    assert math.isclose(profit_tus, 363.60, abs_tol=0.1), "Failed MINE +10% SELF REINFORCE test"
 
     avg_gas_price_tus = 0.01712
     profit_tus = get_scenario_profitability(
@@ -370,7 +370,7 @@ def test_profitability_calc() -> None:
 
 def test_config_manager() -> None:
     send_email_accounts = []
-    encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
+    encrypt_password = ""
 
     cm = ConfigManager("TEST", TEST_CONFIG, send_email_accounts, encrypt_password)
     cm._print_out_config()

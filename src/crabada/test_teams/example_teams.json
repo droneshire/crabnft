@@ -60,7 +60,7 @@
                 "crabada_3_class": 3,
                 "crabada_1_type": 1,
                 "crabada_2_type": 1,
-                "crabada_3_type": 1,
+                "crabada_3_type": 1
             },
             {
                 "team_id": 28028,
@@ -115,7 +115,7 @@
                 "crabada_3_class": 3,
                 "crabada_1_type": 1,
                 "crabada_2_type": 1,
-                "crabada_3_type": 1,
+                "crabada_3_type": 1
             },
             {
                 "team_id": 28022,
@@ -170,7 +170,7 @@
                 "crabada_3_class": 3,
                 "crabada_1_type": 1,
                 "crabada_2_type": 1,
-                "crabada_3_type": 1,
+                "crabada_3_type": 1
             },
             {
                 "team_id": 28016,
@@ -225,7 +225,7 @@
                 "crabada_3_class": 3,
                 "crabada_1_type": 1,
                 "crabada_2_type": 1,
-                "crabada_3_type": 1,
+                "crabada_3_type": 1
             },
             {
                 "team_id": 28015,
@@ -280,7 +280,7 @@
                 "crabada_3_class": 3,
                 "crabada_1_type": 1,
                 "crabada_2_type": 1,
-                "crabada_3_type": 1,
+                "crabada_3_type": 1
             },
             {
                 "team_id": 28013,
@@ -335,7 +335,7 @@
                 "crabada_3_class": 2,
                 "crabada_1_type": 1,
                 "crabada_2_type": 1,
-                "crabada_3_type": 1,
+                "crabada_3_type": 1
             },
             {
                 "team_id": 28012,
@@ -390,7 +390,7 @@
                 "crabada_3_class": 8,
                 "crabada_1_type": 1,
                 "crabada_2_type": 1,
-                "crabada_3_type": 1,
+                "crabada_3_type": 1
             },
             {
                 "team_id": 28011,
@@ -445,7 +445,7 @@
                 "crabada_3_class": 3,
                 "crabada_1_type": 1,
                 "crabada_2_type": 1,
-                "crabada_3_type": 1,
+                "crabada_3_type": 1
             },
             {
                 "team_id": 28009,
@@ -500,7 +500,7 @@
                 "crabada_3_class": 3,
                 "crabada_1_type": 1,
                 "crabada_2_type": 1,
-                "crabada_3_type": 1,
+                "crabada_3_type": 1
             },
             {
                 "team_id": 28007,
@@ -555,9 +555,9 @@
                 "crabada_3_class": 3,
                 "crabada_1_type": 1,
                 "crabada_2_type": 1,
-                "crabada_3_type": 1,
-            },
+                "crabada_3_type": 1
+            }
         ],
-        "team_size": 3,
-    },
+        "team_size": 3
+    }
 }

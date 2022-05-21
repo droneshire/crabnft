@@ -44,7 +44,7 @@
             {"action": "reinforce-attack", "transaction_time": 1650692613},
             {"action": "reinforce-defense", "transaction_time": 1650692883},
             {"action": "reinforce-attack", "transaction_time": 1650693210},
-            {"action": "settle", "transaction_time": 1650696453},
+            {"action": "settle", "transaction_time": 1650696453}
         ],
         "defense_team_faction": "LUX",
         "attack_team_faction": "MACHINE",
@@ -70,7 +70,7 @@
                 "critical": 52,
                 "is_origin": 0,
                 "is_genesis": 0,
-                "legend_number": 0,
+                "legend_number": 0
             },
             {
                 "crabada_id": 46511,
@@ -83,7 +83,7 @@
                 "critical": 52,
                 "is_origin": 0,
                 "is_genesis": 0,
-                "legend_number": 0,
+                "legend_number": 0
             },
             {
                 "crabada_id": 42144,
@@ -96,8 +96,8 @@
                 "critical": 52,
                 "is_origin": 0,
                 "is_genesis": 0,
-                "legend_number": 0,
-            },
+                "legend_number": 0
+            }
         ],
         "attack_team_members": [
             {
@@ -111,7 +111,7 @@
                 "critical": 52,
                 "is_origin": 0,
                 "is_genesis": 0,
-                "legend_number": 0,
+                "legend_number": 0
             },
             {
                 "crabada_id": 62581,
@@ -124,7 +124,7 @@
                 "critical": 51,
                 "is_origin": 0,
                 "is_genesis": 0,
-                "legend_number": 0,
+                "legend_number": 0
             },
             {
                 "crabada_id": 41653,
@@ -137,8 +137,8 @@
                 "critical": 51,
                 "is_origin": 0,
                 "is_genesis": 0,
-                "legend_number": 0,
-            },
+                "legend_number": 0
+            }
         ],
         "defense_team_info": [
             {
@@ -152,7 +152,7 @@
                 "critical": 52,
                 "is_origin": 0,
                 "is_genesis": 0,
-                "legend_number": 0,
+                "legend_number": 0
             },
             {
                 "crabada_id": 46511,
@@ -165,7 +165,7 @@
                 "critical": 52,
                 "is_origin": 0,
                 "is_genesis": 0,
-                "legend_number": 0,
+                "legend_number": 0
             },
             {
                 "crabada_id": 42144,
@@ -178,7 +178,7 @@
                 "critical": 52,
                 "is_origin": 0,
                 "is_genesis": 0,
-                "legend_number": 0,
+                "legend_number": 0
             },
             {
                 "crabada_id": 44329,
@@ -191,7 +191,7 @@
                 "critical": 52,
                 "is_origin": 0,
                 "is_genesis": 0,
-                "legend_number": 0,
+                "legend_number": 0
             },
             {
                 "crabada_id": 66201,
@@ -204,8 +204,8 @@
                 "critical": 52,
                 "is_origin": 0,
                 "is_genesis": 0,
-                "legend_number": 0,
-            },
+                "legend_number": 0
+            }
         ],
         "attack_team_info": [
             {
@@ -219,7 +219,7 @@
                 "critical": 52,
                 "is_origin": 0,
                 "is_genesis": 0,
-                "legend_number": 0,
+                "legend_number": 0
             },
             {
                 "crabada_id": 62581,
@@ -232,7 +232,7 @@
                 "critical": 51,
                 "is_origin": 0,
                 "is_genesis": 0,
-                "legend_number": 0,
+                "legend_number": 0
             },
             {
                 "crabada_id": 41653,
@@ -245,7 +245,7 @@
                 "critical": 51,
                 "is_origin": 0,
                 "is_genesis": 0,
-                "legend_number": 0,
+                "legend_number": 0
             },
             {
                 "crabada_id": 7909,
@@ -258,7 +258,7 @@
                 "critical": 38,
                 "is_origin": 0,
                 "is_genesis": 0,
-                "legend_number": 0,
+                "legend_number": 0
             },
             {
                 "crabada_id": 12554,
@@ -271,9 +271,9 @@
                 "critical": 35,
                 "is_origin": 0,
                 "is_genesis": 0,
-                "legend_number": 0,
-            },
+                "legend_number": 0
+            }
         ],
-        "attack_mine_point": 369,
-    },
+        "attack_mine_point": 369
+    }
 }
