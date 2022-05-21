@@ -26,6 +26,8 @@ def assign_teams_to_groups(teams_info: T.Dict[int, T.Tuple[int, int]]) -> T.Dict
     group = MINING_GROUP_NUM
     num_teams = 0
 
+    fast_mine_teams = sorted(fast_mine_teams)
+    slow_mine_teams = sorted(slow_mine_teams)
     for teams in [fast_mine_teams, slow_mine_teams]:
         for team in teams:
             num_teams += 1
@@ -40,7 +42,9 @@ def assign_crabs_to_groups(crabs: T.Dict[int, int], groups: T.List[int]) -> T.Di
     crab_assignments = {}
     num_crabs = 0
     group_inx = 0
-    for crab, group in crabs.items():
+    crab_list = sorted(list(crabs.keys()))
+    for crab in crab_list:
+        group = crabs[crab]
         if group in [LOOTING_GROUP_NUM, INACTIVE_GROUP_NUM]:
             crab_assignments[crab] = group
             continue

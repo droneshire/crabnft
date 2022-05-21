@@ -230,8 +230,8 @@ class ConfigManagerFirebase(ConfigManager):
                     f"Crab: {crab_id}, Composition: {crab_class}, Action: {details['action']}"
                 )
 
-        groups = list(groups)
-        crabs = [c for c in db_config["strategy"]["reinforcingCrabs"]]
+        groups = sorted(list(groups))
+        crabs = sorted([c for c in db_config["strategy"]["reinforcingCrabs"]])
         for crab, group in assign_crabs_to_groups(crab_assignment, groups).items():
             new_config["reinforcing_crabs"][crab] = group
             logger.print_normal(f"Assigning crab {crab} to group {group}")
