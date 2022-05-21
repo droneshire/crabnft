@@ -98,7 +98,7 @@ class CrabadaWeb2Client:
         teams = self.list_teams(user_address)
         team_composition = {}
         for team in teams:
-            if team is None:
+            if team is None or team["crabada_id_1"] is None or team["crabada_id_2"] is None or team["crabada_id_3"] is None:
                 continue
             comp = []
             for i in range(1, 4):
