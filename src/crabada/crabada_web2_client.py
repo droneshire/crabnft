@@ -427,18 +427,23 @@ class CrabadaWeb2Client:
 
         return cached_high_bp_crab
 
-    def get_my_best_mp_crab_for_lending(self, user_address: Address) -> T.Optional[CrabForLending]:
-        return self.get_my_best_crab_for_lending(user_address, params={"orderBy": "mine_point"})
+    def get_my_best_mp_crab_for_lending(self, user_address: Address, reinforcement_list: T.List[int],) -> T.Optional[CrabForLending]:
+        return self.get_my_best_crab_for_lending(user_address, reinforcement_list, params={"orderBy": "mine_point"})
 
-    def get_my_best_bp_crab_for_lending(self, user_address: Address) -> T.Optional[CrabForLending]:
-        return self.get_my_best_crab_for_lending(user_address, params={"orderBy": "battle_point"})
+    def get_my_best_bp_crab_for_lending(self, user_address: Address, reinforcement_list: T.List[int],) -> T.Optional[CrabForLending]:
+        return self.get_my_best_crab_for_lending(user_address, reinforcement_list, params={"orderBy": "battle_point"})
 
     def get_my_best_crab_for_lending(
-        self, user_address: Address, params: T.Dict[str, T.Any] = {}
+        self,
+        user_address: Address,
+        reinforcement_list: T.List[int],
+        params: T.Dict[str, T.Any] = {}
     ) -> T.Optional[CrabForLending]:
         my_crabs = self.list_my_available_crabs_for_reinforcement(user_address, params)
         if not my_crabs:
             return None
+
+        my_crabs = [c for c in my_crabs if c in reinforcement_list]
 
         logger.print_normal(f"Found {len(my_crabs)} of own crabs that can reinforce")
         point_type = params.get("orderBy", "mine_point")
