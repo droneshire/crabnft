@@ -110,9 +110,15 @@ class Strategy:
             c for c, v in self.config_mgr.config["reinforcing_crabs"].items() if v == group_id
         ]
 
+        now = time.time()
+        available_reinforcing_crabs = []
+
         for crab in allowed_reinforcing_crabs:
             if crab not in self.reinforce_time_cache:
                 self.reinforce_time_cache[crab] = 0.0
+                available_reinforcing_crabs.append(crab)
+            elif now - self.reinforce_time_cache[crab] > self.REINFORCEMENT_REUSE_WINDOW:
+                available_reinforcing_crabs.append(crab)
 
         logger.print_normal(f"Mine[{mine['game_id']}]: using highest bp")
         if self.config_mgr.config["reinforcing_crabs"]:
@@ -121,17 +127,16 @@ class Strategy:
             )
 
         if use_own_crabs:
-            allowed_crabs_str = ", ".join([str(c) for c in allowed_reinforcing_crabs])
+            allowed_crabs_str = ", ".join([str(c) for c in available_reinforcing_crabs])
             logger.print_normal(
                 f"Checking from approved reinforcements {allowed_crabs_str} from group {group_id}"
             )
-            reinforcement_crab = self.crabada_w2.get_my_best_bp_crab_for_lending(self.address, allowed_reinforcing_crabs)
+            reinforcement_crab = self.crabada_w2.get_my_best_bp_crab_for_lending(self.address, available_reinforcing_crabs)
             logger.print_normal(f"Own reinforcement result: {reinforcement_crab}")
 
-        now = time.time()
         if (
             reinforcement_crab is not None
-            and reinforcement_crab["crabada_id"] in allowed_reinforcing_crabs
+            and reinforcement_crab["crabada_id"] in available_reinforcing_crabs
             and now - self.reinforce_time_cache[reinforcement_crab["crabada_id"]]
             > self.REINFORCEMENT_REUSE_WINDOW
         ):
@@ -155,9 +160,15 @@ class Strategy:
             c for c, v in self.config_mgr.config["reinforcing_crabs"].items() if v == group_id
         ]
 
+        now = time.time()
+        available_reinforcing_crabs = []
+
         for crab in allowed_reinforcing_crabs:
             if crab not in self.reinforce_time_cache:
                 self.reinforce_time_cache[crab] = 0.0
+                available_reinforcing_crabs.append(crab)
+            elif now - self.reinforce_time_cache[crab] > self.REINFORCEMENT_REUSE_WINDOW:
+                available_reinforcing_crabs.append(crab)
 
         logger.print_normal(f"Mine[{mine['game_id']}]: using highest mp")
         if self.config_mgr.config["reinforcing_crabs"]:
@@ -166,17 +177,17 @@ class Strategy:
             )
 
         if use_own_crabs:
-            allowed_crabs_str = ", ".join([str(c) for c in allowed_reinforcing_crabs])
+            allowed_crabs_str = ", ".join([str(c) for c in available_reinforcing_crabs])
             logger.print_normal(
                 f"Checking from approved reinforcements {allowed_crabs_str} from group {group_id}"
             )
-            reinforcement_crab = self.crabada_w2.get_my_best_mp_crab_for_lending(self.address, allowed_reinforcing_crabs)
+            reinforcement_crab = self.crabada_w2.get_my_best_mp_crab_for_lending(self.address, available_reinforcing_crabs)
             logger.print_normal(f"Own reinforcement result: {reinforcement_crab}")
 
         now = time.time()
         if (
             reinforcement_crab is not None
-            and reinforcement_crab["crabada_id"] in allowed_reinforcing_crabs
+            and reinforcement_crab["crabada_id"] in available_reinforcing_crabs
             and now - self.reinforce_time_cache[reinforcement_crab["crabada_id"]]
             > self.REINFORCEMENT_REUSE_WINDOW
         ):
