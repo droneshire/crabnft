@@ -443,12 +443,15 @@ class CrabadaWeb2Client:
         if not my_crabs:
             return None
 
-        my_crabs = [c for c in my_crabs if c in reinforcement_list]
+        available_crabs = [c for c in my_crabs if c["crabada_id"] in reinforcement_list]
 
-        logger.print_normal(f"Found {len(my_crabs)} of own crabs that can reinforce")
+        if not available_crabs:
+            return None
+
+        logger.print_normal(f"Found {len(available_crabs)} of own crabs that can reinforce")
         point_type = params.get("orderBy", "mine_point")
 
-        sorted_crabs = sorted(my_crabs, key=lambda c: c[point_type])
+        sorted_crabs = sorted(available_crabs, key=lambda c: c[point_type])
         best_crab = sorted_crabs[0]
         best_crab["price"] = 0
         return best_crab
