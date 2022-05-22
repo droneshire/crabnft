@@ -72,19 +72,22 @@ class ConfigManager:
         )
         return save_config
 
+    def _get_config_file(self) -> str:
+        log_dir = logger.get_logging_dir()
+        config_file = os.path.join(logger.get_logging_dir(), f"{self.user.lower()}_config.json")
+        return config_file
+
     def _save_config(self) -> None:
         if self.dry_run:
             return
 
         config = self._get_save_config()
-        log_dir = logger.get_logging_dir()
-        config_file = os.path.join(logger.get_logging_dir(), f"{self.user.lower()}_config.json")
+        config_file = self._get_config_file()
         with open(config_file, "w") as outfile:
             json.dump(config, outfile, indent=4)
 
     def _load_config(self) -> UserConfig:
-        log_dir = logger.get_logging_dir()
-        config_file = os.path.join(logger.get_logging_dir(), f"{self.user.lower()}_config.json")
+        config_file = self._get_config_file()
         try:
             with open(config_file, "r") as infile:
                 byte_key = str.encode(self.encrypt_password)

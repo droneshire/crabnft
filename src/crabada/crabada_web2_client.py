@@ -98,7 +98,12 @@ class CrabadaWeb2Client:
         teams = self.list_teams(user_address)
         team_composition = {}
         for team in teams:
-            if team is None or team["crabada_id_1"] is None or team["crabada_id_2"] is None or team["crabada_id_3"] is None:
+            if (
+                team is None
+                or team["crabada_id_1"] is None
+                or team["crabada_id_2"] is None
+                or team["crabada_id_3"] is None
+            ):
                 continue
             comp = []
             for i in range(1, 4):
@@ -427,17 +432,29 @@ class CrabadaWeb2Client:
 
         return cached_high_bp_crab
 
-    def get_my_best_mp_crab_for_lending(self, user_address: Address, reinforcement_list: T.List[int],) -> T.Optional[CrabForLending]:
-        return self.get_my_best_crab_for_lending(user_address, reinforcement_list, params={"orderBy": "mine_point"})
+    def get_my_best_mp_crab_for_lending(
+        self,
+        user_address: Address,
+        reinforcement_list: T.List[int],
+    ) -> T.Optional[CrabForLending]:
+        return self.get_my_best_crab_for_lending(
+            user_address, reinforcement_list, params={"orderBy": "mine_point"}
+        )
 
-    def get_my_best_bp_crab_for_lending(self, user_address: Address, reinforcement_list: T.List[int],) -> T.Optional[CrabForLending]:
-        return self.get_my_best_crab_for_lending(user_address, reinforcement_list, params={"orderBy": "battle_point"})
+    def get_my_best_bp_crab_for_lending(
+        self,
+        user_address: Address,
+        reinforcement_list: T.List[int],
+    ) -> T.Optional[CrabForLending]:
+        return self.get_my_best_crab_for_lending(
+            user_address, reinforcement_list, params={"orderBy": "battle_point"}
+        )
 
     def get_my_best_crab_for_lending(
         self,
         user_address: Address,
         reinforcement_list: T.List[int],
-        params: T.Dict[str, T.Any] = {}
+        params: T.Dict[str, T.Any] = {},
     ) -> T.Optional[CrabForLending]:
         my_crabs = self.list_my_available_crabs_for_reinforcement(user_address, params)
         if not my_crabs:
@@ -594,7 +611,9 @@ class CrabadaWeb2Client:
 
         # make sure we don't reinforce to a legendary when we can't win
         if not self._can_loot_reinforcement_win(mine):
-            logger.print_warn(f"Not reinforcing mine {mine['game_id']} due to LEGENDARY reinforcement")
+            logger.print_warn(
+                f"Not reinforcing mine {mine['game_id']} due to LEGENDARY reinforcement"
+            )
             return False
 
         defense_start_time = process[-1]["transaction_time"]

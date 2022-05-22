@@ -131,7 +131,9 @@ class Strategy:
             logger.print_normal(
                 f"Checking from approved reinforcements {allowed_crabs_str} from group {group_id}"
             )
-            reinforcement_crab = self.crabada_w2.get_my_best_bp_crab_for_lending(self.address, available_reinforcing_crabs)
+            reinforcement_crab = self.crabada_w2.get_my_best_bp_crab_for_lending(
+                self.address, available_reinforcing_crabs
+            )
             logger.print_normal(f"Own reinforcement result: {reinforcement_crab}")
 
         if (
@@ -181,7 +183,9 @@ class Strategy:
             logger.print_normal(
                 f"Checking from approved reinforcements {allowed_crabs_str} from group {group_id}"
             )
-            reinforcement_crab = self.crabada_w2.get_my_best_mp_crab_for_lending(self.address, available_reinforcing_crabs)
+            reinforcement_crab = self.crabada_w2.get_my_best_mp_crab_for_lending(
+                self.address, available_reinforcing_crabs
+            )
             logger.print_normal(f"Own reinforcement result: {reinforcement_crab}")
 
         now = time.time()

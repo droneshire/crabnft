@@ -300,7 +300,9 @@ class ConfigManagerFirebase(ConfigManager):
         doc = self._get_user_document(config)
 
         if doc is not None:
-            logger.print_normal(f"Using previous preferences from database")
+            logger.print_normal(
+                f"Using previous preferences from database and {'erasing' if erase_old_config else 'not erasing'}"
+            )
             db_config = doc.get().to_dict()
             db_config["strategy"] = {
                 "reinforceEnabled": db_config["strategy"]["reinforceEnabled"],

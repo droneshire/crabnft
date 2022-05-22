@@ -615,17 +615,6 @@ class CrabadaMineBot:
             )
             return True
 
-        if (
-            strategy_to_game_type(strategy) == MineOption.LOOT
-            and team["team_id"] in self.fraud_detection_tracker
-        ):
-            content = f"Possible fraud detection from user {self.alias}.\n\n"
-            content += f"Reinforced with team {team['team_id']} that never was closed by the bot!"
-            send_email(self.emails, ADMIN_EMAIL, "Fraud Detection Alert!", content)
-        else:
-            self.fraud_detection_tracker.add(team["team_id"])
-            logger.print_warn(f"Adding team {team['team_id']} to fraud detection list")
-
         with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
             tx = strategy.reinforce(team["game_id"], crabada_id, reinforcement_crab["price"])
 
