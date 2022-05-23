@@ -1,19 +1,19 @@
 import datetime
 import os
 import typing as T
+import textwrap
 
 from eth_typing import Address
 
 from crabada.types import Team, CrabadaClass, MineOption, CRABADA_ID_TO_CLASS
+from crabada.crabada_web3_client import CrabadaWeb3Client
 from utils import csv_logger, logger
 from utils.general import TIMESTAMP_FORMAT
 from utils.price import Prices, wei_to_tus_raw, wei_to_tus_raw
-from web3_utils.tus_swimmer_web3_client import TusSwimmerWeb3Client
 
 NORMALIZED_TIME = 4.0
 
-CRA_MULTIPLIER = 3.0
-TUS_TO_CRA_RATIO: int = int(334.125 / (4.125 * CRA_MULTIPLIER))
+CRA_MULTIPLIER = 1.0
 
 
 class Result:
@@ -142,133 +142,133 @@ NO_REINFORCE_PAY_SCENARIOS = (
 REWARDS_TUS: T.Dict[str, T.Dict[str, float]] = {
     Scenarios.Loot: {
         Result.WIN: {
-            "TUS": 221.7375,
-            "CRA": 2.7375,
+            "TUS": 155.21625,
+            "CRA": 0.0,
         },
         Result.LOSE: {
-            "TUS": 24.3,
-            "CRA": 0.3,
+            "TUS": 17.01,
+            "CRA": 0.0,
         },
         "time_normalized": 1.0,
     },
     Scenarios.LootAndSelfReinforce: {
         Result.WIN: {
-            "TUS": 221.7375,
-            "CRA": 2.7375,
+            "TUS": 155.21625,
+            "CRA": 0.0,
         },
         Result.LOSE: {
-            "TUS": 24.3,
-            "CRA": 0.3,
+            "TUS": 17.01,
+            "CRA": 0.0,
         },
         "time_normalized": 1.0,
     },
     Scenarios.LootAndNoReinforce: {
         Result.WIN: {
-            "TUS": 221.7375,
-            "CRA": 2.7375,
+            "TUS": 155.21625,
+            "CRA": 0.0,
         },
         Result.LOSE: {
-            "TUS": 24.3,
-            "CRA": 0.3,
+            "TUS": 17.01,
+            "CRA": 0.0,
         },
         "time_normalized": 1.0,
     },
     Scenarios.LootWithNoContest: {
         Result.WIN: {
-            "TUS": 221.7375,
-            "CRA": 2.7375,
+            "TUS": 155.21625,
+            "CRA": 0.0,
         },
         Result.LOSE: {
-            "TUS": 221.7375,
-            "CRA": 2.7375,
+            "TUS": 155.21625,
+            "CRA": 0.0,
         },
         "time_normalized": 1.0,
     },
     Scenarios.MineAndReinforce: {
         Result.WIN: {
-            "TUS": 303.75,
-            "CRA": 3.75,
+            "TUS": 212.625,
+            "CRA": 0.0,
         },
         Result.LOSE: {
-            "TUS": 106.3125,
-            "CRA": 1.3125,
+            "TUS": 74.4188,
+            "CRA": 0.0,
         },
         "time_normalized": 4.0,
     },
     Scenarios.MineAndSelfReinforce: {
         Result.WIN: {
-            "TUS": 303.75,
-            "CRA": 3.75,
+            "TUS": 212.625,
+            "CRA": 0.0,
         },
         Result.LOSE: {
-            "TUS": 106.3125,
-            "CRA": 1.3125,
+            "TUS": 74.4188,
+            "CRA": 0.0,
         },
         "time_normalized": 4.0,
     },
     Scenarios.MineTenPercentAndReinforce: {
         Result.WIN: {
-            "TUS": 334.125,
-            "CRA": 4.125,
+            "TUS": 233.8875,
+            "CRA": 0.0,
         },
         Result.LOSE: {
-            "TUS": 136.6875,
-            "CRA": 1.6875,
+            "TUS": 95.6812,
+            "CRA": 0.0,
         },
         "time_normalized": 4.0,
     },
     Scenarios.MineTenPercentAndSelfReinforce: {
         Result.WIN: {
-            "TUS": 334.125,
-            "CRA": 4.125,
+            "TUS": 233.8875,
+            "CRA": 0.0,
         },
         Result.LOSE: {
-            "TUS": 136.6875,
-            "CRA": 1.6875,
+            "TUS": 95.6812,
+            "CRA": 0.0,
         },
         "time_normalized": 4.0,
     },
     Scenarios.MineAndNoReinforce: {
         Result.WIN: {
-            "TUS": 106.3125,
-            "CRA": 1.3125,
+            "TUS": 74.4188,
+            "CRA": 0.0,
         },
         Result.LOSE: {
-            "TUS": 106.3125,
-            "CRA": 1.3125,
+            "TUS": 74.4188,
+            "CRA": 0.0,
         },
         "time_normalized": 4.0,
     },
     Scenarios.MineTenPercentAndNoReinforce: {
         Result.WIN: {
-            "TUS": 136.6875,
-            "CRA": 1.6875,
+            "TUS": 95.6812,
+            "CRA": 0.0,
         },
         Result.LOSE: {
-            "TUS": 136.6875,
-            "CRA": 1.6875,
+            "TUS": 95.6812,
+            "CRA": 0.0,
         },
         "time_normalized": 4.0,
     },
     Scenarios.MineWithNoContest: {
         Result.WIN: {
-            "TUS": 303.75,
-            "CRA": 3.75,
+            "TUS": 212.625,
+            "CRA": 0.0,
         },
         Result.LOSE: {
-            "TUS": 303.75,
-            "CRA": 3.75,
+            "TUS": 212.625,
+            "CRA": 0.0,
         },
         "time_normalized": 4.0,
     },
     Scenarios.MineTenPercentWithNoContest: {
         Result.WIN: {
-            "TUS": 334.125,
-            "CRA": 4.125,
+            "TUS": 233.8875,
+            "CRA": 0.0,
         },
         Result.LOSE: {
-            "TUS": 334.125,
-            "CRA": 4.125,
+            "TUS": 233.8875,
+            "CRA": 0.0,
         },
         "time_normalized": 4.0,
     },
@@ -354,32 +354,27 @@ def get_actual_game_profit(
     return profit_tus, profit_usd
 
 
-def get_rewards_from_tx_receipt(
-    tx_receipt: T.Any, address: Address, key: str
-) -> T.Tuple[T.Optional[float], T.Optional[float]]:
+def get_rewards_from_tx_receipt(tx_receipt: T.Any) -> T.Tuple[T.Optional[float], T.Optional[float]]:
+    DATA_SIZE = 64
+
     tus_rewards = None
     cra_rewards = 0.0
 
-    tus_w3 = T.cast(
-        TusSwimmerWeb3Client,
-        (
-            TusSwimmerWeb3Client()
-            .set_credentials(address, key)
-            .set_node_uri(TusSwimmerWeb3Client.NODE_URL)
-        ),
-    )
-    try:
-        logger.print_normal(f"{tx_receipt}")
-        logs = tus_w3.contract.events.Transfer().processReceipt(tx_receipt)
-        tus_rewards = 0.0
-    except:
-        logger.print_fail(f"Failed to parse TX Receipt")
-        logger.print_normal(f"{tx_receipt}")
-        logs = []
-
+    logs = tx_receipt.get("logs", [])
     for log in logs:
-        if log.get("address", "").lower() == TusSwimmerWeb3Client.TUS_CONTRACT_ADDRESS.lower():
-            tus_rewards += wei_to_tus_raw(int(log["args"]["value"]))
+        data_str = log.get("data", "")
+
+        if not data_str.startswith("0x"):
+            continue
+
+        raw_data = data_str[len("0x") :]
+        data = textwrap.wrap(raw_data, DATA_SIZE)
+
+        if len(data) != 3:
+            continue
+
+        if int(data[0], 16) == int(CrabadaWeb3Client().contract_address.lower(), 16):
+            tus_rewards = wei_to_tus_raw(int(data[2], 16))
 
     return (tus_rewards, cra_rewards)
 

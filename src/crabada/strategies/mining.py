@@ -69,9 +69,7 @@ class MiningStrategy(Strategy):
                 pass
 
         gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
-        tus, cra = get_rewards_from_tx_receipt(
-            tx_receipt, self.config_mgr.config["address"], self.config_mgr.config["crabada_key"]
-        )
+        tus, cra = get_rewards_from_tx_receipt(tx_receipt)
         if tus is not None:
             result = self._get_game_result(tus)
         else:
