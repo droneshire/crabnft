@@ -564,7 +564,7 @@ def get_profitability_message(
 
     message += f"**Prices**\n"
     message += (
-        f"AVAX: ${prices.avax_usd:.2f}, TUS: ${prices.tus_usd:.2f}, CRA: ${prices.cra_usd:.2f}\n\n"
+        f"AVAX: ${prices.avax_usd:.2f}, TUS: ${prices.tus_usd:.4f}, CRA: ${prices.cra_usd:.4f}\n\n"
     )
 
     message += f"**Expected Profit (EP)**\n"
