@@ -7,8 +7,8 @@ from eth_typing import Address
 from crabada.types import Team, CrabadaClass, MineOption, CRABADA_ID_TO_CLASS
 from utils import csv_logger, logger
 from utils.general import TIMESTAMP_FORMAT
-from utils.price import Prices, wei_to_cra_raw, wei_to_tus_raw
-from web3_utils.cra_swimmer_web3_client import CraSwimmerWeb3Client
+from utils.price import Prices, wei_to_tus_raw, wei_to_tus_raw
+from web3_utils.tus_swimmer_web3_client import TusSwimmerWeb3Client
 
 NORMALIZED_TIME = 4.0
 
@@ -358,27 +358,28 @@ def get_rewards_from_tx_receipt(
     tx_receipt: T.Any, address: Address, key: str
 ) -> T.Tuple[T.Optional[float], T.Optional[float]]:
     tus_rewards = None
-    cra_rewards = None
+    cra_rewards = 0.0
 
-    cra_w3 = T.cast(
-        CraSwimmerWeb3Client,
+    tus_w3 = T.cast(
+        TusSwimmerWeb3Client,
         (
-            CraSwimmerWeb3Client()
+            TusSwimmerWeb3Client()
             .set_credentials(address, key)
-            .set_node_uri(CraSwimmerWeb3Client.NODE_URL)
+            .set_node_uri(TusSwimmerWeb3Client.NODE_URL)
         ),
     )
     try:
-        logs = cra_w3.contract.events.Transfer().processReceipt(tx_receipt)
+        logger.print_normal(f"{tx_receipt}")
+        logs = tus_w3.contract.events.Transfer().processReceipt(tx_receipt)
+        tus_rewards = 0.0
     except:
         logger.print_fail(f"Failed to parse TX Receipt")
         logger.print_normal(f"{tx_receipt}")
         logs = []
 
     for log in logs:
-        if log.get("address", "").lower() == CraSwimmerWeb3Client.CRA_CONTRACT_ADDRESS.lower():
-            cra_rewards = wei_to_cra_raw(int(log["args"]["value"]))
-            tus_rewards = int(cra_rewards * TUS_TO_CRA_RATIO)
+        if log.get("address", "").lower() == TusSwimmerWeb3Client.TUS_CONTRACT_ADDRESS.lower():
+            tus_rewards += wei_to_tus_raw(int(log["args"]["value"]))
 
     return (tus_rewards, cra_rewards)
 
