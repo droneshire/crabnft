@@ -48,6 +48,7 @@ gspread-formatting==1.0.6
 hexbytes==0.2.2
 httplib2==0.20.4
 idna==3.3
+inflection==0.5.1
 ipfshttpclient==0.8.0a2
 isort==5.10.1
 jsonschema==3.2.0
