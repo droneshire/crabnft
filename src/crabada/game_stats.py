@@ -337,13 +337,18 @@ class LifetimeGameStatsLogger:
         self.lifetime_stats: LifetimeGameStats = None
 
         if not os.path.isfile(get_lifetime_stats_file(self.user, self.log_dir)):
-            self.lifetime_stats = copy.deepcopy(NULL_GAME_STATS)
+            if backup_stats:
+                self.last_lifetime_stats = copy.deepcopy(backup_stats)
+            else:
+                self.lifetime_stats = copy.deepcopy(NULL_GAME_STATS)
         else:
             game_stats = get_game_stats(self.user, self.log_dir)
             if game_stats:
                 self.lifetime_stats = update_lifetime_stats_format(game_stats)
-            else:
+            elif backup_stats:
                 self.lifetime_stats = backup_stats
+            else:
+                self.lifetime_stats = copy.deepcopy(NULL_GAME_STATS)
 
         write_game_stats(self.user, self.log_dir, self.lifetime_stats, dry_run=dry_run)
 
