@@ -21,9 +21,9 @@ from crabada.game_stats import (
     write_game_stats,
 )
 from crabada.miners_revenge import calc_miners_revenge
-from crabada.profitability import GameStats, NULL_STATS
+from crabada.profitability import CrabadaTransaction, GameStats, NULL_STATS
 from crabada.profitability import get_actual_game_profit, is_profitable_to_take_action
-from crabada.strategies.strategy import CrabadaTransaction, GameStage, Strategy
+from crabada.strategies.strategy import GameStage, Strategy
 from crabada.strategies.looting import LootingStrategy
 from crabada.strategies.strategy_selection import STRATEGY_SELECTION, strategy_to_game_type
 from crabada.types import CrabForLending, IdleGame, Team, MineOption
@@ -108,6 +108,7 @@ class CrabadaMineBot:
             dry_run=dry_run,
             verbose=True,
         )
+        self.config_mgr.init()
 
         self.mining_strategy = STRATEGY_SELECTION[config["mining_strategy"]](
             self.address,
@@ -127,12 +128,14 @@ class CrabadaMineBot:
         csv_file = get_lifetime_stats_file(self.alias, self.log_dir).split(".")[0] + ".csv"
         self.csv = CsvLogger(csv_file, csv_header, dry_run)
         self.stats_logger = LifetimeGameStatsLogger(
-            self.alias, self.log_dir, self.dry_run, verbose=False
+            self.alias,
+            self.log_dir,
+            self.config_mgr.get_lifetime_stats(),
+            self.dry_run,
+            verbose=False,
         )
 
         logger.print_ok_blue(f"Adding bot for user {self.alias} with address {self.address}")
-
-        self.config_mgr.init()
 
     def _check_calc_and_send_daily_update_message(self) -> None:
         today = datetime.date.today()

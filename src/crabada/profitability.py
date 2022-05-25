@@ -22,6 +22,34 @@ class Result:
     UNKNOWN = "UNKNOWN"
 
 
+class GameStage:
+    START = "START"
+    CLOSE = "CLOSE"
+    REINFORCE = "REINFORCE"
+
+
+class CrabadaTransaction:
+    def __init__(
+        self,
+        tx_hash: str,
+        game_type: T.Literal["LOOT", "MINE"],
+        tus: float,
+        cra: float,
+        did_succeed: bool,
+        result: Result,
+        gas: float,
+        tx_gas_used: float,
+    ):
+        self.tx_hash = tx_hash
+        self.tus_rewards = tus
+        self.cra_rewards = cra
+        self.did_succeed = did_succeed
+        self.result = result
+        self.gas = gas
+        self.game_type = game_type
+        self.tx_gas_used = tx_gas_used
+
+
 class GameStats(T.TypedDict):
     reinforce1: float
     reinforce2: float

@@ -7,38 +7,10 @@ from web3.types import Wei
 from crabada.config_manager import ConfigManager
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
-from crabada.profitability import REWARDS_TUS, Result, Scenarios
+from crabada.profitability import CrabadaTransaction, GameStage, REWARDS_TUS, Result, Scenarios
 from crabada.types import IdleGame, Team, TeamMember
 from utils import logger
 from utils.price import Tus, wei_to_cra_raw, wei_to_tus_raw
-
-
-class GameStage:
-    START = "START"
-    CLOSE = "CLOSE"
-    REINFORCE = "REINFORCE"
-
-
-class CrabadaTransaction:
-    def __init__(
-        self,
-        tx_hash: str,
-        game_type: T.Literal["LOOT", "MINE"],
-        tus: float,
-        cra: float,
-        did_succeed: bool,
-        result: Result,
-        gas: float,
-        tx_gas_used: float,
-    ):
-        self.tx_hash = tx_hash
-        self.tus_rewards = tus
-        self.cra_rewards = cra
-        self.did_succeed = did_succeed
-        self.result = result
-        self.gas = gas
-        self.game_type = game_type
-        self.tx_gas_used = tx_gas_used
 
 
 class Strategy:

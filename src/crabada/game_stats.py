@@ -11,8 +11,7 @@ from utils.csv_logger import CsvLogger
 from utils.general import TIMESTAMP_FORMAT
 from utils.price import Prices, wei_to_cra_raw, wei_to_tus_raw
 from utils.user import get_alias_from_user
-from crabada.profitability import GameStats, Result, NULL_STATS
-from crabada.strategies.strategy import CrabadaTransaction
+from crabada.profitability import CrabadaTransaction, GameStats, Result, NULL_STATS
 from crabada.types import IdleGame, Team
 
 
@@ -231,8 +230,11 @@ def get_game_stats(user: str, log_dir: str) -> T.Dict[str, T.Any]:
     game_stats_file = get_lifetime_stats_file(user, log_dir)
     if not os.path.isfile(game_stats_file):
         return NULL_GAME_STATS
-    with open(game_stats_file, "r") as infile:
-        return json.load(infile)
+    try:
+        with open(game_stats_file, "r") as infile:
+            return json.load(infile)
+    except:
+        return {}
 
 
 def write_game_stats(user: str, log_dir: str, game_stats: LifetimeGameStats, dry_run=False) -> None:
@@ -318,19 +320,30 @@ def merge_game_stats(
 
 
 class LifetimeGameStatsLogger:
-    def __init__(self, user: str, log_dir: str, dry_run: bool = False, verbose: bool = False):
+    def __init__(
+        self,
+        user: str,
+        log_dir: str,
+        backup_stats: LifetimeGameStats,
+        dry_run: bool = False,
+        verbose: bool = False,
+    ):
         self.user = user
         self.log_dir = log_dir
 
         self.dry_run = dry_run
         self.verbose = verbose
 
+        self.lifetime_stats: LifetimeGameStats = None
+
         if not os.path.isfile(get_lifetime_stats_file(self.user, self.log_dir)):
             self.lifetime_stats = copy.deepcopy(NULL_GAME_STATS)
         else:
-            self.lifetime_stats = update_lifetime_stats_format(
-                get_game_stats(self.user, self.log_dir)
-            )
+            game_stats = get_game_stats(self.user, self.log_dir)
+            if game_stats:
+                self.lifetime_stats = update_lifetime_stats_format(game_stats)
+            else:
+                self.lifetime_stats = backup_stats
 
         write_game_stats(self.user, self.log_dir, self.lifetime_stats, dry_run=dry_run)
 

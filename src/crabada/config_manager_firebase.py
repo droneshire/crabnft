@@ -1,6 +1,7 @@
 import copy
 import deepdiff
 import firebase_admin
+import inflection
 import json
 import os
 import time
@@ -11,6 +12,7 @@ from firebase_admin import credentials
 
 from config import USERS, SMALL_TEAM_GAS_LIMIT
 from crabada.game_stats import get_game_stats
+from crabada.game_stats import LifetimeGameStats, NULL_GAME_STATS
 from crabada.teams import assign_crabs_to_groups, assign_teams_to_groups
 from crabada.teams import LOOTING_GROUP_NUM, MINING_GROUP_NUM, INACTIVE_GROUP_NUM
 from crabada.types import MineOption
@@ -42,6 +44,24 @@ def dict_keys_snake_to_camel(d: T.Dict[T.Any, T.Any]) -> T.Dict[T.Any, T.Any]:
 
         if isinstance(v, T.Dict):
             new[k] = dict_keys_snake_to_camel(v)
+        else:
+            new[k] = v
+    return new
+
+
+def dict_keys_camel_to_snake(d: T.Dict[T.Any, T.Any]) -> T.Dict[T.Any, T.Any]:
+    if not isinstance(d, dict):
+        return {}
+
+    new = {}
+    for k, v in d.items():
+        if isinstance(k, str):
+            snake = inflection.underscore(k)
+            if snake != k.lower():
+                k = snake
+
+        if isinstance(v, T.Dict):
+            new[k] = dict_keys_camel_to_snake(v)
         else:
             new[k] = v
     return new
@@ -100,6 +120,19 @@ class ConfigManagerFirebase(ConfigManager):
             self._update_game_stats()
         except:
             logger.print_fail(f"Failed to upload game stats to database")
+
+    def get_lifetime_stats(self) -> LifetimeGameStats:
+        game_stats: LifetimeGameStats = copy.deepcopy(NULL_GAME_STATS)
+        if self.user_doc is None:
+            return game_stats
+
+        db_config = self.user_doc.get().to_dict()
+
+        try:
+            db_stats = db_config["stats"]
+            return dict_keys_camel_to_snake(db_stats)
+        except:
+            return game_stats
 
     def _update_game_stats(self) -> None:
         if self.user_doc is None:

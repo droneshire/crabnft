@@ -12,6 +12,7 @@ from utils.config_types import UserConfig
 from utils.security import decrypt, encrypt
 from utils.email import Email, send_email
 from utils.user import get_alias_from_user
+from crabada.game_stats import LifetimeGameStats, NULL_GAME_STATS
 
 
 class ConfigManager:
@@ -49,6 +50,9 @@ class ConfigManager:
 
     def close(self) -> None:
         self._save_config()
+
+    def get_lifetime_stats(self) -> LifetimeGameStats:
+        return NULL_GAME_STATS
 
     def _get_team_composition_and_mp(
         self, team: int, config: UserConfig
