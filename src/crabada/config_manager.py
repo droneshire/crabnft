@@ -16,7 +16,7 @@ from crabada.game_stats import LifetimeGameStats, NULL_GAME_STATS
 
 
 class ConfigManager:
-    CONFIG_UPDATE_TIME = 60.0 * 10.0
+    CONFIG_UPDATE_TIME = 60.0 * 30.0
 
     def __init__(
         self,
