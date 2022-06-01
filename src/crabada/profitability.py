@@ -14,6 +14,7 @@ from utils.price import Prices, wei_to_tus_raw, wei_to_tus_raw
 NORMALIZED_TIME = 4.0
 
 CRA_MULTIPLIER = 1.0
+IDLE_MULTIPLIER = 0.7
 
 
 class Result:
@@ -170,144 +171,144 @@ NO_REINFORCE_PAY_SCENARIOS = (
 REWARDS_TUS: T.Dict[str, T.Dict[str, float]] = {
     Scenarios.Loot: {
         Result.WIN: {
-            "TUS": 155.21625,
-            "CRA": 0.0,
+            "TUS": 155.21625 * IDLE_MULTIPLIER,
+            "CRA": 0.0 * CRA_MULTIPLIER,
         },
         Result.LOSE: {
-            "TUS": 17.01,
-            "CRA": 0.0,
+            "TUS": 17.01 * IDLE_MULTIPLIER,
+            "CRA": 0.0 * CRA_MULTIPLIER,
         },
         "time_normalized": 1.0,
     },
     Scenarios.LootAndSelfReinforce: {
         Result.WIN: {
-            "TUS": 155.21625,
-            "CRA": 0.0,
+            "TUS": 155.21625 * IDLE_MULTIPLIER,
+            "CRA": 0.0 * CRA_MULTIPLIER,
         },
         Result.LOSE: {
-            "TUS": 17.01,
-            "CRA": 0.0,
+            "TUS": 17.01 * IDLE_MULTIPLIER,
+            "CRA": 0.0 * CRA_MULTIPLIER,
         },
         "time_normalized": 1.0,
     },
     Scenarios.LootAndNoReinforce: {
         Result.WIN: {
-            "TUS": 155.21625,
-            "CRA": 0.0,
+            "TUS": 155.21625 * IDLE_MULTIPLIER,
+            "CRA": 0.0 * CRA_MULTIPLIER,
         },
         Result.LOSE: {
-            "TUS": 17.01,
-            "CRA": 0.0,
+            "TUS": 17.01 * IDLE_MULTIPLIER,
+            "CRA": 0.0 * CRA_MULTIPLIER,
         },
         "time_normalized": 1.0,
     },
     Scenarios.LootWithNoContest: {
         Result.WIN: {
-            "TUS": 155.21625,
-            "CRA": 0.0,
+            "TUS": 155.21625 * IDLE_MULTIPLIER,
+            "CRA": 0.0 * CRA_MULTIPLIER,
         },
         Result.LOSE: {
-            "TUS": 155.21625,
-            "CRA": 0.0,
+            "TUS": 155.21625 * IDLE_MULTIPLIER,
+            "CRA": 0.0 * CRA_MULTIPLIER,
         },
         "time_normalized": 1.0,
     },
     Scenarios.MineAndReinforce: {
         Result.WIN: {
-            "TUS": 212.625,
-            "CRA": 0.0,
+            "TUS": 212.625 * IDLE_MULTIPLIER,
+            "CRA": 0.0 * CRA_MULTIPLIER,
         },
         Result.LOSE: {
-            "TUS": 74.4188,
-            "CRA": 0.0,
+            "TUS": 74.4188 * IDLE_MULTIPLIER,
+            "CRA": 0.0 * CRA_MULTIPLIER,
         },
         "time_normalized": 4.0,
     },
     Scenarios.MineAndSelfReinforce: {
         Result.WIN: {
-            "TUS": 212.625,
-            "CRA": 0.0,
+            "TUS": 212.625 * IDLE_MULTIPLIER,
+            "CRA": 0.0 * CRA_MULTIPLIER,
         },
         Result.LOSE: {
-            "TUS": 74.4188,
-            "CRA": 0.0,
+            "TUS": 74.4188 * IDLE_MULTIPLIER,
+            "CRA": 0.0 * CRA_MULTIPLIER,
         },
         "time_normalized": 4.0,
     },
     Scenarios.MineTenPercentAndReinforce: {
         Result.WIN: {
-            "TUS": 233.8875,
-            "CRA": 0.0,
+            "TUS": 233.8875 * IDLE_MULTIPLIER,
+            "CRA": 0.0 * CRA_MULTIPLIER,
         },
         Result.LOSE: {
-            "TUS": 95.6812,
-            "CRA": 0.0,
+            "TUS": 95.6812 * IDLE_MULTIPLIER,
+            "CRA": 0.0 * CRA_MULTIPLIER,
         },
         "time_normalized": 4.0,
     },
     Scenarios.MineTenPercentAndSelfReinforce: {
         Result.WIN: {
-            "TUS": 233.8875,
-            "CRA": 0.0,
+            "TUS": 233.8875 * IDLE_MULTIPLIER,
+            "CRA": 0.0 * CRA_MULTIPLIER,
         },
         Result.LOSE: {
-            "TUS": 95.6812,
-            "CRA": 0.0,
+            "TUS": 95.6812 * IDLE_MULTIPLIER,
+            "CRA": 0.0 * CRA_MULTIPLIER,
         },
         "time_normalized": 4.0,
     },
     Scenarios.MineAndNoReinforce: {
         Result.WIN: {
-            "TUS": 74.4188,
-            "CRA": 0.0,
+            "TUS": 74.4188 * IDLE_MULTIPLIER,
+            "CRA": 0.0 * CRA_MULTIPLIER,
         },
         Result.LOSE: {
-            "TUS": 74.4188,
-            "CRA": 0.0,
+            "TUS": 74.4188 * IDLE_MULTIPLIER,
+            "CRA": 0.0 * CRA_MULTIPLIER,
         },
         "time_normalized": 4.0,
     },
     Scenarios.MineTenPercentAndNoReinforce: {
         Result.WIN: {
-            "TUS": 95.6812,
-            "CRA": 0.0,
+            "TUS": 95.6812 * IDLE_MULTIPLIER,
+            "CRA": 0.0 * CRA_MULTIPLIER,
         },
         Result.LOSE: {
-            "TUS": 95.6812,
-            "CRA": 0.0,
+            "TUS": 95.6812 * IDLE_MULTIPLIER,
+            "CRA": 0.0 * CRA_MULTIPLIER,
         },
         "time_normalized": 4.0,
     },
     Scenarios.MineWithNoContest: {
         Result.WIN: {
-            "TUS": 212.625,
-            "CRA": 0.0,
+            "TUS": 212.625 * IDLE_MULTIPLIER,
+            "CRA": 0.0 * CRA_MULTIPLIER,
         },
         Result.LOSE: {
-            "TUS": 212.625,
-            "CRA": 0.0,
+            "TUS": 212.625 * IDLE_MULTIPLIER,
+            "CRA": 0.0 * CRA_MULTIPLIER,
         },
         "time_normalized": 4.0,
     },
     Scenarios.MineTenPercentWithNoContest: {
         Result.WIN: {
-            "TUS": 233.8875,
-            "CRA": 0.0,
+            "TUS": 233.8875 * IDLE_MULTIPLIER,
+            "CRA": 0.0 * CRA_MULTIPLIER,
         },
         Result.LOSE: {
-            "TUS": 233.8875,
-            "CRA": 0.0,
+            "TUS": 233.8875 * IDLE_MULTIPLIER,
+            "CRA": 0.0 * CRA_MULTIPLIER,
         },
         "time_normalized": 4.0,
     },
     Scenarios.TavernThreeMpCrabs: {
         Result.WIN: {
-            "TUS": 0.0,
-            "CRA": 0.0,
+            "TUS": 0.0 * IDLE_MULTIPLIER,
+            "CRA": 0.0 * CRA_MULTIPLIER,
         },
         Result.LOSE: {
-            "TUS": 0.0,
-            "CRA": 0.0,
+            "TUS": 0.0 * IDLE_MULTIPLIER,
+            "CRA": 0.0 * CRA_MULTIPLIER,
         },
         "time_normalized": 2.0,
     },
@@ -317,11 +318,11 @@ REWARDS_TUS: T.Dict[str, T.Dict[str, float]] = {
 def get_expected_tus(game_type: Scenarios, prices: Prices, win_percent: float) -> float:
     win_decimal = win_percent / 100.0
     winnings_tus = REWARDS_TUS[game_type][Result.WIN]["TUS"]
-    winnings_cra = REWARDS_TUS[game_type][Result.WIN]["CRA"] * CRA_MULTIPLIER
+    winnings_cra = REWARDS_TUS[game_type][Result.WIN]["CRA"]
     winnings_tus += prices.cra_to_tus(winnings_cra)
 
     losings_tus = REWARDS_TUS[game_type][Result.LOSE]["TUS"]
-    losings_cra = REWARDS_TUS[game_type][Result.LOSE]["CRA"] * CRA_MULTIPLIER
+    losings_cra = REWARDS_TUS[game_type][Result.LOSE]["CRA"]
     losings_tus += prices.cra_to_tus(losings_cra)
 
     return win_decimal * winnings_tus + (1 - win_decimal) * losings_tus
