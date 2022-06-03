@@ -13,8 +13,8 @@ from utils.price import Prices, wei_to_tus_raw, wei_to_tus_raw
 
 NORMALIZED_TIME = 4.0
 
-CRA_MULTIPLIER = 1.0
-IDLE_MULTIPLIER = 0.7
+CRA_MULTIPLIER = 0.0
+TUS_MULTIPLIER = 0.4
 
 
 class Result:
@@ -171,143 +171,143 @@ NO_REINFORCE_PAY_SCENARIOS = (
 REWARDS_TUS: T.Dict[str, T.Dict[str, float]] = {
     Scenarios.Loot: {
         Result.WIN: {
-            "TUS": 155.21625 * IDLE_MULTIPLIER,
-            "CRA": 0.0 * CRA_MULTIPLIER,
+            "TUS": 221.7375 * TUS_MULTIPLIER,
+            "CRA": 2.7375 * CRA_MULTIPLIER,
         },
         Result.LOSE: {
-            "TUS": 17.01 * IDLE_MULTIPLIER,
-            "CRA": 0.0 * CRA_MULTIPLIER,
+            "TUS": 24.3 * TUS_MULTIPLIER,
+            "CRA": 0.3 * CRA_MULTIPLIER,
         },
         "time_normalized": 1.0,
     },
     Scenarios.LootAndSelfReinforce: {
         Result.WIN: {
-            "TUS": 155.21625 * IDLE_MULTIPLIER,
-            "CRA": 0.0 * CRA_MULTIPLIER,
+            "TUS": 221.7375 * TUS_MULTIPLIER,
+            "CRA": 2.7375 * CRA_MULTIPLIER,
         },
         Result.LOSE: {
-            "TUS": 17.01 * IDLE_MULTIPLIER,
-            "CRA": 0.0 * CRA_MULTIPLIER,
+            "TUS": 24.3 * TUS_MULTIPLIER,
+            "CRA": 0.3 * CRA_MULTIPLIER,
         },
         "time_normalized": 1.0,
     },
     Scenarios.LootAndNoReinforce: {
         Result.WIN: {
-            "TUS": 155.21625 * IDLE_MULTIPLIER,
-            "CRA": 0.0 * CRA_MULTIPLIER,
+            "TUS": 221.7375 * TUS_MULTIPLIER,
+            "CRA": 2.7375 * CRA_MULTIPLIER,
         },
         Result.LOSE: {
-            "TUS": 17.01 * IDLE_MULTIPLIER,
-            "CRA": 0.0 * CRA_MULTIPLIER,
+            "TUS": 24.3 * TUS_MULTIPLIER,
+            "CRA": 0.3 * CRA_MULTIPLIER,
         },
         "time_normalized": 1.0,
     },
     Scenarios.LootWithNoContest: {
         Result.WIN: {
-            "TUS": 155.21625 * IDLE_MULTIPLIER,
-            "CRA": 0.0 * CRA_MULTIPLIER,
+            "TUS": 221.7375 * TUS_MULTIPLIER,
+            "CRA": 2.7375 * CRA_MULTIPLIER,
         },
         Result.LOSE: {
-            "TUS": 155.21625 * IDLE_MULTIPLIER,
-            "CRA": 0.0 * CRA_MULTIPLIER,
+            "TUS": 221.7375 * TUS_MULTIPLIER,
+            "CRA": 2.7375 * CRA_MULTIPLIER,
         },
         "time_normalized": 1.0,
     },
     Scenarios.MineAndReinforce: {
         Result.WIN: {
-            "TUS": 212.625 * IDLE_MULTIPLIER,
-            "CRA": 0.0 * CRA_MULTIPLIER,
+            "TUS": 303.75 * TUS_MULTIPLIER,
+            "CRA": 3.75 * CRA_MULTIPLIER,
         },
         Result.LOSE: {
-            "TUS": 74.4188 * IDLE_MULTIPLIER,
-            "CRA": 0.0 * CRA_MULTIPLIER,
+            "TUS": 106.3125 * TUS_MULTIPLIER,
+            "CRA": 1.3125 * CRA_MULTIPLIER,
         },
         "time_normalized": 4.0,
     },
     Scenarios.MineAndSelfReinforce: {
         Result.WIN: {
-            "TUS": 212.625 * IDLE_MULTIPLIER,
-            "CRA": 0.0 * CRA_MULTIPLIER,
+            "TUS": 303.75 * TUS_MULTIPLIER,
+            "CRA": 3.75 * CRA_MULTIPLIER,
         },
         Result.LOSE: {
-            "TUS": 74.4188 * IDLE_MULTIPLIER,
-            "CRA": 0.0 * CRA_MULTIPLIER,
+            "TUS": 106.3125 * TUS_MULTIPLIER,
+            "CRA": 1.3125 * CRA_MULTIPLIER,
         },
         "time_normalized": 4.0,
     },
     Scenarios.MineTenPercentAndReinforce: {
         Result.WIN: {
-            "TUS": 233.8875 * IDLE_MULTIPLIER,
-            "CRA": 0.0 * CRA_MULTIPLIER,
+            "TUS": 334.125 * TUS_MULTIPLIER,
+            "CRA": 4.125 * CRA_MULTIPLIER,
         },
         Result.LOSE: {
-            "TUS": 95.6812 * IDLE_MULTIPLIER,
-            "CRA": 0.0 * CRA_MULTIPLIER,
+            "TUS": 136.6875 * TUS_MULTIPLIER,
+            "CRA": 1.6875 * CRA_MULTIPLIER,
         },
         "time_normalized": 4.0,
     },
     Scenarios.MineTenPercentAndSelfReinforce: {
         Result.WIN: {
-            "TUS": 233.8875 * IDLE_MULTIPLIER,
-            "CRA": 0.0 * CRA_MULTIPLIER,
+            "TUS": 334.125 * TUS_MULTIPLIER,
+            "CRA": 4.125 * CRA_MULTIPLIER,
         },
         Result.LOSE: {
-            "TUS": 95.6812 * IDLE_MULTIPLIER,
-            "CRA": 0.0 * CRA_MULTIPLIER,
+            "TUS": 136.6875 * TUS_MULTIPLIER,
+            "CRA": 1.6875 * CRA_MULTIPLIER,
         },
         "time_normalized": 4.0,
     },
     Scenarios.MineAndNoReinforce: {
         Result.WIN: {
-            "TUS": 74.4188 * IDLE_MULTIPLIER,
-            "CRA": 0.0 * CRA_MULTIPLIER,
+            "TUS": 106.3125 * TUS_MULTIPLIER,
+            "CRA": 1.3125 * CRA_MULTIPLIER,
         },
         Result.LOSE: {
-            "TUS": 74.4188 * IDLE_MULTIPLIER,
-            "CRA": 0.0 * CRA_MULTIPLIER,
+            "TUS": 106.3125 * TUS_MULTIPLIER,
+            "CRA": 1.3125 * CRA_MULTIPLIER,
         },
         "time_normalized": 4.0,
     },
     Scenarios.MineTenPercentAndNoReinforce: {
         Result.WIN: {
-            "TUS": 95.6812 * IDLE_MULTIPLIER,
-            "CRA": 0.0 * CRA_MULTIPLIER,
+            "TUS": 136.6875 * TUS_MULTIPLIER,
+            "CRA": 1.6875 * CRA_MULTIPLIER,
         },
         Result.LOSE: {
-            "TUS": 95.6812 * IDLE_MULTIPLIER,
-            "CRA": 0.0 * CRA_MULTIPLIER,
+            "TUS": 136.6875 * TUS_MULTIPLIER,
+            "CRA": 1.6875 * CRA_MULTIPLIER,
         },
         "time_normalized": 4.0,
     },
     Scenarios.MineWithNoContest: {
         Result.WIN: {
-            "TUS": 212.625 * IDLE_MULTIPLIER,
-            "CRA": 0.0 * CRA_MULTIPLIER,
+            "TUS": 303.75 * TUS_MULTIPLIER,
+            "CRA": 3.75 * CRA_MULTIPLIER,
         },
         Result.LOSE: {
-            "TUS": 212.625 * IDLE_MULTIPLIER,
-            "CRA": 0.0 * CRA_MULTIPLIER,
+            "TUS": 303.75 * TUS_MULTIPLIER,
+            "CRA": 3.75 * CRA_MULTIPLIER,
         },
         "time_normalized": 4.0,
     },
     Scenarios.MineTenPercentWithNoContest: {
         Result.WIN: {
-            "TUS": 233.8875 * IDLE_MULTIPLIER,
-            "CRA": 0.0 * CRA_MULTIPLIER,
+            "TUS": 334.125 * TUS_MULTIPLIER,
+            "CRA": 4.125 * CRA_MULTIPLIER,
         },
         Result.LOSE: {
-            "TUS": 233.8875 * IDLE_MULTIPLIER,
-            "CRA": 0.0 * CRA_MULTIPLIER,
+            "TUS": 334.125 * TUS_MULTIPLIER,
+            "CRA": 4.125 * CRA_MULTIPLIER,
         },
         "time_normalized": 4.0,
     },
     Scenarios.TavernThreeMpCrabs: {
         Result.WIN: {
-            "TUS": 0.0 * IDLE_MULTIPLIER,
+            "TUS": 0.0 * TUS_MULTIPLIER,
             "CRA": 0.0 * CRA_MULTIPLIER,
         },
         Result.LOSE: {
-            "TUS": 0.0 * IDLE_MULTIPLIER,
+            "TUS": 0.0 * TUS_MULTIPLIER,
             "CRA": 0.0 * CRA_MULTIPLIER,
         },
         "time_normalized": 2.0,
