@@ -377,6 +377,8 @@ class ConfigManagerFirebase(ConfigManager):
         for team in teams:
             team_id = team["team_id"]
             composition, _ = self._get_team_composition_and_mp(team_id, config)
+            if any([c == "UNKNOWN" for c in composition]):
+                continue
             db_config["strategy"]["teams"][str(team_id)] = {
                 "action": StrategyActions.MINING,
                 "composition": composition,
@@ -387,6 +389,8 @@ class ConfigManagerFirebase(ConfigManager):
         for crab in crabs:
             crab_id = crab["crabada_id"]
             crab_class = self.crab_classes.get(crab_id, self._get_crab_class(crab_id, config))
+            if crab_class == "UNKNOWN":
+                continue
             db_config["strategy"]["reinforcingCrabs"][str(crab_id)] = {
                 "action": StrategyActions.MINING,
                 "class": [crab_class.strip()],
