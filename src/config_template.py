@@ -3,14 +3,16 @@ CONFIG_TEMPLATE = {
         group=4,
         crabada_key="",
         address=Address(""),
-        mining_teams={},
-        looting_teams={},
-        reinforcing_crabs={},
-        breed_crabs=[],
-        mining_strategy="PreferOwnMpCrabsAndDelayReinforcement",
-        looting_strategy="PreferOwnBpCrabsAndDelayReinforcement",
+        game_specific_configs = {
+            "mining_teams": {},
+            "looting_teams": {},
+            "reinforcing_crabs": {},
+            "mining_strategy": "PreferOwnMpCrabsAndDelayReinforcement",
+            "looting_strategy": "PreferOwnBpCrabsAndDelayReinforcement",
+            "max_reinforcement_price_tus": 24.0,
+            "should_reinforce": True,
+        },
         max_gas_price_gwei=SMALL_TEAM_GAS_LIMIT,
-        max_reinforcement_price_tus=24.0,
         commission_percent_per_mine={
             "0x8191eFdc4b4A1250481624a908C6cB349A60590e": 10.0,
         },
@@ -21,6 +23,6 @@ CONFIG_TEMPLATE = {
         get_sms_updates_loots=False,
         get_sms_updates_alerts=False,
         get_email_updates=True,
-        should_reinforce=True,
+
     ),
 }

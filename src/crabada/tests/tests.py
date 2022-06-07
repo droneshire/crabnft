@@ -24,21 +24,24 @@ TEST_CONFIG = UserConfig(
     group=1,
     private_key="OzNlfYgu2jDLbjUBsNFmfPySz/QwRO3lbx+DjVmR7IQ=",  # deadbeef
     address=Address("0xae55967c2c5fae2cf2529b12f5a7344e99037656"),
-    mining_teams={
-        28201: 0,
-        28203: 0,
+    game_specific_configs={
+        "mining_teams": {
+            28201: 0,
+            28203: 0,
+        },
+        "looting_teams": {
+            28199: 0,
+        },
+        "reinforcing_crabs": {
+            7777: 0,
+            8888: 10,
+        },
+        "mining_strategy": "PreferOwnMpCrabsAndDelayReinforcement",
+        "looting_strategy": "PreferOwnBpCrabsAndDelayReinforcement",
+        "max_reinforcement_price_tus": 24.0,
+        "should_reinforce": True,
     },
-    looting_teams={
-        28199: 0,
-    },
-    reinforcing_crabs={
-        7777: 0,
-        8888: 10,
-    },
-    mining_strategy="PreferOwnMpCrabsAndDelayReinforcement",
-    looting_strategy="PreferOwnBpCrabsAndDelayReinforcement",
     max_gas_price_gwei=15000.0,
-    max_reinforcement_price_tus=24.0,
     commission_percent_per_mine={
         "": 10.0,
     },
@@ -49,14 +52,15 @@ TEST_CONFIG = UserConfig(
     get_sms_updates_loots=False,
     get_sms_updates_alerts=False,
     get_email_updates=True,
-    should_reinforce=True,
 )
 
 
 def test_miners_revenge() -> None:
     expected_miners_revenge = 42.25
     this_dir = os.path.dirname(os.path.realpath(__file__))
-    mine_file = os.path.join(this_dir, "crabada", "test_mines", "example_mine.json")
+    crabada_test_dir = os.path.join(this_dir, "crabada", "tests")
+
+    mine_file = os.path.join(crabada_test_dir, "test_mines", "example_mine.json")
     with open(mine_file, "r") as infile:
         mine = json.load(infile)["result"]
 
@@ -71,7 +75,7 @@ def test_miners_revenge() -> None:
     ), f"Expected: {expected_miners_revenge} Actual: {miners_revenge}"
 
     expected_miners_revenge = 37.15
-    mine_file = os.path.join(this_dir, "crabada", "test_mines", "example_mine1.json")
+    mine_file = os.path.join(crabada_test_dir, "test_mines", "example_mine1.json")
     with open(mine_file, "r") as infile:
         mine = json.load(infile)["result"]
 
@@ -80,7 +84,7 @@ def test_miners_revenge() -> None:
         expected_miners_revenge, miners_revenge, abs_tol=0.01
     ), f"Expected: {expected_miners_revenge} Actual: {miners_revenge}"
 
-    mine_file = os.path.join(this_dir, "crabada", "test_mines", "example_mine2.json")
+    mine_file = os.path.join(crabada_test_dir, "test_mines", "example_mine2.json")
     with open(mine_file, "r") as infile:
         mine = json.load(infile)["result"]
     additional_crab = [
@@ -108,7 +112,7 @@ def test_miners_revenge() -> None:
         expected_miners_revenge, miners_revenge, abs_tol=0.01
     ), f"Expected: {expected_miners_revenge} Actual: {miners_revenge}"
 
-    mine_file = os.path.join(this_dir, "crabada", "test_mines", "example_mine3.json")
+    mine_file = os.path.join(crabada_test_dir, "test_mines", "example_mine3.json")
     with open(mine_file, "r") as infile:
         mine = json.load(infile)["result"]
 
