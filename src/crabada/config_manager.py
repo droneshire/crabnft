@@ -6,8 +6,6 @@ import time
 import typing as T
 
 from config import GAME_BOT_STRING
-from crabada.crabada_web2_client import CrabadaWeb2Client
-from crabada.types import CrabadaClass
 from utils import logger
 from utils.config_types import UserConfig
 from utils.security import decrypt, encrypt
@@ -33,11 +31,6 @@ class ConfigManager:
 
         self.encrypt_password = encrypt_password
 
-        self.crabada_w2 = CrabadaWeb2Client()
-        self.team_composition_and_mp = self.crabada_w2.get_team_compositions_and_mp(
-            self.config["address"]
-        )
-        self.crab_classes = self.crabada_w2.get_crab_classes(self.config["address"])
         self.send_email_accounts = send_email_accounts
 
         self.dry_run = dry_run
@@ -52,22 +45,8 @@ class ConfigManager:
     def close(self) -> None:
         self._save_config()
 
-    def get_lifetime_stats(self) -> LifetimeGameStats:
-        return NULL_GAME_STATS
-
-    def _get_team_composition_and_mp(
-        self, team: int, config: UserConfig
-    ) -> T.Tuple[CrabadaClass, int]:
-        self.team_composition_and_mp = {}
-        self.team_composition_and_mp = self.crabada_w2.get_team_compositions_and_mp(
-            config["address"]
-        )
-        return self.team_composition_and_mp.get(team, (["UNKNOWN"] * 3, 0))
-
-    def _get_crab_class(self, crab: int, config: UserConfig) -> str:
-        self.crab_classes = {}
-        self.crab_classes = self.crabada_w2.get_crab_classes(config["address"])
-        return self.crab_classes.get(crab, "UNKNOWN")
+    def get_lifetime_stats(self) -> T.Dict[T.Any, T.Any]:
+        raise NotImplementedError
 
     def _get_save_config(self) -> T.Dict[T.Any, T.Any]:
         save_config = copy.deepcopy(self.config)

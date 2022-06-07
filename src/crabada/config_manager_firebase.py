@@ -16,7 +16,7 @@ from crabada.game_stats import LifetimeGameStats, NULL_GAME_STATS
 from crabada.teams import assign_crabs_to_groups, assign_teams_to_groups
 from crabada.teams import LOOTING_GROUP_NUM, MINING_GROUP_NUM, INACTIVE_GROUP_NUM
 from crabada.types import MineOption
-from crabada.config_manager import ConfigManager
+from crabada.config_manager_crabada import CrabadaConfigManager
 from utils import logger
 from utils.general import dict_keys_camel_to_snake, dict_keys_snake_to_camel
 from utils.config_types import UserConfig
@@ -30,7 +30,7 @@ class StrategyActions:
     INACTIVE = "INACTIVE"
 
 
-class ConfigManagerFirebase(ConfigManager):
+class ConfigManagerFirebase(CrabadaConfigManager):
     MULTI_WALLET_KEYS = ["mining_teams", "looting_teams", "reinforcing_crabs"]
 
     def __init__(

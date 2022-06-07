@@ -12,7 +12,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.types import MineOption
-from crabada.config_manager import ConfigManager
+from crabada.config_manager_crabada import CrabadaConfigManager
 from utils import logger
 from utils.config_types import UserConfig
 from utils.email import Email, send_email
@@ -108,7 +108,7 @@ INPUT_VERIFY = {
 }
 
 
-class ConfigManagerSheets(ConfigManager):
+class ConfigManagerSheets(CrabadaConfigManager):
 
     GSHEETS_SCOPE = [
         "https://spreadsheets.google.com/feeds",
