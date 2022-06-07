@@ -2,13 +2,8 @@
 Starts bots for interacting with the Crabada Dapp P2E game
 """
 import argparse
-import copy
-import getpass
-import json
 import logging
 import os
-import requests
-import sys
 import time
 import traceback
 import typing as T
@@ -26,12 +21,12 @@ from config import (
 )
 from crabada.bot import CrabadaMineBot
 from crabada.profitability import get_profitability_message
-from utils import discord, email, logger, price, security
+from utils import discord, logger, security
 from utils.circuit_breaker import CircuitBreaker
 from crabada.game_stats import LifetimeGameStats
 from utils.general import dict_sum
 from utils.math import Average
-from utils.price import get_avax_price_usd, get_token_price_usd, DEFAULT_GAS_USED
+from utils.price import DEFAULT_GAS_USED, get_avax_price_usd, get_token_price_usd, Prices
 
 PRICE_UPDATE_TIME = 60.0 * 60.0
 BOT_TOTALS_UPDATE = 60.0 * 5
@@ -88,7 +83,7 @@ def get_users_teams() -> T.Tuple[int, int]:
 
 
 def handle_subscription_posts(
-    prices: price.Prices, avg_gas_tus: float, gas_price_gwei: float, avg_reinforce_tus: float
+    prices: Prices, avg_gas_tus: float, gas_price_gwei: float, avg_reinforce_tus: float
 ) -> None:
     subscriptions = {
         "HEYA_SUBSCRIPTION": {
@@ -134,18 +129,7 @@ def run_bot() -> None:
     }
 
     encrypt_password = ""
-    email_password = ""
-    email_accounts = []
-    if not args.dry_run:
-        encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
-
-        for email_account in GMAIL:
-            email_password = security.decrypt(
-                str.encode(encrypt_password), email_account["password"]
-            ).decode()
-            email_accounts.append(
-                email.Email(address=email_account["user"], password=email_password)
-            )
+    email_accounts, email_password = get_email_accounts_and_password(GMAIL, args.dry_run)
 
     bots = []
     for user, config in USERS.items():
@@ -153,11 +137,8 @@ def run_bot() -> None:
             logger.print_warn(f"Skipping {user} in group {config['group']}...")
             continue
 
-        private_key = (
-            ""
-            if not encrypt_password
-            else security.decrypt(str.encode(encrypt_password), config["private_key"]).decode()
-        )
+        private_key = security.decrypt_secret(encrypt_password, config["private_key"])
+
         config["private_key"] = private_key
 
         bots.append(
@@ -175,7 +156,7 @@ def run_bot() -> None:
 
     total_commission_tus = 0.0
     total_tus = 0.0
-    prices = price.Prices(
+    prices = Prices(
         get_avax_price_usd(IEX_API_TOKEN, dry_run=args.dry_run),
         get_token_price_usd(COINMARKETCAP_API_TOKEN, "TUS", dry_run=args.dry_run),
         get_token_price_usd(COINMARKETCAP_API_TOKEN, "CRA", dry_run=args.dry_run),

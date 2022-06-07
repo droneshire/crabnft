@@ -1,12 +1,26 @@
+import getpass
 import typing as T
 import yagmail
 
 from utils import logger
+from utils.security import decrypt_secret
 
 
 class Email(T.TypedDict):
     address: str
     password: str
+
+
+def get_email_accounts_and_password(
+    encrypted_emails: T.Dict[str, str], dry_run: bool = False
+) -> T.Tuple(T.List[email.Email], str):
+    if dry_run:
+        return ([], "")
+    encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
+
+    for email_account in encrypted_emails:
+        email_password = decrypt_secret(encrypt_password, email_account["password"])
+        email_accounts.append(email.Email(address=email_account["user"], password=email_password))
 
 
 def send_email_raw(

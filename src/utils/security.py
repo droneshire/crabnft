@@ -30,6 +30,12 @@ def decrypt(key: bytes, source: bytes, decode: bool = True):
     return data[:-padding]
 
 
+def decrypt_secret(encrypt_password: str, encrypted_secret: str) -> str:
+    if not encrypt_password:
+        return ""
+    return decrypt(str.encode(encrypt_password), encrypted_secret).decode()
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     group = parser.add_mutually_exclusive_group()
