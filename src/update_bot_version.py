@@ -25,7 +25,7 @@ def main() -> None:
     if args.dry_run:
         logger.print_warn(f"DRY RUN ACTIVATED")
 
-    text = f"\U0001F980   \U0001F916 **Bot upgraded! Version {args.new_version}**\n"
+    text = f"\U0001F916 **Bot upgraded! Version {args.new_version}**\n"
 
     if args.change_list:
         for line in args.change_list.splitlines():

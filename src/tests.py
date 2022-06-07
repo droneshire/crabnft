@@ -22,7 +22,7 @@ from utils import logger
 
 TEST_CONFIG = UserConfig(
     group=1,
-    crabada_key="OzNlfYgu2jDLbjUBsNFmfPySz/QwRO3lbx+DjVmR7IQ=",  # deadbeef
+    private_key="OzNlfYgu2jDLbjUBsNFmfPySz/QwRO3lbx+DjVmR7IQ=",  # deadbeef
     address=Address("0xae55967c2c5fae2cf2529b12f5a7344e99037656"),
     mining_teams={
         28201: 0,
@@ -35,7 +35,6 @@ TEST_CONFIG = UserConfig(
         7777: 0,
         8888: 10,
     },
-    breed_crabs=[],
     mining_strategy="PreferOwnMpCrabsAndDelayReinforcement",
     looting_strategy="PreferOwnBpCrabsAndDelayReinforcement",
     max_gas_price_gwei=15000.0,

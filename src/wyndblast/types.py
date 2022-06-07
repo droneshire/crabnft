@@ -2,6 +2,7 @@ import typing as T
 
 from eth_typing import Address
 
+
 class DailyActivity(T.TypedDict):
     idle: int
     active: int
@@ -9,6 +10,7 @@ class DailyActivity(T.TypedDict):
     completed_stage_2: int
     completed_stage_3: int
     needs_to_buy_ticket: int
+
 
 class Game(T.TypedDict):
     daily_activity: DailyActivity
@@ -18,7 +20,9 @@ class Game(T.TypedDict):
     pvp: int
     pve: int
 
+
 CountNftStatus = T.TypedDict(
+    "CountNftStatus",
     {
         "all": int,
         "unassigned": int,
@@ -26,8 +30,9 @@ CountNftStatus = T.TypedDict(
         "staking": int,
         "assigned": int,
         "game": Game,
-    }
+    },
 )
+
 
 class WyndNftStatus(T.TypedDict):
     owner_address: Address

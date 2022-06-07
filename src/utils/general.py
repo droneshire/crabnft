@@ -13,6 +13,44 @@ def dict_sum(d: T.Dict[T.Any, T.Any]) -> float:
     return sum
 
 
+def dict_keys_snake_to_camel(d: T.Dict[T.Any, T.Any]) -> T.Dict[T.Any, T.Any]:
+    if not isinstance(d, dict):
+        return {}
+
+    new = {}
+    for k, v in d.items():
+        if isinstance(k, str):
+            if len(k) > 1:
+                split_k = k.split("_")
+                k = split_k[0] + "".join(s.title() for s in split_k[1:])
+            else:
+                k = k.lower()
+
+        if isinstance(v, T.Dict):
+            new[k] = dict_keys_snake_to_camel(v)
+        else:
+            new[k] = v
+    return new
+
+
+def dict_keys_camel_to_snake(d: T.Dict[T.Any, T.Any]) -> T.Dict[T.Any, T.Any]:
+    if not isinstance(d, dict):
+        return {}
+
+    new = {}
+    for k, v in d.items():
+        if isinstance(k, str):
+            snake = inflection.underscore(k)
+            if snake != k.lower():
+                k = snake
+
+        if isinstance(v, T.Dict):
+            new[k] = dict_keys_camel_to_snake(v)
+        else:
+            new[k] = v
+    return new
+
+
 def get_pretty_seconds(s: int) -> str:
     """Given an amount of seconds, return a formatted string with
     hours, minutes and seconds; taken from

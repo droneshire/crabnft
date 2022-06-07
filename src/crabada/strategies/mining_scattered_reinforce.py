@@ -46,13 +46,17 @@ class ScatteredReinforcement(MiningStrategy):
     def _get_mine_per_group(self, mine_group: int) -> T.List[IdleGame]:
         mines = []
         for open_mine in self.crabada_w2.list_my_open_mines(self.config_mgr.config["address"]):
-            group = self.config_mgr.config["mining_teams"].get(open_mine["team_id"], -1)
+            group = self.config_mgr.config["game_specific_configs"]["mining_teams"].get(
+                open_mine["team_id"], -1
+            )
             if group == mine_group:
                 mines.append(open_mine)
         return mines
 
     def should_start(self, team: Team) -> bool:
-        mine_group = self.config_mgr.config["mining_teams"].get(team["team_id"], -1)
+        mine_group = self.config_mgr.config["game_specific_configs"]["mining_teams"].get(
+            team["team_id"], -1
+        )
 
         if mine_group == -1:
             return True
@@ -101,7 +105,9 @@ class ScatteredDelayReinforcement(ScatteredReinforcement):
         )
 
     def should_start(self, team: Team) -> bool:
-        mine_group = self.config_mgr.config["mining_teams"].get(team["team_id"], -1)
+        mine_group = self.config_mgr.config["game_specific_configs"]["mining_teams"].get(
+            team["team_id"], -1
+        )
 
         if mine_group == -1:
             return True

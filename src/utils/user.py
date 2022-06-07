@@ -1,7 +1,5 @@
-from config import ALIAS_POSTFIX, USERS
+from config import ALIAS_POSTFIX
 from utils import logger
-
-BETA_TEST_LIST = list(USERS.keys())
 
 
 def get_alias_from_user(user: str) -> str:

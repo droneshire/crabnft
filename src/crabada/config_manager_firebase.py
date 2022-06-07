@@ -10,7 +10,7 @@ import typing as T
 from firebase_admin import firestore
 from firebase_admin import credentials
 
-from config import USERS, SMALL_TEAM_GAS_LIMIT
+from config import BETA_TEST_LIST, USERS, SMALL_TEAM_GAS_LIMIT
 from crabada.game_stats import get_game_stats
 from crabada.game_stats import LifetimeGameStats, NULL_GAME_STATS
 from crabada.teams import assign_crabs_to_groups, assign_teams_to_groups
@@ -18,53 +18,16 @@ from crabada.teams import LOOTING_GROUP_NUM, MINING_GROUP_NUM, INACTIVE_GROUP_NU
 from crabada.types import MineOption
 from crabada.config_manager import ConfigManager
 from utils import logger
+from utils.general import dict_keys_camel_to_snake, dict_keys_snake_to_camel
 from utils.config_types import UserConfig
 from utils.email import Email
-from utils.user import BETA_TEST_LIST, get_alias_from_user
+from utils.user import get_alias_from_user
 
 
 class StrategyActions:
     MINING = "MINE"
     LOOTING = "LOOT"
     INACTIVE = "INACTIVE"
-
-
-def dict_keys_snake_to_camel(d: T.Dict[T.Any, T.Any]) -> T.Dict[T.Any, T.Any]:
-    if not isinstance(d, dict):
-        return {}
-
-    new = {}
-    for k, v in d.items():
-        if isinstance(k, str):
-            if len(k) > 1:
-                split_k = k.split("_")
-                k = split_k[0] + "".join(s.title() for s in split_k[1:])
-            else:
-                k = k.lower()
-
-        if isinstance(v, T.Dict):
-            new[k] = dict_keys_snake_to_camel(v)
-        else:
-            new[k] = v
-    return new
-
-
-def dict_keys_camel_to_snake(d: T.Dict[T.Any, T.Any]) -> T.Dict[T.Any, T.Any]:
-    if not isinstance(d, dict):
-        return {}
-
-    new = {}
-    for k, v in d.items():
-        if isinstance(k, str):
-            snake = inflection.underscore(k)
-            if snake != k.lower():
-                k = snake
-
-        if isinstance(v, T.Dict):
-            new[k] = dict_keys_camel_to_snake(v)
-        else:
-            new[k] = v
-    return new
 
 
 class ConfigManagerFirebase(ConfigManager):
@@ -171,9 +134,9 @@ class ConfigManagerFirebase(ConfigManager):
             )
 
         logger.print_ok_blue(f"Checking database for strategy setting changes...")
-        new_config["should_reinforce"] = db_config["strategy"]["reinforceEnabled"]
+        new_config["game_specific_configs"]["should_reinforce"] = db_config["strategy"]["reinforceEnabled"]
+        new_config["game_specific_configs"]["max_reinforcement_price_tus"] = float(db_config["strategy"]["maxReinforcement"])
         new_config["max_gas_price_gwei"] = SMALL_TEAM_GAS_LIMIT
-        new_config["max_reinforcement_price_tus"] = float(db_config["strategy"]["maxReinforcement"])
 
         logger.print_ok_blue(f"Checking database for team changes...")
 
@@ -217,9 +180,9 @@ class ConfigManagerFirebase(ConfigManager):
         for team, group in assign_teams_to_groups(team_group_assignment).items():
             if group >= MINING_GROUP_NUM:
                 groups.add(group)
-                new_config["mining_teams"][team] = group
+                new_config["game_specific_configs"]["mining_teams"][team] = group
             elif group >= LOOTING_GROUP_NUM:
-                new_config["looting_teams"][team] = group
+                new_config["game_specific_configs"]["looting_teams"][team] = group
 
             logger.print_normal(f"Assigning team {team} to group {group}")
 
@@ -239,11 +202,11 @@ class ConfigManagerFirebase(ConfigManager):
 
             if details["action"] == StrategyActions.MINING or details["action"] == "MINING":
                 group_base = MINING_GROUP_NUM
-                new_config["reinforcing_crabs"][crab_id] = group_base
+                new_config["game_specific_configs"]["reinforcing_crabs"][crab_id] = group_base
                 db_config["strategy"]["reinforcingCrabs"][crab]["action"] = StrategyActions.MINING
             elif details["action"] == StrategyActions.LOOTING or details["action"] == "LOOTING":
                 group_base = LOOTING_GROUP_NUM
-                new_config["reinforcing_crabs"][crab_id] = group_base
+                new_config["game_specific_configs"]["reinforcing_crabs"][crab_id] = group_base
                 db_config["strategy"]["reinforcingCrabs"][crab]["action"] = StrategyActions.LOOTING
             elif details["action"] == StrategyActions.INACTIVE:
                 logger.print_normal(f"Detected inactive crab")
@@ -266,7 +229,7 @@ class ConfigManagerFirebase(ConfigManager):
         groups = sorted(list(groups))
         crabs = sorted([c for c in db_config["strategy"]["reinforcingCrabs"]])
         for crab, group in assign_crabs_to_groups(crab_assignment, groups).items():
-            new_config["reinforcing_crabs"][crab] = group
+            new_config["game_specific_configs"]["reinforcing_crabs"][crab] = group
             logger.print_normal(f"Assigning crab {crab} to group {group}")
 
         diff = deepdiff.DeepDiff(self.config, new_config, ignore_order=True)
@@ -364,10 +327,10 @@ class ConfigManagerFirebase(ConfigManager):
                 }
             }
             db_config["strategy"] = {
-                "reinforceEnabled": config["should_reinforce"],
+                "reinforceEnabled": config["game_specific_configs"]["should_reinforce"],
                 "reinforcingCrabs": {},
                 "teams": {},
-                "maxReinforcement": config["max_reinforcement_price_tus"],
+                "maxReinforcement": config["game_specific_configs"]["max_reinforcement_price_tus"],
                 "maxGas": 0,
             }
 
@@ -439,14 +402,14 @@ class ConfigManagerFirebase(ConfigManager):
                 }
             }
             db_config["strategy"] = {
-                "reinforceEnabled": config["should_reinforce"],
+                "reinforceEnabled": config["game_specific_configs"]["should_reinforce"],
                 "reinforcingCrabs": {},
                 "teams": {},
-                "maxReinforcement": config["max_reinforcement_price_tus"],
+                "maxReinforcement": config["game_specific_configs"]["max_reinforcement_price_tus"],
                 "maxGas": 0,
             }
 
-            for team, value in config["mining_teams"].items():
+            for team, value in config["game_specific_configs"]["mining_teams"].items():
                 composition, _ = self._get_team_composition_and_mp(team, config)
                 db_config["strategy"]["teams"][team] = {
                     "action": StrategyActions.MINING,
@@ -454,7 +417,7 @@ class ConfigManagerFirebase(ConfigManager):
                     "user": value[1],
                 }
 
-            for team, value in config["looting_teams"].items():
+            for team, value in config["game_specific_configs"]["looting_teams"].items():
                 composition, _ = self._get_team_composition_and_mp(team, config)
                 db_config["strategy"]["teams"][team] = {
                     "action": StrategyActions.LOOTING,
@@ -462,7 +425,7 @@ class ConfigManagerFirebase(ConfigManager):
                     "user": value[1],
                 }
 
-            for crab, value in config["reinforcing_crabs"].items():
+            for crab, value in config["game_specific_configs"]["reinforcing_crabs"].items():
                 action = StrategyActions.MINING if value[0] < 10 else StrategyActions.LOOTING
                 crab_class = self.crab_classes.get(crab, self._get_crab_class(crab, config))
                 db_config["strategy"]["reinforcingCrabs"][crab] = {

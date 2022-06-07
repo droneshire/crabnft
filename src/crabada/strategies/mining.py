@@ -134,7 +134,9 @@ class MiningStrategy(Strategy):
             logger.print_normal(f"Mine[{mine['game_id']}]: not reinforcing since we're winning!")
             return None
 
-        group_id = self.config_mgr.config["mining_teams"].get(team["team_id"], -1)
+        group_id = self.config_mgr.config["game_specific_configs"]["mining_teams"].get(
+            team["team_id"], -1
+        )
         if attack_battle_point - defense_battle_point < self.MAX_BP_DELTA:
             reinforcement_crab = super()._use_bp_reinforcement(
                 mine, group_id, use_own_crabs=use_own_crabs

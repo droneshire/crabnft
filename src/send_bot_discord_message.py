@@ -33,7 +33,6 @@ def main() -> None:
         return
 
     message = args.message
-    message += f"\nsnib snib \U0001F980\n"
 
     if not args.dry_run:
         discord.get_discord_hook(args.channel).send(message)

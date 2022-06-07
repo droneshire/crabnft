@@ -35,7 +35,8 @@ class Strategy:
         self.time_since_last_attack = None  # T.Optional[float]
 
         self.reinforce_time_cache = {
-            c: 0.0 for c in self.config_mgr.config["reinforcing_crabs"].keys()
+            c: 0.0
+            for c in self.config_mgr.config["game_specific_configs"]["reinforcing_crabs"].keys()
         }
 
     def get_reinforcement_crab(
@@ -79,7 +80,9 @@ class Strategy:
     ) -> T.Optional[TeamMember]:
         reinforcement_crab = None
         allowed_reinforcing_crabs = [
-            c for c, v in self.config_mgr.config["reinforcing_crabs"].items() if v == group_id
+            c
+            for c, v in self.config_mgr.config["game_specific_configs"]["reinforcing_crabs"].items()
+            if v == group_id
         ]
 
         now = time.time()
@@ -93,7 +96,7 @@ class Strategy:
                 available_reinforcing_crabs.append(crab)
 
         logger.print_normal(f"Mine[{mine['game_id']}]: using highest bp")
-        if self.config_mgr.config["reinforcing_crabs"]:
+        if self.config_mgr.config["game_specific_configs"]["reinforcing_crabs"]:
             logger.print_normal(
                 f"Total reinforcements: {self.config_mgr.config['reinforcing_crabs'].keys()}"
             )
@@ -119,7 +122,7 @@ class Strategy:
         else:
             reinforcement_crab = self.crabada_w2.get_best_high_bp_crab_for_lending(
                 mine,
-                self.config_mgr.config["max_reinforcement_price_tus"],
+                self.config_mgr.config["game_specific_configs"]["max_reinforcement_price_tus"],
                 self.reinforcement_search_backoff,
             )
 
@@ -131,7 +134,9 @@ class Strategy:
         reinforcement_crab = None
 
         allowed_reinforcing_crabs = [
-            c for c, v in self.config_mgr.config["reinforcing_crabs"].items() if v == group_id
+            c
+            for c, v in self.config_mgr.config["game_specific_configs"]["reinforcing_crabs"].items()
+            if v == group_id
         ]
 
         now = time.time()
@@ -145,7 +150,7 @@ class Strategy:
                 available_reinforcing_crabs.append(crab)
 
         logger.print_normal(f"Mine[{mine['game_id']}]: using highest mp")
-        if self.config_mgr.config["reinforcing_crabs"]:
+        if self.config_mgr.config["game_specific_configs"]["reinforcing_crabs"]:
             logger.print_normal(
                 f"Total reinforcements: {self.config_mgr.config['reinforcing_crabs'].keys()}"
             )
@@ -172,7 +177,7 @@ class Strategy:
         else:
             reinforcement_crab = self.crabada_w2.get_best_high_mp_crab_for_lending(
                 mine,
-                self.config_mgr.config["max_reinforcement_price_tus"],
+                self.config_mgr.config["game_specific_configs"]["max_reinforcement_price_tus"],
                 self.reinforcement_search_backoff,
             )
 

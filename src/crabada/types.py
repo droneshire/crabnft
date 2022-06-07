@@ -3,11 +3,27 @@ from enum import Enum
 from eth_typing import Address
 from web3.types import Wei
 
+from utils.price import Tus
+
 """
 Possible states for a team
 """
 TeamStatus = T.Literal["MINING", "LOOTING", "AVAILABLE"]
 LendingCategories = T.Literal["mine_point", "battle_point", "price"]
+
+
+class CrabadaGameConfig(T.TypedDict):
+    mining_teams: T.Dict[int, int]
+    looting_teams: T.Dict[int, int]
+    max_reinforcement_price_tus: Tus
+    reinforcing_crabs: T.Dict[int, int]
+    mining_strategy: str
+    looting_strategy: str
+    should_reinforce: bool
+
+
+class MiningTeam(T.TypedDict):
+    team_id: int
 
 
 class MineOption:

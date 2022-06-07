@@ -11,7 +11,7 @@ import typing as T
 from eth_typing import Address
 from twilio.rest import Client
 
-from config import GMAIL, TWILIO_CONFIG, USERS
+from config import GAME_BOT_STRING, GMAIL, TWILIO_CONFIG, USERS
 from utils import discord, email, logger
 from crabada.game_stats import LifetimeGameStats, get_game_stats, write_game_stats
 from utils.price import is_gas_too_high
@@ -24,10 +24,10 @@ from web3_utils.tus_swimmer_web3_client import TusSwimmerWeb3Client
 MAX_COLLECTION_GAS_GWEI = 25000
 MINIMUM_TUS_TO_TRANSFER = 15
 DISCORD_TRANSFER_NOTICE = """\U0000203C  **COURTESY NOTICE**  \U0000203C
-@here, collecting Crabada commission shortly. Please ensure TUS are in swimmer wallet.
+@here, collecting commission shortly. Please ensure TUS are in wallet.
 Confirmation will be sent after successful tx.
-snib snib \U0001F980\n"""
-COMMISSION_SUBJECT = """\U0001F980 Crabada Bot: Commission Collection"""
+\n"""
+COMMISSION_SUBJECT = """{GAME_BOT_STRING}: Commission Collection"""
 
 
 def send_sms_message(encrypt_password: str, to_email: str, to_number: str, message: str) -> None:
@@ -105,17 +105,17 @@ def send_collection_notice(
         for address, commission in game_stats["commission_tus"].items():
             commission_tus += commission
 
-        crabada_key = (
+        private_key = (
             ""
             if not encrypt_password
-            else decrypt(str.encode(encrypt_password), config["crabada_key"]).decode()
+            else decrypt(str.encode(encrypt_password), config["private_key"]).decode()
         )
 
         tus_w3 = T.cast(
             TusSwimmerWeb3Client,
             (
                 TusSwimmerWeb3Client()
-                .set_credentials(config["address"], config["crabada_key"])
+                .set_credentials(config["address"], config["private_key"])
                 .set_node_uri(SwimmerNetworkClient.NODE_URL)
                 .set_dry_run(dry_run)
             ),
@@ -176,10 +176,10 @@ def collect_tus_commission(
             logger.print_normal(f"Multi-wallet, skipping {user} b/c we already collected")
             continue
 
-        crabada_key = (
+        private_key = (
             ""
             if not encrypt_password
-            else decrypt(str.encode(encrypt_password), config["crabada_key"]).decode()
+            else decrypt(str.encode(encrypt_password), config["private_key"]).decode()
         )
 
         game_stats = get_game_stats(alias, log_dir)
@@ -190,7 +190,7 @@ def collect_tus_commission(
             TusSwimmerWeb3Client,
             (
                 TusSwimmerWeb3Client()
-                .set_credentials(from_address, crabada_key)
+                .set_credentials(from_address, private_key)
                 .set_node_uri(SwimmerNetworkClient.NODE_URL)
                 .set_dry_run(dry_run)
             ),
@@ -260,7 +260,7 @@ def collect_tus_commission(
 
         if not did_fail:
             new_commission = sum([c for _, c in game_stats["commission_tus"].items()])
-            message = f"\U0001F980  Commission Collection: \U0001F980\n"
+            message = f"\U0000203C  Commission Collection: \U0000203C\n"
             message += f"Successful tx of {commission_tus:.2f} TUS from {alias}\n"
             transactions = "\n\t".join(
                 [f"https://explorer.swimmer.network/tx/{t}" for t in tx_hashes]

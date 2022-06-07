@@ -1,13 +1,6 @@
 import typing as T
 from eth_typing import Address
 
-from utils.price import Tus
-from crabada.types import CrabForLending
-
-
-class MiningTeam(T.TypedDict):
-    team_id: int
-
 
 class SmsConfig(T.TypedDict):
     account_sid: str
@@ -19,16 +12,11 @@ class SmsConfig(T.TypedDict):
 
 class UserConfig(T.TypedDict):
     group: int
-    crabada_key: str
+    game: str
+    private_key: str
     address: Address
-    mining_teams: T.Dict[int, int]
-    looting_teams: T.Dict[int, int]
+    game_specific_configs: T.Dict[T.Any, T.Any]
     max_gas_price_gwei: int
-    max_reinforcement_price_tus: Tus
-    reinforcing_crabs: T.Dict[int, int]
-    breed_crabs: T.List[int]
-    mining_strategy: str
-    looting_strategy: str
     commission_percent_per_mine: T.Dict[Address, float]
     sms_number: str
     email: str
@@ -36,4 +24,3 @@ class UserConfig(T.TypedDict):
     get_sms_updates_loots: bool
     get_sms_updates_alerts: bool
     get_email_updates: bool
-    should_reinforce: bool

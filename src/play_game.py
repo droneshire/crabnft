@@ -15,7 +15,15 @@ import typing as T
 from discord import Webhook
 from twilio.rest import Client
 
-from config import COINMARKETCAP_API_TOKEN, GMAIL, USER_GROUPS, IEX_API_TOKEN, TWILIO_CONFIG, USERS
+from config import (
+    COINMARKETCAP_API_TOKEN,
+    GAME_BOT_STRING,
+    GMAIL,
+    USER_GROUPS,
+    IEX_API_TOKEN,
+    TWILIO_CONFIG,
+    USERS,
+)
 from crabada.bot import CrabadaMineBot
 from crabada.profitability import get_profitability_message
 from utils import discord, email, logger, price, security
@@ -70,7 +78,11 @@ def setup_log(log_level: str, log_dir: str, id_string: str) -> None:
 def get_users_teams() -> T.Tuple[int, int]:
     total_users = len(USERS.keys())
     total_teams = sum(
-        [len(v["mining_teams"].keys()) + len(v["looting_teams"]) for _, v in USERS.items()]
+        [
+            len(v["game_specific_configs"]["mining_teams"].keys())
+            + len(v["game_specific_configs"]["looting_teams"])
+            for _, v in USERS.items()
+        ]
     )
     return (total_users, total_teams)
 
@@ -141,12 +153,12 @@ def run_bot() -> None:
             logger.print_warn(f"Skipping {user} in group {config['group']}...")
             continue
 
-        crabada_key = (
+        private_key = (
             ""
             if not encrypt_password
-            else security.decrypt(str.encode(encrypt_password), config["crabada_key"]).decode()
+            else security.decrypt(str.encode(encrypt_password), config["private_key"]).decode()
         )
-        config["crabada_key"] = crabada_key
+        config["private_key"] = private_key
 
         bots.append(
             CrabadaMineBot(
@@ -216,7 +228,7 @@ def run_bot() -> None:
                 bot_stats = bot.get_lifetime_stats()
                 for k in totals.keys():
                     gross_tus += bot_stats[k]["tus_gross"]
-                    if bot.get_config()["should_reinforce"]:
+                    if bot.get_config()["game_specific_configs"]["should_reinforce"]:
                         totals[k]["wins"] += bot_stats[k]["game_wins"]
                         totals[k]["losses"] += bot_stats[k]["game_losses"]
 
@@ -256,7 +268,7 @@ def run_bot() -> None:
             if now - last_discord_update > BOT_TOTALS_UPDATE:
                 last_discord_update = now
                 groups = ", ".join([str(g) for g in args.groups])
-                message = f"\U0001F980\t**Total TUS mined by groups {groups} bot: {int(gross_tus):,} TUS**\n"
+                message = f"{GAME_BOT_STRING}\t**Total TUS mined by groups {groups} bot: {int(gross_tus):,} TUS**\n"
                 for k in totals.keys():
                     message += f"\U0001F916\t**Bot {k.lower()} win percentage: {win_percentages[k]:.2f}%**\n"
                 total_users, total_teams = get_users_teams()
@@ -293,10 +305,10 @@ def run_bot() -> None:
     except KeyboardInterrupt:
         pass
     except Exception as e:
-        stop_message = f"\U0001F980 Crabada Bot Alert \U0001F980\n\n"
+        stop_message = f"{GAME_BOT_STRING} Alert \U0001F980\n\n"
         stop_message += f"@Cashflow Crabada Bot Stopped \U0000203C\n"
         if alerts_enabled and TWILIO_CONFIG["enable_admin_sms"]:
-            stop_message = f"\U0001F980 Crabada Bot Alert \U0001F980\n\n"
+            stop_message = f"{GAME_BOT_STRING} Alert \U0001F980\n\n"
             stop_message += f"Crabada Bot Stopped \U0000203C\n"
             message = sms_client.messages.create(
                 body=stop_message,

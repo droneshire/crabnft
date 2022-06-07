@@ -5,6 +5,7 @@ import os
 import time
 import typing as T
 
+from config import GAME_BOT_STRING
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.types import CrabadaClass
 from utils import logger
@@ -71,8 +72,8 @@ class ConfigManager:
     def _get_save_config(self) -> T.Dict[T.Any, T.Any]:
         save_config = copy.deepcopy(self.config)
         byte_key = str.encode(self.encrypt_password)
-        save_config["crabada_key"] = encrypt(
-            byte_key, str.encode(self.config["crabada_key"]), encode=True
+        save_config["private_key"] = encrypt(
+            byte_key, str.encode(self.config["private_key"]), encode=True
         )
         return save_config
 
@@ -97,15 +98,30 @@ class ConfigManager:
                 byte_key = str.encode(self.encrypt_password)
                 load_config: UserConfig = json.load(infile)
                 copy_config = copy.deepcopy(load_config)
+                for old_game_keys in [
+                                    "mining_teams",
+                                    "looting_teams",
+                                    "max_reinforcement_price_tus",
+                                    "reinforcing_crabs",
+                                    "mining_strategy",
+                                    "looting_strategy",
+                                    "should_reinforce"
+                ]:
+                    if "game_specific_configs" not in load_config.keys():
+                        load_config["game_specific_configs"] = {}
+
+                    if old_game_keys in load_config:
+                        load_config["game_specific_configs"][old_game_keys] = copy_config[old_game_keys]
+
                 if load_config["sms_number"] == "+1":
                     load_config["sms_number"] = ""
-                load_config["crabada_key"] = decrypt(
-                    byte_key, load_config["crabada_key"], decode=True
+                load_config["private_key"] = decrypt(
+                    byte_key, load_config["private_key"], decode=True
                 ).decode()
                 for config_key in ["mining_teams", "looting_teams", "reinforcing_crabs"]:
                     for k, v in copy_config.get(config_key, {}).items():
-                        del load_config[config_key][k]
-                        load_config[config_key][int(k)] = v
+                        del load_config["game_specific_configs"][config_key][k]
+                        load_config["game_specific_configs"][config_key][int(k)] = v
                 return load_config
         except:
             return copy.deepcopy(self.config)
@@ -113,24 +129,28 @@ class ConfigManager:
     def _get_empty_new_config(self) -> UserConfig:
         new_config = copy.deepcopy(self.config)
 
+        assert self.config is not None, "Empty config"
+
         delete_keys = [
             "mining_teams",
             "looting_teams",
             "reinforcing_crabs",
-            "max_gas_price_gwei",
             "max_reinforcement_price_tus",
             "should_reinforce",
         ]
         for del_key in delete_keys:
-            del new_config[del_key]
-            if isinstance(self.config[del_key], dict):
-                new_config[del_key] = {}
-            if isinstance(self.config[del_key], bool):
-                new_config[del_key] = False
-            if isinstance(self.config[del_key], int):
-                new_config[del_key] = 0
-            if isinstance(self.config[del_key], float):
-                new_config[del_key] = 0.0
+            del new_config["game_specific_configs"][del_key]
+            if isinstance(self.config["game_specific_configs"][del_key], dict):
+                new_config["game_specific_configs"][del_key] = {}
+            if isinstance(self.config["game_specific_configs"][del_key], bool):
+                new_config["game_specific_configs"][del_key] = False
+            if isinstance(self.config["game_specific_configs"][del_key], int):
+                new_config["game_specific_configs"][del_key] = 0
+            if isinstance(self.config["game_specific_configs"][del_key], float):
+                new_config["game_specific_configs"][del_key] = 0.0
+
+        del new_config["max_gas_price_gwei"]
+        new_config["max_gas_price_gwei"] = 0.0
         return new_config
 
     def _should_ignore_config_key(self, item_key: str) -> bool:
@@ -138,7 +158,7 @@ class ConfigManager:
 
     def _get_ignore_config_keys(self) -> T.List[str]:
         return [
-            "crabada_key",
+            "private_key",
             "address",
             "commission_percent_per_mine",
             "discord_handle",
@@ -195,7 +215,7 @@ class ConfigManager:
     def _print_out_config(self) -> None:
         logger.print_bold(f"{self.user} Configuration\n")
         for config_item, value in self.config.items():
-            if config_item == "crabada_key":
+            if config_item == "private_key":
                 continue
             logger.print_normal(f"\t{config_item}: {value}")
         logger.print_normal("")
@@ -211,6 +231,9 @@ class ConfigManager:
         if not self.config["get_email_updates"]:
             return
 
+        if self.dry_run:
+            return
+
         content = self._get_email_config(self.config)
 
         email_message = f"Hello {self.alias}!\n\n"
@@ -220,6 +243,6 @@ class ConfigManager:
         send_email(
             self.send_email_accounts,
             self.config["email"],
-            f"\U0001F980 Crabada Bot Config Change Notification",
+            f"{GAME_BOT_STRING} Config Change Notification",
             email_message,
         )

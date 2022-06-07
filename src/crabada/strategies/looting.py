@@ -116,7 +116,9 @@ class LootingStrategy(Strategy):
             logger.print_normal(f"Loot[{mine['game_id']}]: not reinforcing since we're winning!")
             return None
 
-        group_id = self.config_mgr.config["looting_teams"].get(team["team_id"], -1)
+        group_id = self.config_mgr.config["game_specific_configs"]["looting_teams"].get(
+            team["team_id"], -1
+        )
         reinforcement_crab = super()._use_bp_reinforcement(
             mine, group_id, use_own_crabs=use_own_crabs
         )

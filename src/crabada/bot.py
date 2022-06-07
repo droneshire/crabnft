@@ -7,7 +7,7 @@ import typing as T
 from twilio.rest import Client
 from web3.types import Address
 
-from config import ADMIN_EMAIL
+from config import ADMIN_EMAIL, GAME_BOT_STRING
 from crabada.config_manager_firebase import ConfigManagerFirebase
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
@@ -69,7 +69,7 @@ class CrabadaMineBot:
             CrabadaWeb3Client,
             (
                 CrabadaWeb3Client()
-                .set_credentials(config["address"], config["crabada_key"])
+                .set_credentials(config["address"], config["private_key"])
                 .set_node_uri(SwimmerNetworkClient.NODE_URL)
                 .set_dry_run(dry_run)
             ),
@@ -78,7 +78,7 @@ class CrabadaMineBot:
             TusSwimmerWeb3Client,
             (
                 TusSwimmerWeb3Client()
-                .set_credentials(config["address"], config["crabada_key"])
+                .set_credentials(config["address"], config["private_key"])
                 .set_node_uri(SwimmerNetworkClient.NODE_URL)
                 .set_dry_run(dry_run)
             ),
@@ -110,13 +110,17 @@ class CrabadaMineBot:
         )
         self.config_mgr.init()
 
-        self.mining_strategy = STRATEGY_SELECTION[config["mining_strategy"]](
+        self.mining_strategy = STRATEGY_SELECTION[
+            config["game_specific_configs"]["mining_strategy"]
+        ](
             self.address,
             self.crabada_w2,
             self.crabada_w3,
             self.config_mgr,
         )
-        self.looting_strategy = STRATEGY_SELECTION[config["looting_strategy"]](
+        self.looting_strategy = STRATEGY_SELECTION[
+            config["game_specific_configs"]["looting_strategy"]
+        ](
             self.address,
             self.crabada_w2,
             self.crabada_w3,
@@ -169,7 +173,7 @@ class CrabadaMineBot:
         do_send_email: bool,
         custom_message: str,
         tx_hash: str = None,
-        subject: str = f"\U0001F980 Crabada Bot Update",
+        subject: str = f"{GAME_BOT_STRING} Update",
     ) -> None:
 
         if self.dry_run:
@@ -202,7 +206,7 @@ class CrabadaMineBot:
 
         try:
             if do_send_sms and self.from_sms_number:
-                sms_message = f"\U0001F980 Crabada Bot Alert \U0001F980\n\n"
+                sms_message = f"{GAME_BOT_STRING} Alert \U0001F980\n\n"
                 sms_message += content
                 message = self.sms.messages.create(
                     body=sms_message,
@@ -321,7 +325,7 @@ class CrabadaMineBot:
             send_email(
                 self.emails,
                 self.config_mgr.config["email"],
-                f"\U0001F980 Out of Gas Notification!",
+                f"Bot: Out of Gas Notification!",
                 email_message,
             )
         except:
@@ -411,14 +415,18 @@ class CrabadaMineBot:
                 is_winning = self.crabada_w2.mine_is_winning(mine_data)
                 total_time = self.crabada_w2.get_total_mine_time(mine_data) + 1
                 remaining_time = self.crabada_w2.get_remaining_time(mine_data)
-                group = self.config_mgr.config["mining_teams"].get(mine_data.get(team_id, -1))
+                group = self.config_mgr.config["game_specific_configs"]["mining_teams"].get(
+                    mine_data.get(team_id, -1)
+                )
             else:
                 team_id = "attack_team_id"
                 num_reinforcements = self.crabada_w2.get_num_loot_reinforcements(mine_data)
                 is_winning = self.crabada_w2.loot_is_winning(mine_data)
                 total_time = self.looting_strategy.LOOTING_DURATION
                 remaining_time = self.crabada_w2.get_remaining_loot_time(mine_data)
-                group = self.config_mgr.config["looting_teams"].get(mine_data.get(team_id, -1))
+                group = self.config_mgr.config["game_specific_configs"]["looting_teams"].get(
+                    mine_data.get(team_id, -1)
+                )
 
             percent_done = (total_time - remaining_time) / total_time
             progress = (
@@ -427,7 +435,10 @@ class CrabadaMineBot:
 
             reinforments_used_str = logger.format_normal("[")
             for crab in self.crabada_w2.get_reinforcement_crabs(mine_data):
-                if crab in self.config_mgr.config["reinforcing_crabs"].keys():
+                if (
+                    crab
+                    in self.config_mgr.config["game_specific_configs"]["reinforcing_crabs"].keys()
+                ):
                     reinforments_used_str += logger.format_ok_blue(f"{crab} ")
                 else:
                     reinforments_used_str += logger.format_normal(f"{crab} ")
@@ -493,12 +504,22 @@ class CrabadaMineBot:
             }
 
             if game_type == MineOption.MINE:
-                group = self.config_mgr.config["mining_teams"].get(team["team_id"], -1)
+                group = self.config_mgr.config["game_specific_configs"]["mining_teams"].get(
+                    team["team_id"], -1
+                )
             else:
-                group = self.config_mgr.config["looting_teams"].get(team["team_id"], -1)
+                group = self.config_mgr.config["game_specific_configs"]["looting_teams"].get(
+                    team["team_id"], -1
+                )
 
             does_have_self_reinforcements = any(
-                [c for c, v in self.config_mgr.config["reinforcing_crabs"].items() if v == group]
+                [
+                    c
+                    for c, v in self.config_mgr.config["game_specific_configs"][
+                        "reinforcing_crabs"
+                    ].items()
+                    if v == group
+                ]
             )
 
             if self.fast_avg_gas_used.get_avg() is not None:
@@ -517,7 +538,9 @@ class CrabadaMineBot:
                 win_percentages=win_percentages,
                 commission_percent=dict_sum(self.config_mgr.config["commission_percent_per_mine"]),
                 is_looting=game_type == MineOption.LOOT,
-                is_reinforcing_allowed=self.config_mgr.config["should_reinforce"],
+                is_reinforcing_allowed=self.config_mgr.config["game_specific_configs"][
+                    "should_reinforce"
+                ],
                 can_self_reinforce=does_have_self_reinforcements,
                 min_profit_threshold_tus=0.0,
                 verbose=False,
@@ -694,10 +717,16 @@ class CrabadaMineBot:
         return False
 
     def _is_team_allowed_to_mine(self, team: Team) -> bool:
-        return team["team_id"] in self.config_mgr.config["mining_teams"].keys()
+        return (
+            team["team_id"]
+            in self.config_mgr.config["game_specific_configs"]["mining_teams"].keys()
+        )
 
     def _is_team_allowed_to_loot(self, team: Team) -> bool:
-        return team["team_id"] in self.config_mgr.config["looting_teams"].keys()
+        return (
+            team["team_id"]
+            in self.config_mgr.config["game_specific_configs"]["looting_teams"].keys()
+        )
 
     def _check_and_maybe_reinforce_loots(self, team: Team, mine: IdleGame) -> None:
         self._reinforce_loot_or_mine(
@@ -747,13 +776,15 @@ class CrabadaMineBot:
 
             # only start one team from group at a time in case there's some staggering
             # that needs to happen
-            team_group = self.config_mgr.config["mining_teams"].get(team["team_id"], -1)
+            team_group = self.config_mgr.config["game_specific_configs"]["mining_teams"].get(
+                team["team_id"], -1
+            )
 
             if self._start_mine(team):
                 groups_started.append(team_group)
 
     def _check_and_maybe_reinforce(self) -> None:
-        if not self.config_mgr.config["should_reinforce"]:
+        if not self.config_mgr.config["game_specific_configs"]["should_reinforce"]:
             return
 
         teams = self.crabada_w2.list_teams(self.address)
