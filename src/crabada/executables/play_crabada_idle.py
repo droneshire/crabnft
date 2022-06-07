@@ -2,6 +2,7 @@
 Starts bots for interacting with the Crabada Dapp P2E game
 """
 import argparse
+import getpass
 import logging
 import os
 import time
@@ -24,6 +25,7 @@ from crabada.profitability import get_profitability_message
 from utils import discord, logger, security
 from utils.circuit_breaker import CircuitBreaker
 from crabada.game_stats import LifetimeGameStats
+from utils.email import get_email_accounts_from_password
 from utils.general import dict_sum
 from utils.math import Average
 from utils.price import DEFAULT_GAS_USED, get_avax_price_usd, get_token_price_usd, Prices
@@ -129,7 +131,11 @@ def run_bot() -> None:
     }
 
     encrypt_password = ""
-    email_accounts, email_password = get_email_accounts_and_password(GMAIL, args.dry_run)
+    email_accounts = []
+
+    if not args.dry_run:
+        encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
+        email_accounts = get_email_accounts_from_password(encrypt_password, GMAIL)
 
     bots = []
     for user, config in USERS.items():
@@ -137,9 +143,7 @@ def run_bot() -> None:
             logger.print_warn(f"Skipping {user} in group {config['group']}...")
             continue
 
-        private_key = security.decrypt_secret(encrypt_password, config["private_key"])
-
-        config["private_key"] = private_key
+        config["private_key"] = security.decrypt_secret(encrypt_password, config["private_key"])
 
         bots.append(
             CrabadaMineBot(

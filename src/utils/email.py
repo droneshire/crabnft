@@ -1,4 +1,3 @@
-import getpass
 import typing as T
 import yagmail
 
@@ -11,16 +10,14 @@ class Email(T.TypedDict):
     password: str
 
 
-def get_email_accounts_and_password(
-    encrypted_emails: T.Dict[str, str], dry_run: bool = False
-) -> T.Tuple(T.List[email.Email], str):
-    if dry_run:
-        return ([], "")
-    encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
-
+def get_email_accounts_from_password(
+    encrypt_password: str, encrypted_emails: T.List[T.Dict[str, str]], dry_run: bool = False
+) -> T.List[Email]:
+    email_accounts = []
     for email_account in encrypted_emails:
         email_password = decrypt_secret(encrypt_password, email_account["password"])
-        email_accounts.append(email.Email(address=email_account["user"], password=email_password))
+        email_accounts.append(Email(address=email_account["user"], password=email_password))
+    return email_accounts
 
 
 def send_email_raw(

@@ -56,10 +56,11 @@ class ConfigManagerFirebase(ConfigManager):
 
     def init(self) -> None:
         self._print_out_config()
-        if self.user_doc is None or self.user not in BETA_TEST_LIST:
+        if self.user_doc is None:
             logger.print_warn(f"{self.user} does not have a firebase account! Using default config")
         else:
             self.config = self._load_config()
+        print(json.dumps(self.config, indent=4))
         self._send_email_config_if_needed()
         self._save_config()
 
@@ -74,10 +75,11 @@ class ConfigManagerFirebase(ConfigManager):
 
         self.last_config_update_time = now
 
-        try:
-            self._read_and_update_config()
-        except:
-            logger.print_fail(f"Failed to read and translate updated config from database")
+        self._read_and_update_config()
+        # try:
+        #     self._read_and_update_config()
+        # except:
+        #     logger.print_fail(f"Failed to read and translate updated config from database")
 
         try:
             self._update_game_stats()

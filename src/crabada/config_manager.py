@@ -98,7 +98,7 @@ class ConfigManager:
                 byte_key = str.encode(self.encrypt_password)
                 load_config: UserConfig = json.load(infile)
                 copy_config = copy.deepcopy(load_config)
-                for old_game_keys in [
+                for old_game_key in [
                                     "mining_teams",
                                     "looting_teams",
                                     "max_reinforcement_price_tus",
@@ -110,8 +110,10 @@ class ConfigManager:
                     if "game_specific_configs" not in load_config.keys():
                         load_config["game_specific_configs"] = {}
 
-                    if old_game_keys in load_config:
-                        load_config["game_specific_configs"][old_game_keys] = copy_config[old_game_keys]
+                    if old_game_key in load_config:
+                        load_config["game_specific_configs"][old_game_key] = copy_config[old_game_key]
+                        if old_game_key in ["max_reinforcement_price_tus", "should_reinforce"]:
+                            del load_config[old_game_key]
 
                 if load_config["sms_number"] == "+1":
                     load_config["sms_number"] = ""
