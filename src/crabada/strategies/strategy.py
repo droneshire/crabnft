@@ -98,7 +98,7 @@ class Strategy:
         logger.print_normal(f"Mine[{mine['game_id']}]: using highest bp")
         if self.config_mgr.config["game_specific_configs"]["reinforcing_crabs"]:
             logger.print_normal(
-                f"Total reinforcements: {self.config_mgr.config["game_specific_configs"]['reinforcing_crabs'].keys()}"
+                f"Total reinforcements: {self.config_mgr.config['game_specific_configs']['reinforcing_crabs'].keys()}"
             )
 
         if use_own_crabs:
@@ -152,7 +152,7 @@ class Strategy:
         logger.print_normal(f"Mine[{mine['game_id']}]: using highest mp")
         if self.config_mgr.config["game_specific_configs"]["reinforcing_crabs"]:
             logger.print_normal(
-                f"Total reinforcements: {self.config_mgr.config["game_specific_configs"]['reinforcing_crabs'].keys()}"
+                f"Total reinforcements: {self.config_mgr.config['game_specific_configs']['reinforcing_crabs'].keys()}"
             )
 
         if use_own_crabs:
