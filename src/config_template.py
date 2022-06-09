@@ -3,7 +3,7 @@ CONFIG_TEMPLATE = {
         group=4,
         crabada_key="",
         address=Address(""),
-        game_specific_configs={
+        game_specific_configs = {
             "mining_teams": {},
             "looting_teams": {},
             "reinforcing_crabs": {},
@@ -23,5 +23,6 @@ CONFIG_TEMPLATE = {
         get_sms_updates_loots=False,
         get_sms_updates_alerts=False,
         get_email_updates=True,
+
     ),
 }
