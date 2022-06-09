@@ -112,6 +112,9 @@ class ConfigManager:
 
         assert self.config is not None, "Empty config"
 
+        if "game_specific_configs" not in new_config:
+            new_config["game_specific_configs"] = {}
+
         delete_keys = [
             "mining_teams",
             "looting_teams",
@@ -120,7 +123,11 @@ class ConfigManager:
             "should_reinforce",
         ]
         for del_key in delete_keys:
-            del new_config["game_specific_configs"][del_key]
+            if del_key in new_config:
+                del new_config[del_key]
+            elif del_key in new_config["game_specific_configs"]:
+                del new_config["game_specific_configs"][del_key]
+
             if isinstance(self.config["game_specific_configs"][del_key], dict):
                 new_config["game_specific_configs"][del_key] = {}
             if isinstance(self.config["game_specific_configs"][del_key], bool):
