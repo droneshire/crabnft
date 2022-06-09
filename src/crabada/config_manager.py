@@ -78,19 +78,21 @@ class ConfigManager:
                 load_config: UserConfig = json.load(infile)
                 copy_config = copy.deepcopy(load_config)
                 for old_game_key in [
-                                    "mining_teams",
-                                    "looting_teams",
-                                    "max_reinforcement_price_tus",
-                                    "reinforcing_crabs",
-                                    "mining_strategy",
-                                    "looting_strategy",
-                                    "should_reinforce"
+                    "mining_teams",
+                    "looting_teams",
+                    "max_reinforcement_price_tus",
+                    "reinforcing_crabs",
+                    "mining_strategy",
+                    "looting_strategy",
+                    "should_reinforce",
                 ]:
                     if "game_specific_configs" not in load_config.keys():
                         load_config["game_specific_configs"] = {}
 
                     if old_game_key in load_config:
-                        load_config["game_specific_configs"][old_game_key] = copy_config[old_game_key]
+                        load_config["game_specific_configs"][old_game_key] = copy_config[
+                            old_game_key
+                        ]
                         if old_game_key in ["max_reinforcement_price_tus", "should_reinforce"]:
                             del load_config[old_game_key]
 
