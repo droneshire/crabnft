@@ -48,6 +48,12 @@ class ConfigManager:
     def get_lifetime_stats(self) -> T.Dict[T.Any, T.Any]:
         raise NotImplementedError
 
+    def _load_config(self) -> UserConfig:
+        raise NotImplementedError
+
+    def _get_empty_new_config(self) -> UserConfig:
+        raise NotImplementedError
+
     def _get_save_config(self) -> T.Dict[T.Any, T.Any]:
         save_config = copy.deepcopy(self.config)
         byte_key = str.encode(self.encrypt_password)
@@ -69,79 +75,6 @@ class ConfigManager:
         config_file = self._get_config_file()
         with open(config_file, "w") as outfile:
             json.dump(config, outfile, indent=4)
-
-    def _load_config(self) -> UserConfig:
-        config_file = self._get_config_file()
-        try:
-            with open(config_file, "r") as infile:
-                byte_key = str.encode(self.encrypt_password)
-                load_config: UserConfig = json.load(infile)
-                copy_config = copy.deepcopy(load_config)
-                for old_game_key in [
-                    "mining_teams",
-                    "looting_teams",
-                    "max_reinforcement_price_tus",
-                    "reinforcing_crabs",
-                    "mining_strategy",
-                    "looting_strategy",
-                    "should_reinforce",
-                ]:
-                    if "game_specific_configs" not in load_config.keys():
-                        load_config["game_specific_configs"] = {}
-
-                    if old_game_key in load_config:
-                        load_config["game_specific_configs"][old_game_key] = copy_config[
-                            old_game_key
-                        ]
-                        if old_game_key in ["max_reinforcement_price_tus", "should_reinforce"]:
-                            del load_config[old_game_key]
-
-                if load_config["sms_number"] == "+1":
-                    load_config["sms_number"] = ""
-                load_config["private_key"] = decrypt(
-                    byte_key, load_config["private_key"], decode=True
-                ).decode()
-                for config_key in ["mining_teams", "looting_teams", "reinforcing_crabs"]:
-                    for k, v in copy_config.get(config_key, {}).items():
-                        del load_config["game_specific_configs"][config_key][k]
-                        load_config["game_specific_configs"][config_key][int(k)] = v
-                return load_config
-        except:
-            return copy.deepcopy(self.config)
-
-    def _get_empty_new_config(self) -> UserConfig:
-        new_config = copy.deepcopy(self.config)
-
-        assert self.config is not None, "Empty config"
-
-        if "game_specific_configs" not in new_config:
-            new_config["game_specific_configs"] = {}
-
-        delete_keys = [
-            "mining_teams",
-            "looting_teams",
-            "reinforcing_crabs",
-            "max_reinforcement_price_tus",
-            "should_reinforce",
-        ]
-        for del_key in delete_keys:
-            if del_key in new_config:
-                del new_config[del_key]
-            elif del_key in new_config["game_specific_configs"]:
-                del new_config["game_specific_configs"][del_key]
-
-            if isinstance(self.config["game_specific_configs"][del_key], dict):
-                new_config["game_specific_configs"][del_key] = {}
-            if isinstance(self.config["game_specific_configs"][del_key], bool):
-                new_config["game_specific_configs"][del_key] = False
-            if isinstance(self.config["game_specific_configs"][del_key], int):
-                new_config["game_specific_configs"][del_key] = 0
-            if isinstance(self.config["game_specific_configs"][del_key], float):
-                new_config["game_specific_configs"][del_key] = 0.0
-
-        del new_config["max_gas_price_gwei"]
-        new_config["max_gas_price_gwei"] = 0.0
-        return new_config
 
     def _should_ignore_config_key(self, item_key: str) -> bool:
         return item_key in self._get_ignore_config_keys()
