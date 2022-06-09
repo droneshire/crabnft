@@ -129,7 +129,7 @@ dmypy.json
 .pyre/
 
 # configuration file
-config*
+config.py*
 
 # logs dir
 logs/
