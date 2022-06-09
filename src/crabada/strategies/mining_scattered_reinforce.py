@@ -9,7 +9,7 @@ from crabada.strategies.mining_delayed_reinforce import MiningDelayReinforcement
 from crabada.strategies.strategy import GameStage
 from crabada.types import IdleGame, Team, TeamMember
 from utils import logger
-from crabada.config_manager import ConfigManager
+from utils.config_manager import ConfigManager
 from utils.general import get_pretty_seconds
 
 

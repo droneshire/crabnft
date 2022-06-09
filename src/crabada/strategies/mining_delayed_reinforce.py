@@ -6,7 +6,7 @@ from crabada.crabada_web3_client import CrabadaWeb3Client
 from crabada.strategies.mining import MiningStrategy
 from crabada.types import IdleGame, Team, TeamMember
 from utils import logger
-from crabada.config_manager import ConfigManager
+from utils.config_manager import ConfigManager
 from utils.general import get_pretty_seconds
 
 

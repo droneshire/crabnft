@@ -9,12 +9,12 @@ from eth_typing import Address
 
 from config import GMAIL
 from crabada.miners_revenge import calc_miners_revenge
-from crabada.config_manager import ConfigManager
 from crabada.config_manager_sheets import ConfigManagerSheets
 from crabada.config_manager_firebase import ConfigManagerFirebase
 from crabada.profitability import get_scenario_profitability, is_profitable_to_take_action
 from crabada.types import CrabadaClass, Team
 from utils import email, logger, security
+from utils.config_manager import ConfigManager
 from utils.config_types import UserConfig
 from utils.price import Prices
 from crabada.types import CrabForLending

@@ -1,10 +1,10 @@
 import copy
 import typing as T
 
-from crabada.config_manager import ConfigManager
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.types import CrabadaClass
 from utils import logger
+from utils.config_manager import ConfigManager
 from utils.config_types import UserConfig
 from utils.email import Email
 from crabada.game_stats import NULL_GAME_STATS

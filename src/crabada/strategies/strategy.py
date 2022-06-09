@@ -4,12 +4,12 @@ import typing as T
 from eth_typing import Address
 from web3.types import Wei
 
-from crabada.config_manager import ConfigManager
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
 from crabada.profitability import CrabadaTransaction, GameStage, REWARDS_TUS, Result, Scenarios
 from crabada.types import IdleGame, Team, TeamMember
 from utils import logger
+from utils.config_manager import ConfigManager
 from utils.price import Tus, wei_to_cra_raw, wei_to_tus_raw
 
 

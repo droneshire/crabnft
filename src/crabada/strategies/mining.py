@@ -9,7 +9,7 @@ from crabada.profitability import CrabadaTransaction, get_rewards_from_tx_receip
 from crabada.strategies.strategy import Strategy
 from crabada.types import CrabForLending, IdleGame, Team, TeamMember
 from utils import logger
-from crabada.config_manager import ConfigManager
+from utils.config_manager import ConfigManager
 from utils.price import wei_to_tus_raw
 
 
