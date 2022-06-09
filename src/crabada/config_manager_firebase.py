@@ -136,8 +136,12 @@ class ConfigManagerFirebase(CrabadaConfigManager):
             )
 
         logger.print_ok_blue(f"Checking database for strategy setting changes...")
-        new_config["game_specific_configs"]["should_reinforce"] = db_config["strategy"]["reinforceEnabled"]
-        new_config["game_specific_configs"]["max_reinforcement_price_tus"] = float(db_config["strategy"]["maxReinforcement"])
+        new_config["game_specific_configs"]["should_reinforce"] = db_config["strategy"][
+            "reinforceEnabled"
+        ]
+        new_config["game_specific_configs"]["max_reinforcement_price_tus"] = float(
+            db_config["strategy"]["maxReinforcement"]
+        )
         new_config["max_gas_price_gwei"] = SMALL_TEAM_GAS_LIMIT
 
         logger.print_ok_blue(f"Checking database for team changes...")
