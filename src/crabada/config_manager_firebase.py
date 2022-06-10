@@ -10,7 +10,7 @@ import typing as T
 from firebase_admin import firestore
 from firebase_admin import credentials
 
-from config import BETA_TEST_LIST, USERS, SMALL_TEAM_GAS_LIMIT
+from config_crabada import BETA_TEST_LIST, USERS, SMALL_TEAM_GAS_LIMIT
 from crabada.game_stats import get_game_stats
 from crabada.game_stats import LifetimeGameStats, NULL_GAME_STATS
 from crabada.teams import assign_crabs_to_groups, assign_teams_to_groups

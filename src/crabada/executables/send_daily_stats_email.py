@@ -3,7 +3,7 @@ import datetime
 import getpass
 
 
-from config import GMAIL, USERS
+from config_crabada import GMAIL, USERS
 from utils import logger
 from utils import email
 from utils.csv_logger import CsvLogger

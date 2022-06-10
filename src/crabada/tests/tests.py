@@ -7,7 +7,7 @@ import time
 
 from eth_typing import Address
 
-from config import GMAIL
+from config_crabada import GMAIL
 from crabada.miners_revenge import calc_miners_revenge
 from crabada.config_manager_sheets import ConfigManagerSheets
 from crabada.config_manager_firebase import ConfigManagerFirebase

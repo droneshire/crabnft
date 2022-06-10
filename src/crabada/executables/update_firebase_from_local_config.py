@@ -7,7 +7,7 @@ import datetime
 import getpass
 
 
-from config import USERS
+from config_crabada import USERS
 from crabada.config_manager_firebase import ConfigManagerFirebase
 from utils import logger
 from utils.user import get_alias_from_user

@@ -11,7 +11,7 @@ import typing as T
 from eth_typing import Address
 from twilio.rest import Client
 
-from config import GAME_BOT_STRING, GMAIL, TWILIO_CONFIG, USERS
+from config_crabada import GAME_BOT_STRING, GMAIL, TWILIO_CONFIG, USERS
 from utils import discord, email, logger
 from crabada.game_stats import LifetimeGameStats, get_game_stats, write_game_stats
 from utils.price import is_gas_too_high

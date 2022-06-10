@@ -1,6 +1,6 @@
 import argparse
 
-from config import IEX_API_TOKEN, COINMARKETCAP_API_TOKEN, USERS
+from config_crabada import IEX_API_TOKEN, COINMARKETCAP_API_TOKEN, USERS
 from crabada.profitability import get_profitability_message, STATIC_WIN_PERCENTAGES
 from utils import logger
 from crabada.game_stats import get_game_stats

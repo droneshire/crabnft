@@ -11,7 +11,7 @@ import typing as T
 from discord import Webhook
 from twilio.rest import Client
 
-from config import (
+from config_crabada import (
     COINMARKETCAP_API_TOKEN,
     GAME_BOT_STRING,
     GMAIL,

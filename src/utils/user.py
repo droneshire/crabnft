@@ -1,4 +1,4 @@
-from config import ALIAS_POSTFIX
+from config_crabada import ALIAS_POSTFIX
 from utils import logger
 
 

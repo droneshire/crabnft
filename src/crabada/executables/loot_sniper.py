@@ -3,7 +3,7 @@ import os
 import time
 import typing as T
 
-from config import USERS
+from config_crabada import USERS
 from crabada.loot_sniping import LootSnipes
 from utils import logger, circuit_breaker
 from utils.discord import DISCORD_WEBHOOK_URL

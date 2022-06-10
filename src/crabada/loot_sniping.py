@@ -9,7 +9,7 @@ import typing as T
 from discord_webhook import DiscordEmbed, DiscordWebhook
 from eth_typing import Address
 
-from config import USERS
+from config_crabada import USERS
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.factional_advantage import FACTIONAL_ADVANTAGE, FACTION_ICON_URLS, FACTION_COLORS
 from crabada.factional_advantage import get_faction_adjusted_battle_point, get_bp_mp_from_mine

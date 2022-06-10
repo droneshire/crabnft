@@ -5,7 +5,7 @@ import os
 import time
 import typing as T
 
-from config import GAME_BOT_STRING
+from config_crabada import GAME_BOT_STRING
 from utils import logger
 from utils.config_types import UserConfig
 from utils.security import decrypt, encrypt
