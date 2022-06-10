@@ -1,0 +1,29 @@
+{
+    "status": true,
+    "result": {
+      "owner_address": "0x8191eFdc4b4A1250481624a908C6cB349A60590e",
+      "datetime": "2022-06-09T06:47:31.550752+00:00",
+      "count_nfts": {
+        "all": 5,
+        "unassigned": 0,
+        "marketplace": 0,
+        "staking": 0,
+        "assigned": 5,
+        "game": {
+          "daily_activity": {
+            "idle": 3,
+            "active": 2,
+            "completed_stage_1": 1,
+            "completed_stage_2": 0,
+            "completed_stage_3": 1,
+            "needs_to_buy_ticket": 0
+          },
+          "breeding": 0,
+          "training": 0,
+          "forging": 0,
+          "pvp": 0,
+          "pve": 0
+        }
+      }
+    }
+  }

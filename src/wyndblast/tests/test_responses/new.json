@@ -1,0 +1,26 @@
+{
+    "status": true,
+    "result": [
+      {
+        "index": 1,
+        "round_index": 0,
+        "faction": "Ysia",
+        "activity_datetime": "2022-06-09T06:48:15.227750+00:00",
+        "stage": {
+          "level": 2,
+          "variation": {
+            "name": "elemental_ore_deposit",
+            "class_requirement": "Assaulter",
+            "element_requirement": "Fire"
+          },
+          "success": true,
+          "rewards": {
+            "chro": 0,
+            "wams": 1,
+            "elemental_stones": null
+          }
+        },
+        "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:10605"
+      }
+    ]
+  }

@@ -1,0 +1,977 @@
+{
+    "status": true,
+    "result": [
+      {
+        "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:10605",
+        "product_metadata": {
+          "image_url": "https://storage.googleapis.com/wyndblast-prod.appspot.com/Rider-NFT/rider-000137-000116-000008-000008-000008-000105-000123-000116.gif",
+          "class": "Assaulter",
+          "rarity": 3,
+          "element": "Light",
+          "faction": "Ysia"
+        },
+        "days": [
+          {
+            "index": 0,
+            "round_ticket_trxids": [],
+            "round_completed": true,
+            "date": "2022-06-05T00:00:00+00:00",
+            "round_ticket_consumed": 1,
+            "activities": [
+              {
+                "faction": "Vicima",
+                "round_index": 0,
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:10605",
+                "index": 0,
+                "stage": {
+                  "success": true,
+                  "variation": {
+                    "element_requirement": "Water",
+                    "class_requirement": "Ranger",
+                    "name": "plowing"
+                  },
+                  "level": 1,
+                  "rewards": {
+                    "chro": 0,
+                    "wams": 1,
+                    "elemental_stones": null
+                  }
+                },
+                "activity_datetime": "2022-06-05T21:10:20.795293+00:00"
+              },
+              {
+                "stage": {
+                  "level": 2,
+                  "success": true,
+                  "rewards": {
+                    "wams": 1,
+                    "elemental_stones": null,
+                    "chro": 0
+                  },
+                  "variation": {
+                    "class_requirement": "Vanguard",
+                    "name": "fruits",
+                    "element_requirement": "Wind"
+                  }
+                },
+                "activity_datetime": "2022-06-05T21:11:24.726394+00:00",
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:10605",
+                "index": 1,
+                "faction": "Vicima",
+                "round_index": 0
+              },
+              {
+                "activity_datetime": "2022-06-05T21:14:43.869923+00:00",
+                "stage": {
+                  "rewards": {
+                    "elemental_stones": null,
+                    "chro": 3,
+                    "wams": 2
+                  },
+                  "level": 3,
+                  "success": true,
+                  "variation": {
+                    "name": "fragile_goods",
+                    "element_requirement": "Light",
+                    "class_requirement": "Assaulter"
+                  }
+                },
+                "index": 2,
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:10605",
+                "faction": "Vicima",
+                "round_index": 0
+              }
+            ]
+          },
+          {
+            "round_ticket_trxids": [],
+            "activities": [
+              {
+                "activity_datetime": "2022-06-06T20:29:30.319846+00:00",
+                "faction": "Ysia",
+                "index": 0,
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:10605",
+                "stage": {
+                  "level": 1,
+                  "success": false,
+                  "rewards": {
+                    "elemental_stones": null,
+                    "chro": 0,
+                    "wams": 0
+                  },
+                  "variation": {
+                    "name": "long_digging_path",
+                    "element_requirement": "Darkness",
+                    "class_requirement": "Ranger"
+                  }
+                },
+                "round_index": 0
+              }
+            ],
+            "round_completed": false,
+            "date": "2022-06-06T00:00:00+00:00",
+            "round_ticket_consumed": 1,
+            "index": 1
+          },
+          {
+            "round_completed": false,
+            "index": 2,
+            "date": "2022-06-07T00:00:00+00:00",
+            "round_ticket_consumed": 1,
+            "round_ticket_trxids": [],
+            "activities": [
+              {
+                "activity_datetime": "2022-06-07T06:17:04.683033+00:00",
+                "stage": {
+                  "level": 1,
+                  "rewards": {
+                    "wams": 1,
+                    "elemental_stones": null,
+                    "chro": 0
+                  },
+                  "success": true,
+                  "variation": {
+                    "class_requirement": "Ranger",
+                    "name": "rocky_digging_path",
+                    "element_requirement": "Darkness"
+                  }
+                },
+                "round_index": 0,
+                "faction": "Ysia",
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:10605",
+                "index": 0
+              },
+              {
+                "round_index": 0,
+                "activity_datetime": "2022-06-07T06:17:21.951477+00:00",
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:10605",
+                "faction": "Ysia",
+                "index": 1,
+                "stage": {
+                  "level": 2,
+                  "success": true,
+                  "rewards": {
+                    "chro": 0,
+                    "elemental_stones": null,
+                    "wams": 1
+                  },
+                  "variation": {
+                    "class_requirement": "Vanguard",
+                    "name": "solid_ore_deposit",
+                    "element_requirement": "Fire"
+                  }
+                }
+              },
+              {
+                "index": 2,
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:10605",
+                "activity_datetime": "2022-06-07T06:17:33.780425+00:00",
+                "stage": {
+                  "rewards": {
+                    "wams": 0,
+                    "chro": 0,
+                    "elemental_stones": null
+                  },
+                  "success": false,
+                  "level": 3,
+                  "variation": {
+                    "class_requirement": "Vanguard",
+                    "element_requirement": "Light",
+                    "name": "composite_ore"
+                  }
+                },
+                "round_index": 0,
+                "faction": "Ysia"
+              }
+            ]
+          },
+          {
+            "round_ticket_consumed": 0,
+            "index": 3,
+            "round_completed": false,
+            "activities": [],
+            "date": "2022-06-08T00:00:00+00:00",
+            "round_ticket_trxids": []
+          },
+          {
+            "date": "2022-06-09T00:00:00+00:00",
+            "index": 4,
+            "activities": [
+              {
+                "round_index": 0,
+                "index": 0,
+                "activity_datetime": "2022-06-09T06:47:26.741734+00:00",
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:10605",
+                "faction": "Ysia",
+                "stage": {
+                  "rewards": {
+                    "chro": 0,
+                    "elemental_stones": null,
+                    "wams": 1
+                  },
+                  "success": true,
+                  "variation": {
+                    "name": "long_digging_path",
+                    "element_requirement": "Earth",
+                    "class_requirement": "Ranger"
+                  },
+                  "level": 1
+                }
+              }
+            ],
+            "round_ticket_consumed": 0,
+            "round_completed": false,
+            "round_ticket_trxids": []
+          }
+        ],
+        "type": "Rider"
+      },
+      {
+        "type": "Wynd",
+        "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:14884",
+        "product_metadata": {
+          "element": "Wind",
+          "faction": "Vicima",
+          "rarity": 5,
+          "class": "Assaulter",
+          "image_url": "https://storage.googleapis.com/wyndblast-prod.appspot.com/Wynd-NFT/wynd-000047-000047-000153-000020-000047-000101-000020-000020.gif"
+        },
+        "days": [
+          {
+            "activities": [
+              {
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:14884",
+                "index": 0,
+                "faction": "Vicima",
+                "activity_datetime": "2022-06-05T21:10:21.246363+00:00",
+                "stage": {
+                  "rewards": {
+                    "wams": 1,
+                    "elemental_stones": null,
+                    "chro": 0
+                  },
+                  "level": 1,
+                  "variation": {
+                    "element_requirement": "Water",
+                    "name": "plowing",
+                    "class_requirement": "Ranger"
+                  },
+                  "success": true
+                },
+                "round_index": 0
+              },
+              {
+                "round_index": 0,
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:14884",
+                "faction": "Vicima",
+                "stage": {
+                  "level": 2,
+                  "rewards": {
+                    "wams": 1,
+                    "elemental_stones": null,
+                    "chro": 0
+                  },
+                  "variation": {
+                    "class_requirement": "Ranger",
+                    "name": "grains",
+                    "element_requirement": "Earth"
+                  },
+                  "success": true
+                },
+                "activity_datetime": "2022-06-05T21:11:59.976624+00:00",
+                "index": 1
+              },
+              {
+                "faction": "Vicima",
+                "round_index": 0,
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:14884",
+                "stage": {
+                  "rewards": {
+                    "elemental_stones": null,
+                    "wams": 2,
+                    "chro": 7
+                  },
+                  "level": 3,
+                  "variation": {
+                    "name": "heavy_goods",
+                    "element_requirement": "Earth",
+                    "class_requirement": "Ranger"
+                  },
+                  "success": true
+                },
+                "index": 2,
+                "activity_datetime": "2022-06-05T21:13:59.498507+00:00"
+              }
+            ],
+            "round_completed": true,
+            "date": "2022-06-05T00:00:00+00:00",
+            "round_ticket_trxids": [],
+            "index": 0,
+            "round_ticket_consumed": 1
+          },
+          {
+            "round_ticket_trxids": [],
+            "activities": [
+              {
+                "faction": "Vicima",
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:14884",
+                "activity_datetime": "2022-06-06T01:47:38.902490+00:00",
+                "index": 0,
+                "stage": {
+                  "rewards": {
+                    "elemental_stones": null,
+                    "chro": 0,
+                    "wams": 1
+                  },
+                  "variation": {
+                    "element_requirement": "Earth",
+                    "class_requirement": "Ranger",
+                    "name": "plowing"
+                  },
+                  "success": true,
+                  "level": 1
+                },
+                "round_index": 0
+              },
+              {
+                "faction": "Vicima",
+                "stage": {
+                  "success": true,
+                  "rewards": {
+                    "elemental_stones": null,
+                    "chro": 0,
+                    "wams": 1
+                  },
+                  "variation": {
+                    "class_requirement": "Vanguard",
+                    "name": "grains",
+                    "element_requirement": "Darkness"
+                  },
+                  "level": 2
+                },
+                "round_index": 0,
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:14884",
+                "activity_datetime": "2022-06-06T01:48:07.604001+00:00",
+                "index": 1
+              },
+              {
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:14884",
+                "stage": {
+                  "success": true,
+                  "level": 3,
+                  "rewards": {
+                    "wams": 2,
+                    "elemental_stones": null,
+                    "chro": 7
+                  },
+                  "variation": {
+                    "class_requirement": "Assaulter",
+                    "element_requirement": "Light",
+                    "name": "heavy_goods"
+                  }
+                },
+                "faction": "Vicima",
+                "round_index": 0,
+                "activity_datetime": "2022-06-06T01:48:26.269431+00:00",
+                "index": 2
+              }
+            ],
+            "round_completed": true,
+            "round_ticket_consumed": 1,
+            "date": "2022-06-06T00:00:00+00:00",
+            "index": 1
+          },
+          {
+            "date": "2022-06-07T00:00:00+00:00",
+            "round_completed": false,
+            "round_ticket_trxids": [],
+            "activities": [],
+            "round_ticket_consumed": 0,
+            "index": 2
+          },
+          {
+            "index": 3,
+            "activities": [],
+            "round_ticket_trxids": [],
+            "round_completed": false,
+            "round_ticket_consumed": 0,
+            "date": "2022-06-08T00:00:00+00:00"
+          },
+          {
+            "index": 4,
+            "round_ticket_trxids": [],
+            "date": "2022-06-09T00:00:00+00:00",
+            "activities": [
+              {
+                "faction": "Vicima",
+                "activity_datetime": "2022-06-09T05:06:55.094789+00:00",
+                "index": 0,
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:14884",
+                "stage": {
+                  "variation": {
+                    "class_requirement": "Ranger",
+                    "name": "plowing",
+                    "element_requirement": "Earth"
+                  },
+                  "success": true,
+                  "rewards": {
+                    "elemental_stones": null,
+                    "chro": 0,
+                    "wams": 1
+                  },
+                  "level": 1
+                },
+                "round_index": 0
+              },
+              {
+                "activity_datetime": "2022-06-09T05:07:09.436633+00:00",
+                "index": 1,
+                "round_index": 0,
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:14884",
+                "stage": {
+                  "rewards": {
+                    "chro": 0,
+                    "elemental_stones": null,
+                    "wams": 1
+                  },
+                  "level": 2,
+                  "variation": {
+                    "class_requirement": "Ranger",
+                    "element_requirement": "Earth",
+                    "name": "tubers"
+                  },
+                  "success": true
+                },
+                "faction": "Vicima"
+              },
+              {
+                "activity_datetime": "2022-06-09T05:07:21.726452+00:00",
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:14884",
+                "stage": {
+                  "rewards": {
+                    "wams": 2,
+                    "elemental_stones": null,
+                    "chro": 7
+                  },
+                  "success": true,
+                  "variation": {
+                    "class_requirement": "Assaulter",
+                    "element_requirement": "Wind",
+                    "name": "fragile_goods"
+                  },
+                  "level": 3
+                },
+                "index": 2,
+                "faction": "Vicima",
+                "round_index": 0
+              }
+            ],
+            "round_completed": true,
+            "round_ticket_consumed": 1
+          }
+        ]
+      },
+      {
+        "days": [
+          {
+            "round_ticket_consumed": 1,
+            "round_completed": false,
+            "round_ticket_trxids": [],
+            "index": 0,
+            "activities": [
+              {
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:16850",
+                "stage": {
+                  "success": true,
+                  "variation": {
+                    "name": "plowing",
+                    "class_requirement": "Ranger",
+                    "element_requirement": "Water"
+                  },
+                  "rewards": {
+                    "elemental_stones": null,
+                    "wams": 1,
+                    "chro": 0
+                  },
+                  "level": 1
+                },
+                "index": 0,
+                "activity_datetime": "2022-06-05T21:10:21.672899+00:00",
+                "faction": "Vicima",
+                "round_index": 0
+              },
+              {
+                "faction": "Vicima",
+                "activity_datetime": "2022-06-05T21:12:33.522637+00:00",
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:16850",
+                "index": 1,
+                "round_index": 0,
+                "stage": {
+                  "level": 2,
+                  "rewards": {
+                    "chro": 0,
+                    "elemental_stones": null,
+                    "wams": 1
+                  },
+                  "variation": {
+                    "element_requirement": "Wind",
+                    "name": "tubers",
+                    "class_requirement": "Vanguard"
+                  },
+                  "success": true
+                }
+              },
+              {
+                "round_index": 0,
+                "faction": "Vicima",
+                "index": 2,
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:16850",
+                "activity_datetime": "2022-06-05T21:13:59.776830+00:00",
+                "stage": {
+                  "level": 3,
+                  "success": false,
+                  "variation": {
+                    "class_requirement": "Ranger",
+                    "element_requirement": "Earth",
+                    "name": "heavy_goods"
+                  },
+                  "rewards": {
+                    "elemental_stones": null,
+                    "wams": 0,
+                    "chro": 0
+                  }
+                }
+              }
+            ],
+            "date": "2022-06-05T00:00:00+00:00"
+          },
+          {
+            "round_ticket_consumed": 1,
+            "activities": [
+              {
+                "index": 0,
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:16850",
+                "activity_datetime": "2022-06-06T01:48:48.697468+00:00",
+                "stage": {
+                  "rewards": {
+                    "chro": 0,
+                    "elemental_stones": null,
+                    "wams": 1
+                  },
+                  "success": true,
+                  "level": 1,
+                  "variation": {
+                    "name": "clearing_weeds",
+                    "element_requirement": "Earth",
+                    "class_requirement": "Vanguard"
+                  }
+                },
+                "faction": "Vicima",
+                "round_index": 0
+              },
+              {
+                "index": 1,
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:16850",
+                "faction": "Vicima",
+                "activity_datetime": "2022-06-06T03:41:02.367356+00:00",
+                "round_index": 0,
+                "stage": {
+                  "variation": {
+                    "name": "grains",
+                    "class_requirement": "Ranger",
+                    "element_requirement": "Earth"
+                  },
+                  "success": true,
+                  "rewards": {
+                    "chro": 0,
+                    "wams": 1,
+                    "elemental_stones": null
+                  },
+                  "level": 2
+                }
+              },
+              {
+                "activity_datetime": "2022-06-06T20:27:58.163820+00:00",
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:16850",
+                "faction": "Vicima",
+                "index": 2,
+                "stage": {
+                  "success": true,
+                  "variation": {
+                    "element_requirement": "Light",
+                    "class_requirement": "Assaulter",
+                    "name": "heavy_goods"
+                  },
+                  "rewards": {
+                    "wams": 2,
+                    "elemental_stones": null,
+                    "chro": 7
+                  },
+                  "level": 3
+                },
+                "round_index": 0
+              }
+            ],
+            "round_completed": true,
+            "date": "2022-06-06T00:00:00+00:00",
+            "index": 1,
+            "round_ticket_trxids": []
+          },
+          {
+            "index": 2,
+            "round_completed": false,
+            "date": "2022-06-07T00:00:00+00:00",
+            "round_ticket_trxids": [],
+            "round_ticket_consumed": 1,
+            "activities": [
+              {
+                "activity_datetime": "2022-06-07T04:45:02.799687+00:00",
+                "stage": {
+                  "success": true,
+                  "level": 1,
+                  "rewards": {
+                    "wams": 1,
+                    "elemental_stones": null,
+                    "chro": 0
+                  },
+                  "variation": {
+                    "class_requirement": "Vanguard",
+                    "element_requirement": "Water",
+                    "name": "clearing_weeds"
+                  }
+                },
+                "round_index": 0,
+                "index": 0,
+                "faction": "Vicima",
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:16850"
+              },
+              {
+                "faction": "Vicima",
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:16850",
+                "round_index": 0,
+                "stage": {
+                  "level": 2,
+                  "rewards": {
+                    "elemental_stones": null,
+                    "chro": 0,
+                    "wams": 1
+                  },
+                  "success": true,
+                  "variation": {
+                    "element_requirement": "Darkness",
+                    "name": "tubers",
+                    "class_requirement": "Ranger"
+                  }
+                },
+                "activity_datetime": "2022-06-07T04:45:26.551324+00:00",
+                "index": 1
+              },
+              {
+                "index": 2,
+                "faction": "Vicima",
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:16850",
+                "activity_datetime": "2022-06-07T04:46:24.053180+00:00",
+                "round_index": 0,
+                "stage": {
+                  "success": false,
+                  "level": 3,
+                  "variation": {
+                    "name": "heavy_goods",
+                    "class_requirement": "Ranger",
+                    "element_requirement": "Earth"
+                  },
+                  "rewards": {
+                    "elemental_stones": null,
+                    "chro": 0,
+                    "wams": 0
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "round_ticket_trxids": [],
+            "round_ticket_consumed": 0,
+            "index": 3,
+            "activities": [],
+            "round_completed": false,
+            "date": "2022-06-08T00:00:00+00:00"
+          },
+          {
+            "activities": [],
+            "index": 4,
+            "round_ticket_consumed": 0,
+            "date": "2022-06-09T00:00:00+00:00",
+            "round_ticket_trxids": [],
+            "round_completed": false
+          }
+        ],
+        "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:16850",
+        "product_metadata": {
+          "element": "Light",
+          "rarity": 5,
+          "image_url": "https://storage.googleapis.com/wyndblast-prod.appspot.com/Wynd-NFT/wynd-0000000000-000020-000101-000101-000033-000033-000068-000047-000047.gif",
+          "class": "Assaulter",
+          "faction": "Vicima"
+        },
+        "type": "Wynd"
+      },
+      {
+        "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:13728",
+        "type": "Wynd",
+        "days": [
+          {
+            "date": "2022-06-05T00:00:00+00:00",
+            "round_completed": false,
+            "round_ticket_trxids": [],
+            "activities": [
+              {
+                "stage": {
+                  "variation": {
+                    "name": "plowing",
+                    "element_requirement": "Water",
+                    "class_requirement": "Ranger"
+                  },
+                  "level": 1,
+                  "rewards": {
+                    "chro": 0,
+                    "wams": 1,
+                    "elemental_stones": null
+                  },
+                  "success": true
+                },
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:13728",
+                "index": 0,
+                "activity_datetime": "2022-06-05T21:10:19.312806+00:00",
+                "faction": "Vicima",
+                "round_index": 0
+              },
+              {
+                "round_index": 0,
+                "faction": "Vicima",
+                "activity_datetime": "2022-06-05T21:10:53.980316+00:00",
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:13728",
+                "index": 1,
+                "stage": {
+                  "variation": {
+                    "class_requirement": "Vanguard",
+                    "name": "fruits",
+                    "element_requirement": "Earth"
+                  },
+                  "rewards": {
+                    "wams": 1,
+                    "elemental_stones": null,
+                    "chro": 0
+                  },
+                  "level": 2,
+                  "success": true
+                }
+              },
+              {
+                "faction": "Vicima",
+                "activity_datetime": "2022-06-05T21:14:21.643194+00:00",
+                "index": 2,
+                "stage": {
+                  "level": 3,
+                  "success": false,
+                  "variation": {
+                    "class_requirement": "Ranger",
+                    "name": "heavy_goods",
+                    "element_requirement": "Wind"
+                  },
+                  "rewards": {
+                    "chro": 0,
+                    "elemental_stones": null,
+                    "wams": 0
+                  }
+                },
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:13728",
+                "round_index": 0
+              }
+            ],
+            "round_ticket_consumed": 1,
+            "index": 0
+          },
+          {
+            "date": "2022-06-06T00:00:00+00:00",
+            "round_ticket_consumed": 1,
+            "round_ticket_trxids": [],
+            "activities": [
+              {
+                "stage": {
+                  "rewards": {
+                    "wams": 0,
+                    "elemental_stones": null,
+                    "chro": 0
+                  },
+                  "success": false,
+                  "variation": {
+                    "name": "plowing",
+                    "class_requirement": "Vanguard",
+                    "element_requirement": "Fire"
+                  },
+                  "level": 1
+                },
+                "index": 0,
+                "round_index": 0,
+                "faction": "Vicima",
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:13728",
+                "activity_datetime": "2022-06-06T20:28:21.671176+00:00"
+              }
+            ],
+            "index": 1,
+            "round_completed": false
+          },
+          {
+            "round_ticket_consumed": 0,
+            "round_completed": false,
+            "round_ticket_trxids": [],
+            "index": 2,
+            "activities": [],
+            "date": "2022-06-07T00:00:00+00:00"
+          },
+          {
+            "date": "2022-06-08T00:00:00+00:00",
+            "round_completed": false,
+            "activities": [],
+            "round_ticket_consumed": 0,
+            "round_ticket_trxids": [],
+            "index": 3
+          },
+          {
+            "index": 4,
+            "round_ticket_trxids": [],
+            "round_completed": false,
+            "round_ticket_consumed": 0,
+            "date": "2022-06-09T00:00:00+00:00",
+            "activities": []
+          }
+        ],
+        "product_metadata": {
+          "faction": "Vicima",
+          "class": "Assaulter",
+          "rarity": 3,
+          "image_url": "https://storage.googleapis.com/wyndblast-prod.appspot.com/Wynd-NFT/wynd-000158-000153-000020-000129-000129-000155-000155-000153.gif",
+          "element": "Water"
+        }
+      },
+      {
+        "product_metadata": {
+          "element": "Darkness",
+          "class": "Assaulter",
+          "faction": "Perlia",
+          "rarity": 3,
+          "image_url": "https://storage.googleapis.com/wyndblast-prod.appspot.com/Wynd-NFT/wynd-000133-000036-000133-000124-000148-000148-000132-000133.gif"
+        },
+        "type": "Wynd",
+        "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:11118",
+        "days": [
+          {
+            "index": 0,
+            "date": "2022-06-05T00:00:00+00:00",
+            "round_completed": false,
+            "round_ticket_trxids": [],
+            "activities": [
+              {
+                "index": 0,
+                "stage": {
+                  "success": false,
+                  "rewards": {
+                    "elemental_stones": null,
+                    "wams": 0,
+                    "chro": 0
+                  },
+                  "variation": {
+                    "name": "plowing",
+                    "class_requirement": "Ranger",
+                    "element_requirement": "Water"
+                  },
+                  "level": 1
+                },
+                "faction": "Vicima",
+                "round_index": 0,
+                "activity_datetime": "2022-06-05T21:10:20.173927+00:00",
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:11118"
+              }
+            ],
+            "round_ticket_consumed": 1
+          },
+          {
+            "activities": [
+              {
+                "round_index": 0,
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:11118",
+                "index": 0,
+                "faction": "Perlia",
+                "activity_datetime": "2022-06-06T20:28:52.694239+00:00",
+                "stage": {
+                  "variation": {
+                    "element_requirement": "Light",
+                    "class_requirement": "Ranger",
+                    "name": "jungle"
+                  },
+                  "rewards": {
+                    "elemental_stones": null,
+                    "wams": 1,
+                    "chro": 0
+                  },
+                  "level": 1,
+                  "success": true
+                }
+              },
+              {
+                "round_index": 0,
+                "product_id": "0x4B3903952A25961B9E66216186Efd9B21903AEd3:11118",
+                "index": 1,
+                "activity_datetime": "2022-06-06T20:29:09.948869+00:00",
+                "faction": "Perlia",
+                "stage": {
+                  "level": 2,
+                  "variation": {
+                    "element_requirement": "Earth",
+                    "class_requirement": "Vanguard",
+                    "name": "mystic_tree"
+                  },
+                  "success": false,
+                  "rewards": {
+                    "wams": 0,
+                    "chro": 0,
+                    "elemental_stones": null
+                  }
+                }
+              }
+            ],
+            "round_completed": false,
+            "round_ticket_trxids": [],
+            "index": 1,
+            "round_ticket_consumed": 1,
+            "date": "2022-06-06T00:00:00+00:00"
+          },
+          {
+            "round_ticket_trxids": [],
+            "index": 2,
+            "activities": [],
+            "round_completed": false,
+            "date": "2022-06-07T00:00:00+00:00",
+            "round_ticket_consumed": 0
+          },
+          {
+            "round_ticket_consumed": 0,
+            "activities": [],
+            "index": 3,
+            "date": "2022-06-08T00:00:00+00:00",
+            "round_completed": false,
+            "round_ticket_trxids": []
+          },
+          {
+            "date": "2022-06-09T00:00:00+00:00",
+            "round_ticket_consumed": 0,
+            "round_ticket_trxids": [],
+            "round_completed": false,
+            "activities": [],
+            "index": 4
+          }
+        ]
+      }
+    ]
+  }

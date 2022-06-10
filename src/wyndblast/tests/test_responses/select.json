@@ -1,0 +1,37 @@
+{
+    "status": true,
+    "result": {
+      "product_ids": [
+        "0x4B3903952A25961B9E66216186Efd9B21903AEd3:10605"
+      ],
+      "to_select": "variation",
+      "faction": "Ysia",
+      "stage_level": 2,
+      "selection_detail": {
+        "level": 2,
+        "name": "Mining",
+        "action_text": "Select Ore Deposit",
+        "variations": {
+          "large_ore_deposit": {
+            "name": "Large Ore Deposit",
+            "class_requirement": "Vanguard",
+            "element_requirement": "Earth",
+            "success_rate": "60%"
+          },
+          "solid_ore_deposit": {
+            "name": "Solid Ore Deposit",
+            "class_requirement": "Vanguard",
+            "element_requirement": "Earth",
+            "success_rate": "60%"
+          },
+          "elemental_ore_deposit": {
+            "name": "Elemental Ore Deposit",
+            "class_requirement": "Assaulter",
+            "element_requirement": "Fire",
+            "success_rate": "80%"
+          }
+        },
+        "base_success_rate": "40%"
+      }
+    }
+  }
