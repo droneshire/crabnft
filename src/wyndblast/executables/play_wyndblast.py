@@ -9,7 +9,7 @@ from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
 encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
 
 for user, info in USERS.items():
-    logger.print_normal(f"Starting for user {user}...")
+    logger.print_normal(f"\nStarting for user {user}...")
 
     private_key = decrypt_secret(encrypt_password, info["private_key"])
 

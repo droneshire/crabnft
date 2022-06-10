@@ -38,6 +38,7 @@ class DailyActivitiesGame:
         available_wynds = account_overview["count_nfts"]["game"]["daily_activity"]["idle"]
 
         if available_wynds <= 0:
+            logger.print_warn(f"No wynds available for daily activities...")
             return
 
         logger.print_bold(f"Found {available_wynds} Wynds available for daily activities\n\n")
