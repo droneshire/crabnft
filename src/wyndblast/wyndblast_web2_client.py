@@ -14,6 +14,13 @@ from wyndblast.api_headers import (
     WYNDBLAST_AUTHORIZATION_HEADER_KEY_FORMAT,
     WYNDBLAST_HEADERS,
 )
+from wyndblast.types import (
+    AccountOverview,
+    ActivityResult,
+    ActivitySelection,
+    DailyActivitySelection,
+    WyndStatus,
+)
 
 
 class WyndblastWeb2Client:
@@ -40,7 +47,7 @@ class WyndblastWeb2Client:
         },
     }
 
-    WYNDBLAST_NFT_CONTRACT_ADDRESS = "0x4b3903952a25961b9e66216186efd9b21903aed3"
+    WYNDBLAST_NFT_CONTRACT_ADDRESS = "0x4B3903952A25961B9E66216186Efd9B21903AEd3"
 
     def __init__(self, private_key: str, user_address: Address) -> None:
         self.private_key = private_key
@@ -50,11 +57,11 @@ class WyndblastWeb2Client:
         self.object_id = None
         self.username = None
 
-    def _get_request(self, url: str, params: T.Dict[str, T.Any] = {}) -> T.Any:
+    def _get_request(
+        self, url: str, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+    ) -> T.Any:
         try:
-            return requests.request(
-                "GET", url, params=params, headers=self.BROWSER_HEADERS, timeout=5.0
-            ).json()
+            return requests.request("GET", url, params=params, headers=headers, timeout=5.0).json()
         except KeyboardInterrupt:
             raise
         except:
@@ -75,6 +82,16 @@ class WyndblastWeb2Client:
             raise
         except:
             return {}
+
+    def _get_product_id(self, nft_id: int) -> str:
+        return ":".join([self.WYNDBLAST_NFT_CONTRACT_ADDRESS, str(nft_id)])
+
+    def _get_daily_activity_headers(self) -> T.Dict[str, str]:
+        headers = copy.deepcopy(WYNDBLAST_HEADERS)
+        headers["authorization"] = WYNDBLAST_AUTHORIZATION_HEADER_KEY_FORMAT.format(
+            self.session_token
+        )
+        return headers
 
     def _get_moralis_base_payload(self) -> T.Dict[str, T.Any]:
         payload = copy.deepcopy(self.MORALIS_BASE_PAYLOAD)
@@ -113,12 +130,13 @@ class WyndblastWeb2Client:
         return self._post_request(url, json_data=payload, headers=headers, params=params)
 
     def _get_server_time(self, params: T.Dict[str, T.Any] = {}) -> int:
-        res = self._get_server_time_raw(headers=MORALIS_SERVER_TIME_HEADERS, params=params)
-        if not res:
-            return 0
         try:
+            res = self._get_server_time_raw(headers=MORALIS_SERVER_TIME_HEADERS, params=params)
             return int(res["result"]["dateTime"])
+        except KeyboardInterrupt:
+            raise
         except:
+            logger.print_fail(f"Failed to get server time:\n{res if res else ''}")
             return 0
 
     def _authorize_user_raw(
@@ -130,18 +148,20 @@ class WyndblastWeb2Client:
         return self._post_request(url, json_data=payload, headers=headers, params=params)
 
     def authorize_user(self) -> None:
-        res = self._authorize_user_raw(headers=MORALIS_USER_AUTH_HEADERS)
-        if not res:
-            return
         try:
+            res = self._authorize_user_raw(headers=MORALIS_USER_AUTH_HEADERS)
             self.session_token = res["sessionToken"]
             self.object_id = res["objectId"]
             self.username = res["username"]
-            logger.print_ok(
+            logger.print_normal(
                 f"Successfully authorized user {self.user_address}:\nToken: {self.session_token}\nUser: {self.username}"
             )
+        except KeyboardInterrupt:
+            raise
         except:
-            logger.print_fail(f"Failed to authorize user {self.user_address}:\n{res}")
+            logger.print_fail(
+                f"Failed to authorize user {self.user_address}:\n{res if res else ''}"
+            )
 
     def _update_account_raw(
         self, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
@@ -152,10 +172,96 @@ class WyndblastWeb2Client:
         return self._post_request(url, json_data=payload, headers=headers, params=params)
 
     def update_account(self) -> None:
-        res = self._update_account_raw(headers=MORALIS_USER_AUTH_HEADERS)
-        if not res:
-            return
         try:
-            logger.print_ok(f"Successful update for {self.user_address} at {res['updatedAt']}")
+            res = self._update_account_raw(headers=MORALIS_USER_AUTH_HEADERS)
+            logger.print_normal(f"Successful update for {self.user_address} at {res['updatedAt']}")
+        except KeyboardInterrupt:
+            raise
         except:
-            logger.print_fail(f"Failed to update {self.object_id}:\n{res}")
+            logger.print_fail(f"Failed to update {self.object_id}:\n{res if res else ''}")
+
+    def _get_account_overview_raw(
+        self, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+    ) -> T.Any:
+        url = self.DAILY_ACTIVITY_BASE_URL + "/nft-overview"
+        default_params = {
+            "limit": "100",
+            "page": "1",
+        }
+        default_params.update(params)
+
+        return self._get_request(url, headers=headers, params=default_params)
+
+    def get_account_overview(self) -> AccountOverview:
+        try:
+            res = self._get_account_overview_raw(headers=self._get_daily_activity_headers())
+            return res["result"]
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed get nft overview")
+            return {}
+
+    def _get_nft_raw(
+        self, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+    ) -> T.Any:
+        url = self.DAILY_ACTIVITY_BASE_URL + "/nft"
+        default_params = {
+            "limit": "100",
+            "page": "1",
+        }
+        default_params.update(params)
+
+        return self._get_request(url, headers=headers, params=default_params)
+
+    def get_all_wynds_activity(self) -> T.List[WyndStatus]:
+        try:
+            res = self._get_nft_raw(headers=self._get_daily_activity_headers())
+            return res["result"]
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed get nft stats")
+            return []
+
+    def _get_activity_selection_raw(
+        self, nft_id: int, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+    ) -> T.Any:
+        url = self.DAILY_ACTIVITY_BASE_URL + "/select"
+        json_data = {"product_ids": [self._get_product_id(nft_id)]}
+        headers = self._get_daily_activity_headers()
+
+        return self._post_request(url, json_data=json_data, headers=headers, params=params)
+
+    def get_activity_selection(self, nft_id: int) -> DailyActivitySelection:
+        try:
+            res = self._get_activity_selection_raw(
+                nft_id=nft_id, headers=self._get_daily_activity_headers()
+            )
+            return res["result"]
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to get activity options\n{res if res else ''}")
+            return {}
+
+    def _new_raw(
+        self,
+        selection: ActivitySelection,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
+    ) -> T.Any:
+        url = self.DAILY_ACTIVITY_BASE_URL + "/new"
+        json_data = json.loads(json.dumps(selection))
+
+        return self._post_request(url, json_data=json_data, headers=headers, params=params)
+
+    def do_activity(self, selection: ActivitySelection) -> ActivityResult:
+        try:
+            res = self._new_raw(selection=selection, headers=self._get_daily_activity_headers())
+            return res["result"][0]
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to do activity!\n{res}")
+            return {}

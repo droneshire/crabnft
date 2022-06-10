@@ -105,7 +105,9 @@ class ConfigManager:
             if isinstance(value, T.Dict):
                 new_value = ""
                 for k, v in value.items():
-                    new_value += f"{k}\n"
+                    if isinstance(v, T.List):
+                        v = "\n\t".join([str(l) for l in v])
+                    new_value += f"{' '.join(k.split('_'))} = {v}\n"
 
             if isinstance(value, bool):
                 new_value = str(value)

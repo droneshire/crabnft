@@ -38,9 +38,9 @@ WYNDBLAST_HEADERS = {
     "authority": "api.wyndblast.com",
     "accept": "application/json, text/plain, */*",
     "accept-language": "en-US,en;q=0.9",
-    "authorization": "",  # must provide WYNDBLAST_AUTH_FORMAT.format(session_token here)
+    "authorization": "",  # must use WYNDBLAST_AUTHORIZATION_HEADER_KEY_FORMAT.format(token)
     "dnt": "1",
-    "if-none-match": 'W/"b3-7e/mJ/RrKHuO4gb+4YM2j3UbTW8"',
+    # "if-none-match": 'W/"2dc8-fr/ndnMMZm8unZlMPFzWpdz+fKk"',
     "origin": "https://dailyactivities.wyndblast.com",
     "referer": "https://dailyactivities.wyndblast.com/",
     "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="101", "Google Chrome";v="101"',
