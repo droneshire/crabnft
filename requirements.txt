@@ -92,6 +92,7 @@ rlp==2.0.1
 rsa==4.8
 six==1.16.0
 stem==1.8.0
+termcolor==1.1.0
 tomli==2.0.1
 toolz==0.11.2
 torrequest==0.1.0
@@ -110,3 +111,4 @@ websockets==9.1
 wrapt==1.14.0
 yagmail==0.15.277
 yarl==1.7.2
+yaspin==2.1.0

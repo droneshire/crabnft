@@ -3,6 +3,7 @@ import getpass
 import logging
 import os
 import time
+from yaspin import yaspin
 
 from config_wyndblast import GMAIL, USERS, USER_GROUPS
 from utils import logger
@@ -51,6 +52,11 @@ def setup_log(log_level: str, log_dir: str, id_string: str) -> None:
     )
 
 
+@yaspin(text="Waiting...")
+def wait() -> None:
+    time.sleep(TIME_BETWEEN_RUNS)
+
+
 def run_bot() -> None:
     args = parse_args()
 
@@ -83,7 +89,7 @@ def run_bot() -> None:
         while True:
             for bot in bots:
                 bot.run()
-            time.sleep(TIME_BETWEEN_RUNS)
+            wait()
     finally:
         for bot in bots:
             bot.end()
