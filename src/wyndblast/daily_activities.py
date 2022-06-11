@@ -1,7 +1,11 @@
+import copy
 import json
 import typing as T
 
 from utils import logger
+from utils.config_types import UserConfig
+from utils.email import Email, send_email
+from wyndblast.game_stats import NULL_GAME_STATS
 from wyndblast.types import (
     Action,
     AccountOverview,
@@ -20,18 +24,21 @@ from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
 class DailyActivitiesGame:
     MAX_NUM_ROUNDS = 3
 
-    def __init__(self, user: str, wynd_w2: WyndblastWeb2Client):
+    def __init__(
+        self,
+        user: str,
+        config: UserConfig,
+        email_accounts: T.List[Email],
+        wynd_w2: WyndblastWeb2Client,
+    ):
         self.user = user
+        self.config_mgr = config
+        self.email_accounts = email_accounts
         self.wynd_w2 = wynd_w2
 
-        self.stats = stats = {
-            "wins": 0,
-            "losses": 0,
-            "win_percent": 0.0,
-            "chro": 0.0,
-            "wams": 0.0,
-            "elemental_stones": 0.0,
-        }
+        self.current_stats = stats = copy.deepcopy(NULL_GAME_STATS)
+
+        self.lifetime_stats = copy.deepcopy(NULL_GAME_STATS)
 
         logger.print_ok_blue(f"\nStarting for user {user}...")
 
@@ -97,12 +104,31 @@ class DailyActivitiesGame:
                     logger.print_warn(f"We lost, unable to proceed to next round")
                     break
 
-        logger.print_bold(f"Activity Stats:\n")
-        logger.print_ok_blue(f"Wins: {self.stats['wins']}")
-        logger.print_ok_blue(f"Losses: {self.stats['losses']}")
-        logger.print_ok_blue(f"CHRO: {self.stats['chro']}")
-        logger.print_ok_blue(f"WAMS: {self.stats['wams']}")
-        logger.print_ok_blue(f"Stones: {' '.join(self.stats['elemental_stones'])}")
+        self._send_summary_email()
+        self._update_stats()
+
+    def _update_stats(self) -> None:
+        for k, v in self.current_stats.items():
+            if isinstance(v, list):
+                self.lifetime_stats[k].extend(v)
+            else:
+                self.lifetime_stats[k] += v
+
+        self.current_stats = copy.deepcopy(NULL_GAME_STATS)
+
+    def _send_summary_email(self) -> None:
+        content = f"Activity Stats for {self.user.upper()}:\n"
+        content += f"Wins: {self.current_stats['wins']}\n"
+        content += f"Losses: {self.current_stats['losses']}\n"
+        content += f"CHRO: {self.current_stats['chro']}\n"
+        content += f"WAMS: {self.current_stats['wams']}\n"
+        content += f"Stones: {' '.join(self.current_stats['elemental_stones'])}\n"
+
+        logger.print_bold(content)
+
+        send_email(
+            self.email_accounts, self.config_mgr["email"], "Wyndblast Daily Activities", content
+        )
 
     def _play_round(self, wynd_id: int, current_stage: int, wynd_info: ProductMetadata) -> bool:
         options: DailyActivitySelection = self.wynd_w2.get_activity_selection(wynd_id)
@@ -125,10 +151,10 @@ class DailyActivitiesGame:
         level = result["stage"]["level"]
         rewards = result["stage"]["rewards"]
 
-        self.stats["chro"] += rewards["chro"]
-        self.stats["wams"] += rewards["wams"]
+        self.current_stats["chro"] += rewards["chro"]
+        self.current_stats["wams"] += rewards["wams"]
         if rewards["elemental_stones"] is not None:
-            self.stats["elemental_stones"].append(rewards["elemental_stones"])
+            self.current_stats["elemental_stones"].append(rewards["elemental_stones"])
 
         outcome_emoji = "\U0001F389" if did_succeed else "\U0001F915"
 
@@ -147,9 +173,9 @@ class DailyActivitiesGame:
                 f"CHRO: {rewards['chro']} WAMS: {rewards['wams']} ELEMENTAL STONES: {rewards['elemental_stones']}"
             )
             if did_succeed:
-                self.stats["wins"] += 1
+                self.current_stats["wins"] += 1
             else:
-                self.stats["losses"] += 1
+                self.current_stats["losses"] += 1
 
         return did_succeed
 
