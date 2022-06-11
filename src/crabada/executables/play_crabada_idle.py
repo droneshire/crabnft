@@ -38,7 +38,7 @@ GAS_DOWNSAMPLE_COUNT = 8
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    log_dir = logger.get_logging_dir()
+    log_dir = logger.get_logging_dir("crabada")
     parser.add_argument("--dry-run", action="store_true", help="Dry run")
     parser.add_argument("--quiet", action="store_true", help="Disable alerts")
     parser.add_argument("--log-level", choices=["INFO", "DEBUG", "ERROR", "NONE"], default="INFO")

@@ -49,7 +49,9 @@ def calc_profits() -> None:
             continue
 
         csv_header = ["timestamp"] + [k for k in NULL_STATS.keys()] + ["team_id"]
-        csv_file = get_lifetime_stats_file(alias, logger.get_logging_dir()).split(".")[0] + ".csv"
+        csv_file = (
+            get_lifetime_stats_file(alias, logger.get_logging_dir("crabada")).split(".")[0] + ".csv"
+        )
         csv = CsvLogger(csv_file, csv_header, dry_run=args.dry_run)
 
         target_date = datetime.datetime.strptime(args.target_date, "%m/%d/%Y").date()

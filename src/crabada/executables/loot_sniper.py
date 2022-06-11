@@ -34,7 +34,7 @@ def setup_log(log_level: str, log_dir: str, id_string: str) -> None:
 
 
 def main() -> None:
-    setup_log("INFO", logger.get_logging_dir(), "loot_sniper")
+    setup_log("INFO", logger.get_logging_dir("crabada"), "loot_sniper")
     this_dir = os.path.dirname(os.path.realpath(__file__))
     sniper = LootSnipes(os.path.join(this_dir, "gspread_credentials.json"), verbose=True)
     cb = circuit_breaker.CircuitBreaker(15.0)

@@ -39,10 +39,11 @@ class ConfigManagerFirebase(CrabadaConfigManager):
         config: UserConfig,
         send_email_accounts: T.List[Email],
         encrypt_password: str,
+        log_dir: str,
         dry_run: bool = False,
         verbose: bool = False,
     ):
-        super().__init__(user, config, send_email_accounts, encrypt_password, dry_run)
+        super().__init__(user, config, send_email_accounts, encrypt_password, log_dir, dry_run)
         this_dir = os.path.dirname(os.path.realpath(__file__))
         creds_dir = os.path.dirname(this_dir)
         credentials_file = os.path.join(creds_dir, "firebase_credentials.json")
@@ -60,7 +61,6 @@ class ConfigManagerFirebase(CrabadaConfigManager):
             logger.print_warn(f"{self.user} does not have a firebase account! Using default config")
         else:
             self.config = self._load_config()
-        print(json.dumps(self.config, indent=4))
         self._send_email_config_if_needed()
         self._save_config()
 
@@ -102,7 +102,7 @@ class ConfigManagerFirebase(CrabadaConfigManager):
         if self.user_doc is None:
             return
 
-        log_dir = logger.get_logging_dir()
+        log_dir = logger.get_logging_dir("crabada")
         game_stats = copy.deepcopy(get_game_stats(self.alias, log_dir))
 
         commission_tus = 0.0

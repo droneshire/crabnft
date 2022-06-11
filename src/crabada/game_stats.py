@@ -223,7 +223,7 @@ def update_lifetime_stats_format(game_stats: LifetimeGameStats) -> LifetimeGameS
 
 
 def get_lifetime_stats_file(user: str, log_dir: str) -> str:
-    return os.path.join(log_dir, user.lower() + "_lifetime_game_bot_stats.json")
+    return os.path.join(log_dir, "stats", user.lower() + "_lifetime_game_bot_stats.json")
 
 
 def get_game_stats(user: str, log_dir: str) -> T.Dict[str, T.Any]:

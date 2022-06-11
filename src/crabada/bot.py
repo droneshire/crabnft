@@ -105,6 +105,7 @@ class CrabadaMineBot:
             config,
             email_accounts,
             encrypt_password,
+            log_dir,
             dry_run=dry_run,
             verbose=True,
         )

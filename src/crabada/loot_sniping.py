@@ -70,7 +70,7 @@ class LootSnipes:
         self.sheets_update_delta = self.UPDATE_TIME_DELTA
 
         self.hit_rate = {}
-        self.log_file = os.path.join(logger.get_logging_dir(), "sniper", "hit_rates.json")
+        self.log_file = os.path.join(logger.get_logging_dir("crabada"), "sniper", "hit_rates.json")
 
         self.hit_rate = self._read_log()
 

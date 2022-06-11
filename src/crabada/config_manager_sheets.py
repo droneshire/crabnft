@@ -129,9 +129,10 @@ class ConfigManagerSheets(CrabadaConfigManager):
         config: UserConfig,
         send_email_accounts: T.List[Email],
         encrypt_password: str,
+        log_dir: str,
         dry_run: bool = False,
     ):
-        super().__init__(user, config, send_email_accounts, encrypt_password, dry_run)
+        super().__init__(user, config, send_email_accounts, encrypt_password, log_dir, dry_run)
 
         self.backoff = self.DEFAULT_BACKOFF_OPTION
         self.google_api_success = False

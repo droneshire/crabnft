@@ -6,6 +6,7 @@ import typing as T
 
 from eth_account import Account, messages
 from eth_typing import Address
+from web3 import Web3
 
 from utils import logger
 from wyndblast.api_headers import (
@@ -51,7 +52,7 @@ class WyndblastWeb2Client:
 
     def __init__(self, private_key: str, user_address: Address) -> None:
         self.private_key = private_key
-        self.user_address = user_address
+        self.user_address = Web3.toChecksumAddress(user_address)
 
         self.session_token = None
         self.object_id = None

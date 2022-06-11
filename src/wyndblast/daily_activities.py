@@ -20,8 +20,10 @@ from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
 class DailyActivitiesGame:
     MAX_NUM_ROUNDS = 3
 
-    def __init__(self, wynd_w2: WyndblastWeb2Client):
+    def __init__(self, user: str, wynd_w2: WyndblastWeb2Client):
+        self.user = user
         self.wynd_w2 = wynd_w2
+
         self.stats = stats = {
             "wins": 0,
             "losses": 0,
@@ -31,11 +33,18 @@ class DailyActivitiesGame:
             "elemental_stones": 0.0,
         }
 
+        logger.print_ok_blue(f"\nStarting for user {user}...")
+
     def run_activity(self) -> None:
         account_overview = self.wynd_w2.get_account_overview()
-        total = account_overview["count_nfts"]["all"]
 
-        available_wynds = account_overview["count_nfts"]["game"]["daily_activity"]["idle"]
+        try:
+            total = account_overview["count_nfts"]["all"]
+
+            available_wynds = account_overview["count_nfts"]["game"]["daily_activity"]["idle"]
+        except:
+            logger.print_fail(f"Failed to process account overview")
+            return
 
         if available_wynds <= 0:
             logger.print_warn(f"No wynds available for daily activities...")
@@ -85,18 +94,15 @@ class DailyActivitiesGame:
                     current_stage=stage,
                     wynd_info=wynd["product_metadata"],
                 ):
-                    logger.print_warn(f"Unable to proceed to next round")
-                    self.stats["losses"] += 1
+                    logger.print_warn(f"We lost, unable to proceed to next round")
                     break
-                else:
-                    self.stats["wins"] += 1
 
         logger.print_bold(f"Activity Stats:\n")
         logger.print_ok_blue(f"Wins: {self.stats['wins']}")
         logger.print_ok_blue(f"Losses: {self.stats['losses']}")
         logger.print_ok_blue(f"CHRO: {self.stats['chro']}")
         logger.print_ok_blue(f"WAMS: {self.stats['wams']}")
-        logger.print_ok_blue(f"Stones: {self.stats['elemental_stones']}")
+        logger.print_ok_blue(f"Stones: {' '.join(self.stats['elemental_stones'])}")
 
     def _play_round(self, wynd_id: int, current_stage: int, wynd_info: ProductMetadata) -> bool:
         options: DailyActivitySelection = self.wynd_w2.get_activity_selection(wynd_id)
@@ -117,26 +123,34 @@ class DailyActivitiesGame:
         did_succeed = result["stage"]["success"]
 
         level = result["stage"]["level"]
+        rewards = result["stage"]["rewards"]
 
         self.stats["chro"] += rewards["chro"]
         self.stats["wams"] += rewards["wams"]
-        self.stats["elemental_stones"] += (
-            rewards["elemental_stones"] if rewards["elemental_stones"] is not None else 0
-        )
+        if rewards["elemental_stones"] is not None:
+            self.stats["elemental_stones"].append(rewards["elemental_stones"])
+
+        outcome_emoji = "\U0001F389" if did_succeed else "\U0001F915"
 
         if level < 3:
             logger.print_ok_blue(f"Finished round {level}")
             logger.print_ok_blue_arrow(
                 f"CHRO: {rewards['chro']} WAMS: {rewards['wams']} ELEMENTAL STONES: {rewards['elemental_stones']}"
             )
-            return did_succeed
+            if not did_succeed:
+                logger.print_ok(f"Finished round, we lost {outcome_emoji}")
+        else:
+            logger.print_ok(
+                f"Finished round, we {'won!' if did_succeed else 'lost.'} {outcome_emoji}"
+            )
+            logger.print_ok_arrow(
+                f"CHRO: {rewards['chro']} WAMS: {rewards['wams']} ELEMENTAL STONES: {rewards['elemental_stones']}"
+            )
+            if did_succeed:
+                self.stats["wins"] += 1
+            else:
+                self.stats["losses"] += 1
 
-        rewards = result["stage"]["rewards"]
-        outcome_emoji = "\U0001F389" if did_succeed else "\U0001F915"
-        logger.print_ok(f"Finished round, we {'won!' if did_succeed else 'lost.'} {outcome_emoji}")
-        logger.print_ok_arrow(
-            f"CHRO: {rewards['chro']} WAMS: {rewards['wams']} ELEMENTAL STONES: {rewards['elemental_stones']}"
-        )
         return did_succeed
 
     def _get_best_action(

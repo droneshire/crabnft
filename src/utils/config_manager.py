@@ -5,13 +5,11 @@ import os
 import time
 import typing as T
 
-from config_crabada import GAME_BOT_STRING
 from utils import logger
 from utils.config_types import UserConfig
 from utils.security import decrypt, encrypt
 from utils.email import Email, send_email
 from utils.user import get_alias_from_user
-from crabada.game_stats import LifetimeGameStats, NULL_GAME_STATS
 
 
 class ConfigManager:
@@ -23,18 +21,21 @@ class ConfigManager:
         config: UserConfig,
         send_email_accounts: T.List[Email],
         encrypt_password: str,
+        log_dir: str,
         dry_run: bool = False,
     ):
         self.config = config
         self.user = user
         self.alias = get_alias_from_user(user)
-
+        self.log_dir = log_dir
         self.encrypt_password = encrypt_password
 
         self.send_email_accounts = send_email_accounts
 
         self.dry_run = dry_run
         self.last_config_update_time = 0.0
+
+        self.game_string = config["game"].upper()
 
     def init(self) -> None:
         raise NotImplementedError
@@ -63,8 +64,7 @@ class ConfigManager:
         return save_config
 
     def _get_config_file(self) -> str:
-        log_dir = logger.get_logging_dir()
-        config_file = os.path.join(logger.get_logging_dir(), f"{self.user.lower()}_config.json")
+        config_file = os.path.join(self.log_dir, "stats", f"{self.user.lower()}_config.json")
         return config_file
 
     def _save_config(self) -> None:
@@ -168,6 +168,6 @@ class ConfigManager:
         send_email(
             self.send_email_accounts,
             self.config["email"],
-            f"{GAME_BOT_STRING} Config Change Notification",
+            f"{self.game_string} Config Change Notification",
             email_message,
         )

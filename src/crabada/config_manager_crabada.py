@@ -17,10 +17,11 @@ class CrabadaConfigManager(ConfigManager):
         config: UserConfig,
         send_email_accounts: T.List[Email],
         encrypt_password: str,
+        log_dir: str,
         dry_run: bool = False,
         verbose: bool = False,
     ):
-        super().__init__(user, config, send_email_accounts, encrypt_password, dry_run)
+        super().__init__(user, config, send_email_accounts, encrypt_password, log_dir, dry_run)
         self.crabada_w2 = CrabadaWeb2Client()
         self.team_composition_and_mp = self.crabada_w2.get_team_compositions_and_mp(
             self.config["address"]
@@ -81,19 +82,19 @@ class CrabadaConfigManager(ConfigManager):
             "max_reinforcement_price_tus",
             "should_reinforce",
         ]
+
         for del_key in delete_keys:
             if del_key in new_config:
+                new_config["game_specific_configs"][del_key] = new_config[del_key]
                 del new_config[del_key]
-            elif del_key in new_config["game_specific_configs"]:
-                del new_config["game_specific_configs"][del_key]
 
-            if isinstance(self.config["game_specific_configs"][del_key], dict):
+            if isinstance(new_config["game_specific_configs"][del_key], dict):
                 new_config["game_specific_configs"][del_key] = {}
-            if isinstance(self.config["game_specific_configs"][del_key], bool):
+            if isinstance(new_config["game_specific_configs"][del_key], bool):
                 new_config["game_specific_configs"][del_key] = False
-            if isinstance(self.config["game_specific_configs"][del_key], int):
+            if isinstance(new_config["game_specific_configs"][del_key], int):
                 new_config["game_specific_configs"][del_key] = 0
-            if isinstance(self.config["game_specific_configs"][del_key], float):
+            if isinstance(new_config["game_specific_configs"][del_key], float):
                 new_config["game_specific_configs"][del_key] = 0.0
 
         del new_config["max_gas_price_gwei"]

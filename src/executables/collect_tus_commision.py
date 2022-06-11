@@ -279,7 +279,9 @@ def collect_tus_commission(
     if dry_run:
         return
 
-    stats_file = os.path.join(logger.get_logging_dir(), "commission_lifetime_bot_stats.json")
+    stats_file = os.path.join(
+        logger.get_logging_dir("crabada"), "stats", "commission_lifetime_bot_stats.json"
+    )
 
     if os.path.isfile(stats_file):
         with open(stats_file, "r") as infile:
@@ -307,7 +309,7 @@ def parse_args() -> argparse.Namespace:
         "--from-users", choices=list(USERS.keys()) + ["ALL"], default="ALL", nargs="+"
     )
     parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--log-dir", default=logger.get_logging_dir())
+    parser.add_argument("--log-dir", default=logger.get_logging_dir("crabada"))
     parser.add_argument("--log-level", choices=["INFO", "DEBUG", "ERROR", "NONE"], default="INFO")
     return parser.parse_args()
 

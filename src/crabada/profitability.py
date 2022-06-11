@@ -601,7 +601,8 @@ def get_profitability_message(
 
     if log_stats:
         csv_file = os.path.join(
-            logger.get_logging_dir(),
+            logger.get_logging_dir("crabada"),
+            "stats",
             "profitability_stats{}.csv".format(str(group) if group is not None else ""),
         )
 
