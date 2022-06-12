@@ -36,7 +36,7 @@ class DailyActivitiesGame:
         self.email_accounts = email_accounts
         self.wynd_w2 = wynd_w2
 
-        self.current_stats = stats = copy.deepcopy(NULL_GAME_STATS)
+        self.current_stats = copy.deepcopy(NULL_GAME_STATS)
 
         self.lifetime_stats = copy.deepcopy(NULL_GAME_STATS)
 
