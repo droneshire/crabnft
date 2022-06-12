@@ -41,7 +41,9 @@ class WyndBot:
         self.wynd_w2: WyndblastWeb2Client = WyndblastWeb2Client(
             self.config["private_key"], self.address
         )
-        self.daily_activities: DailyActivitiesGame = DailyActivitiesGame(self.user, self.wynd_w2)
+        self.daily_activities: DailyActivitiesGame = DailyActivitiesGame(
+            user, config, email_accounts, self.wynd_w2
+        )
 
     def init(self) -> None:
         self.config_mgr.init()
