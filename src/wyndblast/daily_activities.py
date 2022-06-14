@@ -69,6 +69,9 @@ class DailyActivitiesGame:
 
         wynds: T.List[WyndStatus] = self.wynd_w2.get_all_wynds_activity()
 
+        if not wynds:
+            return
+
         for wynd in wynds:
             wynd_id = int(wynd["product_id"].split(":")[1])
             wynd_faction = wynd["product_metadata"]["faction"]
@@ -112,22 +115,30 @@ class DailyActivitiesGame:
                     logger.print_warn(f"We lost, unable to proceed to next round")
                     break
 
-        self._send_summary_email()
+        self._send_summary_email(account_overview)
         self._update_stats()
 
     def _update_stats(self) -> None:
         for k, v in self.current_stats.items():
             if isinstance(v, list):
                 self.lifetime_stats[k].extend(v)
+            if isinstance(v, dict):
+                self.lifetime_stats[k].update(v)
             else:
                 self.lifetime_stats[k] += v
 
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
 
-    def _send_summary_email(self) -> None:
+    def _send_summary_email(self, account_overview: AccountOverview) -> None:
+        active_nfts = account_overview["count_nfts"]["game"]["daily_activity"]["active"]
+
         content = f"Activity Stats for {self.user.upper()}:\n"
-        content += f"Wins: {self.current_stats['wins']}\n"
-        content += f"Losses: {self.current_stats['losses']}\n"
+        content = f"Active NFTs: {active_nfts}\n"
+        for stage in range(1, 4):
+            stage_key = f"stage_{stage}"
+            stage_str = f"Stage {stage}" if stage != 3 else "All Stages"
+            content += f"Completed {stage_str}: {self.current_stats[stage_key]['wins']}\n\n"
+        content += f"REWARDS:"
         content += f"CHRO: {self.current_stats['chro']}\n"
         content += f"WAMS: {self.current_stats['wams']}\n"
         content += f"Elemental Stones:\n"
@@ -160,34 +171,36 @@ class DailyActivitiesGame:
 
         did_succeed = result["stage"]["success"]
 
-        level = result["stage"]["level"]
+        level = int(result["stage"]["level"])
         rewards = result["stage"]["rewards"]
 
         self.current_stats["chro"] += rewards["chro"]
         self.current_stats["wams"] += rewards["wams"]
         if rewards["elemental_stones"] is not None:
-            self.current_stats["elemental_stones"].append(rewards["elemental_stones"])
+            self.current_stats["elemental_stones"] = rewards["elemental_stones"]
 
         outcome_emoji = "\U0001F389" if did_succeed else "\U0001F915"
 
         if level < 3:
-            logger.print_ok_blue(f"Finished round {level}")
+            logger.print_ok_blue(f"Finished stage {level}")
             logger.print_ok_blue_arrow(
-                f"CHRO: {rewards['chro']} WAMS: {rewards['wams']} ELEMENTAL STONES: {rewards['elemental_stones']}"
+                f"CHRO: {rewards['chro']} WAMS: {rewards['wams']}\nELEMENTAL STONES:\n{rewards['elemental_stones']}"
             )
             if not did_succeed:
-                logger.print_ok(f"Finished round, we lost {outcome_emoji}")
+                logger.print_ok(f"Finished stage, we lost {outcome_emoji}")
         else:
             logger.print_ok(
                 f"Finished round, we {'won!' if did_succeed else 'lost.'} {outcome_emoji}"
             )
             logger.print_ok_arrow(
-                f"CHRO: {rewards['chro']} WAMS: {rewards['wams']} ELEMENTAL STONES: {rewards['elemental_stones']}"
+                f"CHRO: {rewards['chro']} WAMS: {rewards['wams']}\nELEMENTAL STONES:\n {rewards['elemental_stones']}"
             )
-            if did_succeed:
-                self.current_stats["wins"] += 1
-            else:
-                self.current_stats["losses"] += 1
+
+        stage_key = f"stage_{level}"
+        if did_succeed:
+            self.current_stats[stage_key]["wins"] += 1
+        else:
+            self.current_stats[stage_key]["losses"] += 1
 
         return did_succeed
 

@@ -27,23 +27,35 @@ class WyndblastGameWeb3Client(AvalancheCWeb3Client):
         """
         Claim daily activity rewards
         """
-        tx: TxParams = self.build_contract_transaction(self.contract.functions.claimReward())
-        return self.sign_and_send_transaction(tx)
+        try:
+            self.contract.functions.claimReward().call()
+            tx: TxParams = self.build_contract_transaction(self.contract.functions.claimReward())
+            return self.sign_and_send_transaction(tx)
+        except:
+            return ""
 
     def move_into_inventory(self, token_ids: T.List[int]) -> HexStr:
         """
         Move nft out daily activities into inventory
         """
-        tx: TxParams = self.build_contract_transaction(
-            self.contract.functions.batchDispatch(self.holder_place, token_ids)
-        )
-        return self.sign_and_send_transaction(tx)
+        try:
+            self.contract.functions.batchDispatch(self.holder_place, token_ids).call()
+            tx: TxParams = self.build_contract_transaction(
+                self.contract.functions.batchDispatch(self.holder_place, token_ids)
+            )
+            return self.sign_and_send_transaction(tx)
+        except:
+            return ""
 
     def move_out_of_inventory(self, token_ids: T.List[int]) -> HexStr:
         """
         Move nft out of inventory into daily activities
         """
-        tx: TxParams = self.build_contract_transaction(
-            self.contract.functions.batchSubmit(self.holder_place, token_ids)
-        )
-        return self.sign_and_send_transaction(tx)
+        try:
+            self.contract.functions.batchDispatch(self.holder_place, token_ids).call()
+            tx: TxParams = self.build_contract_transaction(
+                self.contract.functions.batchSubmit(self.holder_place, token_ids)
+            )
+            return self.sign_and_send_transaction(tx)
+        except:
+            return ""

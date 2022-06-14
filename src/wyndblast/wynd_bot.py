@@ -69,11 +69,13 @@ class WyndBot:
             logger.print_normal(f"No NFTs found in inventory")
             return
 
-        logger.print_bold(f"Moving wynds from inventory to game!")
-        try:
-            self.wynd_w3.move_out_of_inventory(token_ids=wynds_to_move_to_game)
-        except:
-            logger.print_fail(f"Failed to move wynds to game")
+        logger.print_bold(f"Attempting to move wynds from inventory to game...")
+        tx_hash = self.wynd_w3.move_out_of_inventory(token_ids=wynds_to_move_to_game)
+        tx_receipt = self.wynd_w3.get_transaction_receipt(tx_hash)
+        if tx_receipt["status"] != 1:
+            logger.print_fail(f"Failed to move wynds to game!")
+        else:
+            logger.print_ok(f"Successfully moved to game")
 
     def init(self) -> None:
         self.config_mgr.init()
@@ -81,7 +83,7 @@ class WyndBot:
         self.wynd_w2.update_account()
 
     def run(self) -> None:
-        logger.print_bold(f"Attempting daily activities for {self.user}")
+        logger.print_bold(f"\n\nAttempting daily activities for {self.user}")
         self._check_and_submit_available_inventory()
         self.daily_activities.run_activity()
         self.daily_activities.check_and_claim_if_needed()

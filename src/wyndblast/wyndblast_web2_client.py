@@ -227,7 +227,7 @@ class WyndblastWeb2Client:
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed get nft stats")
+            logger.print_fail(f"Failed get nft stats\n{res}")
             return []
 
     def _get_activity_selection_raw(
