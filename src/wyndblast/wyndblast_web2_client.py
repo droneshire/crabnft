@@ -220,9 +220,9 @@ class WyndblastWeb2Client:
 
         return self._get_request(url, headers=headers, params=default_params)
 
-    def get_all_wynds_activity(self) -> T.List[WyndStatus]:
+    def get_all_wynds_activity(self, params: T.Dict[str, T.Any] = {}) -> T.List[WyndStatus]:
         try:
-            res = self._get_nft_raw(headers=self._get_daily_activity_headers())
+            res = self._get_nft_raw(headers=self._get_daily_activity_headers(), params=params)
             return res["result"]
         except KeyboardInterrupt:
             raise
@@ -299,7 +299,7 @@ class WyndblastWeb2Client:
         url = self.DAILY_ACTIVITY_BASE_URL + "/nft/owned"
 
         default_params = {
-            "limit": "100",
+            "limit": "50",
             "page": "1",
         }
         default_params.update(params)
