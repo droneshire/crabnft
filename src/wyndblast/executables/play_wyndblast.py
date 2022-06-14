@@ -13,6 +13,7 @@ from wyndblast.daily_activities import DailyActivitiesGame
 from wyndblast.wynd_bot import WyndBot
 from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
 
+TIME_BETWEEN_PLAYERS = 10.0
 TIME_BETWEEN_RUNS = 30.0 * 60.0
 
 
@@ -53,8 +54,8 @@ def setup_log(log_level: str, log_dir: str, id_string: str) -> None:
 
 
 @yaspin(text="Waiting...")
-def wait() -> None:
-    time.sleep(TIME_BETWEEN_RUNS)
+def wait(wait_time) -> None:
+    time.sleep(wait_time)
 
 
 def run_bot() -> None:
@@ -89,7 +90,11 @@ def run_bot() -> None:
         while True:
             for bot in bots:
                 bot.run()
-            wait()
+                logger.print_normal(f"Waiting before next user...")
+                wait(TIME_BETWEEN_PLAYERS)
+            logger.print_normal(f"Waiting for next round of botting...")
+            wait(TIME_BETWEEN_RUNS)
+
     finally:
         for bot in bots:
             bot.end()
