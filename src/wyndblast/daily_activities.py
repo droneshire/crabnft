@@ -176,7 +176,7 @@ class DailyActivitiesGame:
 
         self.current_stats["chro"] += rewards["chro"]
         self.current_stats["wams"] += rewards["wams"]
-        if rewards["elemental_stones"] is not None:
+        if rewards["elemental_stones"] is not None and "null" not in rewards["elemental_stones"]:
             self.current_stats["elemental_stones"] = rewards["elemental_stones"]
 
         outcome_emoji = "\U0001F389" if did_succeed else "\U0001F915"
