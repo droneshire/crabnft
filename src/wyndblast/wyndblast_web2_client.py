@@ -1,4 +1,5 @@
 import copy
+import datetime
 import json
 import requests
 import time
@@ -20,8 +21,12 @@ from wyndblast.types import (
     ActivityResult,
     ActivitySelection,
     DailyActivitySelection,
+    Rewards,
+    WyndNft,
     WyndStatus,
 )
+
+TIMESTAMP_FORMAT = "%Y-%m-%d"
 
 
 class WyndblastWeb2Client:
@@ -266,3 +271,70 @@ class WyndblastWeb2Client:
         except:
             logger.print_fail(f"Failed to do activity!\n{res}")
             return {}
+
+    def _get_balances_raw(
+        self,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
+    ) -> T.Any:
+        url = self.DAILY_ACTIVITY_BASE_URL + "/balance"
+
+        return self._get_request(url, headers=headers, params=params)
+
+    def get_unclaimed_balances(self, user_address: Address) -> Rewards:
+        try:
+            res = self._get_balances_raw(headers=self._get_daily_activity_headers())
+            return res["result"]
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to read unclaimed balances!\n{res}")
+            return {}
+
+    def _get_wynd_status_raw(
+        self,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
+    ) -> T.Any:
+        url = self.DAILY_ACTIVITY_BASE_URL + "/nft/owned"
+
+        default_params = {
+            "limit": "100",
+            "page": "1",
+        }
+        default_params.update(params)
+
+        return self._get_request(url, headers=headers, params=default_params)
+
+    def get_wynd_status(self) -> T.List[WyndNft]:
+        try:
+            res = self._get_wynd_status_raw(headers=self._get_daily_activity_headers())
+            return res["result"]["result"]
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to read wynd status!\n{res}")
+            return []
+
+    def _get_last_claim_raw(
+        self,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
+    ) -> T.Any:
+        url = self.DAILY_ACTIVITY_BASE_URL + "/last-claim"
+
+        return self._get_request(url, headers=headers, params=params)
+
+    def get_last_claim(self) -> T.Optional[datetime.datetime]:
+        try:
+            res = self._get_last_claim_raw(headers=self._get_daily_activity_headers())
+            try:
+                date_str = res["result"]["last_claim_datetime"].split("T")[0]
+                return datetime.datetime.strptime(date_str, TIMESTAMP_FORMAT)
+            except:
+                return None
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to read last claim time!\n{res}")
+            return None

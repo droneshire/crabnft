@@ -10,6 +10,26 @@ class Faction:
 
 
 #####
+# Individual nft information
+WyndNft = T.TypedDict(
+    "WyndNft",
+    {
+        "token_id": str,
+        "product_id": str,
+        "faction": Faction,
+        "class": str,
+        "element": str,
+        "rarity": int,
+        "group": T.Literal["rider", "wynd"],
+        "owner": Address,
+        "image": str,
+        "operator_holding_type": str,
+        "operator_holding_name": str,
+        "isSubmitted": bool,
+    },
+)
+
+#####
 # For nft status
 class DailyActivity(T.TypedDict):
     idle: int
@@ -91,10 +111,20 @@ class DailyActivitySelection(T.TypedDict):
 
 #####
 # Activity result
+class ElementalStones(T.TypedDict):
+    Fire: int
+    Wind: int
+    Earth: int
+    Light: int
+    Darkness: int
+    Water: int
+    elemental_stones_qty: int
+
+
 class Rewards(T.TypedDict):
     chro: int
     wams: int
-    elemental_stones: int
+    elemental_stones: ElementalStones
 
 
 class Stage(T.TypedDict):

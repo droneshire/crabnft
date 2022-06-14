@@ -11,6 +11,7 @@ from utils import logger
 
 Tus = T.NewType("Tus", int)
 Cra = T.NewType("Cra", int)
+Chro = T.NewType("Chro", int)
 Avax = T.NewType("Avax", int)
 
 DEFAULT_GAS_USED = 0.01259
@@ -104,11 +105,25 @@ def cra_to_wei(cra: int) -> Wei:
     return Web3.toWei(cra, "ether")
 
 
+def chro_to_wei(chro: int) -> Wei:
+    """
+    The conversion is 1 chro = 10^18 Wei.
+    """
+    return Web3.toWei(chro, "ether")
+
+
 def wei_to_cra(wei: Wei) -> Tus:
     """
     Convert Wei to CRA
     """
     return T.cast(Cra, Web3.fromWei(wei, "ether"))
+
+
+def wei_to_chro(wei: Wei) -> Tus:
+    """
+    Convert Wei to CHRO
+    """
+    return T.cast(Chro, Web3.fromWei(wei, "ether"))
 
 
 def wei_to_tus_raw(wei: Wei) -> float:
@@ -121,6 +136,13 @@ def wei_to_tus_raw(wei: Wei) -> float:
 def wei_to_cra_raw(wei: Wei) -> float:
     """
     Convert Wei to CRA in float
+    """
+    return T.cast(float, float(Web3.fromWei(wei, "ether")))
+
+
+def wei_to_chro_raw(wei: Wei) -> float:
+    """
+    Convert Wei to CHRO in float
     """
     return T.cast(float, float(Web3.fromWei(wei, "ether")))
 

@@ -6,9 +6,12 @@ from utils import logger
 from utils.config_types import UserConfig
 from utils.email import Email
 from utils.security import decrypt_secret
+from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from wyndblast.config_manager_wyndblast import WyndblastConfigManager
 from wyndblast.daily_activities import DailyActivitiesGame
 from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
+from wyndblast.wyndblast_web3_client import WyndblastGameWeb3Client
+from wyndblast.types import WyndNft
 
 
 class WyndBot:
@@ -41,9 +44,36 @@ class WyndBot:
         self.wynd_w2: WyndblastWeb2Client = WyndblastWeb2Client(
             self.config["private_key"], self.address
         )
+
+        self.wynd_w3: WyndblastGameWeb3Client = (
+            WyndblastGameWeb3Client()
+            .set_credentials(config["address"], config["private_key"])
+            .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+            .set_dry_run(dry_run)
+        )
+
         self.daily_activities: DailyActivitiesGame = DailyActivitiesGame(
             user, config, email_accounts, self.wynd_w2
         )
+
+    def _check_and_submit_available_inventory(self) -> None:
+        wynd_infos: T.List[WyndNft] = self.wynd_w2.get_wynd_status()
+        logger.print_ok_blue(f"Searching for NFTs in inventory...")
+        wynds_to_move_to_game = []
+        for wynd in wynd_infos:
+            if not wynd["isSubmitted"]:
+                logger.print_ok_blue_arrow(f"Found {wynd['token_id']} in inventory...")
+                wynds_to_move_to_game.append(int(wynd["token_id"]))
+
+        if not wynds_to_move_to_game:
+            logger.print_normal(f"No NFTs found in inventory")
+            return
+
+        logger.print_bold(f"Moving wynds from inventory to game!")
+        try:
+            self.wynd_w3.move_out_of_inventory(token_ids=wynds_to_move_to_game)
+        except:
+            logger.print_fail(f"Failed to move wynds to game")
 
     def init(self) -> None:
         self.config_mgr.init()
@@ -52,7 +82,9 @@ class WyndBot:
 
     def run(self) -> None:
         logger.print_bold(f"Attempting daily activities for {self.user}")
+        self._check_and_submit_available_inventory()
         self.daily_activities.run_activity()
+        self.daily_activities.check_and_claim_if_needed()
 
     def end(self) -> None:
         self.config_mgr.close()

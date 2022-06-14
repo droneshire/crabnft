@@ -7,7 +7,7 @@ from eth_typing.encoding import HexStr
 from web3.middleware import geth_poa_middleware
 from web3.types import TxParams, Wei
 
-from utils.price import chro
+from utils.price import Chro
 from utils.price import chro_to_wei, wei_to_chro
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.web3_client import Web3Client
@@ -18,7 +18,7 @@ class ChroWeb3Client(AvalancheCWeb3Client):
     Interact with the Chro token
     """
 
-    contract_address = T.cast(Address, "0xf693248f96fe03422fea95ac0afbbbc4a8fdd172")
+    contract_address = T.cast(Address, "0xbf1230bb63bfD7F5D628AB7B543Bcefa8a24B81B")
     this_dir = os.path.dirname(os.path.realpath(__file__))
     abi_dir = os.path.join(this_dir, "abi", "abi-chro.json")
     abi = Web3Client._get_contract_abi_from_file(abi_dir)

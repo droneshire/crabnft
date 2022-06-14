@@ -85,10 +85,8 @@ class Web3Client:
             tx["gasPrice"] = self.w3.eth.generate_gas_price()
             gas_fee_gwei = float(Web3.fromWei(tx["gasPrice"], "gwei"))
         elif self.tx_type == 2:
-            tx["maxFeePerGas"] = (Web3.toWei(self.estimate_max_fee_per_gas_in_gwei(), "gwei"),)
-            tx["maxPriorityFeePerGas"] = (
-                Web3.toWei(self.max_priority_fee_per_gas_in_gwei, "gwei"),
-            )
+            tx["maxFeePerGas"] = Web3.toWei(self.estimate_max_fee_per_gas_in_gwei(), "gwei")
+            tx["maxPriorityFeePerGas"] = Web3.toWei(self.max_priority_fee_per_gas_in_gwei, "gwei")
 
         tx["nonce"] = self.get_nonce()
 

@@ -42,6 +42,14 @@ class DailyActivitiesGame:
 
         logger.print_ok_blue(f"\nStarting for user {user}...")
 
+    def check_and_claim_if_needed(self) -> bool:
+        # TODO(ross): do below
+        # date = self.wynd_w2.get_last_claim()
+        # rewards_unclaimed = self.wynd_w2.get_unclaimed_balances()
+        # if now - date > 2 days and rewards > min amount:
+        #    self.wynd_w3.claim_rewards()
+        pass
+
     def run_activity(self) -> None:
         account_overview = self.wynd_w2.get_account_overview()
 
@@ -122,7 +130,11 @@ class DailyActivitiesGame:
         content += f"Losses: {self.current_stats['losses']}\n"
         content += f"CHRO: {self.current_stats['chro']}\n"
         content += f"WAMS: {self.current_stats['wams']}\n"
-        content += f"Stones: {' '.join(self.current_stats['elemental_stones'])}\n"
+        content += f"Elemental Stones:\n"
+        for stone, count in self.current_stats["elemental_stones"].items():
+            if stone == "elemental_stones_qty":
+                continue
+            content += f"{stone}: {count}\n"
 
         logger.print_bold(content)
 
