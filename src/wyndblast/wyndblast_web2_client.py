@@ -281,7 +281,7 @@ class WyndblastWeb2Client:
 
         return self._get_request(url, headers=headers, params=params)
 
-    def get_unclaimed_balances(self, user_address: Address) -> Rewards:
+    def get_unclaimed_balances(self) -> Rewards:
         try:
             res = self._get_balances_raw(headers=self._get_daily_activity_headers())
             return res["result"]

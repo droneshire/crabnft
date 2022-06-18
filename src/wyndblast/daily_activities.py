@@ -1,5 +1,7 @@
 import copy
+import datetime
 import json
+import time
 import typing as T
 
 from utils import logger
@@ -14,6 +16,7 @@ from wyndblast.types import (
     DailyActivity,
     DailyActivitySelection,
     DayLog,
+    Rewards,
     Stage,
     ProductMetadata,
     WyndStatus,
@@ -23,6 +26,8 @@ from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
 
 class DailyActivitiesGame:
     MAX_NUM_ROUNDS = 3
+    MIN_CLAIM_CHRO = 100
+    DAYS_BETWEEN_CLAIM = 2
 
     def __init__(
         self,
@@ -43,12 +48,24 @@ class DailyActivitiesGame:
         logger.print_ok_blue(f"\nStarting for user {user}...")
 
     def check_and_claim_if_needed(self) -> bool:
-        # TODO(ross): do below
-        # date = self.wynd_w2.get_last_claim()
-        # rewards_unclaimed = self.wynd_w2.get_unclaimed_balances()
-        # if now - date > 2 days and rewards > min amount:
-        #    self.wynd_w3.claim_rewards()
-        pass
+        date: datetime.datetime = self.wynd_w2.get_last_claim()
+        if date is None:
+            return False
+
+        rewards_unclaimed: Rewards = self.wynd_w2.get_unclaimed_balances()
+
+        if rewards_unclaimed.get("chro", 0) < self.MIN_CLAIM_CHRO:
+            logger.print_normal("Not enough CHRO to claim rewards")
+            return False
+
+        time_delta: datetime.date = datetime.datetime.now().date() - date.date()
+
+        if time_delta.days < self.DAYS_BETWEEN_CLAIM:
+            return False
+
+        logger.print_ok(f"Claiming rewards! {rewards.get('chro', 0)} CHRO")
+        self.wynd_w3.claim_rewards()
+        return True
 
     def run_activity(self) -> None:
         account_overview = self.wynd_w2.get_account_overview()
@@ -67,11 +84,18 @@ class DailyActivitiesGame:
 
         logger.print_bold(f"Found {available_wynds} Wynds available for daily activities\n\n")
 
-        wynds: T.List[WyndStatus] = self.wynd_w2.get_all_wynds_activity()
+        wynds: T.List[WyndStatus] = []
+        total_pages = int((total + 12) / 12)
+        logger.print_normal(f"Searching through {total_pages} pages of NFTs...")
+        for page in range(1, total_pages):
+            params = {"page": page, "limit": 12}
+            wynds.extend(self.wynd_w2.get_all_wynds_activity(params=params))
+            time.sleep(5.0)
 
         if not wynds:
             return
 
+        rounds_completed = 0
         for wynd in wynds:
             wynd_id = int(wynd["product_id"].split(":")[1])
             wynd_faction = wynd["product_metadata"]["faction"]
@@ -79,25 +103,25 @@ class DailyActivitiesGame:
             wynd_class = wynd["product_metadata"]["class"]
 
             most_recent_activity: DayLog = wynd["days"][-1]
-            if most_recent_activity["round_completed"]:
+
+            rounds_remaining = self._get_rounds_remaining(day_log=most_recent_activity)
+
+            if most_recent_activity["round_completed"] or rounds_remaining == 0:
                 logger.print_normal(
                     f"Skipping {wynd_id} for daily activities b/c already completed..."
                 )
                 continue
+
+            logger.print_normal(f"{rounds_remaining} rounds left to play...")
 
             logger.print_bold(f"Wynd[{wynd_id}] starting daily activities")
             stats_fmt = logger.format_ok_blue(f"Faction: {wynd_faction.upper()}\t")
             stats_fmt += logger.format_normal(f"Class: {wynd_class} Element: {wynd_element}\n")
             logger.print_normal("{}".format(stats_fmt))
 
-            rounds_remaining = self._get_rounds_remaining(day_log=most_recent_activity)
-
-            logger.print_normal(f"{rounds_remaining} rounds left to play...")
-
-            if rounds_remaining == 0:
-                continue
-
             activities_completed = most_recent_activity.get("activities")
+
+            rounds_completed += 1
 
             if len(activities_completed) > 0:
                 stage = activities_completed[-1]["stage"]["level"]
@@ -115,7 +139,7 @@ class DailyActivitiesGame:
                     logger.print_warn(f"We lost, unable to proceed to next round")
                     break
 
-        self._send_summary_email(account_overview)
+        self._send_summary_email(available_wynds, account_overview)
         self._update_stats()
 
     def _update_stats(self) -> None:
@@ -129,9 +153,7 @@ class DailyActivitiesGame:
 
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
 
-    def _send_summary_email(self, account_overview: AccountOverview) -> None:
-        active_nfts = account_overview["count_nfts"]["game"]["daily_activity"]["active"]
-
+    def _send_summary_email(self, active_nfts: int, account_overview: AccountOverview) -> None:
         content = f"Activity Stats for {self.user.upper()}:\n"
         content = f"Active NFTs: {active_nfts}\n"
         for stage in range(1, 4):
@@ -141,11 +163,12 @@ class DailyActivitiesGame:
         content += f"REWARDS:"
         content += f"CHRO: {self.current_stats['chro']}\n"
         content += f"WAMS: {self.current_stats['wams']}\n"
-        content += f"Elemental Stones:\n"
-        for stone, count in self.current_stats["elemental_stones"].items():
-            if stone == "elemental_stones_qty":
-                continue
-            content += f"{stone}: {count}\n"
+        if isinstance(self.current_stats["elemental_stones"], dict):
+            content += f"Elemental Stones:\n"
+            for stone, count in self.current_stats["elemental_stones"].items():
+                if stone == "elemental_stones_qty":
+                    continue
+                content += f"{stone}: {count}\n"
 
         logger.print_bold(content)
 
@@ -176,7 +199,6 @@ class DailyActivitiesGame:
 
         self.current_stats["chro"] += rewards["chro"]
         self.current_stats["wams"] += rewards["wams"]
-        print(rewards)
         if rewards["elemental_stones"] is not None:
             self.current_stats["elemental_stones"] = rewards["elemental_stones"]
 
