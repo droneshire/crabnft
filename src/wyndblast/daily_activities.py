@@ -54,8 +54,9 @@ class DailyActivitiesGame:
 
         rewards_unclaimed: Rewards = self.wynd_w2.get_unclaimed_balances()
 
-        if rewards_unclaimed.get("chro", 0) < self.MIN_CLAIM_CHRO:
-            logger.print_normal("Not enough CHRO to claim rewards")
+        unclaimed_chro = rewards_unclaimed.get("chro", 0)
+        if unclaimed_chro < self.MIN_CLAIM_CHRO:
+            logger.print_normal("Not enough CHRO to claim rewards ({unclaimed_chro} CHRO)")
             return False
 
         time_delta: datetime.date = datetime.datetime.now().date() - date.date()
@@ -63,7 +64,7 @@ class DailyActivitiesGame:
         if time_delta.days < self.DAYS_BETWEEN_CLAIM:
             return False
 
-        logger.print_ok(f"Claiming rewards! {rewards.get('chro', 0)} CHRO")
+        logger.print_ok(f"Claiming rewards! {unclaimed_chro} CHRO")
         self.wynd_w3.claim_rewards()
         return True
 
