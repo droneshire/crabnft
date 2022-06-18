@@ -7,6 +7,7 @@ import typing as T
 from utils import logger
 from utils.config_types import UserConfig
 from utils.email import Email, send_email
+from utils.price import wei_to_chro_raw
 from wyndblast.game_stats import NULL_GAME_STATS
 from wyndblast.types import (
     Action,
@@ -22,6 +23,7 @@ from wyndblast.types import (
     WyndStatus,
 )
 from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
+from wyndblast.wyndblast_web3_client import WyndblastGameWeb3Client
 
 
 class DailyActivitiesGame:
@@ -35,11 +37,13 @@ class DailyActivitiesGame:
         config: UserConfig,
         email_accounts: T.List[Email],
         wynd_w2: WyndblastWeb2Client,
+        wynd_w3: WyndblastGameWeb3Client,
     ):
         self.user = user
         self.config_mgr = config
         self.email_accounts = email_accounts
         self.wynd_w2 = wynd_w2
+        self.wynd_w3 = wynd_w3
 
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
 
@@ -47,14 +51,14 @@ class DailyActivitiesGame:
 
         logger.print_ok_blue(f"\nStarting for user {user}...")
 
-    def check_and_claim_if_needed(self) -> bool:
+    def check_and_claim_if_needed(self, prices: Prices) -> bool:
         date: datetime.datetime = self.wynd_w2.get_last_claim()
         if date is None:
             return False
 
         rewards_unclaimed: Rewards = self.wynd_w2.get_unclaimed_balances()
 
-        unclaimed_chro = rewards_unclaimed.get("chro", 0)
+        unclaimed_chro = int(rewards_unclaimed.get("chro", 0))
         if unclaimed_chro < self.MIN_CLAIM_CHRO:
             logger.print_normal(f"Not enough CHRO to claim rewards ({unclaimed_chro} CHRO)")
             return False
@@ -65,7 +69,15 @@ class DailyActivitiesGame:
             return False
 
         logger.print_ok(f"Claiming rewards! {unclaimed_chro} CHRO")
-        self.wynd_w3.claim_rewards()
+        tx_hash = self.wynd_w3.claim_rewards()
+        tx_receipt = self.wynd_w3.get_transaction_receipt(tx_hash)
+        gas = wei_to_chro_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        if tx_receipt["status"] != 1:
+            logger.print_fail(f"Failed to move wynds to game!")
+        else:
+            logger.print_ok(f"Successfully moved to game")
+        logger.print_bold(f"Paid {gas} AVAX in gas")
+
         return True
 
     def run_activity(self) -> None:

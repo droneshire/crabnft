@@ -277,18 +277,18 @@ class WyndblastWeb2Client:
         headers: T.Dict[str, T.Any] = {},
         params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
-        url = self.DAILY_ACTIVITY_BASE_URL + "/balance"
+        url = self.DAILY_ACTIVITY_BASE_URL + "/rewards"
 
         return self._get_request(url, headers=headers, params=params)
 
     def get_unclaimed_balances(self) -> Rewards:
         try:
             res = self._get_balances_raw(headers=self._get_daily_activity_headers())
-            return res["result"]
+            return res["result"]["total_rewards"]
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed to read unclaimed balances!\n{res}")
+            logger.print_fail(f"Failed to read unclaimed rewards!\n{res}")
             return {}
 
     def _get_wynd_status_raw(
