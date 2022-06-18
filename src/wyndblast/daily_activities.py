@@ -139,6 +139,9 @@ class DailyActivitiesGame:
                     logger.print_warn(f"We lost, unable to proceed to next round")
                     break
 
+        if rounds_completed <= 0:
+            return
+
         self._send_summary_email(available_wynds, account_overview)
         self._update_stats()
 
