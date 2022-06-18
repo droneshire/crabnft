@@ -56,7 +56,7 @@ class DailyActivitiesGame:
 
         unclaimed_chro = rewards_unclaimed.get("chro", 0)
         if unclaimed_chro < self.MIN_CLAIM_CHRO:
-            logger.print_normal("Not enough CHRO to claim rewards ({unclaimed_chro} CHRO)")
+            logger.print_normal(f"Not enough CHRO to claim rewards ({unclaimed_chro} CHRO)")
             return False
 
         time_delta: datetime.date = datetime.datetime.now().date() - date.date()
