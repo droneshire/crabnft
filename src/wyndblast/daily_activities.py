@@ -71,7 +71,7 @@ class DailyActivitiesGame:
         logger.print_ok(f"Claiming rewards! {unclaimed_chro} CHRO")
         tx_hash = self.wynd_w3.claim_rewards()
         tx_receipt = self.wynd_w3.get_transaction_receipt(tx_hash)
-        gas = wei_to_chro_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        gas = wei_to_chro_raw(self.wynd_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         if tx_receipt["status"] != 1:
             logger.print_fail(f"Failed to move wynds to game!")
         else:
