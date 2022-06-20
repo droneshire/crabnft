@@ -53,7 +53,11 @@ class WyndBot:
         )
 
         self.daily_activities: DailyActivitiesGame = DailyActivitiesGame(
-            user, config, email_accounts, self.wynd_w2, self.wynd_w3,
+            user,
+            config,
+            email_accounts,
+            self.wynd_w2,
+            self.wynd_w3,
         )
 
     def _check_and_submit_available_inventory(self) -> None:

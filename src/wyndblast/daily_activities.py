@@ -28,8 +28,8 @@ from wyndblast.wyndblast_web3_client import WyndblastGameWeb3Client
 
 class DailyActivitiesGame:
     MAX_NUM_ROUNDS = 3
-    MIN_CLAIM_CHRO = 100
-    DAYS_BETWEEN_CLAIM = 2
+    MIN_CLAIM_CHRO = 300
+    DAYS_BETWEEN_CLAIM = 1
 
     def __init__(
         self,
@@ -51,7 +51,7 @@ class DailyActivitiesGame:
 
         logger.print_ok_blue(f"\nStarting for user {user}...")
 
-    def check_and_claim_if_needed(self, prices: Prices) -> bool:
+    def check_and_claim_if_needed(self) -> bool:
         date: datetime.datetime = self.wynd_w2.get_last_claim()
         if date is None:
             return False
