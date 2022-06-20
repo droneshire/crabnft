@@ -8,6 +8,7 @@ from eth_typing import Address
 
 from utils import logger
 from utils.csv_logger import CsvLogger
+from utils.game_stats import LifetimeGameStatsLogger
 from utils.general import TIMESTAMP_FORMAT
 from utils.price import Prices, wei_to_cra_raw, wei_to_tus_raw
 from utils.user import get_alias_from_user
@@ -222,35 +223,6 @@ def update_lifetime_stats_format(game_stats: LifetimeGameStats) -> LifetimeGameS
     return new_game_stats
 
 
-def get_lifetime_stats_file(user: str, log_dir: str) -> str:
-    return os.path.join(log_dir, "stats", user.lower() + "_lifetime_game_bot_stats.json")
-
-
-def get_game_stats(user: str, log_dir: str) -> T.Dict[str, T.Any]:
-    game_stats_file = get_lifetime_stats_file(user, log_dir)
-    if not os.path.isfile(game_stats_file):
-        return NULL_GAME_STATS
-    try:
-        with open(game_stats_file, "r") as infile:
-            return json.load(infile)
-    except:
-        return {}
-
-
-def write_game_stats(user: str, log_dir: str, game_stats: LifetimeGameStats, dry_run=False) -> None:
-    if dry_run:
-        return
-
-    game_stats_file = get_lifetime_stats_file(user, log_dir)
-    with open(game_stats_file, "w") as outfile:
-        json.dump(
-            game_stats,
-            outfile,
-            indent=4,
-            sort_keys=True,
-        )
-
-
 def delta_game_stats(
     user_a_stats: LifetimeGameStats, user_b_stats: LifetimeGameStats, verbose: bool = False
 ) -> LifetimeGameStats:
@@ -319,40 +291,17 @@ def merge_game_stats(
     return merged_stats
 
 
-class LifetimeGameStatsLogger:
+class CrabadaLifetimeGameStatsLogger(LifetimeGameStatsLogger):
     def __init__(
         self,
         user: str,
+        null_game_stats: T.Dict[T.Any, T.Any],
         log_dir: str,
-        backup_stats: LifetimeGameStats,
+        backup_stats: T.Dict[T.Any, T.Any],
         dry_run: bool = False,
         verbose: bool = False,
     ):
-        self.user = user
-        self.log_dir = log_dir
-
-        self.dry_run = dry_run
-        self.verbose = verbose
-
-        self.lifetime_stats: LifetimeGameStats = None
-
-        if not os.path.isfile(get_lifetime_stats_file(self.user, self.log_dir)):
-            if backup_stats:
-                self.last_lifetime_stats = copy.deepcopy(backup_stats)
-            else:
-                self.lifetime_stats = copy.deepcopy(NULL_GAME_STATS)
-        else:
-            game_stats = get_game_stats(self.user, self.log_dir)
-            if game_stats:
-                self.lifetime_stats = update_lifetime_stats_format(game_stats)
-            elif backup_stats:
-                self.lifetime_stats = backup_stats
-            else:
-                self.lifetime_stats = copy.deepcopy(NULL_GAME_STATS)
-
-        write_game_stats(self.user, self.log_dir, self.lifetime_stats, dry_run=dry_run)
-
-        self.last_lifetime_stats: LifetimeGameStats = copy.deepcopy(self.lifetime_stats)
+        super().__init__(user, null_game_stats, log_dir, backup_stats, dry_run, verbose)
 
     def write(self) -> None:
         delta_stats = delta_game_stats(
@@ -364,13 +313,13 @@ class LifetimeGameStatsLogger:
         )
 
         if self.verbose:
-            logger.print_bold(f"Writing stats for {self.user} [alias: {self.user}]")
+            logger.print_bold(f"Writing stats for {self.user} [alias: {self.alias}]")
 
-        write_game_stats(self.user, self.log_dir, combined_stats, dry_run=self.dry_run)
+        self.write_game_stats(combined_stats, dry_run=self.dry_run)
         self.last_lifetime_stats = copy.deepcopy(self.lifetime_stats)
 
-    def read(self) -> LifetimeGameStats:
+    def read(self) -> T.Dict[T.Any, T.Any]:
         if self.verbose:
-            logger.print_bold(f"Reading stats for {self.user} [alias: {self.user}]")
+            logger.print_bold(f"Reading stats for {self.user} [alias: {self.alias}]")
 
-        return get_game_stats(self.user, self.log_dir)
+        return self.get_game_stats()

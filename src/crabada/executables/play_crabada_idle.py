@@ -125,8 +125,8 @@ def run_bot() -> None:
     sms_client = Client(TWILIO_CONFIG["account_sid"], TWILIO_CONFIG["account_auth_token"])
 
     webhooks = {
-        "HOLDERS": discord.get_discord_hook("HOLDERS"),
-        "UPDATES": discord.get_discord_hook("UPDATES"),
+        "CRABADA_HOLDERS": discord.get_discord_hook("CRABADA_HOLDERS"),
+        "CRABADA_UPDATES": discord.get_discord_hook("CRABADA_UPDATES"),
         "LOOT_SNIPE": discord.get_discord_hook("LOOT_SNIPE"),
     }
 
@@ -267,7 +267,7 @@ def run_bot() -> None:
             if alerts_enabled and now - last_profitability_update > PROFITABILITY_UPDATE_TIME:
                 last_profitability_update = now
                 try:
-                    webhooks["UPDATES"].send(profitability_message)
+                    webhooks["CRABADA_UPDATES"].send(profitability_message)
                 except:
                     logger.print_fail(f"Failed to post to discord hook")
 
@@ -303,7 +303,7 @@ def run_bot() -> None:
         if alerts_enabled:
             stop_message += "Please manually attend your mines until we're back up"
             try:
-                webhooks["HOLDERS"].send(stop_message)
+                webhooks["CRABADA_HOLDERS"].send(stop_message)
             except:
                 pass
         logger.print_fail(traceback.format_exc())

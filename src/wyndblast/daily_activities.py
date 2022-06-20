@@ -28,7 +28,7 @@ from wyndblast.wyndblast_web3_client import WyndblastGameWeb3Client
 
 class DailyActivitiesGame:
     MAX_NUM_ROUNDS = 3
-    MIN_CLAIM_CHRO = 300
+    MIN_CLAIM_CHRO = 100
     DAYS_BETWEEN_CLAIM = 1
 
     def __init__(
@@ -72,11 +72,11 @@ class DailyActivitiesGame:
         tx_hash = self.wynd_w3.claim_rewards()
         tx_receipt = self.wynd_w3.get_transaction_receipt(tx_hash)
         gas = wei_to_chro_raw(self.wynd_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        logger.print_bold(f"Paid {gas} AVAX in gas")
         if tx_receipt["status"] != 1:
-            logger.print_fail(f"Failed to move wynds to game!")
+            logger.print_fail(f"Failed to claim CHRO!")
         else:
             logger.print_ok(f"Successfully moved to game")
-        logger.print_bold(f"Paid {gas} AVAX in gas")
 
         return True
 

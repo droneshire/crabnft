@@ -13,7 +13,8 @@ from twilio.rest import Client
 
 from config_crabada import GAME_BOT_STRING, GMAIL, TWILIO_CONFIG, USERS
 from utils import discord, email, logger
-from crabada.game_stats import LifetimeGameStats, get_game_stats, write_game_stats
+from crabada.game_stats import NULL_GAME_STATS
+from crabada.game_stats import CrabadaLifetimeGameStatsLogger
 from utils.price import is_gas_too_high
 from utils.price import Tus
 from utils.security import decrypt
@@ -99,7 +100,8 @@ def send_collection_notice(
             logger.print_normal(f"Multi-wallet, skipping {user} b/c we already sent notice")
             continue
 
-        game_stats = get_game_stats(alias, log_dir)
+        stats_logger = CrabadaLifetimeGameStatsLogger(user, NULL_GAME_STATS, log_dir, {})
+        game_stats = stats_logger.get_game_stats()
 
         commission_tus = 0.0
         for address, commission in game_stats["commission_tus"].items():
@@ -146,7 +148,7 @@ def send_collection_notice(
     logger.print_bold(f"Projected to collect {total_tus:.2f} TUS in commission")
 
     if not dry_run and run_all_users:
-        discord.get_discord_hook("HOLDERS").send(DISCORD_TRANSFER_NOTICE)
+        discord.get_discord_hook("CRABADA_HOLDERS").send(DISCORD_TRANSFER_NOTICE)
 
 
 def collect_tus_commission(
@@ -182,7 +184,8 @@ def collect_tus_commission(
             else decrypt(str.encode(encrypt_password), config["private_key"]).decode()
         )
 
-        game_stats = get_game_stats(alias, log_dir)
+        stats_logger = CrabadaLifetimeGameStatsLogger(user, NULL_GAME_STATS, log_dir, {})
+        game_stats = stats_logger.get_game_stats()
 
         from_address = config["address"]
 
@@ -253,7 +256,7 @@ def collect_tus_commission(
                 )
                 game_stats["commission_tus"][to_address] -= commission
                 if not dry_run:
-                    write_game_stats(alias, log_dir, game_stats)
+                    stats_logger.write_game_stats(game_stats)
                 logger.print_normal(
                     f"New TUS commission balance: {game_stats['commission_tus']} TUS"
                 )

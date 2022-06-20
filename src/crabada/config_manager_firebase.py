@@ -11,13 +11,13 @@ from firebase_admin import firestore
 from firebase_admin import credentials
 
 from config_crabada import BETA_TEST_LIST, USERS, SMALL_TEAM_GAS_LIMIT
-from crabada.game_stats import get_game_stats
 from crabada.game_stats import LifetimeGameStats, NULL_GAME_STATS
 from crabada.teams import assign_crabs_to_groups, assign_teams_to_groups
 from crabada.teams import LOOTING_GROUP_NUM, MINING_GROUP_NUM, INACTIVE_GROUP_NUM
 from crabada.types import MineOption
 from crabada.config_manager_crabada import CrabadaConfigManager
 from utils import logger
+from crabada.game_stats import CrabadaLifetimeGameStatsLogger
 from utils.general import dict_keys_camel_to_snake, dict_keys_snake_to_camel
 from utils.config_types import UserConfig
 from utils.email import Email
@@ -75,15 +75,17 @@ class ConfigManagerFirebase(CrabadaConfigManager):
 
         self.last_config_update_time = now
 
-        try:
-            self._read_and_update_config()
-        except:
-            logger.print_fail(f"Failed to read and translate updated config from database")
+        self._read_and_update_config()
+        self._update_game_stats()
+        # try:
+        #     self._read_and_update_config()
+        # except:
+        #     logger.print_fail(f"Failed to read and translate updated config from database")
 
-        try:
-            self._update_game_stats()
-        except:
-            logger.print_fail(f"Failed to upload game stats to database")
+        # try:
+        #     self._update_game_stats()
+        # except:
+        #     logger.print_fail(f"Failed to upload game stats to database")
 
     def get_lifetime_stats(self) -> LifetimeGameStats:
         game_stats: LifetimeGameStats = copy.deepcopy(NULL_GAME_STATS)
@@ -103,7 +105,8 @@ class ConfigManagerFirebase(CrabadaConfigManager):
             return
 
         log_dir = logger.get_logging_dir("crabada")
-        game_stats = copy.deepcopy(get_game_stats(self.alias, log_dir))
+        stats = CrabadaLifetimeGameStatsLogger(self.user, NULL_GAME_STATS, log_dir, {})
+        game_stats = copy.deepcopy(stats.get_game_stats())
 
         commission_tus = 0.0
         for _, commission in game_stats["commission_tus"].items():

@@ -7,7 +7,8 @@ from config_crabada import GMAIL, USERS
 from utils import logger
 from utils import email
 from utils.csv_logger import CsvLogger
-from crabada.game_stats import get_daily_stats_message, get_lifetime_stats_file, NULL_STATS
+from crabada.game_stats import CrabadaLifetimeGameStatsLogger
+from crabada.game_stats import get_daily_stats_message, NULL_STATS
 from utils.security import decrypt
 from utils.user import get_alias_from_user
 
@@ -48,10 +49,11 @@ def calc_profits() -> None:
         if alias not in aliases:
             continue
 
-        csv_header = ["timestamp"] + [k for k in NULL_STATS.keys()] + ["team_id"]
-        csv_file = (
-            get_lifetime_stats_file(alias, logger.get_logging_dir("crabada")).split(".")[0] + ".csv"
+        stats_logger = CrabadaLifetimeGameStatsLogger(
+            user, NULL_GAME_STATS, logger.get_logging_dir("crabada"), {}
         )
+        csv_header = ["timestamp"] + [k for k in NULL_STATS.keys()] + ["team_id"]
+        csv_file = stats_logger.get_lifetime_stats_file().split(".")[0] + ".csv"
         csv = CsvLogger(csv_file, csv_header, dry_run=args.dry_run)
 
         target_date = datetime.datetime.strptime(args.target_date, "%m/%d/%Y").date()

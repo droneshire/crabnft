@@ -1,9 +1,10 @@
 import argparse
 
 from config_crabada import IEX_API_TOKEN, COINMARKETCAP_API_TOKEN, USERS
+from crabada.game_stats import NULL_GAME_STATS
 from crabada.profitability import get_profitability_message, STATIC_WIN_PERCENTAGES
 from utils import logger
-from crabada.game_stats import get_game_stats
+from crabada.game_stats import CrabadaLifetimeGameStatsLogger
 from utils.general import dict_sum
 from utils.price import get_avax_price_usd, get_token_price_usd, Prices
 from utils.user import get_alias_from_user
@@ -60,7 +61,9 @@ def calc_profits() -> None:
         alias = get_alias_from_user(user)
         logger.print_ok_blue(f"Profitability Analysis for {alias.upper()}:")
 
-        stats = get_game_stats(alias, logger.get_logging_dir())
+        stats = CrabadaLifetimeGameStatsLogger(
+            user, NULL_GAME_STATS, logger.get_logging_dir(), {}
+        ).get_game_stats()
 
         win_percentages = {
             "MINE": stats["MINE"]["game_win_percent"],

@@ -36,7 +36,7 @@ def update_firebase_db() -> None:
     aliases = set([get_alias_from_user(u) for u in USERS])
 
     for user in users:
-        cm = ConfigManagerFirebase(user, USERS[user], [], "")
+        cm = ConfigManagerFirebase(user, USERS[user], [], "", "")
         if args.from_crabada:
             erase_configs = args.force_erase or get_alias_from_user(user) == user
             cm.update_user_from_crabada(user, erase_configs)

@@ -11,26 +11,22 @@ from config_crabada import ADMIN_EMAIL, GAME_BOT_STRING
 from crabada.config_manager_firebase import ConfigManagerFirebase
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
-from crabada.game_stats import LifetimeGameStatsLogger, NULL_GAME_STATS, Result
+from crabada.game_stats import NULL_GAME_STATS, Result
 from crabada.game_stats import (
     get_daily_stats_message,
-    get_game_stats,
-    get_lifetime_stats_file,
     update_game_stats_after_close,
-    update_lifetime_stats_format,
-    write_game_stats,
 )
 from crabada.miners_revenge import calc_miners_revenge
 from crabada.profitability import CrabadaTransaction, GameStats, NULL_STATS
 from crabada.profitability import get_actual_game_profit, is_profitable_to_take_action
 from crabada.strategies.strategy import GameStage, Strategy
-from crabada.strategies.looting import LootingStrategy
 from crabada.strategies.strategy_selection import STRATEGY_SELECTION, strategy_to_game_type
 from crabada.types import CrabForLending, IdleGame, Team, MineOption
 from utils import logger
 from utils.config_types import UserConfig, SmsConfig
 from utils.csv_logger import CsvLogger
 from utils.email import Email, send_email
+from crabada.game_stats import CrabadaLifetimeGameStatsLogger
 from utils.general import dict_sum, get_pretty_seconds, TIMESTAMP_FORMAT
 from utils.math import Average
 from utils.price import Prices, DEFAULT_GAS_USED
@@ -129,16 +125,17 @@ class CrabadaMineBot:
         )
 
         self.alias = get_alias_from_user(self.user)
-        csv_header = ["timestamp"] + [k for k in NULL_STATS.keys()] + ["team_id"]
-        csv_file = get_lifetime_stats_file(self.alias, self.log_dir).split(".")[0] + ".csv"
-        self.csv = CsvLogger(csv_file, csv_header, dry_run)
-        self.stats_logger = LifetimeGameStatsLogger(
+        self.stats_logger = CrabadaLifetimeGameStatsLogger(
             self.alias,
+            NULL_GAME_STATS,
             self.log_dir,
             self.config_mgr.get_lifetime_stats(),
             self.dry_run,
             verbose=False,
         )
+        csv_header = ["timestamp"] + [k for k in NULL_STATS.keys()] + ["team_id"]
+        csv_file = self.stats_logger.get_lifetime_stats_file().split(".")[0] + ".csv"
+        self.csv = CsvLogger(csv_file, csv_header, dry_run)
 
         logger.print_ok_blue(f"Adding bot for user {self.alias} with address {self.address}")
 
