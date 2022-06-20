@@ -28,7 +28,6 @@ class WyndblastGameWeb3Client(AvalancheCWeb3Client):
         Claim daily activity rewards
         """
         try:
-            self.contract.functions.claimReward().call()
             tx: TxParams = self.build_contract_transaction(self.contract.functions.claimReward())
             return self.sign_and_send_transaction(tx)
         except:

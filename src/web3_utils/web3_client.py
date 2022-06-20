@@ -121,7 +121,7 @@ class Web3Client:
         return tx
 
     def build_contract_transaction(
-        self, contractFunction: ContractFunction, value_in_wei: Wei = None
+        self, contract_function: ContractFunction, value_in_wei: Wei = None
     ) -> TxParams:
         """
         Build a transaction that involves a contract interation.
@@ -132,7 +132,7 @@ class Web3Client:
         base_tx = self.build_base_transaction()
         if value_in_wei:
             base_tx["value"] = value_in_wei
-        return contractFunction.buildTransaction(base_tx)
+        return contract_function.buildTransaction(base_tx)
 
     ####################
     # Sign & send Tx

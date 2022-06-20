@@ -73,6 +73,7 @@ class DailyActivitiesGame:
         tx_receipt = self.wynd_w3.get_transaction_receipt(tx_hash)
         gas = wei_to_chro_raw(self.wynd_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         logger.print_bold(f"Paid {gas} AVAX in gas")
+        print(json.dumps(tx_receipt, indent=4))
         if tx_receipt["status"] != 1:
             logger.print_fail(f"Failed to claim CHRO!")
         else:
