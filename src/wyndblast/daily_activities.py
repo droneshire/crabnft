@@ -194,6 +194,10 @@ class DailyActivitiesGame:
 
     def _play_round(self, wynd_id: int, current_stage: int, wynd_info: ProductMetadata) -> bool:
         options: DailyActivitySelection = self.wynd_w2.get_activity_selection(wynd_id)
+
+        if not options:
+            return False
+
         if current_stage > 1:
             actions: Action = options["selection_detail"]
         else:
@@ -202,11 +206,17 @@ class DailyActivitiesGame:
 
         selection: ActivitySelection = self._get_best_action(current_stage, actions, wynd_info)
 
+        if not selection:
+            return False
+
         selection["product_ids"] = [self.wynd_w2._get_product_id(wynd_id)]
 
         logger.print_normal(f"Selecting: {json.dumps(selection, indent=4)}")
 
         result: ActivityResult = self.wynd_w2.do_activity(selection)
+
+        if not result:
+            return False
 
         did_succeed = result["stage"]["success"]
 
