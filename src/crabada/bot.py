@@ -11,7 +11,7 @@ from config_crabada import ADMIN_EMAIL, GAME_BOT_STRING
 from crabada.config_manager_firebase import ConfigManagerFirebase
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
-from crabada.game_stats import NULL_GAME_STATS, Result
+from crabada.game_stats import CrabadaLifetimeGameStatsLogger, NULL_GAME_STATS, Result
 from crabada.game_stats import (
     get_daily_stats_message,
     update_game_stats_after_close,
@@ -26,7 +26,6 @@ from utils import logger
 from utils.config_types import UserConfig, SmsConfig
 from utils.csv_logger import CsvLogger
 from utils.email import Email, send_email
-from crabada.game_stats import CrabadaLifetimeGameStatsLogger
 from utils.general import dict_sum, get_pretty_seconds, TIMESTAMP_FORMAT
 from utils.math import Average
 from utils.price import Prices, DEFAULT_GAS_USED
@@ -190,7 +189,7 @@ class CrabadaMineBot:
         content += "---\U0001F579  GAME STATS\U0001F579  ---\n"
 
         for k, v in self.stats_logger.lifetime_stats.items():
-            if k in ["MINE", "LOOT"]:
+            if k in [MineOption.MINE, MineOption.LOOT]:
                 content += f"{k}:\n"
                 for s, n in self.stats_logger.lifetime_stats[k].items():
                     content += f"\t{' '.join(s.lower().split('_'))}: {n:.3f}\n"
@@ -266,7 +265,7 @@ class CrabadaMineBot:
         message += f"Profits: {profit_tus:.2f} TUS [${profit_usd:.2f}]\n"
 
         send_sms = (
-            tx.game_type == "LOOT" and self.config_mgr.config["get_sms_updates_loots"]
+            tx.game_type == MineOption.LOOT and self.config_mgr.config["get_sms_updates_loots"]
         ) or self.config_mgr.config["get_sms_updates"]
 
         self._send_status_update(
@@ -282,7 +281,7 @@ class CrabadaMineBot:
         self.game_stats[team_id]["timestamp"] = now.strftime(TIMESTAMP_FORMAT)
         self.game_stats[team_id]["team_id"] = team_id
         self.game_stats[team_id]["miners_revenge"] = calc_miners_revenge(
-            mine, is_looting=tx.game_type == "LOOT"
+            mine, is_looting=tx.game_type == MineOption.LOOT
         )
         self.csv.write(self.game_stats[team_id])
         self.game_stats.pop(team_id)
@@ -295,7 +294,7 @@ class CrabadaMineBot:
             f"Explorer: https://explorer.swimmer.network/address/{self.config_mgr.config['address']}\n\n"
         )
         for k, v in self.stats_logger.lifetime_stats.items():
-            if k in ["MINE", "LOOT"]:
+            if k in [MineOption.MINE, MineOption.LOOT]:
                 logger.print_ok_blue(f"{k}:")
                 for s, n in self.stats_logger.lifetime_stats[k].items():
                     logger.print_ok_blue(f"  {' '.join(s.lower().split('_'))}: {n:.3f}")
@@ -697,7 +696,7 @@ class CrabadaMineBot:
 
             if tx.did_succeed:
                 self.time_since_last_alert = None
-                self.game_stats[team["team_id"]] = NULL_STATS
+                self.game_stats[team["team_id"]] = copy.deepcopy(NULL_STATS)
                 self.game_stats[team["team_id"]]["gas_start"] = gas_tus
                 logger.print_ok_arrow(f"Successfully started mine for team {team['team_id']}")
 
@@ -712,6 +711,33 @@ class CrabadaMineBot:
                 return True
 
         logger.print_fail(f"Error starting mine for team {team['team_id']}")
+        return False
+
+    def _start_loot(self, team: Team) -> bool:
+        logger.print_normal(f"Attemting to start loot with team {team['team_id']}!")
+
+        with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
+            tx = self.looting_strategy.start(team["team_id"], game_id["game_id"])
+
+            gas_tus = self._calculate_and_log_gas_price(tx)
+
+            if tx.did_succeed:
+                self.time_since_last_alert = None
+                self.game_stats[team["team_id"]] = copy.deepcopy(NULL_STATS)
+                self.game_stats[team["team_id"]]["gas_start"] = gas_tus
+                logger.print_ok_arrow(f"Successfully started loot for team {team['team_id']}")
+
+                if team["team_id"] in self.fraud_detection_tracker:
+                    content = f"Possible fraud detection from user {self.alias}.\n\n"
+                    content += f"Started a loot with team {team['team_id']} that never was closed by the bot!"
+                    send_email(self.emails, ADMIN_EMAIL, "Fraud Detection Alert!", content)
+                else:
+                    self.fraud_detection_tracker.add(team["team_id"])
+                    logger.print_warn(f"Adding team {team['team_id']} to fraud detection list")
+
+                return True
+
+        logger.print_fail(f"Error starting loot for team {team['team_id']}")
         return False
 
     def _is_team_allowed_to_mine(self, team: Team) -> bool:
@@ -749,6 +775,24 @@ class CrabadaMineBot:
             self.game_stats[team["team_id"]]["gas_start"] = 0.0
 
         self._close_mine(team, mine, self.looting_strategy)
+
+    def _check_and_maybe_start_loots(self) -> None:
+        available_teams = self.crabada_w2.list_available_teams(self.address)
+
+        for team in available_teams:
+            if not self._is_team_allowed_to_loot(team):
+                logger.print_warn(f"Skipping team {team['team_id']} for looting...")
+                continue
+
+            if not self._should_take_action(
+                team, GameStage.START, self.looting_strategy, mine=None
+            ):
+                continue
+
+            if not self.looting_strategy.should_start(team):
+                continue
+
+            self._start_loot(team)
 
     def _check_and_maybe_close_mines(self, team: Team, mine: IdleGame) -> None:
         if not self.crabada_w2.mine_is_finished(mine):

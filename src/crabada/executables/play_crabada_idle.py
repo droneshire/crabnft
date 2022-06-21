@@ -21,10 +21,11 @@ from config_crabada import (
     USERS,
 )
 from crabada.bot import CrabadaMineBot
+from crabada.game_stats import LifetimeGameStats
 from crabada.profitability import get_profitability_message
+from crabada.types import MineOption
 from utils import discord, logger, security
 from utils.circuit_breaker import CircuitBreaker
-from crabada.game_stats import LifetimeGameStats
 from utils.email import get_email_accounts_from_password
 from utils.general import dict_sum
 from utils.math import Average
@@ -91,8 +92,8 @@ def handle_subscription_posts(
         "HEYA_SUBSCRIPTION": {
             "hook": discord.get_discord_hook("HEYA_SUBSCRIPTION"),
             "win_percentages": {
-                "MINE": 40.0,
-                "LOOT": 80.0,
+                MineOption.MINE: 40.0,
+                MineOption.LOOT: 80.0,
             },
         }
     }
@@ -171,7 +172,7 @@ def run_bot() -> None:
         logger.print_bold(f"Starting game bot for user {bot.user}...")
         bot_stats = bot.get_lifetime_stats()
         total_commission_tus += dict_sum(bot_stats["commission_tus"])
-        for k in ["MINE", "LOOT"]:
+        for k in [MineOption.MINE, MineOption.LOOT]:
             total_tus += bot_stats[k]["tus_gross"]
 
     logger.print_bold(f"Mined TUS: {total_tus} TUS Commission TUS: {total_commission_tus} TUS")
@@ -198,7 +199,10 @@ def run_bot() -> None:
     try:
         while True:
             gross_tus = 0.0
-            totals = {"MINE": {"wins": 0, "losses": 0}, "LOOT": {"wins": 0, "losses": 0}}
+            totals = {
+                MineOption.MINE: {"wins": 0, "losses": 0},
+                MineOption.LOOT: {"wins": 0, "losses": 0},
+            }
 
             circuit_breaker.start()
 

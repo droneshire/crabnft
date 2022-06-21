@@ -25,8 +25,8 @@ from utils.user import get_alias_from_user
 
 
 class StrategyActions:
-    MINING = "MINE"
-    LOOTING = "LOOT"
+    MINING = MineOption.MINE
+    LOOTING = MineOption.LOOT
     INACTIVE = "INACTIVE"
 
 

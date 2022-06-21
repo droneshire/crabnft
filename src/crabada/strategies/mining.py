@@ -7,7 +7,7 @@ from crabada.crabada_web3_client import CrabadaWeb3Client
 from crabada.factional_advantage import get_faction_adjusted_battle_point
 from crabada.profitability import CrabadaTransaction, get_rewards_from_tx_receipt, Result
 from crabada.strategies.strategy import Strategy
-from crabada.types import CrabForLending, IdleGame, Team, TeamMember
+from crabada.types import CrabForLending, IdleGame, MineOption, Team, TeamMember
 from utils import logger
 from utils.config_manager import ConfigManager
 from utils.price import wei_to_tus_raw
@@ -35,7 +35,7 @@ class MiningStrategy(Strategy):
             config_mgr,
         )
 
-    def start(self, team_id: int) -> CrabadaTransaction:
+    def start(self, team_id: int, game_id: T.Optional[int] = None) -> CrabadaTransaction:
         tx_hash = self.crabada_w3.start_game(team_id)
         tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
 
@@ -48,7 +48,7 @@ class MiningStrategy(Strategy):
         gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         return CrabadaTransaction(
             tx_hash,
-            "MINE",
+            MineOption.MINE,
             None,
             None,
             tx_receipt["status"] == 1,
@@ -76,7 +76,7 @@ class MiningStrategy(Strategy):
             result = Result.UNKNOWN
         return CrabadaTransaction(
             tx_hash,
-            "MINE",
+            MineOption.MINE,
             tus,
             cra,
             tx_receipt["status"] == 1,
@@ -100,7 +100,7 @@ class MiningStrategy(Strategy):
 
         return CrabadaTransaction(
             tx_hash,
-            "MINE",
+            MineOption.MINE,
             None,
             None,
             tx_receipt["status"] == 1,

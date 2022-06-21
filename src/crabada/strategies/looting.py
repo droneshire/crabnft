@@ -7,7 +7,7 @@ from crabada.crabada_web3_client import CrabadaWeb3Client
 from crabada.factional_advantage import get_faction_adjusted_battle_point
 from crabada.profitability import CrabadaTransaction, get_rewards_from_tx_receipt, Result
 from crabada.strategies.strategy import GameStage, Strategy
-from crabada.types import IdleGame, Team, TeamMember
+from crabada.types import MineOption, IdleGame, Team, TeamMember
 from utils import logger
 from utils.config_manager import ConfigManager
 from utils.price import Tus, wei_to_tus_raw
@@ -35,8 +35,21 @@ class LootingStrategy(Strategy):
             config_mgr,
         )
 
-    def start(self, team_id: int) -> CrabadaTransaction:
-        return CrabadaTransaction(None, "LOOT", None, None, False, None, 0.0, 0.0, 0.0)
+    def start(self, team_id: int, game_id: T.Optional[int] = None) -> CrabadaTransaction:
+        logger.print_normal(f"Starting loot")
+        tx_hash = self.crabada_w3.attack(game_id, team_id)
+        tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
+        gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        return CrabadaTransaction(
+            tx_hash,
+            MineOption.LOOT,
+            None,
+            None,
+            tx_receipt["status"] == 1,
+            None,
+            gas,
+            tx_receipt.get("gasUsed", 0.0),
+        )
 
     def close(self, game_id: int) -> T.Dict[T.Any, T.Any]:
         logger.print_normal(f"Loot[{game_id}]: Settling game")
@@ -51,7 +64,7 @@ class LootingStrategy(Strategy):
             result = Result.UNKNOWN
         return CrabadaTransaction(
             tx_hash,
-            "LOOT",
+            MineOption.LOOT,
             tus,
             cra,
             tx_receipt["status"] == 1,
@@ -68,7 +81,7 @@ class LootingStrategy(Strategy):
         gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         return CrabadaTransaction(
             tx_hash,
-            "LOOT",
+            MineOption.LOOT,
             None,
             None,
             tx_receipt["status"] == 1,

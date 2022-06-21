@@ -33,7 +33,7 @@ class CrabadaTransaction:
     def __init__(
         self,
         tx_hash: str,
-        game_type: T.Literal["LOOT", "MINE"],
+        game_type: MineOption,
         tus: float,
         cra: float,
         did_succeed: bool,
@@ -58,7 +58,7 @@ class GameStats(T.TypedDict):
     gas_reinforce1: float
     gas_reinforce2: float
     gas_close: float
-    game_type: T.Literal["MINE", "LOOT"]
+    game_type: MineOption
     reward_tus: float
     reward_cra: float
     avax_usd: float
@@ -78,7 +78,7 @@ NULL_STATS = GameStats(
     gas_reinforce1=0.0,
     gas_reinforce2=0.0,
     gas_close=0.0,
-    game_type="MINE",
+    game_type=MineOption.MINE,
     reward_tus=0.0,
     reward_cra=0.0,
     avax_usd=0.0,
@@ -92,8 +92,8 @@ NULL_STATS = GameStats(
 )
 
 STATIC_WIN_PERCENTAGES = {
-    "MINE": 40.0,
-    "LOOT": 60.0,
+    MineOption.MINE: 40.0,
+    MineOption.LOOT: 60.0,
 }
 
 
@@ -561,8 +561,8 @@ def get_profitability_message(
     data_points = {
         "avg_tx_gas_tus": avg_gas_tus,
         "avg_gas_price_gwei": gas_price_gwei,
-        "avg_mining_win": win_percentages["MINE"],
-        "avg_loot_win": win_percentages["LOOT"],
+        "avg_mining_win": win_percentages[MineOption.MINE],
+        "avg_loot_win": win_percentages[MineOption.LOOT],
         "avg_reinforce_cost_tus": avg_reinforce_tus,
         "avax_usd": prices.avax_usd,
         "tus_usd": prices.tus_usd,
@@ -620,9 +620,9 @@ def get_profitability_message(
             continue
 
         if game in LOOT_SCENARIOS:
-            win_percent = percentages["LOOT"]
+            win_percent = percentages[MineOption.LOOT]
         else:
-            win_percent = percentages["MINE"]
+            win_percent = percentages[MineOption.MINE]
 
         if game == Scenarios.TavernThreeMpCrabs:
             profit_tus = avg_reinforce_tus * 3 - avg_gas_tus / 6

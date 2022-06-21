@@ -12,8 +12,8 @@ from utils.game_stats import LifetimeGameStatsLogger
 from utils.general import TIMESTAMP_FORMAT
 from utils.price import Prices, wei_to_cra_raw, wei_to_tus_raw
 from utils.user import get_alias_from_user
-from crabada.profitability import CrabadaTransaction, GameStats, Result, NULL_STATS
-from crabada.types import IdleGame, Team
+from crabada.profitability import CrabadaTransaction, GameStats, MineOption, Result, NULL_STATS
+from crabada.types import IdleGame, MineOption, Team
 
 
 class MineLootGameStats(T.TypedDict):
@@ -67,12 +67,12 @@ def get_daily_stats_message(user: str, csv: CsvLogger, target_date: datetime.dat
     total_tus = 0.0
     total_cra = 0.0
     wins = {
-        "LOOT": 0,
-        "MINE": 0,
+        MineOption.LOOT: 0,
+        MineOption.MINE: 0,
     }
     losses = {
-        "LOOT": 0,
-        "MINE": 0,
+        MineOption.LOOT: 0,
+        MineOption.MINE: 0,
     }
     miners_revenge = 0.0
     total_mrs = 0
@@ -117,7 +117,7 @@ def get_daily_stats_message(user: str, csv: CsvLogger, target_date: datetime.dat
         if t:
             total_tus += float(t)
 
-        if game_type == "LOOT":
+        if game_type == MineOption.LOOT:
             continue
 
         m = row[csv.get_col_map()["miners_revenge"]]
@@ -210,8 +210,8 @@ def update_game_stats_after_close(
 
 def update_lifetime_stats_format(game_stats: LifetimeGameStats) -> LifetimeGameStats:
     new_game_stats = LifetimeGameStats()
-    new_game_stats["MINE"] = MineLootGameStats()
-    new_game_stats["LOOT"] = MineLootGameStats()
+    new_game_stats[MineOption.MINE] = MineLootGameStats()
+    new_game_stats[MineOption.LOOT] = MineLootGameStats()
 
     if "gas_tus" in game_stats:
         return game_stats
@@ -245,7 +245,7 @@ def delta_game_stats(
         for k, v in user_b_stats[item].items():
             diffed_stats[item][k] = diffed_stats[item].get(k, 0.0) - v
 
-    for game_type in ["MINE", "LOOT"]:
+    for game_type in [MineOption.MINE, MineOption.LOOT]:
         for k, v in user_a_stats[game_type].items():
             diffed_stats[game_type][k] = v
 
@@ -278,7 +278,7 @@ def merge_game_stats(
         for k, v in user_b_stats[item].items():
             merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
 
-    for game_type in ["MINE", "LOOT"]:
+    for game_type in [MineOption.MINE, MineOption.LOOT]:
         for k, v in user_a_stats[game_type].items():
             merged_stats[game_type][k] += v
 

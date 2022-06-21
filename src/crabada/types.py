@@ -27,7 +27,7 @@ class MiningTeam(T.TypedDict):
 
 
 class MineOption:
-    MINE = "MINE"
+    MINE = MineOption.MINE
     LOOT = "LOOT"
 
 

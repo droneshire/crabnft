@@ -12,7 +12,7 @@ from crabada.miners_revenge import calc_miners_revenge
 from crabada.config_manager_sheets import ConfigManagerSheets
 from crabada.config_manager_firebase import ConfigManagerFirebase
 from crabada.profitability import get_scenario_profitability, is_profitable_to_take_action
-from crabada.types import CrabadaClass, Team
+from crabada.types import CrabadaClass, MineOption, Team
 from utils import email, logger, security
 from utils.config_manager import ConfigManager
 from utils.config_types import UserConfig
@@ -208,8 +208,8 @@ def test_profitability_calc() -> None:
     avg_gas_price_tus = 0.01712
     avg_reinforce_tus = 7.86
     win_percentages = {
-        "MINE": 40.0,
-        "LOOT": 60.0,
+        MineOption.MINE: 40.0,
+        MineOption.LOOT: 60.0,
     }
     test_team = Team(
         crabada_1_class=CrabadaClass.PRIME,

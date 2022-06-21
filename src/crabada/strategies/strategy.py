@@ -50,7 +50,7 @@ class Strategy:
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:
         raise NotImplementedError
 
-    def start(self, team_id: int) -> CrabadaTransaction:
+    def start(self, team_id: int, game_id: T.Optional[int] = None) -> CrabadaTransaction:
         raise NotImplementedError
 
     def close(self, game_id: int) -> CrabadaTransaction:
