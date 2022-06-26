@@ -1,4 +1,5 @@
 import getpass
+import time
 import typing as T
 
 
@@ -15,6 +16,8 @@ from wyndblast.types import WyndNft
 
 
 class WyndBot:
+    TIME_BETWEEN_AUTH = 60.0 * 60.0 * 4.0
+
     def __init__(
         self,
         user: str,
@@ -30,6 +33,8 @@ class WyndBot:
         self.log_dir: str = log_dir
         self.dry_run: bool = dry_run
         self.address: Address = config["address"]
+
+        self.last_auth_time = 0
 
         self.config_mgr = WyndblastConfigManager(
             user,
@@ -85,9 +90,17 @@ class WyndBot:
         self.config_mgr.init()
         self.wynd_w2.authorize_user()
         self.wynd_w2.update_account()
+        self.last_auth_time = time.now()
 
     def run(self) -> None:
         logger.print_bold(f"\n\nAttempting daily activities for {self.user}")
+        now = time.now()
+
+        if now - self.last_auth_time > self.TIME_BETWEEN_AUTH:
+            self.wynd_w2.authorize_user()
+            self.wynd_w2.update_account()
+            self.last_auth_time = now
+
         self._check_and_submit_available_inventory()
         self.daily_activities.run_activity()
         self.daily_activities.check_and_claim_if_needed()

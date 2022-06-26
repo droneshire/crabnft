@@ -73,11 +73,11 @@ class DailyActivitiesGame:
         tx_receipt = self.wynd_w3.get_transaction_receipt(tx_hash)
         gas = wei_to_chro_raw(self.wynd_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         logger.print_bold(f"Paid {gas} AVAX in gas")
-        print(tx_receipt)
+
         if tx_receipt["status"] != 1:
             logger.print_fail(f"Failed to claim CHRO!")
         else:
-            logger.print_ok(f"Successfully moved to game")
+            logger.print_ok(f"Successfully transferred CHRO")
 
         return True
 
@@ -101,7 +101,7 @@ class DailyActivitiesGame:
         wynds: T.List[WyndStatus] = []
         total_pages = int((total + 12) / 12)
         logger.print_normal(f"Searching through {total_pages} pages of NFTs...")
-        for page in range(1, total_pages):
+        for page in range(1, total_pages + 1):
             params = {"page": page, "limit": 12}
             wynds.extend(self.wynd_w2.get_all_wynds_activity(params=params))
             time.sleep(5.0)

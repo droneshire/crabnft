@@ -213,11 +213,10 @@ class WyndblastWeb2Client:
     ) -> T.Any:
         url = self.DAILY_ACTIVITY_BASE_URL + "/nft"
         default_params = {
-            "limit": "100",
+            "limit": "12",
             "page": "1",
         }
         default_params.update(params)
-
         return self._get_request(url, headers=headers, params=default_params)
 
     def get_all_wynds_activity(self, params: T.Dict[str, T.Any] = {}) -> T.List[WyndStatus]:
