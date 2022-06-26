@@ -27,7 +27,7 @@ class MiningTeam(T.TypedDict):
 
 
 class MineOption:
-    MINE = MineOption.MINE
+    MINE = "MINE"
     LOOT = "LOOT"
 
 
@@ -175,6 +175,7 @@ class Team(T.TypedDict):
     game_round: T.Literal[0, 1, 2, 3, 4]
     game_start_time: int
     game_type: T.Literal["mining"]
+    looting_point: int
     mine_end_time: int
     mine_point: int
     mine_start_time: int
