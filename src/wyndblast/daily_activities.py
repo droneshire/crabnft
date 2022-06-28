@@ -161,9 +161,12 @@ class DailyActivitiesGame:
 
     def _update_stats(self) -> None:
         for k, v in self.current_stats.items():
+            if type(v) != type(self.lifetime_stats[k]):
+                logger.print_warn(f"Mismatched stats: {self.current_stats} {self.lifetime_stats}")
+                continue
             if isinstance(v, list):
                 self.lifetime_stats[k].extend(v)
-            if isinstance(v, dict):
+            elif isinstance(v, dict):
                 self.lifetime_stats[k].update(v)
             else:
                 self.lifetime_stats[k] += v
