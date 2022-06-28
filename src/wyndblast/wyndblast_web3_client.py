@@ -5,6 +5,8 @@ import typing as T
 from eth_typing import Address
 from eth_typing.encoding import HexStr
 from web3.types import TxParams, Wei
+
+from utils import logger
 from web3_utils.web3_client import Web3Client
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 
@@ -30,7 +32,8 @@ class WyndblastGameWeb3Client(AvalancheCWeb3Client):
         try:
             tx: TxParams = self.build_contract_transaction(self.contract.functions.claimReward())
             return self.sign_and_send_transaction(tx)
-        except:
+        except Exception as e:
+            logger.print_fail(f"{e}")
             return ""
 
     def move_into_inventory(self, token_ids: T.List[int]) -> HexStr:
@@ -43,7 +46,8 @@ class WyndblastGameWeb3Client(AvalancheCWeb3Client):
                 self.contract.functions.batchDispatch(self.holder_place, token_ids)
             )
             return self.sign_and_send_transaction(tx)
-        except:
+        except Exception as e:
+            logger.print_fail(f"{e}")
             return ""
 
     def move_out_of_inventory(self, token_ids: T.List[int]) -> HexStr:
@@ -56,5 +60,6 @@ class WyndblastGameWeb3Client(AvalancheCWeb3Client):
                 self.contract.functions.batchSubmit(self.holder_place, token_ids)
             )
             return self.sign_and_send_transaction(tx)
-        except:
+        except Exception as e:
+            logger.print_fail(f"{e}")
             return ""

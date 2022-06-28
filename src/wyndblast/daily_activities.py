@@ -9,6 +9,7 @@ from utils.config_types import UserConfig
 from utils.email import Email, send_email
 from utils.price import wei_to_chro_raw
 from wyndblast.game_stats import NULL_GAME_STATS
+from wyndblast.game_stats import WyndblastLifetimeGameStatsLogger
 from wyndblast.types import (
     Action,
     AccountOverview,
@@ -25,10 +26,9 @@ from wyndblast.types import (
 from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
 from wyndblast.wyndblast_web3_client import WyndblastGameWeb3Client
 
-
 class DailyActivitiesGame:
     MAX_NUM_ROUNDS = 3
-    MIN_CLAIM_CHRO = 100
+    MIN_CLAIM_CHRO = 200
     DAYS_BETWEEN_CLAIM = 1
 
     def __init__(
@@ -38,24 +38,20 @@ class DailyActivitiesGame:
         email_accounts: T.List[Email],
         wynd_w2: WyndblastWeb2Client,
         wynd_w3: WyndblastGameWeb3Client,
+        stats_logger: WyndblastLifetimeGameStatsLogger,
     ):
         self.user = user
         self.config_mgr = config
         self.email_accounts = email_accounts
         self.wynd_w2 = wynd_w2
         self.wynd_w3 = wynd_w3
+        self.stats_logger = stats_logger
 
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
-
-        self.lifetime_stats = copy.deepcopy(NULL_GAME_STATS)
 
         logger.print_ok_blue(f"\nStarting for user {user}...")
 
     def check_and_claim_if_needed(self) -> bool:
-        date: datetime.datetime = self.wynd_w2.get_last_claim()
-        if date is None:
-            return False
-
         rewards_unclaimed: Rewards = self.wynd_w2.get_unclaimed_balances()
 
         unclaimed_chro = int(rewards_unclaimed.get("chro", 0))
@@ -63,16 +59,20 @@ class DailyActivitiesGame:
             logger.print_normal(f"Not enough CHRO to claim rewards ({unclaimed_chro} CHRO)")
             return False
 
-        time_delta: datetime.date = datetime.datetime.now().date() - date.date()
+        date: datetime.datetime = self.wynd_w2.get_last_claim()
+        if date is not None:
+            time_delta: datetime.date = datetime.datetime.now().date() - date.date()
 
-        if time_delta.days < self.DAYS_BETWEEN_CLAIM:
-            return False
+            if time_delta.days < self.DAYS_BETWEEN_CLAIM:
+                return False
 
         logger.print_ok(f"Claiming rewards! {unclaimed_chro} CHRO")
         tx_hash = self.wynd_w3.claim_rewards()
         tx_receipt = self.wynd_w3.get_transaction_receipt(tx_hash)
         gas = wei_to_chro_raw(self.wynd_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         logger.print_bold(f"Paid {gas} AVAX in gas")
+
+        self.stats_logger.lifetime_stats["avax_gas"] += tx.gas
 
         if tx_receipt["status"] != 1:
             logger.print_fail(f"Failed to claim CHRO!")
@@ -161,15 +161,15 @@ class DailyActivitiesGame:
 
     def _update_stats(self) -> None:
         for k, v in self.current_stats.items():
-            if type(v) != type(self.lifetime_stats[k]):
-                logger.print_warn(f"Mismatched stats: {self.current_stats} {self.lifetime_stats}")
+            if type(v) != type(self.stats_logger.lifetime_stats[k]):
+                logger.print_warn(f"Mismatched stats:\n{self.current_stats}\n{self.stats_logger.lifetime_stats}")
                 continue
             if isinstance(v, list):
-                self.lifetime_stats[k].extend(v)
+                self.stats_logger.lifetime_stats[k].extend(v)
             elif isinstance(v, dict):
-                self.lifetime_stats[k].update(v)
+                self.stats_logger.lifetime_stats[k].update(v)
             else:
-                self.lifetime_stats[k] += v
+                self.stats_logger.lifetime_stats[k] += v
 
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
 
@@ -230,7 +230,8 @@ class DailyActivitiesGame:
         self.current_stats["chro"] += rewards["chro"]
         self.current_stats["wams"] += rewards["wams"]
         if rewards["elemental_stones"] is not None:
-            self.current_stats["elemental_stones"] = rewards["elemental_stones"]
+            self.current_stats["elemental_stones"][rewards["elemental_stones"]] += 1
+            self.current_stats["elemental_stones"]["elemental_stones_qty"] += 1
 
         outcome_emoji = "\U0001F389" if did_succeed else "\U0001F915"
 

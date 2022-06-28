@@ -258,39 +258,6 @@ def delta_game_stats(
     return diffed_stats
 
 
-def merge_game_stats(
-    user_a_stats: str, user_b_stats: str, log_dir: str, verbose
-) -> LifetimeGameStats:
-    diff = deepdiff.DeepDiff(user_a_stats, user_b_stats)
-    if not diff:
-        return user_a_stats
-
-    merged_stats = copy.deepcopy(NULL_GAME_STATS)
-
-    for item in ["avax_gas_usd", "gas_tus"]:
-        merged_stats[item] = merged_stats.get(item, 0.0) + user_a_stats.get(item, 0.0)
-        merged_stats[item] = merged_stats.get(item, 0.0) + user_b_stats.get(item, 0.0)
-
-    for item in ["commission_tus"]:
-        for k, v in user_a_stats[item].items():
-            merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
-
-        for k, v in user_b_stats[item].items():
-            merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
-
-    for game_type in [MineOption.MINE, MineOption.LOOT]:
-        for k, v in user_a_stats[game_type].items():
-            merged_stats[game_type][k] += v
-
-        for k, v in user_b_stats[game_type].items():
-            merged_stats[game_type][k] += v
-
-    if verbose:
-        logger.print_bold("Merging game stats:")
-        logger.print_normal(json.dumps(merged_stats, indent=4))
-    return merged_stats
-
-
 class CrabadaLifetimeGameStatsLogger(LifetimeGameStatsLogger):
     def __init__(
         self,
@@ -303,23 +270,34 @@ class CrabadaLifetimeGameStatsLogger(LifetimeGameStatsLogger):
     ):
         super().__init__(user, null_game_stats, log_dir, backup_stats, dry_run, verbose)
 
-    def write(self) -> None:
-        delta_stats = delta_game_stats(
-            self.lifetime_stats, self.last_lifetime_stats, verbose=self.verbose
-        )
-        file_stats = self.read()
-        combined_stats = merge_game_stats(
-            delta_stats, file_stats, self.log_dir, verbose=self.verbose
-        )
+    def merge_game_stats(
+        self, user_a_stats: str, user_b_stats: str, log_dir: str, verbose
+    ) -> LifetimeGameStats:
+        diff = deepdiff.DeepDiff(user_a_stats, user_b_stats)
+        if not diff:
+            return user_a_stats
 
-        if self.verbose:
-            logger.print_bold(f"Writing stats for {self.user} [alias: {self.alias}]")
+        merged_stats = copy.deepcopy(NULL_GAME_STATS)
 
-        self.write_game_stats(combined_stats, dry_run=self.dry_run)
-        self.last_lifetime_stats = copy.deepcopy(self.lifetime_stats)
+        for item in ["avax_gas_usd", "gas_tus"]:
+            merged_stats[item] = merged_stats.get(item, 0.0) + user_a_stats.get(item, 0.0)
+            merged_stats[item] = merged_stats.get(item, 0.0) + user_b_stats.get(item, 0.0)
 
-    def read(self) -> T.Dict[T.Any, T.Any]:
-        if self.verbose:
-            logger.print_bold(f"Reading stats for {self.user} [alias: {self.alias}]")
+        for item in ["commission_tus"]:
+            for k, v in user_a_stats[item].items():
+                merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
 
-        return self.get_game_stats()
+            for k, v in user_b_stats[item].items():
+                merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
+
+        for game_type in [MineOption.MINE, MineOption.LOOT]:
+            for k, v in user_a_stats[game_type].items():
+                merged_stats[game_type][k] += v
+
+            for k, v in user_b_stats[game_type].items():
+                merged_stats[game_type][k] += v
+
+        if verbose:
+            logger.print_bold("Merging game stats:")
+            logger.print_normal(json.dumps(merged_stats, indent=4))
+        return merged_stats

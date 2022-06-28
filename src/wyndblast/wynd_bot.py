@@ -10,9 +10,10 @@ from utils.security import decrypt_secret
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from wyndblast.config_manager_wyndblast import WyndblastConfigManager
 from wyndblast.daily_activities import DailyActivitiesGame
+from wyndblast.game_stats import WyndblastLifetimeGameStatsLogger
+from wyndblast.types import WyndNft
 from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
 from wyndblast.wyndblast_web3_client import WyndblastGameWeb3Client
-from wyndblast.types import WyndNft
 
 
 class WyndBot:
@@ -57,12 +58,22 @@ class WyndBot:
             .set_dry_run(dry_run)
         )
 
+        self.stats_logger = WyndblastLifetimeGameStatsLogger(
+            self.alias,
+            NULL_GAME_STATS,
+            self.log_dir,
+            self.config_mgr.get_lifetime_stats(),
+            self.dry_run,
+            verbose=False,
+        )
+
         self.daily_activities: DailyActivitiesGame = DailyActivitiesGame(
             user,
             config,
             email_accounts,
             self.wynd_w2,
             self.wynd_w3,
+            self.stats_logger
         )
 
     def _check_and_submit_available_inventory(self) -> None:
@@ -81,6 +92,10 @@ class WyndBot:
         logger.print_bold(f"Attempting to move wynds from inventory to game...")
         tx_hash = self.wynd_w3.move_out_of_inventory(token_ids=wynds_to_move_to_game)
         tx_receipt = self.wynd_w3.get_transaction_receipt(tx_hash)
+        gas = wei_to_chro_raw(self.wynd_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        logger.print_bold(f"Paid {gas} AVAX in gas")
+
+        self.stats_logger.lifetime_stats["avax_gas"] += tx.gas
         if tx_receipt["status"] != 1:
             logger.print_fail(f"Failed to move wynds to game!\n{tx_receipt}")
         else:
@@ -106,7 +121,9 @@ class WyndBot:
 
         self.wynd_w2.update_account()
         self.daily_activities.check_and_claim_if_needed()
+        self.stats_logger.write()
 
     def end(self) -> None:
         self.config_mgr.close()
+        self.stats_logger.write()
         logger.print_normal(f"Shutting down {self.user} bot...")

@@ -73,7 +73,27 @@ class LifetimeGameStatsLogger:
             return {}
 
     def write(self) -> None:
-        raise NotImplementedError
+        delta_stats = delta_game_stats(
+            self.lifetime_stats, self.last_lifetime_stats, verbose=self.verbose
+        )
+        file_stats = self.read()
+        combined_stats = self.merge_game_stats(
+            delta_stats, file_stats, self.log_dir, verbose=self.verbose
+        )
+
+        if self.verbose:
+            logger.print_bold(f"Writing stats for {self.user} [alias: {self.alias}]")
+
+        self.write_game_stats(combined_stats, dry_run=self.dry_run)
+        self.last_lifetime_stats = copy.deepcopy(self.lifetime_stats)
 
     def read(self) -> T.Dict[T.Any, T.Any]:
+        if self.verbose:
+            logger.print_bold(f"Reading stats for {self.user} [alias: {self.alias}]")
+
+        return self.get_game_stats()
+
+    def merge_game_stats(
+        self, user_a_stats: str, user_b_stats: str, log_dir: str, verbose
+    ) -> LifetimeGameStats:
         raise NotImplementedError
