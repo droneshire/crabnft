@@ -16,7 +16,7 @@ from wyndblast.types import WyndNft
 
 
 class WyndBot:
-    TIME_BETWEEN_AUTH = 60.0 * 60.0 * 4.0
+    TIME_BETWEEN_AUTH = 60.0 * 60.0 * 6.0
 
     def __init__(
         self,
@@ -82,7 +82,7 @@ class WyndBot:
         tx_hash = self.wynd_w3.move_out_of_inventory(token_ids=wynds_to_move_to_game)
         tx_receipt = self.wynd_w3.get_transaction_receipt(tx_hash)
         if tx_receipt["status"] != 1:
-            logger.print_fail(f"Failed to move wynds to game!")
+            logger.print_fail(f"Failed to move wynds to game!\n{tx_receipt}")
         else:
             logger.print_ok(f"Successfully moved to game")
 
@@ -103,6 +103,8 @@ class WyndBot:
         self.wynd_w2.update_account()
         self._check_and_submit_available_inventory()
         self.daily_activities.run_activity()
+
+        self.wynd_w2.update_account()
         self.daily_activities.check_and_claim_if_needed()
 
     def end(self) -> None:
