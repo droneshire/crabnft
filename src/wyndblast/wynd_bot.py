@@ -98,9 +98,9 @@ class WyndBot:
 
         if now - self.last_auth_time > self.TIME_BETWEEN_AUTH:
             self.wynd_w2.authorize_user()
-            self.wynd_w2.update_account()
             self.last_auth_time = now
 
+        self.wynd_w2.update_account()
         self._check_and_submit_available_inventory()
         self.daily_activities.run_activity()
         self.daily_activities.check_and_claim_if_needed()
