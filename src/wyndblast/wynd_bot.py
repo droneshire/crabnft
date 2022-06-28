@@ -90,11 +90,11 @@ class WyndBot:
         self.config_mgr.init()
         self.wynd_w2.authorize_user()
         self.wynd_w2.update_account()
-        self.last_auth_time = time.now()
+        self.last_auth_time = time.time()
 
     def run(self) -> None:
         logger.print_bold(f"\n\nAttempting daily activities for {self.user}")
-        now = time.now()
+        now = time.time()
 
         if now - self.last_auth_time > self.TIME_BETWEEN_AUTH:
             self.wynd_w2.authorize_user()
