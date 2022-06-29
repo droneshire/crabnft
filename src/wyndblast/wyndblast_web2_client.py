@@ -327,7 +327,10 @@ class WyndblastWeb2Client:
     def get_last_claim(self) -> T.Optional[datetime.datetime]:
         try:
             res = self._get_last_claim_raw(headers=self._get_daily_activity_headers())
-            date_str = res["result"]["last_claim_datetime"].split("T")[0]
+            last_claim = res["result"]["last_claim_datetime"]
+            if last_claim is None:
+                return None
+            date_str = last_claim.split("T")[0]
             return datetime.datetime.strptime(date_str, TIMESTAMP_FORMAT)
         except KeyboardInterrupt:
             raise

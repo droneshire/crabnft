@@ -73,17 +73,23 @@ class DailyActivitiesGame:
         gas = wei_to_chro_raw(self.wynd_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         logger.print_bold(f"Paid {gas} AVAX in gas")
 
-        self.stats_logger.lifetime_stats["avax_gas"] += tx.gas
+        self.stats_logger.lifetime_stats["avax_gas"] += gas
 
         if tx_receipt["status"] != 1:
             logger.print_fail(f"Failed to claim CHRO!")
         else:
             logger.print_ok(f"Successfully transferred CHRO")
+            logger.print_normal(f"Explorer: https://explorer.swimmer.network/tx/{tx_hash}\n\n")
 
         return True
 
     def run_activity(self) -> None:
         account_overview = self.wynd_w2.get_account_overview()
+
+        if not account_overview:
+            self.wynd_w2.authorize_user()
+            self.wynd_w2.update_account()
+            return
 
         try:
             total = account_overview["count_nfts"]["all"]
@@ -100,14 +106,17 @@ class DailyActivitiesGame:
         logger.print_bold(f"Found {available_wynds} Wynds available for daily activities\n\n")
 
         wynds: T.List[WyndStatus] = []
-        total_pages = int((total + 12) / 12)
+        ITEMS_PER_PAGE = 20
+        total_pages = int((total + ITEMS_PER_PAGE) / ITEMS_PER_PAGE)
         logger.print_normal(f"Searching through {total_pages} pages of NFTs...")
-        for page in range(1, total_pages + 1):
-            params = {"page": page, "limit": 12}
+        for page in range(1, total_pages + 2):
+            params = {"page": page, "limit": ITEMS_PER_PAGE}
             wynds.extend(self.wynd_w2.get_all_wynds_activity(params=params))
-            time.sleep(5.0)
+            time.sleep(1.0)
 
         if not wynds:
+            self.wynd_w2.authorize_user()
+            self.wynd_w2.update_account()
             return
 
         rounds_completed = 0
@@ -127,9 +136,9 @@ class DailyActivitiesGame:
                 )
                 continue
 
-            logger.print_normal(f"{rounds_remaining} rounds left to play...")
+            logger.print_normal(f"\nWynd[{wynd_id}]: {rounds_remaining} rounds left to play...")
 
-            logger.print_bold(f"Wynd[{wynd_id}] starting daily activities")
+            logger.print_bold(f"Wynd[{wynd_id}]: starting daily activities")
             stats_fmt = logger.format_ok_blue(f"Faction: {wynd_faction.upper()}\t")
             stats_fmt += logger.format_normal(f"Class: {wynd_class} Element: {wynd_element}\n")
             logger.print_normal("{}".format(stats_fmt))
@@ -153,6 +162,7 @@ class DailyActivitiesGame:
                 ):
                     logger.print_warn(f"We lost, unable to proceed to next round")
                     break
+                time.sleep(0.2)
 
         if rounds_completed <= 0:
             return
@@ -205,6 +215,8 @@ class DailyActivitiesGame:
         options: DailyActivitySelection = self.wynd_w2.get_activity_selection(wynd_id)
 
         if not options:
+            self.wynd_w2.authorize_user()
+            self.wynd_w2.update_account()
             return False
 
         if current_stage > 1:
@@ -226,6 +238,8 @@ class DailyActivitiesGame:
         result: ActivityResult = self.wynd_w2.do_activity(selection)
 
         if not result:
+            self.wynd_w2.authorize_user()
+            self.wynd_w2.update_account()
             return False
 
         did_succeed = result["stage"]["success"]

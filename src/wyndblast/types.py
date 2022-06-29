@@ -112,13 +112,13 @@ class DailyActivitySelection(T.TypedDict):
 #####
 # Activity result
 class ElementalStones(T.TypedDict):
-    Fire: int
-    Wind: int
-    Earth: int
-    Light: int
-    Darkness: int
-    Water: int
-    elemental_stones_qty: int
+    Fire: float
+    Wind: float
+    Earth: float
+    Light: float
+    Darkness: float
+    Water: float
+    elemental_stones_qty: float
 
 
 class Rewards(T.TypedDict):

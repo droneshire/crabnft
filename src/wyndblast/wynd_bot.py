@@ -6,6 +6,7 @@ import typing as T
 from utils import logger
 from utils.config_types import UserConfig
 from utils.email import Email
+from utils.price import wei_to_chro_raw
 from utils.user import get_alias_from_user
 from utils.security import decrypt_secret
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
@@ -91,17 +92,16 @@ class WyndBot:
         gas = wei_to_chro_raw(self.wynd_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         logger.print_bold(f"Paid {gas} AVAX in gas")
 
-        self.stats_logger.lifetime_stats["avax_gas"] += tx.gas
+        self.stats_logger.lifetime_stats["avax_gas"] += gas
         if tx_receipt["status"] != 1:
             logger.print_fail(f"Failed to move wynds to game!\n{tx_receipt}")
         else:
             logger.print_ok(f"Successfully moved to game")
+            logger.print_normal(f"Explorer: https://explorer.swimmer.network/tx/{tx_hash}\n\n")
 
     def init(self) -> None:
         self.config_mgr.init()
-        self.wynd_w2.authorize_user()
-        self.wynd_w2.update_account()
-        self.last_auth_time = time.time()
+        self.last_auth_time = 0
 
     def run(self) -> None:
         logger.print_bold(f"\n\nAttempting daily activities for {self.user}")

@@ -13,8 +13,8 @@ from wyndblast.daily_activities import DailyActivitiesGame
 from wyndblast.wynd_bot import WyndBot
 from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
 
-TIME_BETWEEN_PLAYERS = 60.0
-TIME_BETWEEN_RUNS = 30.0 * 60.0
+TIME_BETWEEN_PLAYERS = 5.0
+TIME_BETWEEN_RUNS = 20.0 * 60.0
 
 
 def parse_args() -> argparse.Namespace:
