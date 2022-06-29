@@ -94,7 +94,7 @@ class LifetimeGameStatsLogger:
         return self.get_game_stats()
 
     def merge_game_stats(
-        self, user_a_stats: str, user_b_stats: str, log_dir: str, verbose
+        self, user_a_stats: T.Dict[T.Any, T.Any], user_b_stats: T.Dict[T.Any, T.Any], log_dir: str, verbose
     ) -> T.Dict[T.Any, T.Any]:
         raise NotImplementedError
 
