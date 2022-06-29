@@ -223,41 +223,6 @@ def update_lifetime_stats_format(game_stats: LifetimeGameStats) -> LifetimeGameS
     return new_game_stats
 
 
-def delta_game_stats(
-    user_a_stats: LifetimeGameStats, user_b_stats: LifetimeGameStats, verbose: bool = False
-) -> LifetimeGameStats:
-    diff = deepdiff.DeepDiff(user_a_stats, user_b_stats)
-    if not diff:
-        return NULL_GAME_STATS
-
-    diffed_stats = copy.deepcopy(NULL_GAME_STATS)
-
-    for item in ["avax_gas_usd", "gas_tus"]:
-        if item not in user_a_stats or item not in user_b_stats:
-            diffed_stats[item] = 0.0
-        else:
-            diffed_stats[item] = user_a_stats[item] - user_b_stats[item]
-
-    for item in ["commission_tus"]:
-        for k, v in user_a_stats[item].items():
-            diffed_stats[item][k] = v
-
-        for k, v in user_b_stats[item].items():
-            diffed_stats[item][k] = diffed_stats[item].get(k, 0.0) - v
-
-    for game_type in [MineOption.MINE, MineOption.LOOT]:
-        for k, v in user_a_stats[game_type].items():
-            diffed_stats[game_type][k] = v
-
-        for k, v in user_b_stats[game_type].items():
-            diffed_stats[game_type][k] = diffed_stats[game_type].get(k, 0.0) - v
-
-    if verbose:
-        logger.print_bold("Subtracting game stats:")
-        logger.print_normal(json.dumps(diffed_stats, indent=4))
-    return diffed_stats
-
-
 class CrabadaLifetimeGameStatsLogger(LifetimeGameStatsLogger):
     def __init__(
         self,
@@ -269,6 +234,43 @@ class CrabadaLifetimeGameStatsLogger(LifetimeGameStatsLogger):
         verbose: bool = False,
     ):
         super().__init__(user, null_game_stats, log_dir, backup_stats, dry_run, verbose)
+
+    def delta_game_stats(
+        self,
+        user_a_stats: LifetimeGameStats,
+        user_b_stats: LifetimeGameStats,
+        verbose: bool = False,
+    ) -> LifetimeGameStats:
+        diff = deepdiff.DeepDiff(user_a_stats, user_b_stats)
+        if not diff:
+            return NULL_GAME_STATS
+
+        diffed_stats = copy.deepcopy(NULL_GAME_STATS)
+
+        for item in ["avax_gas_usd", "gas_tus"]:
+            if item not in user_a_stats or item not in user_b_stats:
+                diffed_stats[item] = 0.0
+            else:
+                diffed_stats[item] = user_a_stats[item] - user_b_stats[item]
+
+        for item in ["commission_tus"]:
+            for k, v in user_a_stats[item].items():
+                diffed_stats[item][k] = v
+
+            for k, v in user_b_stats[item].items():
+                diffed_stats[item][k] = diffed_stats[item].get(k, 0.0) - v
+
+        for game_type in [MineOption.MINE, MineOption.LOOT]:
+            for k, v in user_a_stats[game_type].items():
+                diffed_stats[game_type][k] = v
+
+            for k, v in user_b_stats[game_type].items():
+                diffed_stats[game_type][k] = diffed_stats[game_type].get(k, 0.0) - v
+
+        if verbose:
+            logger.print_bold("Subtracting game stats:")
+            logger.print_normal(json.dumps(diffed_stats, indent=4))
+        return diffed_stats
 
     def merge_game_stats(
         self, user_a_stats: str, user_b_stats: str, log_dir: str, verbose
