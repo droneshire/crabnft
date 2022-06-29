@@ -26,6 +26,7 @@ from wyndblast.types import (
 from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
 from wyndblast.wyndblast_web3_client import WyndblastGameWeb3Client
 
+
 class DailyActivitiesGame:
     MAX_NUM_ROUNDS = 3
     MIN_CLAIM_CHRO = 200
@@ -156,13 +157,15 @@ class DailyActivitiesGame:
         if rounds_completed <= 0:
             return
 
-        self._send_summary_email(available_wynds, account_overview)
+        self._send_summary_email(len(wynds), account_overview)
         self._update_stats()
 
     def _update_stats(self) -> None:
         for k, v in self.current_stats.items():
             if type(v) != type(self.stats_logger.lifetime_stats[k]):
-                logger.print_warn(f"Mismatched stats:\n{self.current_stats}\n{self.stats_logger.lifetime_stats}")
+                logger.print_warn(
+                    f"Mismatched stats:\n{self.current_stats}\n{self.stats_logger.lifetime_stats}"
+                )
                 continue
             if isinstance(v, list):
                 self.stats_logger.lifetime_stats[k].extend(v)
@@ -175,7 +178,7 @@ class DailyActivitiesGame:
 
     def _send_summary_email(self, active_nfts: int, account_overview: AccountOverview) -> None:
         content = f"Activity Stats for {self.user.upper()}:\n"
-        content = f"Active NFTs: {active_nfts}\n"
+        content += f"Active NFTs: {active_nfts}\n"
         for stage in range(1, 4):
             stage_key = f"stage_{stage}"
             stage_str = f"Stage {stage}" if stage != 3 else "All Stages"
@@ -196,7 +199,9 @@ class DailyActivitiesGame:
             self.email_accounts, self.config_mgr["email"], "Wyndblast Daily Activities", content
         )
 
-    def _play_round(self, wynd_id: int, current_stage: int, wynd_info: ProductMetadata) -> bool:
+    def _play_round(
+        self, wynd_id: int, current_stage: int, wynd_info: ProductMetadata, verbose: bool = False
+    ) -> bool:
         options: DailyActivitySelection = self.wynd_w2.get_activity_selection(wynd_id)
 
         if not options:
@@ -215,7 +220,8 @@ class DailyActivitiesGame:
 
         selection["product_ids"] = [self.wynd_w2._get_product_id(wynd_id)]
 
-        logger.print_normal(f"Selecting: {json.dumps(selection, indent=4)}")
+        if verbose:
+            logger.print_normal(f"Selecting: {json.dumps(selection, indent=4)}")
 
         result: ActivityResult = self.wynd_w2.do_activity(selection)
 
@@ -259,7 +265,7 @@ class DailyActivitiesGame:
         return did_succeed
 
     def _get_best_action(
-        self, current_stage: int, actions: Action, wynd_info: ProductMetadata
+        self, current_stage: int, actions: Action, wynd_info: ProductMetadata, verbose: bool = False
     ) -> ActivitySelection:
         best_percent = 0.0
         wynd_class = wynd_info["class"]
@@ -291,9 +297,10 @@ class DailyActivitiesGame:
                 selection["element_requirement"] = info["element_requirement"]
                 selection["variation"] = action
 
-            logger.print_normal(
-                f"Analyzing: {action} has {success_rate}% success rate [score={score}]"
-            )
+            if verbose:
+                logger.print_normal(
+                    f"Analyzing: {action} has {success_rate}% success rate [score={score}]"
+                )
 
         return selection
 

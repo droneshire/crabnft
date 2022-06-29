@@ -6,11 +6,12 @@ import typing as T
 from utils import logger
 from utils.config_types import UserConfig
 from utils.email import Email
+from utils.user import get_alias_from_user
 from utils.security import decrypt_secret
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from wyndblast.config_manager_wyndblast import WyndblastConfigManager
 from wyndblast.daily_activities import DailyActivitiesGame
-from wyndblast.game_stats import WyndblastLifetimeGameStatsLogger
+from wyndblast.game_stats import NULL_GAME_STATS, WyndblastLifetimeGameStatsLogger
 from wyndblast.types import WyndNft
 from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
 from wyndblast.wyndblast_web3_client import WyndblastGameWeb3Client
@@ -59,7 +60,7 @@ class WyndBot:
         )
 
         self.stats_logger = WyndblastLifetimeGameStatsLogger(
-            self.alias,
+            get_alias_from_user(self.user),
             NULL_GAME_STATS,
             self.log_dir,
             self.config_mgr.get_lifetime_stats(),
@@ -68,12 +69,7 @@ class WyndBot:
         )
 
         self.daily_activities: DailyActivitiesGame = DailyActivitiesGame(
-            user,
-            config,
-            email_accounts,
-            self.wynd_w2,
-            self.wynd_w3,
-            self.stats_logger
+            user, config, email_accounts, self.wynd_w2, self.wynd_w3, self.stats_logger
         )
 
     def _check_and_submit_available_inventory(self) -> None:

@@ -7,6 +7,7 @@ from utils import logger
 from utils.game_stats import LifetimeGameStatsLogger
 from wyndblast import types
 
+
 class LifetimeStats(T.TypedDict):
     chro: float
     wams: float
@@ -14,9 +15,9 @@ class LifetimeStats(T.TypedDict):
     stage_1: T.Dict[str, int]
     stage_2: T.Dict[str, int]
     stage_3: T.Dict[str, int]
-    commission_tus=dict(),
-    avax_gas_usd=0.0,
-    gas_tus=0.0,
+    commission_tus = (dict(),)
+    avax_gas_usd = (0.0,)
+    gas_tus = (0.0,)
 
 
 NULL_GAME_STATS = {
@@ -48,6 +49,7 @@ NULL_GAME_STATS = {
     "gas_tus": 0.0,
 }
 
+
 class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
     def __init__(
         self,
@@ -62,7 +64,7 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
 
     def merge_game_stats(
         self, user_a_stats: str, user_b_stats: str, log_dir: str, verbose
-    ) -> LifetimeGameStats:
+    ) -> T.Dict[T.Any, T.Any]:
         diff = deepdiff.DeepDiff(user_a_stats, user_b_stats)
         if not diff:
             return user_a_stats
