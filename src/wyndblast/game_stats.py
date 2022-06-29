@@ -101,7 +101,6 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
         if not diff:
             return user_a_stats
 
-        print(user_a_stats, user_b_stats)
         merged_stats = copy.deepcopy(NULL_GAME_STATS)
 
         for item in ["avax_gas", "gas_tus", "chro", "wams"]:
