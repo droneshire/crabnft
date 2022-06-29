@@ -73,7 +73,7 @@ class LifetimeGameStatsLogger:
             return {}
 
     def write(self) -> None:
-        delta_stats = delta_game_stats(
+        delta_stats = self.delta_game_stats(
             self.lifetime_stats, self.last_lifetime_stats, verbose=self.verbose
         )
         file_stats = self.read()
@@ -100,8 +100,8 @@ class LifetimeGameStatsLogger:
 
     def delta_game_stats(
         self,
-        user_a_stats: LifetimeGameStats,
-        user_b_stats: LifetimeGameStats,
+        user_a_stats: T.Dict[T.Any, T.Any],
+        user_b_stats: T.Dict[T.Any, T.Any],
         verbose: bool = False,
     ) -> T.Dict[T.Any, T.Any]:
         raise NotImplementedError

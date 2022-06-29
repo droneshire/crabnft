@@ -237,10 +237,10 @@ class CrabadaLifetimeGameStatsLogger(LifetimeGameStatsLogger):
 
     def delta_game_stats(
         self,
-        user_a_stats: LifetimeGameStats,
-        user_b_stats: LifetimeGameStats,
+        user_a_stats: T.Dict[T.Any, T.Any],
+        user_b_stats: T.Dict[T.Any, T.Any],
         verbose: bool = False,
-    ) -> LifetimeGameStats:
+    ) -> T.Dict[T.Any, T.Any]:
         diff = deepdiff.DeepDiff(user_a_stats, user_b_stats)
         if not diff:
             return NULL_GAME_STATS
@@ -273,7 +273,11 @@ class CrabadaLifetimeGameStatsLogger(LifetimeGameStatsLogger):
         return diffed_stats
 
     def merge_game_stats(
-        self, user_a_stats: str, user_b_stats: str, log_dir: str, verbose
+        self,
+        user_a_stats: LifetimeGameStats,
+        user_b_stats: LifetimeGameStats,
+        log_dir: str,
+        verbose,
     ) -> LifetimeGameStats:
         diff = deepdiff.DeepDiff(user_a_stats, user_b_stats)
         if not diff:
