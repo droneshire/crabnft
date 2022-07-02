@@ -37,6 +37,7 @@ class LootingStrategy(Strategy):
 
     def start(self, team_id: int, game_id: T.Optional[int] = None) -> CrabadaTransaction:
         logger.print_normal(f"Starting loot")
+        signature, expire_time = self._get_loot_signature()
         tx_hash = self.crabada_w3.attack(game_id, team_id, expire_time, signature)
         tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
         gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
