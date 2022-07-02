@@ -55,11 +55,13 @@ class LootSnipes:
     MIN_MP_THRESHOLD = 225
     MIN_PAGE_THRESHOLD = 6
 
-    def __init__(self, credentials: str, verbose: bool = False):
+    def __init__(self, credentials: str, verbose: bool = False, update_from_sheet: bool = True):
         self.verbose = verbose
         self.urls = DISCORD_WEBHOOK_URL
         self.snipes = {}
-        self.gsheet = GoogleSheets(self.ADDRESS_GSHEET, credentials, [])
+        self.gsheet = (
+            GoogleSheets(self.ADDRESS_GSHEET, credentials, []) if update_from_sheet else None
+        )
         self.addresses: T.Dict[str, list] = {"verified": [], "unverified": [], "blocklist": []}
         self.last_update = 0.0
         self.web2 = CrabadaWeb2Client()
@@ -166,7 +168,7 @@ class LootSnipes:
         logger.print_normal(f"Updated {list_name} search index: {self.search_index[list_name]}")
         return search_this_time
 
-    def _find_loot_snipe(
+    def find_loot_snipe(
         self,
         user_address: Address,
         address_list: T.List[str],
@@ -256,11 +258,17 @@ class LootSnipes:
 
         return mine
 
-    def _find_low_mr_teams(
+    def find_low_mr_teams(
         self, user_address: Address, available_loots: T.List[IdleGame], verbose: bool = False
     ) -> T.Dict[int, T.Any]:
         target_pages = {}
+        bot_user_addresses = [v["address"] for _, v in USERS.items()]
         for inx, mine in enumerate(available_loots):
+
+            if mine["owner"] in bot_user_addresses:
+                logger.print_fail_arrow(f"Snipe added for bot holder user: {address}...skipping")
+                continue
+
             faction = mine["faction"].upper()
             page = int((inx + 9) / 9)
             bp, mp = get_bp_mp_from_mine(mine, is_looting=False, verbose=False)
@@ -286,6 +294,9 @@ class LootSnipes:
         return target_pages
 
     def _update_addresses_from_sheet(self) -> None:
+        if not self.gsheet:
+            return
+
         now = time.time()
         if now - self.last_update < self.sheets_update_delta:
             return

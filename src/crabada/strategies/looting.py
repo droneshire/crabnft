@@ -90,6 +90,9 @@ class LootingStrategy(Strategy):
             tx_receipt.get("gasUsed", 0.0),
         )
 
+    def should_start(self, team: Team) -> bool:
+        return team["looting_point"] > 0
+
     def should_reinforce(self, mine) -> bool:
         return self.crabada_w2.loot_needs_reinforcement(mine)
 

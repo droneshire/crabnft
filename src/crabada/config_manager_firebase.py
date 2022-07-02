@@ -75,10 +75,11 @@ class ConfigManagerFirebase(CrabadaConfigManager):
 
         self.last_config_update_time = now
 
-        try:
-            self._read_and_update_config()
-        except:
-            logger.print_fail(f"Failed to read and translate updated config from database")
+        self._read_and_update_config()
+        # try:
+        #     self._read_and_update_config()
+        # except:
+        #     logger.print_fail(f"Failed to read and translate updated config from database")
 
         try:
             self._update_game_stats()

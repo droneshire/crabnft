@@ -16,6 +16,7 @@ from crabada.game_stats import (
     get_daily_stats_message,
     update_game_stats_after_close,
 )
+from crabada.loot_sniping import LootSnipes
 from crabada.miners_revenge import calc_miners_revenge
 from crabada.profitability import CrabadaTransaction, GameStats, NULL_STATS
 from crabada.profitability import get_actual_game_profit, is_profitable_to_take_action
@@ -135,6 +136,8 @@ class CrabadaMineBot:
         csv_header = ["timestamp"] + [k for k in NULL_STATS.keys()] + ["team_id"]
         csv_file = self.stats_logger.get_lifetime_stats_file().split(".")[0] + ".csv"
         self.csv = CsvLogger(csv_file, csv_header, dry_run)
+
+        self.loot_sniper: LootSnipes = LootSnipes("", False, False)
 
         logger.print_ok_blue(f"Adding bot for user {self.alias} with address {self.address}")
 
@@ -563,6 +566,20 @@ class CrabadaMineBot:
 
         return True
 
+    def _find_mine_to_loot(
+        self,
+        team: Team,
+        available_loots: T.List[IdleGame],
+    ) -> T.Optional[IdleGame]:
+        mine_to_loot: IdleGame = None
+
+        loot_candidates = self.loot_sniper.find_low_mr_teams(self.address, available_loots)
+
+        for candidate in loot_candidates:
+            return False
+
+        return mine_to_loot
+
     def _reinforce_loot_or_mine(
         self,
         team: Team,
@@ -713,11 +730,19 @@ class CrabadaMineBot:
         logger.print_fail(f"Error starting mine for team {team['team_id']}")
         return False
 
-    def _start_loot(self, team: Team) -> bool:
-        logger.print_normal(f"Attemting to start loot with team {team['team_id']}!")
+    def _start_loot(self, team: Team, available_loots: T.List[IdleGame]) -> bool:
+        mine_to_loot: T.Optional[IdleGame] = self._find_mine_to_loot(team, available_loots)
+
+        if mine_to_loot is None:
+            logger.print_warn(f"Failed to find a mine to loot!")
+            return False
+
+        logger.print_normal(
+            f"Attemting to start loot of mine {mine_to_loot['game_id']} with team {team['team_id']}!"
+        )
 
         with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
-            tx = self.looting_strategy.start(team["team_id"], game_id["game_id"])
+            tx = self.looting_strategy.start(team["team_id"], mine_to_loot["game_id"])
 
             gas_tus = self._calculate_and_log_gas_price(tx)
 
@@ -735,16 +760,24 @@ class CrabadaMineBot:
                     self.fraud_detection_tracker.add(team["team_id"])
                     logger.print_warn(f"Adding team {team['team_id']} to fraud detection list")
 
+                # remove it from the available loots list
+                for i, loot in enumerate(available_loots):
+                    if loot["game_id"] != mine_to_loot["game_id"]:
+                        continue
+
+                    del available_loots[i]
+                    break
                 return True
 
         logger.print_fail(f"Error starting loot for team {team['team_id']}")
         return False
 
     def _is_team_allowed_to_mine(self, team: Team) -> bool:
-        return (
-            team["team_id"]
-            in self.config_mgr.config["game_specific_configs"]["mining_teams"].keys()
-        )
+        return team["team_id"] in self.config_mgr.config["game_specific_configs"][
+            "mining_teams"
+        ].keys() or self._is_team_allowed_to_loot(
+            team
+        )  # looting teams go back and forth between loot/mine
 
     def _is_team_allowed_to_loot(self, team: Team) -> bool:
         return (
@@ -776,9 +809,11 @@ class CrabadaMineBot:
 
         self._close_mine(team, mine, self.looting_strategy)
 
-    def _check_and_maybe_start_loots(self) -> None:
+    def _check_and_maybe_start(self) -> None:
         available_teams = self.crabada_w2.list_available_teams(self.address)
+        available_loots = self.crabada_w2.list_available_loots(self.address)
 
+        teams_to_mine = []
         for team in available_teams:
             if not self._is_team_allowed_to_loot(team):
                 logger.print_warn(f"Skipping team {team['team_id']} for looting...")
@@ -792,7 +827,10 @@ class CrabadaMineBot:
             if not self.looting_strategy.should_start(team):
                 continue
 
-            self._start_loot(team)
+            if not self._start_loot(team, available_loots):
+                teams_to_mine.append(team)
+
+        self._check_and_maybe_start_mines(teams_to_mine)
 
     def _check_and_maybe_close_mines(self, team: Team, mine: IdleGame) -> None:
         if not self.crabada_w2.mine_is_finished(mine):
@@ -800,12 +838,10 @@ class CrabadaMineBot:
 
         self._close_mine(team, mine, self.mining_strategy)
 
-    def _check_and_maybe_start_mines(self) -> None:
-        available_teams = self.crabada_w2.list_available_teams(self.address)
-
+    def _check_and_maybe_start_mines(self, teams_to_mine: T.List[Team]) -> None:
         groups_started = []
 
-        for team in available_teams:
+        for team in teams_to_mine:
             if not self._is_team_allowed_to_mine(team):
                 logger.print_warn(f"Skipping team {team['team_id']} for mining...")
                 continue
@@ -826,7 +862,7 @@ class CrabadaMineBot:
                 groups_started.append(team_group)
 
     def _check_and_maybe_reinforce(self) -> None:
-        if not self.config_mgr.config["game_specific_configs"]["should_reinforce"]:
+        if not self.config_mgr.config["game_specific_configs"].get("should_reinforce", True):
             return
 
         teams = self.crabada_w2.list_teams(self.address)
@@ -851,7 +887,7 @@ class CrabadaMineBot:
         loots = [l["game_id"] for l in self.crabada_w2.list_my_open_loots(self.address)]
         mines = [m["game_id"] for m in self.crabada_w2.list_my_mines(self.address)]
         for team in teams:
-            if team["game_id"] is None and team["game_type"] != "mining":
+            if team["game_id"] is None and team["game_type"].lower() != "mining":
                 continue
 
             mine = self.crabada_w2.get_mine(team["game_id"])
@@ -911,9 +947,10 @@ class CrabadaMineBot:
         self.config_mgr.check_for_config_updates()
 
         self._print_mine_loot_status()
+
         self._check_and_maybe_close()
         time.sleep(2.0)
-        self._check_and_maybe_start_mines()
+        self._check_and_maybe_start()
         time.sleep(2.0)
         self._check_and_maybe_reinforce()
         time.sleep(2.0)
