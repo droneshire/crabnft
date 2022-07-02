@@ -29,7 +29,7 @@ from wyndblast.wyndblast_web3_client import WyndblastGameWeb3Client
 
 class DailyActivitiesGame:
     MAX_NUM_ROUNDS = 3
-    MIN_CLAIM_CHRO = 200
+    MIN_CLAIM_CHRO = 400
     DAYS_BETWEEN_CLAIM = 1
 
     def __init__(
