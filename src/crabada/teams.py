@@ -48,8 +48,11 @@ def assign_crabs_to_groups(crabs: T.Dict[int, int], groups: T.List[int]) -> T.Di
         if group in [LOOTING_GROUP_NUM, INACTIVE_GROUP_NUM]:
             crab_assignments[crab] = group
             continue
+        if len(groups) < group_inx + 1:
+            continue
         num_crabs += 1
         crab_assignments[crab] = groups[group_inx]
         if num_crabs > CRABS_PER_GROUP:
             num_crabs = 0
+            group_inx += 1
     return crab_assignments
