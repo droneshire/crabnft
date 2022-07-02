@@ -39,7 +39,8 @@ class LootingStrategy(Strategy):
 
     def start(self, team_id: int, game_id: T.Optional[int] = None) -> CrabadaTransaction:
         logger.print_normal(f"Starting loot")
-        signature, expire_time = self._get_loot_signature(game_id, team_id)
+        signature, request_time = self._get_loot_signature(game_id, team_id)
+        expire_time = request_time + 60 * 10
         tx_hash = self.crabada_w3.attack(game_id, team_id, expire_time, signature)
         tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
         gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
@@ -119,8 +120,9 @@ class LootingStrategy(Strategy):
             return 0
 
     def _get_loot_signature(self, game_id: int, team_id: int) -> (str, int):
-        timestamp = str(int(time.time() * 1000))
-        to_sign = f"{self.address}_{timestamp}"
+        timestamp = int(time.time())
+        timestamp_str = str(int(time.time() * 1000))
+        to_sign = f"{self.address}_{timestamp_str}"
         signable = messages.encode_defunct(text=to_sign)
         signed = Account.sign_message(signable, private_key=self.config_mgr.config["private_key"])
         return signed.signature.hex(), timestamp
