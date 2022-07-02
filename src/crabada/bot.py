@@ -828,9 +828,8 @@ class CrabadaMineBot:
             if not self.looting_strategy.should_start(team):
                 continue
 
-            # if not self._start_loot(team, available_loots):
-            #     teams_to_mine.append(team)
-            teams_to_mine.append(team)
+            if not self._start_loot(team, available_loots):
+                teams_to_mine.append(team)
 
         self._check_and_maybe_start_mines(teams_to_mine)
 
