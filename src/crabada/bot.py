@@ -814,7 +814,7 @@ class CrabadaMineBot:
         available_teams = self.crabada_w2.list_available_teams(self.address)
         available_loots = self.crabada_w2.list_available_loots(self.address)
 
-        teams_to_mine = []
+        teams_to_mine = available_teams
         for team in available_teams:
             if not self._is_team_allowed_to_loot(team):
                 logger.print_warn(f"Skipping team {team['team_id']} for looting...")
