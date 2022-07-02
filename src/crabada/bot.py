@@ -887,7 +887,7 @@ class CrabadaMineBot:
         loots = [l["game_id"] for l in self.crabada_w2.list_my_open_loots(self.address)]
         mines = [m["game_id"] for m in self.crabada_w2.list_my_mines(self.address)]
         for team in teams:
-            if team["game_id"] is None and team.get("game_type", "").lower() != "mining":
+            if team["game_id"] is None or team["game_type"] is None:
                 continue
 
             mine = self.crabada_w2.get_mine(team["game_id"])

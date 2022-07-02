@@ -115,6 +115,12 @@ class LootingStrategy(Strategy):
         else:
             return 0
 
+    def _get_loot_signature(self) -> (str, int):
+        server_time = self._get_server_time()
+        signable = messages.encode_defunct(text=self.TO_SIGN.format(server_time))
+        signed = Account.sign_message(signable, private_key=self.private_key)
+        return signed.signature.hex(), server_time
+
     def _get_best_mine_reinforcement(
         self, team: Team, mine: IdleGame, use_own_crabs: bool = False
     ) -> T.Optional[TeamMember]:
