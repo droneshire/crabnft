@@ -69,6 +69,13 @@ class GameProcess(T.TypedDict):
     transaction_time: int
 
 
+class LootAttackInfo(T.TypedDict):
+    expire_time: int
+    game_id: int
+    signature: str
+    team_id: int
+
+
 class TeamMember(T.TypedDict):
     """
     Synthetic info about a team member as returned by mine endpoints

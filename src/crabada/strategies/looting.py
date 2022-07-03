@@ -39,9 +39,8 @@ class LootingStrategy(Strategy):
 
     def start(self, team_id: int, game_id: T.Optional[int] = None) -> CrabadaTransaction:
         logger.print_normal(f"Starting loot")
-        signature, request_time = self._get_loot_signature(game_id, team_id)
-        expire_time = request_time + 60 * 10
-        tx_hash = self.crabada_w3.attack(game_id, team_id, expire_time, signature)
+        signature, expired_time = self._get_loot_signature(game_id, team_id)
+        tx_hash = self.crabada_w3.attack(game_id, team_id, expired_time, signature)
         tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
         gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         return CrabadaTransaction(
@@ -120,12 +119,8 @@ class LootingStrategy(Strategy):
             return 0
 
     def _get_loot_signature(self, game_id: int, team_id: int) -> (str, int):
-        timestamp = int(time.time())
-        timestamp_str = str(int(time.time() * 1000))
-        to_sign = f"{self.address}_{timestamp_str}"
-        signable = messages.encode_defunct(text=to_sign)
-        signed = Account.sign_message(signable, private_key=self.config_mgr.config["private_key"])
-        return signed.signature.hex(), timestamp
+        data = self.crabada_w2.get_loot_attack_data(self.address, team_id, game_id)
+        return data["signature"], data["expire_time"]
 
     def _get_best_mine_reinforcement(
         self, team: Team, mine: IdleGame, use_own_crabs: bool = False

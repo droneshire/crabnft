@@ -1,3 +1,4 @@
+import json
 import typing as T
 import math
 import requests
@@ -7,7 +8,15 @@ from eth_typing import Address
 
 from crabada.factional_advantage import get_faction_adjusted_battle_point, get_bp_mp_from_team
 from crabada.miners_revenge import calc_miners_revenge
-from crabada.types import Crab, CrabadaClass, CrabForLending, IdleGame, LendingCategories, Team
+from crabada.types import (
+    Crab,
+    CrabadaClass,
+    CrabForLending,
+    IdleGame,
+    LendingCategories,
+    LootAttackInfo,
+    Team,
+)
 from crabada.types import CRABADA_ID_TO_CLASS
 from utils import logger
 from utils.general import first_or_none, n_or_better_or_none, get_pretty_seconds
@@ -25,6 +34,7 @@ class CrabadaWeb2Client:
     """
 
     BASE_URL = "https://idle-game-api.crabada.com/public/idle"
+    MARKETPLACE_URL = "https://market-api.crabada.com"
 
     BROWSER_HEADERS = {
         "authority": "idle-game-api.crabada.com",
@@ -41,6 +51,23 @@ class CrabadaWeb2Client:
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36",
     }
 
+    BROWSER_WITH_AUTH_HEADERS = {
+        "authority": "idle-game-api.crabada.com",
+        "accept": "application/json, text/plain, */*",
+        "accept-language": "en-US,en;q=0.9",
+        # "authorization": "Bearer xxxxx"
+        "dnt": "1",
+        "origin": "https://idle.crabada.com",
+        "referer": "https://idle.crabada.com/",
+        "sec-ch-ua": '" Not A;Brand";v="99", "Chromium";v="101", "Google Chrome";v="101"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"Linux"',
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "same-site",
+        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.0.0 Safari/537.36",
+    }
+
     # reinforcement stuff
     N_CRAB_PERCENT = 37.0
     REINFORCE_TIME_WINDOW = 60 * (30 - 1)  # 30 minute window + 1 minute buffer
@@ -55,8 +82,9 @@ class CrabadaWeb2Client:
 
     MAX_BP_NORMAL_CRAB = 237
 
-    def __init__(self) -> None:
+    def __init__(self, authorization_token: str = "") -> None:
         self.requests = requests
+        self.authorization_token = authorization_token
 
     def _get_request(self, url: str, params: T.Dict[str, T.Any] = {}) -> T.Any:
         try:
@@ -67,6 +95,72 @@ class CrabadaWeb2Client:
             raise
         except:
             return {}
+
+    def _post_put_request(
+        self,
+        request_type: str,
+        url: str,
+        json_data: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
+        headers: T.Dict[str, T.Any] = {},
+    ) -> T.Any:
+        if not headers:
+            headers = self.BROWSER_WITH_AUTH_HEADERS
+            headers["authorization"] = f"Bearer {self.authorization_token}"
+
+            if not self.authorization_token:
+                logger.print_fail(f"No auth token present, unable to complete post request!")
+                return {}
+
+        try:
+            return self.requests.request(
+                request_type, url, json=json_data, params=params, headers=headers, timeout=5.0
+            ).json()
+        except KeyboardInterrupt:
+            raise
+        except:
+            return {}
+
+    def get_loot_attack_data(
+        self,
+        user_address: Address,
+        attack_team_id: int,
+        loot_id: int,
+        params: T.Dict[str, T.Any] = {},
+    ) -> LootAttackInfo:
+        url = self.BASE_URL + f"/attack/{loot_id}"
+        data = {
+            "team_id": attack_team_id,
+        }
+
+        try:
+            res = self._post_put_request("PUT", url, json_data=json.loads(json.dumps(data)))
+            return res["result"]
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.format_fail(f"Failed to get loot data!\n{res}")
+            return {}
+
+    def get_auth_token(self, user_address: Address, signature: str, timestamp: int) -> str:
+        url = self.MARKETPLACE_URL + "/crabada-user/public/login-signature"
+        data = {
+            "address": user_address,
+            "sign": signature,
+            "timestamp": timestamp,
+        }
+
+        try:
+            res = self._post_put_request("POST",
+                url, json_data=json.loads(json.dumps(data)), headers=self.BROWSER_HEADERS
+            )
+            self.authorization_token = res["result"]["accessToken"]
+            return self.authorization_token
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.format_fail(f"Failed to get authorization!\n{res}")
+            return ""
 
     def get_crabs(self, user_address: Address, params: T.Dict[str, T.Any] = {}) -> T.List[Crab]:
         res = self.list_crabs_in_game_raw(user_address, params)

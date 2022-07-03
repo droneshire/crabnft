@@ -1,10 +1,12 @@
 import copy
 import datetime
+import json
 import logging
 import math
 import os
 import time
 import typing as T
+from eth_account import Account, messages
 from twilio.rest import Client
 from web3.types import Address
 
@@ -109,6 +111,10 @@ class CrabadaMineBot:
         )
         self.config_mgr.init()
 
+        if self.config_mgr.config["game_specific_configs"]["authorization"]:
+            auth_token = self._authorize_user()
+            self.config_mgr.config["game_specific_configs"]["authorization"] = auth_token
+
         self.mining_strategy = STRATEGY_SELECTION[
             config["game_specific_configs"]["mining_strategy"]
         ](
@@ -142,6 +148,15 @@ class CrabadaMineBot:
         self.loot_sniper: LootSnipes = LootSnipes("", False, False)
 
         logger.print_ok_blue(f"Adding bot for user {self.alias} with address {self.address}")
+
+    def _authorize_user(self) -> str:
+        address = self.address.lower()
+        timestamp = str(int(time.time() * 1000))
+        to_sign = f"{address}_{timestamp}"
+        signable = messages.encode_defunct(text=to_sign)
+        signed = Account.sign_message(signable, private_key=self.config_mgr.config["private_key"])
+        logger.print_normal(f"Signing authorization and getting auth token....")
+        return self.crabada_w2.get_auth_token(self.address, signed.signature.hex(), timestamp)
 
     def _check_calc_and_send_daily_update_message(self) -> None:
         today = datetime.date.today()
@@ -580,6 +595,7 @@ class CrabadaMineBot:
         )
 
         delta_points = 0
+        highest_page = 0
         for loot, data in loot_candidates.items():
             mine_team: Team = Team(
                 faction=data["faction"], battle_point=data["defense_battle_point"]
@@ -588,9 +604,18 @@ class CrabadaMineBot:
                 team, mine_team
             )
             new_delta_points = loot_points - mine_points
-            if new_delta_points > delta_points:
+            if (
+                new_delta_points > delta_points
+                or new_delta_points == delta_points
+                and data["page"] > highest_page
+            ):
+                highest_page = data["page"]
                 delta_points = new_delta_points
                 mine_to_loot = loot
+
+        if mine_to_loot:
+            logger.print_normal(f"Loot[{mine_to_loot}]: Theirs: {loot_candidates[mine_to_loot]['faction']} Ours: {team['faction']}")
+            logger.print_normal(f"{json.dumps(loot_candidates[mine_to_loot], indent=4)}"            )
 
         return mine_to_loot
 
@@ -797,6 +822,7 @@ class CrabadaMineBot:
         return (
             team["team_id"]
             in self.config_mgr.config["game_specific_configs"]["looting_teams"].keys()
+            and self.config_mgr.config["game_specific_configs"]["authorization"]
         )
 
     def _check_and_maybe_reinforce_loots(self, team: Team, mine: IdleGame) -> None:
@@ -827,7 +853,7 @@ class CrabadaMineBot:
         available_teams = self.crabada_w2.list_available_teams(self.address)
         available_loots = self.loot_sniper.get_available_loots(self.address, 9, True)
 
-        teams_to_mine = []
+        teams_to_mine = available_teams[:]
         for team in available_teams:
             if not self._is_team_allowed_to_loot(team):
                 logger.print_warn(f"Skipping team {team['team_id']} for looting...")
@@ -841,8 +867,8 @@ class CrabadaMineBot:
             if not self.looting_strategy.should_start(team):
                 continue
 
-            if not self._start_loot(team, available_loots):
-                teams_to_mine.append(team)
+            if self._start_loot(team, available_loots):
+                teams_to_mine.remove(team)
 
         self._check_and_maybe_start_mines(teams_to_mine)
 
