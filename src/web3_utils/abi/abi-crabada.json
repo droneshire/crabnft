@@ -1,9 +1,21 @@
 [
   {
     "inputs": [
-      { "internalType": "uint256", "name": "teamId", "type": "uint256" },
-      { "internalType": "uint256", "name": "position", "type": "uint256" },
-      { "internalType": "uint256", "name": "crabadaId", "type": "uint256" }
+      {
+        "internalType": "uint256",
+        "name": "teamId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "position",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "crabadaId",
+        "type": "uint256"
+      }
     ],
     "name": "addCrabadaToTeam",
     "outputs": [],
@@ -12,8 +24,16 @@
   },
   {
     "inputs": [
-      { "internalType": "uint256", "name": "gameId", "type": "uint256" },
-      { "internalType": "uint256", "name": "attackTeamId", "type": "uint256" }
+      {
+        "internalType": "uint256",
+        "name": "gameId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "attackTeamId",
+        "type": "uint256"
+      }
     ],
     "name": "attack",
     "outputs": [],
@@ -22,7 +42,11 @@
   },
   {
     "inputs": [
-      { "internalType": "uint256", "name": "gameId", "type": "uint256" }
+      {
+        "internalType": "uint256",
+        "name": "gameId",
+        "type": "uint256"
+      }
     ],
     "name": "closeGame",
     "outputs": [],
@@ -31,9 +55,21 @@
   },
   {
     "inputs": [
-      { "internalType": "uint256", "name": "crabadaId1", "type": "uint256" },
-      { "internalType": "uint256", "name": "crabadaId2", "type": "uint256" },
-      { "internalType": "uint256", "name": "crabadaId3", "type": "uint256" }
+      {
+        "internalType": "uint256",
+        "name": "crabadaId1",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "crabadaId2",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "crabadaId3",
+        "type": "uint256"
+      }
     ],
     "name": "createTeam",
     "outputs": [],
@@ -42,7 +78,11 @@
   },
   {
     "inputs": [
-      { "internalType": "uint256[]", "name": "crabadaIds", "type": "uint256[]" }
+      {
+        "internalType": "uint256[]",
+        "name": "crabadaIds",
+        "type": "uint256[]"
+      }
     ],
     "name": "deposit",
     "outputs": [],
@@ -51,9 +91,21 @@
   },
   {
     "inputs": [
-      { "internalType": "uint256", "name": "gameId", "type": "uint256" },
-      { "internalType": "uint256", "name": "crabadaId", "type": "uint256" },
-      { "internalType": "uint256", "name": "borrowPrice", "type": "uint256" }
+      {
+        "internalType": "uint256",
+        "name": "gameId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "crabadaId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "borrowPrice",
+        "type": "uint256"
+      }
     ],
     "name": "reinforceAttack",
     "outputs": [],
@@ -62,9 +114,21 @@
   },
   {
     "inputs": [
-      { "internalType": "uint256", "name": "gameId", "type": "uint256" },
-      { "internalType": "uint256", "name": "crabadaId", "type": "uint256" },
-      { "internalType": "uint256", "name": "borrowPrice", "type": "uint256" }
+      {
+        "internalType": "uint256",
+        "name": "gameId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "crabadaId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "borrowPrice",
+        "type": "uint256"
+      }
     ],
     "name": "reinforceDefense",
     "outputs": [],
@@ -73,8 +137,16 @@
   },
   {
     "inputs": [
-      { "internalType": "uint256", "name": "teamId", "type": "uint256" },
-      { "internalType": "uint256", "name": "position", "type": "uint256" }
+      {
+        "internalType": "uint256",
+        "name": "teamId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "position",
+        "type": "uint256"
+      }
     ],
     "name": "removeCrabadaFromTeam",
     "outputs": [],
@@ -83,8 +155,16 @@
   },
   {
     "inputs": [
-      { "internalType": "uint256", "name": "crabadaId", "type": "uint256" },
-      { "internalType": "uint256", "name": "price", "type": "uint256" }
+      {
+        "internalType": "uint256",
+        "name": "crabadaId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "price",
+        "type": "uint256"
+      }
     ],
     "name": "setLendingPrice",
     "outputs": [],
@@ -93,7 +173,11 @@
   },
   {
     "inputs": [
-      { "internalType": "uint256", "name": "gameId", "type": "uint256" }
+      {
+        "internalType": "uint256",
+        "name": "gameId",
+        "type": "uint256"
+      }
     ],
     "name": "settleGame",
     "outputs": [],
@@ -102,7 +186,11 @@
   },
   {
     "inputs": [
-      { "internalType": "uint256", "name": "teamId", "type": "uint256" }
+      {
+        "internalType": "uint256",
+        "name": "teamId",
+        "type": "uint256"
+      }
     ],
     "name": "startGame",
     "outputs": [],
@@ -111,8 +199,16 @@
   },
   {
     "inputs": [
-      { "internalType": "address", "name": "to", "type": "address" },
-      { "internalType": "uint256[]", "name": "crabadaIds", "type": "uint256[]" }
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "crabadaIds",
+        "type": "uint256[]"
+      }
     ],
     "name": "withdraw",
     "outputs": [],
