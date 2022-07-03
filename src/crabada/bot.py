@@ -574,7 +574,9 @@ class CrabadaMineBot:
     ) -> T.Optional[IdleGame]:
         mine_to_loot: IdleGame = None
 
-        loot_candidates = self.loot_sniper.find_low_mr_teams(self.address, available_loots)
+        loot_candidates = self.loot_sniper.find_low_mr_teams(
+            self.address, available_loots, verbose=True
+        )
 
         for candidate in loot_candidates:
             return False
