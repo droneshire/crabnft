@@ -21,7 +21,7 @@ from crabada.game_stats import (
     update_game_stats_after_close,
 )
 from crabada.loot_sniping import LootSnipes
-from crabada.miners_revenge import calc_miners_revenge
+from crabada.miners_revenge import calc_miners_revenge, miners_revenge
 from crabada.profitability import CrabadaTransaction, GameStats, NULL_STATS
 from crabada.profitability import get_actual_game_profit, is_profitable_to_take_action
 from crabada.strategies.strategy import GameStage, Strategy
@@ -594,7 +594,7 @@ class CrabadaMineBot:
             self.address, available_loots, verbose=True
         )
 
-        delta_points = 0
+        lowest_mr = 100.0
         highest_page = 0
         for loot, data in loot_candidates.items():
             mine_team: Team = Team(
@@ -603,19 +603,20 @@ class CrabadaMineBot:
             loot_points, mine_points = get_faction_adjusted_battle_points_from_teams(
                 team, mine_team
             )
-            new_delta_points = loot_points - mine_points
-            if (
-                new_delta_points > delta_points
-                or new_delta_points == delta_points
-                and data["page"] > highest_page
-            ):
-                highest_page = data["page"]
-                delta_points = new_delta_points
+            mr = miners_revenge(
+                mine_points, loot_points, data["defense_mine_point"], [], 3, False, False
+            )
+            if mr < lowest_mr or mr == lowest_mr and data["page"] > highest_page:
                 mine_to_loot = loot
+                lowest_mr = mr
+                highest_page = data["page"]
 
         if mine_to_loot:
-            logger.print_normal(f"Loot[{mine_to_loot}]: Theirs: {loot_candidates[mine_to_loot]['faction']} Ours: {team['faction']}")
-            logger.print_normal(f"{json.dumps(loot_candidates[mine_to_loot], indent=4)}"            )
+            logger.print_normal(
+                f"Loot[{mine_to_loot}]: Theirs: {loot_candidates[mine_to_loot]['faction']} Ours: {team['faction']}"
+            )
+            logger.print_normal(f"Miners Revenge: {lowest_mr}")
+            logger.print_normal(f"{json.dumps(loot_candidates[mine_to_loot], indent=4)}")
 
         return mine_to_loot
 

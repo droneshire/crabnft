@@ -16,16 +16,15 @@ HIGH_MP_CRAB_BATTLE_POINT = 220
 HIGH_MP_CRAB_MINE_POINT = 82
 
 
-def calc_miners_revenge(
-    mine: IdleGame,
+def miners_revenge(
+    defense_point: int,
+    attack_point: int,
+    defense_mine_point: int,
+    additional_crabs: T.List[CrabForLending],
+    num_defense_crabs: int,
     is_looting: bool,
-    additional_crabs: T.List[CrabForLending] = [],
     verbose: bool = False,
 ) -> float:
-    defense_point = get_faction_adjusted_battle_point(mine, is_looting=False)
-    attack_point = get_faction_adjusted_battle_point(mine, is_looting=True)
-
-    defense_mine_point = 0
     num_additional_crabs = 0
 
     for crab in additional_crabs:
@@ -42,16 +41,11 @@ def calc_miners_revenge(
     if verbose:
         logger.print_normal(f"MR D:{defense_point} A:{attack_point}")
 
-    key = "defense_team_info" if "defense_team_info" in mine else "defense_team_members"
-    for crab in mine[key]:
-        _, defense_mp = get_bp_mp_from_crab(crab)
-        defense_mine_point += defense_mp
-
     if verbose:
         logger.print_normal(f"MR defense MP {defense_mine_point}")
 
     revenge = BASE_CHANCE
-    mine_point = defense_mine_point / (len(mine[key]) + num_additional_crabs)
+    mine_point = defense_mine_point / (num_defense_crabs + num_additional_crabs)
 
     if mine_point > 56:
         revenge += MP_MODIFIER * (mine_point - 56)
@@ -64,3 +58,29 @@ def calc_miners_revenge(
         revenge += CN_MODIFIER
 
     return revenge
+
+
+def calc_miners_revenge(
+    mine: IdleGame,
+    is_looting: bool,
+    additional_crabs: T.List[CrabForLending] = [],
+    verbose: bool = False,
+) -> float:
+    defense_point = get_faction_adjusted_battle_point(mine, is_looting=False)
+    attack_point = get_faction_adjusted_battle_point(mine, is_looting=True)
+
+    defense_mine_point = 0
+    key = "defense_team_info" if "defense_team_info" in mine else "defense_team_members"
+    for crab in mine[key]:
+        _, defense_mp = get_bp_mp_from_crab(crab)
+        defense_mine_point += defense_mp
+
+    return miners_revenge(
+        defense_point,
+        attack_point,
+        defense_mine_point,
+        additional_crabs,
+        len(mine[key]),
+        is_looting,
+        verbose,
+    )

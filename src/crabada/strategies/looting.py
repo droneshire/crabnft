@@ -120,6 +120,9 @@ class LootingStrategy(Strategy):
 
     def _get_loot_signature(self, game_id: int, team_id: int) -> (str, int):
         data = self.crabada_w2.get_loot_attack_data(self.address, team_id, game_id)
+        if "signature" not in data or "expire_time" not in data:
+            logger.print_fail(f"Failed to get loot attack info:\n{data}")
+            return "", 0
         return data["signature"], data["expire_time"]
 
     def _get_best_mine_reinforcement(

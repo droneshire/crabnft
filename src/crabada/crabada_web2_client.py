@@ -151,8 +151,8 @@ class CrabadaWeb2Client:
         }
 
         try:
-            res = self._post_put_request("POST",
-                url, json_data=json.loads(json.dumps(data)), headers=self.BROWSER_HEADERS
+            res = self._post_put_request(
+                "POST", url, json_data=json.loads(json.dumps(data)), headers=self.BROWSER_HEADERS
             )
             self.authorization_token = res["result"]["accessToken"]
             return self.authorization_token

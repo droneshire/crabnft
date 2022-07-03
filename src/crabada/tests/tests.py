@@ -58,7 +58,7 @@ TEST_CONFIG = UserConfig(
 def test_miners_revenge() -> None:
     expected_miners_revenge = 42.25
     this_dir = os.path.dirname(os.path.realpath(__file__))
-    crabada_test_dir = os.path.join(this_dir, "crabada", "tests")
+    crabada_test_dir = os.path.join(this_dir)
 
     mine_file = os.path.join(crabada_test_dir, "test_mines", "example_mine.json")
     with open(mine_file, "r") as infile:
@@ -382,8 +382,8 @@ def test_config_manager() -> None:
 
 
 if __name__ == "__main__":
-    test_config_manager_firebase()
-    test_config_manager()
-    test_config_manager_sheets()
+    # test_config_manager_firebase()
+    # test_config_manager()
+    # test_config_manager_sheets()
     test_miners_revenge()
-    test_profitability_calc()
+    # test_profitability_calc()
