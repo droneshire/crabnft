@@ -12,6 +12,7 @@ from config_crabada import ADMIN_EMAIL, GAME_BOT_STRING
 from crabada.config_manager_firebase import ConfigManagerFirebase
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
+from crabada.factional_advantage import get_faction_adjusted_battle_points_from_teams
 from crabada.game_stats import CrabadaLifetimeGameStatsLogger, NULL_GAME_STATS, Result
 from crabada.game_stats import (
     get_daily_stats_message,
@@ -578,8 +579,18 @@ class CrabadaMineBot:
             self.address, available_loots, verbose=True
         )
 
-        for candidate in loot_candidates:
-            return False
+        delta_points = 0
+        for loot, data in loot_candidates.items():
+            mine_team: Team = Team(
+                faction=data["faction"], battle_point=data["defense_battle_point"]
+            )
+            loot_points, mine_points = get_faction_adjusted_battle_points_from_teams(
+                team, mine_team
+            )
+            new_delta_points = loot_points - mine_points
+            if new_delta_points > delta_points:
+                delta_points = new_delta_points
+                mine_to_loot = loot
 
         return mine_to_loot
 
@@ -741,11 +752,11 @@ class CrabadaMineBot:
             return False
 
         logger.print_normal(
-            f"Attemting to start loot of mine {mine_to_loot['game_id']} with team {team['team_id']}!"
+            f"Attemting to start loot of mine {mine_to_loot} with team {team['team_id']}!"
         )
 
         with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
-            tx = self.looting_strategy.start(team["team_id"], mine_to_loot["game_id"])
+            tx = self.looting_strategy.start(team["team_id"], mine_to_loot)
 
             gas_tus = self._calculate_and_log_gas_price(tx)
 
@@ -765,7 +776,7 @@ class CrabadaMineBot:
 
                 # remove it from the available loots list
                 for i, loot in enumerate(available_loots):
-                    if loot["game_id"] != mine_to_loot["game_id"]:
+                    if loot["game_id"] != mine_to_loot:
                         continue
 
                     del available_loots[i]
@@ -814,7 +825,7 @@ class CrabadaMineBot:
 
     def _check_and_maybe_start(self) -> None:
         available_teams = self.crabada_w2.list_available_teams(self.address)
-        available_loots = self.crabada_w2.list_available_loots(self.address)
+        available_loots = self.loot_sniper.get_available_loots(self.address, 9, True)
 
         teams_to_mine = []
         for team in available_teams:

@@ -91,7 +91,7 @@ class LootSnipes:
 
     def hunt(self, address: str) -> None:
         self._update_addresses_from_sheet()
-        available_loots = self._get_available_loots(address, 9, False)
+        available_loots = self.get_available_loots(address, 9, False)
 
         if len(self.addresses["verified"]) > 0:
             addresses_to_search = self._update_address_search_circ_buffer(
@@ -122,7 +122,7 @@ class LootSnipes:
         with open(self.log_file, "w") as outfile:
             json.dump(data, outfile, indent=4)
 
-    def _get_available_loots(
+    def get_available_loots(
         self, user_address: Address, max_pages: int = 8, verbose: bool = False
     ) -> T.List[IdleGame]:
 
@@ -370,7 +370,7 @@ class LootSnipes:
         return embed
 
     def _hunt_low_mp_teams(self, address: str, available_loots: T.List[IdleGame]) -> None:
-        update_loot_snipes = self._find_low_mr_teams(address, available_loots, verbose=True)
+        update_loot_snipes = self.find_low_mr_teams(address, available_loots, verbose=True)
 
         def get_embed(mine: int, data: T.Dict[str, T.Any]) -> DiscordEmbed:
             page = data["page"]
@@ -404,7 +404,7 @@ class LootSnipes:
         available_loots: T.List[IdleGame],
         verified: bool,
     ) -> None:
-        update_loot_snipes = self._find_loot_snipe(
+        update_loot_snipes = self.find_loot_snipe(
             address, address_list, available_loots, verbose=self.verbose
         )
 

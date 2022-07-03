@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import requests
 import typing as T
 from contextlib import contextmanager
 
@@ -19,6 +20,8 @@ def web3_transaction(err_string_compare: str, handler: T.Callable) -> T.Iterator
     try:
         yield
     except exceptions.ContractLogicError as e:
+        logger.print_fail(f"{e}")
+    except requests.exceptions.HTTPError as e:
         logger.print_fail(f"{e}")
     except ValueError as e:
         logger.print_fail(f"{e.args[0]['message']} COMPARE: {err_string_compare}")

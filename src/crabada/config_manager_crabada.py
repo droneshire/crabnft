@@ -1,4 +1,5 @@
 import copy
+import json
 import typing as T
 
 from crabada.crabada_web2_client import CrabadaWeb2Client
@@ -7,6 +8,7 @@ from utils import logger
 from utils.config_manager import ConfigManager
 from utils.config_types import UserConfig
 from utils.email import Email
+from utils.security import decrypt
 from crabada.game_stats import NULL_GAME_STATS
 
 

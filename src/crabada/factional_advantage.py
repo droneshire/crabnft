@@ -92,6 +92,27 @@ def get_defense_faction(game: IdleGame) -> Faction:
     return T.cast(Faction, game.get("defense_team_faction", ""))
 
 
+def get_faction_adjusted_battle_points_from_teams(
+    loot_team: Team, mine_team: Team, verbose: bool = False
+) -> (int, int):
+    mine_faction = mine_team["faction"]
+    loot_faction = loot_team["faction"]
+
+    mine_point = mine_team["battle_point"]
+    if mine_faction == Faction.NO_FACTION:
+        mine_point = int(math.floor(mine_point * NEUTRAL_ADVANTAGE_MULT))
+    elif mine_faction in FACTIONAL_ADVANTAGE.get(loot_faction, []):
+        mine_points = int(math.floor(mine_point * FACTIONAL_ADVANTAGE_MULT))
+
+    loot_point = loot_team["battle_point"]
+    if loot_faction == Faction.NO_FACTION:
+        loot_point = int(math.floor(loot_point * NEUTRAL_ADVANTAGE_MULT))
+    elif loot_faction in FACTIONAL_ADVANTAGE.get(mine_faction, []):
+        loot_point = int(math.floor(loot_point * FACTIONAL_ADVANTAGE_MULT))
+
+    return loot_point, mine_point
+
+
 def get_faction_adjusted_battle_point(
     game: IdleGame, is_looting: bool = False, verbose: bool = False
 ) -> int:
