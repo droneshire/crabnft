@@ -113,6 +113,8 @@ class CrabadaMineBot:
 
         if not self.config_mgr.config["game_specific_configs"].get("authorization", ""):
             auth_token = self._authorize_user()
+            if auth_token:
+                logger.print_ok(f"Successfully authorized user")
             self.config_mgr.config["game_specific_configs"]["authorization"] = auth_token
 
         self.mining_strategy = STRATEGY_SELECTION[
