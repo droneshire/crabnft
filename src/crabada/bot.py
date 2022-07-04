@@ -896,7 +896,7 @@ class CrabadaMineBot:
                 continue
 
             if not available_loots:
-                available_loots = self.loot_sniper.get_available_loots(self.address, 9, True)
+                available_loots = self.loot_sniper.get_available_loots(self.address, 9, False)
 
             if self._start_loot(team, available_loots):
                 teams_to_mine.remove(team)
