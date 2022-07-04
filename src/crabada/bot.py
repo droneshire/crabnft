@@ -876,7 +876,7 @@ class CrabadaMineBot:
 
     def _check_and_maybe_start(self) -> None:
         available_teams = self.crabada_w2.list_available_teams(self.address)
-        available_loots = self.loot_sniper.get_available_loots(self.address, 9, True)
+        available_loots = []
 
         teams_to_mine = available_teams[:]
         for team in available_teams:
@@ -891,6 +891,9 @@ class CrabadaMineBot:
 
             if not self.looting_strategy.should_start(team):
                 continue
+
+            if not available_loots:
+                available_loots = self.loot_sniper.get_available_loots(self.address, 9, True)
 
             if self._start_loot(team, available_loots):
                 teams_to_mine.remove(team)
