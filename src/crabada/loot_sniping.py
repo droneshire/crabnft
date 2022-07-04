@@ -55,14 +55,19 @@ class LootSnipes:
     MIN_MP_THRESHOLD = 225
     MIN_PAGE_THRESHOLD = 6
 
-    def __init__(self, credentials: str, verbose: bool = False, update_from_sheet: bool = True):
+    def __init__(
+        self,
+        credentials: str,
+        verbose: bool = False,
+        update_from_sheet: bool = True,
+        log_name_suffix: str = "",
+    ):
         self.verbose = verbose
         self.urls = DISCORD_WEBHOOK_URL
         self.snipes = {}
         self.gsheet = (
             GoogleSheets(self.ADDRESS_GSHEET, credentials, []) if update_from_sheet else None
         )
-        self.addresses: T.Dict[str, list] = {"verified": [], "unverified": [], "blocklist": []}
         self.last_update = 0.0
         self.web2 = CrabadaWeb2Client()
         self.search_index: T.Dict[str, int] = {
@@ -72,9 +77,27 @@ class LootSnipes:
         self.sheets_update_delta = self.UPDATE_TIME_DELTA
 
         self.hit_rate = {}
-        self.log_file = os.path.join(logger.get_logging_dir("crabada"), "sniper", "hit_rates.json")
-
-        self.hit_rate = self._read_log()
+        if update_from_sheet:
+            self.log_file = os.path.join(
+                logger.get_logging_dir("crabada"),
+                "sniper",
+                f"hit_rates{'_' + log_name_suffix if log_name_suffix else ''}.json",
+            )
+            self.addresses: T.Dict[str, list] = {"verified": [], "unverified": [], "blocklist": []}
+            self.hit_rate = self._read_log()
+        else:
+            self.log_file = os.path.join(
+                logger.get_logging_dir("crabada"), "sniper", "no_reinforce.json"
+            )
+            data = self._read_log()
+            if not data:
+                self.addresses: T.Dict[str, list] = {
+                    "verified": [],
+                    "unverified": [],
+                    "blocklist": [],
+                }
+            else:
+                self.addresses: T.Dict[str, list] = data
 
     def delete_all_messages(self) -> None:
         logger.print_fail("Deleting all messages")
@@ -168,6 +191,18 @@ class LootSnipes:
         logger.print_normal(f"Updated {list_name} search index: {self.search_index[list_name]}")
         return search_this_time
 
+    def add_no_reinforce_address(self, mine: IdleGame) -> None:
+        user_address = mine.get("owner", "")
+        if user_address in self.addresses["verified"]:
+            return
+        self.addresses["verified"].append(user_address)
+        self._write_log(self.addresses)
+
+    def remove_no_reinforce_address(self, mine: IdleGame) -> None:
+        user_address = mine.get("owner", "")
+        if user_address in self.addresses["verified"]:
+            self.addresses["verified"].remove(user_address)
+
     def find_loot_snipe(
         self,
         user_address: Address,
@@ -181,6 +216,10 @@ class LootSnipes:
         if verbose:
             logger.print_normal(f"Searching through addresses...")
 
+        if not address_list:
+            address_list = self.addresses["verified"]
+            address_list.extend(self.addresses["unverified"])
+
         pb = tqdm.tqdm(total=len(address_list))
         loot_list = {}
         for address in address_list:
@@ -188,7 +227,7 @@ class LootSnipes:
                 logger.print_fail_arrow(f"Snipe added for bot holder user: {address}...skipping")
                 continue
             if address in self.addresses["blocklist"]:
-                logger.print_warn(f"Owner ({owner}) is on blocklist...skipping")
+                logger.print_warn(f"Owner ({address}) is on blocklist...skipping")
                 continue
             mines = {m["game_id"]: address for m in self.web2.list_my_mines(address)}
             loot_list.update(mines)

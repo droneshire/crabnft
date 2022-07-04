@@ -587,13 +587,33 @@ class CrabadaMineBot:
         self,
         team: Team,
         available_loots: T.List[IdleGame],
-    ) -> T.Optional[IdleGame]:
-        mine_to_loot: IdleGame = None
+    ) -> T.Optional[int]:
+        mine_to_loot = None
 
-        loot_candidates = self.loot_sniper.find_low_mr_teams(
-            self.address, available_loots, verbose=True
-        )
+        loot_candidates = self.loot_sniper.find_loot_snipe(self.address, [], available_loots)
 
+        mine_to_loot, lowest_mr = self._find_best_loot(team, loot_candidates)
+
+        if mine_to_loot is None:
+            loot_candidates = self.loot_sniper.find_low_mr_teams(
+                self.address, available_loots, verbose=True
+            )
+
+            mine_to_loot, lowest_mr = self._find_best_loot(team, loot_candidates)
+
+        if mine_to_loot is not None:
+            logger.print_normal(
+                f"Loot[{mine_to_loot}]: Theirs: {loot_candidates[mine_to_loot]['faction']} Ours: {team['faction']}"
+            )
+            logger.print_normal(f"Miners Revenge: {lowest_mr:.2}%")
+            logger.print_normal(f"{json.dumps(loot_candidates[mine_to_loot], indent=4)}")
+
+        return mine_to_loot
+
+    def _find_best_loot(
+        self, team: Team, loot_candidates: T.Dict[int, T.Any]
+    ) -> T.Tuple[int, float]:
+        mine_to_loot: int = None
         lowest_mr = 100.0
         highest_page = 0
         for loot, data in loot_candidates.items():
@@ -611,14 +631,7 @@ class CrabadaMineBot:
                 lowest_mr = mr
                 highest_page = data["page"]
 
-        if mine_to_loot:
-            logger.print_normal(
-                f"Loot[{mine_to_loot}]: Theirs: {loot_candidates[mine_to_loot]['faction']} Ours: {team['faction']}"
-            )
-            logger.print_normal(f"Miners Revenge: {lowest_mr}")
-            logger.print_normal(f"{json.dumps(loot_candidates[mine_to_loot], indent=4)}")
-
-        return mine_to_loot
+        return mine_to_loot, lowest_mr
 
     def _reinforce_loot_or_mine(
         self,
@@ -847,6 +860,12 @@ class CrabadaMineBot:
         if team["team_id"] in self.game_stats:
             # we don't do gas start for loots, so we don't track it
             self.game_stats[team["team_id"]]["gas_start"] = 0.0
+
+        num_reinforcements = self.crabada_w2.get_num_mine_reinforcements(mine)
+        if num_reinforcements == 0:
+            self.loot_sniper.add_no_reinforce_address(mine)
+        else:
+            self.loot_sniper.remove_no_reinforce_address(mine)
 
         self._close_mine(team, mine, self.looting_strategy)
 
