@@ -112,10 +112,7 @@ class CrabadaMineBot:
         self.config_mgr.init()
 
         if not self.config_mgr.config["game_specific_configs"].get("authorization", ""):
-            auth_token = self._authorize_user()
-            if auth_token:
-                logger.print_ok(f"Successfully authorized user: {auth_token}")
-            self.config_mgr.config["game_specific_configs"]["authorization"] = auth_token
+            self._authorize_user()
 
         self.mining_strategy = STRATEGY_SELECTION[
             config["game_specific_configs"]["mining_strategy"]
@@ -160,7 +157,14 @@ class CrabadaMineBot:
         signable = messages.encode_defunct(text=to_sign)
         signed = Account.sign_message(signable, private_key=self.config_mgr.config["private_key"])
         logger.print_normal(f"Signing authorization and getting auth token....")
-        return self.crabada_w2.get_auth_token(self.address, signed.signature.hex(), timestamp)
+        auth_token = self.crabada_w2.get_auth_token(self.address, signed.signature.hex(), timestamp)
+        if not auth_token:
+            logger.print_warn(f"Failed to auth user!")
+            return ""
+
+        logger.print_ok(f"Successfully authorized user: {auth_token}")
+        self.config_mgr.config["game_specific_configs"]["authorization"] = auth_token
+        return auth_token
 
     def _check_calc_and_send_daily_update_message(self) -> None:
         today = datetime.date.today()
@@ -827,6 +831,7 @@ class CrabadaMineBot:
                 return True
 
         logger.print_fail(f"Error starting loot for team {team['team_id']}")
+        self._authorize_user()
         return False
 
     def _is_team_allowed_to_mine(self, team: Team) -> bool:
