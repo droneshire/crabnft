@@ -144,10 +144,7 @@ class ConfigManager:
         for config_item, value in self.config.items():
             if config_item == "private_key":
                 continue
-            if isinstance(value, dict):
-                logger.print_normal(
-                    f"\t{config_item}:\n\t{json.dumps(value, indent=4, sort_keys=True)}"
-                )
+
             logger.print_normal(f"\t{config_item}: {value}")
         logger.print_normal("")
 
