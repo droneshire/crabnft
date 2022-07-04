@@ -111,8 +111,11 @@ class DailyActivitiesGame:
         logger.print_normal(f"Searching through {total_pages} pages of NFTs...")
         for page in range(1, total_pages + 2):
             params = {"page": page, "limit": ITEMS_PER_PAGE}
-            wynds.extend(self.wynd_w2.get_all_wynds_activity(params=params))
-            time.sleep(1.0)
+            new_wynds = self.wynd_w2.get_all_wynds_activity(params=params)
+            if not new_wynds:
+                logger.print_warn(f"Didn't find any new winds on page {page}")
+            wynds.extend(new_wynds)
+            time.sleep(5.0)
 
         if not wynds:
             self.wynd_w2.authorize_user()
