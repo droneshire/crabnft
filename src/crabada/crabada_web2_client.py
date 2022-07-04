@@ -121,6 +121,9 @@ class CrabadaWeb2Client:
         except:
             return {}
 
+    def update_auth_token(self, auth_token: str) -> None:
+        self.authorization_token = auth_token
+
     def get_loot_attack_data(
         self,
         user_address: Address,

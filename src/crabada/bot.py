@@ -66,6 +66,7 @@ class CrabadaMineBot:
         self.dry_run: bool = dry_run
         self.address: Address = config["address"]
 
+        self.crabada_w2: CrabadaWeb2Client = CrabadaWeb2Client()
         self.crabada_w3: CrabadaWeb3Client = T.cast(
             CrabadaWeb3Client,
             (
@@ -114,8 +115,8 @@ class CrabadaMineBot:
         if not self.config_mgr.config["game_specific_configs"].get("authorization", ""):
             self._authorize_user()
 
-        self.crabada_w2: CrabadaWeb2Client = CrabadaWeb2Client(
-            self.config_mgr.config["game_specific_configs"].get("authorization", "")
+        self.crabada_w2.update_auth_token(
+            self.config_mgr.config["game_specific_configs"]["authorization"]
         )
 
         self.mining_strategy = STRATEGY_SELECTION[
