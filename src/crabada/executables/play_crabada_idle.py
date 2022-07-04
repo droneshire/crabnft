@@ -270,10 +270,10 @@ def run_bot() -> None:
             now = time.time()
             if alerts_enabled and now - last_profitability_update > PROFITABILITY_UPDATE_TIME:
                 last_profitability_update = now
-                try:
-                    webhooks["CRABADA_UPDATES"].send(profitability_message)
-                except:
-                    logger.print_fail(f"Failed to post to discord hook")
+                # try:
+                #     webhooks["CRABADA_UPDATES"].send(profitability_message)
+                # except:
+                #     logger.print_fail(f"Failed to post to discord hook")
 
                 handle_subscription_posts(
                     prices,
