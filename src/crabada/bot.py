@@ -111,7 +111,7 @@ class CrabadaMineBot:
         )
         self.config_mgr.init()
 
-        if self.config_mgr.config["game_specific_configs"]["authorization"]:
+        if not self.config_mgr.config["game_specific_configs"].get("authorization", ""):
             auth_token = self._authorize_user()
             self.config_mgr.config["game_specific_configs"]["authorization"] = auth_token
 
