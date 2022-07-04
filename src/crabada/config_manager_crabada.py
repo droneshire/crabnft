@@ -62,7 +62,7 @@ class CrabadaConfigManager(ConfigManager):
                     byte_key, load_config["private_key"], decode=True
                 ).decode()
                 for config_key in ["mining_teams", "looting_teams", "reinforcing_crabs"]:
-                    for k, v in copy_config.get(config_key, {}).items():
+                    for k, v in copy_config["game_specific_configs"].get(config_key, {}).items():
                         del load_config["game_specific_configs"][config_key][k]
                         load_config["game_specific_configs"][config_key][int(k)] = v
                 return load_config
