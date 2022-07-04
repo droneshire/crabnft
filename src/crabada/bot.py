@@ -634,7 +634,9 @@ class CrabadaMineBot:
             mr = miners_revenge(
                 mine_points, loot_points, data["defense_mine_point"], [], 3, False, False
             )
-            if mr < lowest_mr or mr == lowest_mr and data["page"] > highest_page:
+            if loot_points > mine_points and (
+                mr < lowest_mr or mr == lowest_mr and data["page"] > highest_page
+            ):
                 mine_to_loot = loot
                 lowest_mr = mr
                 highest_page = data["page"]
