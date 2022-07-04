@@ -83,7 +83,6 @@ class CrabadaMineBot:
                 .set_dry_run(dry_run)
             ),
         )
-        self.crabada_w2: CrabadaWeb2Client = CrabadaWeb2Client()
 
         self.game_stats: T.Dict[int, GameStat] = dict()
         self.updated_game_stats: bool = True
@@ -113,6 +112,10 @@ class CrabadaMineBot:
 
         if not self.config_mgr.config["game_specific_configs"].get("authorization", ""):
             self._authorize_user()
+
+        self.crabada_w2: CrabadaWeb2Client = CrabadaWeb2Client(
+            self.config_mgr.config["game_specific_configs"].get("authorization", "")
+        )
 
         self.mining_strategy = STRATEGY_SELECTION[
             config["game_specific_configs"]["mining_strategy"]
