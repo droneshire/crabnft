@@ -56,11 +56,11 @@ class ConfigManagerFirebase(CrabadaConfigManager):
         self.verbose = verbose
 
     def init(self) -> None:
-        self._print_out_config()
         if self.user_doc is None:
             logger.print_warn(f"{self.user} does not have a firebase account! Using default config")
         else:
             self.config = self._load_config()
+        self._print_out_config()
         self._send_email_config_if_needed()
         self._save_config()
 

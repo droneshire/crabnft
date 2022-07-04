@@ -22,9 +22,9 @@ class WyndblastConfigManager(ConfigManager):
         super().__init__(user, config, send_email_accounts, encrypt_password, log_dir, dry_run)
 
     def init(self):
-        self._print_out_config()
         self.config = self._load_config()
         self._send_email_config_if_needed()
+        self._print_out_config()
         self._save_config()
 
     def _load_config(self) -> UserConfig:
