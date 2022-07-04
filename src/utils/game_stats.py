@@ -35,7 +35,9 @@ class LifetimeGameStatsLogger:
                 self.lifetime_stats = copy.deepcopy(self.null_game_stats)
         else:
             game_stats = self.get_game_stats()
-            if not game_stats and backup_stats:
+            if game_stats:
+                self.lifetime_stats = game_stats
+            elif backup_stats:
                 self.lifetime_stats = backup_stats
             else:
                 self.lifetime_stats = copy.deepcopy(self.null_game_stats)
@@ -70,6 +72,7 @@ class LifetimeGameStatsLogger:
             with open(game_stats_file, "r") as infile:
                 return json.load(infile)
         except:
+            logger.print_fail(f"Failed to read game stats from {game_stats_file}")
             return {}
 
     def write(self) -> None:

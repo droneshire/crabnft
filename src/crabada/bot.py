@@ -136,7 +136,7 @@ class CrabadaMineBot:
             self.alias,
             self.log_dir,
             self.config_mgr.get_lifetime_stats(),
-            self.dry_run,
+            dry_run=self.dry_run,
             verbose=True,
         )
         csv_header = ["timestamp"] + [k for k in NULL_STATS.keys()] + ["team_id"]
