@@ -106,7 +106,7 @@ class DailyActivitiesGame:
         logger.print_bold(f"Found {available_wynds} Wynds available for daily activities\n\n")
 
         wynds: T.List[WyndStatus] = []
-        ITEMS_PER_PAGE = 20
+        ITEMS_PER_PAGE = 5
         total_pages = int((total + ITEMS_PER_PAGE) / ITEMS_PER_PAGE)
         logger.print_normal(f"Searching through {total_pages} pages of NFTs...")
         for page in range(1, total_pages + 2):
