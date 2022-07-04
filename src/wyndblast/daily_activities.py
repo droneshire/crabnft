@@ -165,7 +165,7 @@ class DailyActivitiesGame:
                 ):
                     logger.print_warn(f"We lost, unable to proceed to next round")
                     break
-                time.sleep(0.2)
+                time.sleep(1.0)
 
         if rounds_completed <= 0:
             return

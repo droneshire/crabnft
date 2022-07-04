@@ -45,6 +45,7 @@ class CrabadaMineBot:
     TIME_BETWEEN_TRANSACTIONS = 5.0
     ALERT_THROTTLING_TIME = 60.0 * 120.0
     MIN_MINE_POINT = 60
+    MAX_INACTIVE_ROUNDS = 2
 
     def __init__(
         self,
@@ -146,10 +147,7 @@ class CrabadaMineBot:
         csv_file = self.stats_logger.get_lifetime_stats_file().split(".")[0] + ".csv"
         self.csv = CsvLogger(csv_file, csv_header, dry_run)
 
-        # TODO(ross): known race condition if multiple bots write to same file at same time
-        # however, we are running all bots in single loop now so don't need a lock until/if we
-        # ever have multiple bots running again on the same system
-        self.loot_sniper: LootSnipes = LootSnipes("", False, False)
+        self.loot_sniper: LootSnipes = LootSnipes("", False, False, self.alias.lower())
 
         self.consecutive_inactive_rounds = 0
 
@@ -1013,7 +1011,7 @@ class CrabadaMineBot:
 
         logger.print_ok(f"User: {self.alias.upper()}")
 
-        if self.consecutive_inactive_rounds > 10:
+        if self.consecutive_inactive_rounds > self.MAX_INACTIVE_ROUNDS:
             logger.print_normal(f"Skipping {self.alias.upper()} due to inactivity")
             return
 
@@ -1032,11 +1030,11 @@ class CrabadaMineBot:
         self._print_mine_loot_status()
 
         self._check_and_maybe_close()
-        time.sleep(2.0)
+        time.sleep(1.0)
         self._check_and_maybe_start()
-        time.sleep(2.0)
+        time.sleep(1.0)
         self._check_and_maybe_reinforce()
-        time.sleep(2.0)
+        time.sleep(1.0)
 
         if self.updated_game_stats:
             self.updated_game_stats = False
