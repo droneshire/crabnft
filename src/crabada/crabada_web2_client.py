@@ -596,6 +596,7 @@ class CrabadaWeb2Client:
 
     def _can_loot_reinforcement_win(self, mine: IdleGame) -> bool:
         defense_battle_point, attack_battle_point = self._get_battle_points(mine)
+        logger.print_normal(f"Loot reinforce check: [D]-{defense_battle_point} [A]-{attack_battle_point + self.MAX_BP_NORMAL_CRAB}")
         return attack_battle_point + self.MAX_BP_NORMAL_CRAB > defense_battle_point
 
     def loot_is_winning(self, mine: IdleGame) -> bool:
