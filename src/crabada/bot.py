@@ -292,12 +292,8 @@ class CrabadaMineBot:
 
         message += f"Profits: {profit_tus:.2f} TUS [${profit_usd:.2f}]\n"
 
-        send_sms = (
-            tx.game_type == MineOption.LOOT and self.config_mgr.config["get_sms_updates_loots"]
-        ) or self.config_mgr.config["get_sms_updates"]
-
         self._send_status_update(
-            send_sms,
+            False,
             self.config_mgr.config["get_email_updates"],
             message,
             tx_hash=tx.tx_hash,
