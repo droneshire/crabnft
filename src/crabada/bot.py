@@ -145,6 +145,9 @@ class CrabadaMineBot:
         csv_file = self.stats_logger.get_lifetime_stats_file().split(".")[0] + ".csv"
         self.csv = CsvLogger(csv_file, csv_header, dry_run)
 
+        # TODO(ross): known race condition if multiple bots write to same file at same time
+        # however, we are running all bots in single loop now so don't need a lock until/if we
+        # ever have multiple bots running again on the same system
         self.loot_sniper: LootSnipes = LootSnipes("", False, False)
 
         logger.print_ok_blue(f"Adding bot for user {self.alias} with address {self.address}")
@@ -605,7 +608,7 @@ class CrabadaMineBot:
             logger.print_normal(
                 f"Loot[{mine_to_loot}]: Theirs: {loot_candidates[mine_to_loot]['faction']} Ours: {team['faction']}"
             )
-            logger.print_normal(f"Miners Revenge: {lowest_mr:.2}%")
+            logger.print_normal(f"Miners Revenge: {lowest_mr:.2f}%")
             logger.print_normal(f"{json.dumps(loot_candidates[mine_to_loot], indent=4)}")
 
         return mine_to_loot

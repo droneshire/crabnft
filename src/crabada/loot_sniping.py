@@ -195,12 +195,14 @@ class LootSnipes:
         user_address = mine.get("owner", "")
         if user_address in self.addresses["verified"]:
             return
+        logger.print_ok(f"Found a new no-reinforce snipe {mine['owner']} to list")
         self.addresses["verified"].append(user_address)
         self._write_log(self.addresses)
 
     def remove_no_reinforce_address(self, mine: IdleGame) -> None:
         user_address = mine.get("owner", "")
         if user_address in self.addresses["verified"]:
+            logger.print_ok(f"Removing previous no-reinforce snipe {mine['owner']} from list")
             self.addresses["verified"].remove(user_address)
 
     def find_loot_snipe(
@@ -249,17 +251,17 @@ class LootSnipes:
                     )
                     continue
 
-                battle_point = get_faction_adjusted_battle_point(
-                    mine, is_looting=False, verbose=False
-                )
                 address = loot_list[mine["game_id"]]
 
                 self.hit_rate[address] = self.hit_rate.get(address, 0) + 1
 
+                bp, mp = get_bp_mp_from_mine(mine, is_looting=False, verbose=False)
+
                 data = {
                     "page": page,
                     "faction": faction,
-                    "defense_battle_point": battle_point,
+                    "defense_battle_point": bp,
+                    "defense_mine_point": mp,
                     "address": address,
                 }
                 target_pages[mine["game_id"]] = data
@@ -305,7 +307,9 @@ class LootSnipes:
         for inx, mine in enumerate(available_loots):
 
             if mine["owner"] in bot_user_addresses:
-                logger.print_fail_arrow(f"Snipe added for bot holder user: {address}...skipping")
+                logger.print_fail_arrow(
+                    f"Snipe added for bot holder user: {mine['owner']}...skipping"
+                )
                 continue
 
             faction = mine["faction"].upper()
@@ -326,6 +330,7 @@ class LootSnipes:
                 "faction": faction,
                 "defense_mine_point": mp,
                 "defense_battle_point": bp,
+                "address": mine["owner"],
             }
             target_pages[mine["game_id"]] = data
 

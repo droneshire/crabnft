@@ -238,7 +238,13 @@ class ConfigManagerFirebase(CrabadaConfigManager):
             new_config["game_specific_configs"]["reinforcing_crabs"][crab] = group
             logger.print_normal(f"Assigning crab {crab} to group {group}")
 
-        diff = deepdiff.DeepDiff(self.config, new_config, ignore_order=True)
+        diff = deepdiff.DeepDiff(
+            self.config,
+            new_config,
+            ignore_order=True,
+            ignore_numeric_type_changes=True,
+            ignore_order_func=True,
+        )
         if diff:
             logger.print_ok_blue(f"Detected changes in config from firebase database")
             logger.print_normal(f"{diff}")
