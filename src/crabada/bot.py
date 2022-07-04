@@ -151,6 +151,8 @@ class CrabadaMineBot:
         # ever have multiple bots running again on the same system
         self.loot_sniper: LootSnipes = LootSnipes("", False, False)
 
+        self.consecutive_inactive_rounds = 0
+
         logger.print_ok_blue(f"Adding bot for user {self.alias} with address {self.address}")
 
     def _authorize_user(self) -> str:
@@ -900,6 +902,7 @@ class CrabadaMineBot:
 
             if self._start_loot(team, available_loots):
                 teams_to_mine.remove(team)
+                self.consecutive_inactive_rounds = 0
 
         self._check_and_maybe_start_mines(teams_to_mine)
 
@@ -930,6 +933,7 @@ class CrabadaMineBot:
             )
 
             if self._start_mine(team):
+                self.consecutive_inactive_rounds = 0
                 groups_started.append(team_group)
 
     def _check_and_maybe_reinforce(self) -> None:
@@ -957,6 +961,10 @@ class CrabadaMineBot:
         teams = self.crabada_w2.list_teams(self.address)
         loots = [l["game_id"] for l in self.crabada_w2.list_my_open_loots(self.address)]
         mines = [m["game_id"] for m in self.crabada_w2.list_my_mines(self.address)]
+
+        if not teams:
+            self.consecutive_inactive_rounds += 1
+
         for team in teams:
             if team["game_id"] is None or team["game_type"] is None:
                 continue
@@ -1004,6 +1012,10 @@ class CrabadaMineBot:
         logger.print_normal("=" * 60)
 
         logger.print_ok(f"User: {self.alias.upper()}")
+
+        if self.consecutive_inactive_rounds > 10:
+            logger.print_normal(f"Skipping {self.alias.upper()} due to inactivity")
+            return
 
         gas_price_gwei = self.crabada_w3.get_gas_price()
         if gas_price_gwei is None:
