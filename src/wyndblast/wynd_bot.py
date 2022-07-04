@@ -62,7 +62,6 @@ class WyndBot:
 
         self.stats_logger = WyndblastLifetimeGameStatsLogger(
             get_alias_from_user(self.user),
-            NULL_GAME_STATS,
             self.log_dir,
             self.config_mgr.get_lifetime_stats(),
             self.dry_run,

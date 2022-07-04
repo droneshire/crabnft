@@ -227,13 +227,12 @@ class CrabadaLifetimeGameStatsLogger(LifetimeGameStatsLogger):
     def __init__(
         self,
         user: str,
-        null_game_stats: T.Dict[T.Any, T.Any],
         log_dir: str,
         backup_stats: T.Dict[T.Any, T.Any],
         dry_run: bool = False,
         verbose: bool = False,
     ):
-        super().__init__(user, null_game_stats, log_dir, backup_stats, dry_run, verbose)
+        super().__init__(user, NULL_GAME_STATS, log_dir, backup_stats, dry_run, verbose)
 
     def delta_game_stats(
         self,
@@ -243,9 +242,9 @@ class CrabadaLifetimeGameStatsLogger(LifetimeGameStatsLogger):
     ) -> T.Dict[T.Any, T.Any]:
         diff = deepdiff.DeepDiff(user_a_stats, user_b_stats)
         if not diff:
-            return NULL_GAME_STATS
+            return copy.deepcopy(self.null_game_stats)
 
-        diffed_stats = copy.deepcopy(NULL_GAME_STATS)
+        diffed_stats = copy.deepcopy(self.null_game_stats)
 
         for item in ["avax_gas_usd", "gas_tus"]:
             if item not in user_a_stats or item not in user_b_stats:
@@ -283,7 +282,7 @@ class CrabadaLifetimeGameStatsLogger(LifetimeGameStatsLogger):
         if not diff:
             return user_a_stats
 
-        merged_stats = copy.deepcopy(NULL_GAME_STATS)
+        merged_stats = copy.deepcopy(self.null_game_stats)
 
         for item in ["avax_gas_usd", "gas_tus"]:
             merged_stats[item] = merged_stats.get(item, 0.0) + user_a_stats.get(item, 0.0)

@@ -135,11 +135,10 @@ class CrabadaMineBot:
         self.alias = get_alias_from_user(self.user)
         self.stats_logger = CrabadaLifetimeGameStatsLogger(
             self.alias,
-            NULL_GAME_STATS,
             self.log_dir,
             self.config_mgr.get_lifetime_stats(),
             self.dry_run,
-            verbose=False,
+            verbose=True,
         )
         csv_header = ["timestamp"] + [k for k in NULL_STATS.keys()] + ["team_id"]
         csv_file = self.stats_logger.get_lifetime_stats_file().split(".")[0] + ".csv"

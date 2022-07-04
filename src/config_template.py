@@ -11,6 +11,7 @@ CONFIG_TEMPLATE = {
             "looting_strategy": "PreferOwnBpCrabsAndDelayReinforcement",
             "max_reinforcement_price_tus": 24.0,
             "should_reinforce": True,
+            "authorization": "",
         },
         max_gas_price_gwei=SMALL_TEAM_GAS_LIMIT,
         commission_percent_per_mine={

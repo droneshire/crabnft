@@ -52,13 +52,12 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
     def __init__(
         self,
         user: str,
-        null_game_stats: T.Dict[T.Any, T.Any],
         log_dir: str,
         backup_stats: T.Dict[T.Any, T.Any],
         dry_run: bool = False,
         verbose: bool = False,
     ):
-        super().__init__(user, null_game_stats, log_dir, backup_stats, dry_run, verbose)
+        super().__init__(user, NULL_GAME_STATS, log_dir, backup_stats, dry_run, verbose)
 
     def delta_game_stats(
         self,

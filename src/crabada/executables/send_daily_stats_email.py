@@ -49,9 +49,7 @@ def calc_profits() -> None:
         if alias not in aliases:
             continue
 
-        stats_logger = CrabadaLifetimeGameStatsLogger(
-            user, NULL_GAME_STATS, logger.get_logging_dir("crabada"), {}
-        )
+        stats_logger = CrabadaLifetimeGameStatsLogger(user, logger.get_logging_dir("crabada"), {})
         csv_header = ["timestamp"] + [k for k in NULL_STATS.keys()] + ["team_id"]
         csv_file = stats_logger.get_lifetime_stats_file().split(".")[0] + ".csv"
         csv = CsvLogger(csv_file, csv_header, dry_run=args.dry_run)

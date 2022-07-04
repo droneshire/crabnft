@@ -1,7 +1,6 @@
 import argparse
 
 from config_crabada import IEX_API_TOKEN, COINMARKETCAP_API_TOKEN, USERS
-from crabada.game_stats import NULL_GAME_STATS
 from crabada.profitability import get_profitability_message, STATIC_WIN_PERCENTAGES
 from crabada.game_stats import CrabadaLifetimeGameStatsLogger
 from crabada.types import MineOption
@@ -68,9 +67,7 @@ def calc_profits() -> None:
         alias = get_alias_from_user(user)
         logger.print_ok_blue(f"Profitability Analysis for {alias.upper()}:")
 
-        stats = CrabadaLifetimeGameStatsLogger(
-            user, NULL_GAME_STATS, logger.get_logging_dir(), {}
-        ).get_game_stats()
+        stats = CrabadaLifetimeGameStatsLogger(user, logger.get_logging_dir(), {}).get_game_stats()
 
         win_percentages = {
             MineOption.MINE: stats[MineOption.MINE]["game_win_percent"],

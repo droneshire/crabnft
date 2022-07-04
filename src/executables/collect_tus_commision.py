@@ -13,7 +13,6 @@ from twilio.rest import Client
 
 from config_crabada import GAME_BOT_STRING, GMAIL, TWILIO_CONFIG, USERS
 from utils import discord, email, logger
-from crabada.game_stats import NULL_GAME_STATS
 from crabada.game_stats import CrabadaLifetimeGameStatsLogger
 from utils.price import is_gas_too_high
 from utils.price import Tus
@@ -100,7 +99,7 @@ def send_collection_notice(
             logger.print_normal(f"Multi-wallet, skipping {user} b/c we already sent notice")
             continue
 
-        stats_logger = CrabadaLifetimeGameStatsLogger(user, NULL_GAME_STATS, log_dir, {})
+        stats_logger = CrabadaLifetimeGameStatsLogger(user, log_dir, {})
         game_stats = stats_logger.get_game_stats()
 
         commission_tus = 0.0
@@ -184,7 +183,7 @@ def collect_tus_commission(
             else decrypt(str.encode(encrypt_password), config["private_key"]).decode()
         )
 
-        stats_logger = CrabadaLifetimeGameStatsLogger(user, NULL_GAME_STATS, log_dir, {})
+        stats_logger = CrabadaLifetimeGameStatsLogger(user, log_dir, {})
         game_stats = stats_logger.get_game_stats()
 
         from_address = config["address"]

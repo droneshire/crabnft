@@ -103,7 +103,7 @@ class ConfigManagerFirebase(CrabadaConfigManager):
             return
 
         log_dir = logger.get_logging_dir("crabada")
-        stats = CrabadaLifetimeGameStatsLogger(self.user, NULL_GAME_STATS, log_dir, {})
+        stats = CrabadaLifetimeGameStatsLogger(self.user, log_dir, {})
         game_stats = copy.deepcopy(stats.get_game_stats())
 
         commission_tus = 0.0
@@ -355,7 +355,7 @@ class ConfigManagerFirebase(CrabadaConfigManager):
             if any([c == "UNKNOWN" for c in composition]):
                 continue
             db_config["strategy"]["teams"][str(team_id)] = {
-                "action": StrategyActions.MINING,
+                "action": StrategyActions.LOOTING,
                 "composition": composition,
                 "user": user,
             }
