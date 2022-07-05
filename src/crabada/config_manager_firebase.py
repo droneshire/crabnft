@@ -64,19 +64,20 @@ class ConfigManagerFirebase(CrabadaConfigManager):
         self._send_email_config_if_needed()
         self._save_config()
 
-    def check_for_config_updates(self) -> None:
+    def check_for_config_updates(self) -> bool:
         if self.user not in BETA_TEST_LIST:
-            return
+            return False
 
         now = time.time()
 
         if now - self.last_config_update_time < self.CONFIG_UPDATE_TIME:
-            return
+            return False
 
         self.last_config_update_time = now
 
+        did_update = False
         try:
-            self._read_and_update_config()
+            did_update = self._read_and_update_config()
         except:
             logger.print_fail(f"Failed to read and translate updated config from database")
 
@@ -84,6 +85,8 @@ class ConfigManagerFirebase(CrabadaConfigManager):
             self._update_game_stats()
         except:
             logger.print_fail(f"Failed to upload game stats to database")
+
+        return did_update
 
     def get_lifetime_stats(self) -> LifetimeGameStats:
         game_stats: LifetimeGameStats = copy.deepcopy(NULL_GAME_STATS)
@@ -117,9 +120,9 @@ class ConfigManagerFirebase(CrabadaConfigManager):
         db_config["stats"] = dict_keys_snake_to_camel(game_stats)
         self.user_doc.set(json.loads(json.dumps(db_config)))
 
-    def _read_and_update_config(self) -> None:
+    def _read_and_update_config(self) -> bool:
         if self.user_doc is None:
-            return
+            return False
 
         db_config = self.user_doc.get().to_dict()
 
@@ -255,6 +258,9 @@ class ConfigManagerFirebase(CrabadaConfigManager):
             self.user_doc.set(json.loads(json.dumps(db_config)))
             logger.print_normal(f"Sending config update email")
             self._send_email_config()
+            return True
+
+        return False
 
     def _get_user_document(self, config: UserConfig) -> T.Optional[T.Any]:
         db_setup = {}

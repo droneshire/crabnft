@@ -901,9 +901,11 @@ class CrabadaMineBot:
             if not available_loots:
                 available_loots = self.loot_sniper.get_available_loots(self.address, 9, False)
 
-            if self._start_loot(team, available_loots):
-                teams_to_mine.remove(team)
-                self.consecutive_inactive_rounds = 0
+            for _ in range(2):
+                if self._start_loot(team, available_loots):
+                    teams_to_mine.remove(team)
+                    self.consecutive_inactive_rounds = 0
+                    break
 
         self._check_and_maybe_start_mines(teams_to_mine)
 
@@ -1014,6 +1016,13 @@ class CrabadaMineBot:
 
         logger.print_ok(f"User: {self.alias.upper()}")
 
+        if self.config_mgr.check_for_config_updates():
+            # authorize user that has been inactive for a while
+            if self.consecutive_inactive_rounds > self.MAX_INACTIVE_ROUNDS:
+                self._authorize_user()
+            # note now that they are active
+            self.consecutive_inactive_rounds = 0
+
         if self.consecutive_inactive_rounds > self.MAX_INACTIVE_ROUNDS:
             logger.print_normal(f"Skipping {self.alias.upper()} due to inactivity")
             return
@@ -1027,8 +1036,6 @@ class CrabadaMineBot:
         )
 
         self._check_calc_and_send_daily_update_message()
-
-        self.config_mgr.check_for_config_updates()
 
         self._print_mine_loot_status()
 

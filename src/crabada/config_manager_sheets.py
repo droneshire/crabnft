@@ -155,9 +155,9 @@ class ConfigManagerSheets(CrabadaConfigManager):
         self._save_config()
         self._create_sheet_if_needed()
 
-    def check_for_config_updates(self) -> None:
+    def check_for_config_updates(self) -> bool:
         if not self._check_to_see_if_action(check_sheets_none=False):
-            return
+            return False
 
         now = time.time()
         if now - self.last_config_update_time < self.CONFIG_UPDATE_TIME:
@@ -171,7 +171,7 @@ class ConfigManagerSheets(CrabadaConfigManager):
 
         if self.sheet is None:
             self._create_sheet_if_needed()
-            return
+            return False
 
         logger.print_normal("Checking for gsheet config update")
         updated_config = self._read_sheets_config()
@@ -180,11 +180,11 @@ class ConfigManagerSheets(CrabadaConfigManager):
             logger.print_warn("Incorrect sheet config, writing with current config...")
             self._write_sheets_config()
             self._save_config()
-            return
+            return False
 
         config_diff = deepdiff.DeepDiff(self.config, updated_config)
         if not config_diff:
-            return
+            return False
 
         logger.print_ok("Detected updated config, saving changes...")
         self.config = copy.deepcopy(updated_config)
@@ -193,6 +193,7 @@ class ConfigManagerSheets(CrabadaConfigManager):
         self._write_sheets_config()
         self._save_config()
         self._send_email_config()
+        return True
 
     def _write_sheets_config(self) -> None:
         rows, cols = self._get_rows_cols()

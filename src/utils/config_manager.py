@@ -40,7 +40,7 @@ class ConfigManager:
     def init(self) -> None:
         raise NotImplementedError
 
-    def check_for_config_updates(self) -> None:
+    def check_for_config_updates(self) -> bool:
         raise NotImplementedError
 
     def close(self) -> None:
