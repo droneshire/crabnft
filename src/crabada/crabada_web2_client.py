@@ -493,9 +493,9 @@ class CrabadaWeb2Client:
     ) -> T.Optional[CrabForLending]:
         cached_high_bp_crab = None
         for class_id in [
+            CrabadaClass.SURGE,
             CrabadaClass.BULK,
             CrabadaClass.GEM,
-            CrabadaClass.SURGE,
         ]:
             params = {
                 "class_ids[]": class_id,
