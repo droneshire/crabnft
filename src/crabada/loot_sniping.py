@@ -114,7 +114,7 @@ class LootSnipes:
 
     def hunt(self, address: str) -> None:
         self._update_addresses_from_sheet()
-        available_loots = self.get_available_loots(address, 9, False)
+        available_loots = self.get_available_loots(address, 1, 9, False)
 
         if len(self.addresses["verified"]) > 0:
             addresses_to_search = self._update_address_search_circ_buffer(
@@ -147,13 +147,13 @@ class LootSnipes:
             json.dump(data, outfile, indent=4)
 
     def get_available_loots(
-        self, user_address: Address, max_pages: int = 8, verbose: bool = False
+        self, user_address: Address, start_page: int = 1, max_pages: int = 8, verbose: bool = False
     ) -> T.List[IdleGame]:
 
         available_loots = []
         pb = tqdm.tqdm(total=max_pages)
         logger.print_ok_blue(f"Searching for available mines...")
-        for page in range(1, max_pages):
+        for page in range(start_page, start_page + max_pages):
             params = {
                 "page": page,
                 "limit": 100,
