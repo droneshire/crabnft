@@ -835,7 +835,6 @@ class CrabadaMineBot:
                 return True
 
         logger.print_fail(f"Error starting loot for team {team['team_id']}")
-        self._authorize_user()
         return False
 
     def _is_team_allowed_to_mine(self, team: Team) -> bool:
@@ -903,11 +902,13 @@ class CrabadaMineBot:
             if not available_loots:
                 available_loots = self.loot_sniper.get_available_loots(self.address, 9, False)
 
-            for _ in range(2):
+            for i in range(2):
                 if self._start_loot(team, available_loots):
                     teams_to_mine.remove(team)
                     self.consecutive_inactive_rounds = 0
                     break
+                elif i == 0:
+                    self._authorize_user()
 
         self._check_and_maybe_start_mines(teams_to_mine)
 
