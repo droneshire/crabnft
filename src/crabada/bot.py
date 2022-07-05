@@ -549,6 +549,8 @@ class CrabadaMineBot:
 
             if self.fast_avg_gas_used.get_avg() is not None:
                 avg_gas_price_tus = self._get_gas_cost(self.fast_avg_gas_used.get_avg())
+                if avg_gas_price_tus is None:
+                    avg_gas_price_tus = 2.03
             else:
                 avg_gas_price_tus = 2.03
 
