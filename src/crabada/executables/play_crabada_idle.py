@@ -41,6 +41,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     log_dir = logger.get_logging_dir("crabada")
     parser.add_argument("--dry-run", action="store_true", help="Dry run")
+    parser.add_argument("--use-proxy", action="store_true", help="Use proxy if available")
     parser.add_argument("--quiet", action="store_true", help="Disable alerts")
     parser.add_argument("--log-level", choices=["INFO", "DEBUG", "ERROR", "NONE"], default="INFO")
     parser.add_argument("--log-dir", default=log_dir)
@@ -156,6 +157,7 @@ def run_bot() -> None:
                 encrypt_password,
                 args.log_dir,
                 args.dry_run,
+                args.use_proxy,
             )
         )
 

@@ -58,6 +58,7 @@ class LootSnipes:
     def __init__(
         self,
         credentials: str,
+        crabada_w2: CrabadaWeb2Client,
         verbose: bool = False,
         update_from_sheet: bool = True,
         log_name_suffix: str = "",
@@ -69,7 +70,7 @@ class LootSnipes:
             GoogleSheets(self.ADDRESS_GSHEET, credentials, []) if update_from_sheet else None
         )
         self.last_update = 0.0
-        self.web2 = CrabadaWeb2Client()
+        self.web2 = crabada_w2
         self.search_index: T.Dict[str, int] = {
             "verified": 0,
             "unverified": 0,

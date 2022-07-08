@@ -58,6 +58,7 @@ class CrabadaMineBot:
         encrypt_password: str,
         log_dir: str,
         dry_run: bool,
+        use_proxy: bool,
     ) -> None:
         self.user: str = user
         self.from_sms_number: str = from_sms_number
@@ -67,7 +68,7 @@ class CrabadaMineBot:
         self.dry_run: bool = dry_run
         self.address: Address = config["address"]
 
-        self.crabada_w2: CrabadaWeb2Client = CrabadaWeb2Client()
+        self.crabada_w2: CrabadaWeb2Client = CrabadaWeb2Client(use_proxy=use_proxy)
         self.crabada_w3: CrabadaWeb3Client = T.cast(
             CrabadaWeb3Client,
             (
@@ -150,7 +151,9 @@ class CrabadaMineBot:
         csv_file = self.stats_logger.get_lifetime_stats_file().split(".")[0] + ".csv"
         self.csv = CsvLogger(csv_file, csv_header, dry_run)
 
-        self.loot_sniper: LootSnipes = LootSnipes("", False, False, self.alias.lower())
+        self.loot_sniper: LootSnipes = LootSnipes(
+            "", self.crabada_w2, False, False, self.alias.lower()
+        )
         self.loot_sniper.consolidate_snipes()
 
         self.consecutive_inactive_rounds = 0

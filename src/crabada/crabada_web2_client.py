@@ -84,18 +84,19 @@ class CrabadaWeb2Client:
 
     MAX_BP_NORMAL_CRAB = 237
 
-    def __init__(self, authorization_token: str = "") -> None:
+    def __init__(self, authorization_token: str = "", use_proxy: bool = False) -> None:
         self.requests = requests
         self.authorization_token = authorization_token
-
-        try:
-            proxies = FreeProxy(
-                country_id=["US", "BR"], timeout=0.3, rand=True, elite=True
-            ).get_proxy_list()
-            self.proxy = proxies[random.randint(0, len(proxies) - 1)]
-            logger.print_ok_blue_arrow(f"Using proxy! {self.proxy}")
-        except:
-            self.proxy = None
+        self.proxy = None
+        if use_proxy:
+            try:
+                proxies = FreeProxy(
+                    country_id=["US", "BR"], timeout=0.3, rand=True, elite=True
+                ).get_proxy_list()
+                self.proxy = proxies[random.randint(0, len(proxies) - 1)]
+                logger.print_ok_blue_arrow(f"Using proxy: {self.proxy}")
+            except:
+                logger.print_warn(f"Failed to get proxy")
 
     def _get_request(self, url: str, params: T.Dict[str, T.Any] = {}) -> T.Any:
         if self.proxy:
