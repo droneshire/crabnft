@@ -71,7 +71,7 @@ class CrabadaWeb2Client:
     }
 
     # reinforcement stuff
-    N_CRAB_PERCENT = 37.0
+    N_CRAB_PERCENT = 15.0
     REINFORCE_TIME_WINDOW = 60 * (30 - 1)  # 30 minute window + 1 minute buffer
 
     # game facts

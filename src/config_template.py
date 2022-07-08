@@ -1,7 +1,8 @@
 CONFIG_TEMPLATE = {
     "": config_types.UserConfig(
         group=4,
-        crabada_key="",
+        game="crabada",
+        private_key="",
         address=Address(""),
         game_specific_configs={
             "mining_teams": {},
