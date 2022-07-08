@@ -9,6 +9,7 @@ import getpass
 
 from config_crabada import USERS
 from crabada.config_manager_firebase import ConfigManagerFirebase
+from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.types import MineOption
 from utils import logger
 from utils.user import get_alias_from_user
@@ -37,7 +38,7 @@ def update_firebase_db() -> None:
     aliases = set([get_alias_from_user(u) for u in USERS])
 
     for user in users:
-        cm = ConfigManagerFirebase(user, USERS[user], [], "", "")
+        cm = ConfigManagerFirebase(user, USERS[user], [], "", "", CrabadaWeb2Client())
         if args.from_crabada:
             erase_configs = args.force_erase or get_alias_from_user(user) == user
             cm.update_user_from_crabada(user, erase_configs)

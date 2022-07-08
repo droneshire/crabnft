@@ -40,10 +40,20 @@ class ConfigManagerFirebase(CrabadaConfigManager):
         send_email_accounts: T.List[Email],
         encrypt_password: str,
         log_dir: str,
+        crabada_w2: CrabadaWeb2Client,
         dry_run: bool = False,
         verbose: bool = False,
     ):
-        super().__init__(user, config, send_email_accounts, encrypt_password, log_dir, dry_run)
+        super().__init__(
+            user,
+            config,
+            send_email_accounts,
+            encrypt_password,
+            log_dir,
+            crabada_w2,
+            dry_run,
+            verbose,
+        )
         this_dir = os.path.dirname(os.path.realpath(__file__))
         creds_dir = os.path.dirname(this_dir)
         credentials_file = os.path.join(creds_dir, "firebase_credentials.json")

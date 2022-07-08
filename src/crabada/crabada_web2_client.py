@@ -88,7 +88,9 @@ class CrabadaWeb2Client:
         self.authorization_token = authorization_token
 
         try:
-            self.proxy = FreeProxy(country_id=["US", "BR"], timeout=0.3, rand=True).get()
+            self.proxy = FreeProxy(
+                country_id=["US", "BR"], timeout=0.3, rand=True, elite=True
+            ).get()
             logger.print_ok_blue_arrow(f"Using proxy! {self.proxy}")
         except:
             self.proxy = None

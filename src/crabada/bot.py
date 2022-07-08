@@ -108,6 +108,7 @@ class CrabadaMineBot:
             email_accounts,
             encrypt_password,
             log_dir,
+            self.crabada_w2,
             dry_run=dry_run,
             verbose=True,
         )

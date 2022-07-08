@@ -129,10 +129,21 @@ class ConfigManagerSheets(CrabadaConfigManager):
         config: UserConfig,
         send_email_accounts: T.List[Email],
         encrypt_password: str,
+        crabada_w2: CrabadaWeb2Client,
         log_dir: str,
         dry_run: bool = False,
+        verbose: bool = False,
     ):
-        super().__init__(user, config, send_email_accounts, encrypt_password, log_dir, dry_run)
+        super().__init__(
+            user,
+            config,
+            send_email_accounts,
+            encrypt_password,
+            log_dir,
+            crabada_w2,
+            dry_run,
+            verbose,
+        )
 
         self.backoff = self.DEFAULT_BACKOFF_OPTION
         self.google_api_success = False

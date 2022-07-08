@@ -20,11 +20,12 @@ class CrabadaConfigManager(ConfigManager):
         send_email_accounts: T.List[Email],
         encrypt_password: str,
         log_dir: str,
+        crabada_w2: CrabadaWeb2Client,
         dry_run: bool = False,
         verbose: bool = False,
     ):
         super().__init__(user, config, send_email_accounts, encrypt_password, log_dir, dry_run)
-        self.crabada_w2 = CrabadaWeb2Client()
+        self.crabada_w2 = crabada_w2
         self.team_composition_and_mp = self.crabada_w2.get_team_compositions_and_mp(
             self.config["address"]
         )
