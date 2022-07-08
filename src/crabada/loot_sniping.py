@@ -117,6 +117,10 @@ class LootSnipes:
             snipe_data.update(data)
         self._write_log(snipe_data)
 
+    def end(self) -> None:
+        self.delete_all_messages()
+        self._write_log(self.addresses)
+
     def delete_all_messages(self) -> None:
         logger.print_fail("Deleting all messages")
         for _, hook in self.snipes.items():

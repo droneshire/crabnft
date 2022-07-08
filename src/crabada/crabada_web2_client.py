@@ -5,6 +5,7 @@ import requests
 import time
 
 from eth_typing import Address
+from fp.fp import FreeProxy
 
 from crabada.factional_advantage import get_faction_adjusted_battle_point, get_bp_mp_from_team
 from crabada.miners_revenge import calc_miners_revenge
@@ -86,10 +87,24 @@ class CrabadaWeb2Client:
         self.requests = requests
         self.authorization_token = authorization_token
 
+        try:
+            self.proxy = FreeProxy(country_id=["US", "BR"], timeout=0.3, rand=True).get()
+        except:
+            self.proxy = None
+
     def _get_request(self, url: str, params: T.Dict[str, T.Any] = {}) -> T.Any:
+        if self.proxy:
+            proxies = {"http": self.proxy}
+        else:
+            proxies = None
         try:
             return self.requests.request(
-                "GET", url, params=params, headers=self.BROWSER_HEADERS, timeout=5.0
+                "GET",
+                url,
+                params=params,
+                headers=self.BROWSER_HEADERS,
+                timeout=3.0,
+                proxies=proxies,
             ).json()
         except KeyboardInterrupt:
             raise

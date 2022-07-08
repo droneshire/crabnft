@@ -44,7 +44,7 @@ def main() -> None:
             try:
                 sniper.hunt(config["address"])
             except KeyboardInterrupt:
-                sniper.delete_all_messages()
+                sniper.end()
             except:
                 pass
             cb.end()

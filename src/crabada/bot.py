@@ -1071,6 +1071,7 @@ class CrabadaMineBot:
 
         self.stats_logger.write()
         self.config_mgr.close()
+        self.loot_sniper.end()
 
         for team in self.game_stats.keys():
             self.game_stats[team]["team_id"] = team
