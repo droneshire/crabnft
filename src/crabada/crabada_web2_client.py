@@ -1,6 +1,7 @@
 import json
 import typing as T
 import math
+import random
 import requests
 import time
 
@@ -88,9 +89,10 @@ class CrabadaWeb2Client:
         self.authorization_token = authorization_token
 
         try:
-            self.proxy = FreeProxy(
+            proxies = FreeProxy(
                 country_id=["US", "BR"], timeout=0.3, rand=True, elite=True
-            ).get()
+            ).get_proxy_list()
+            self.proxy = proxies[random.randint(0, len(proxies) - 1)]
             logger.print_ok_blue_arrow(f"Using proxy! {self.proxy}")
         except:
             self.proxy = None
