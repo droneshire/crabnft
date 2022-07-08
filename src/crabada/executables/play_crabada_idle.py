@@ -170,7 +170,6 @@ def run_bot() -> None:
     for bot in bots:
         bot.update_prices(prices.avax_usd, prices.tus_usd, prices.cra_usd)
         logger.print_bold(f"Starting game bot for user {bot.user}...")
-        bot.consolidate_snipes()
         bot_stats = bot.get_lifetime_stats()
         total_commission_tus += dict_sum(bot_stats["commission_tus"])
         for k in [MineOption.MINE, MineOption.LOOT]:
