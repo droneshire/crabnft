@@ -144,7 +144,6 @@ class LootSnipes:
             return json.load(infile)
 
     def _write_log(self, data: T.Dict[str, int]) -> None:
-        data.update(self._read_log())
         with open(self.log_file, "w") as outfile:
             json.dump(data, outfile, indent=4)
 
@@ -204,10 +203,10 @@ class LootSnipes:
 
     def remove_no_reinforce_address(self, mine: IdleGame) -> None:
         user_address = mine.get("owner", "")
-        if user_address in self.addresses["blocklist"]:
+        if user_address not in self.addresses["verified"]:
             return
         logger.print_ok(f"Removing previous no-reinforce snipe {mine['owner']} from list")
-        self.addresses["blocklist"].append(user_address)
+        self.addresses["verified"].remove(user_address)
         self._write_log(self.addresses)
 
     def find_loot_snipe(
