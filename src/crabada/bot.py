@@ -46,6 +46,7 @@ class CrabadaMineBot:
     ALERT_THROTTLING_TIME = 60.0 * 120.0
     MIN_MINE_POINT = 60
     MAX_INACTIVE_ROUNDS = 2
+    MAX_LOOT_START_ATTEMPTS = 3
 
     def __init__(
         self,
@@ -149,6 +150,7 @@ class CrabadaMineBot:
         self.csv = CsvLogger(csv_file, csv_header, dry_run)
 
         self.loot_sniper: LootSnipes = LootSnipes("", False, False, self.alias.lower())
+        self.loot_sniper.consolidate_snipes()
 
         self.consecutive_inactive_rounds = 0
 
@@ -597,16 +599,26 @@ class CrabadaMineBot:
         self,
         team: Team,
         available_loots: T.List[IdleGame],
-    ) -> T.Optional[int]:
+    ) -> int:
         mine_to_loot = None
 
+        # first try from known no reinforce list
         loot_candidates = self.loot_sniper.find_loot_snipe(self.address, [], available_loots)
 
         mine_to_loot, lowest_mr = self._find_best_loot(team, loot_candidates)
 
+        # if that fails, grab a low MR loot not on the first few pages
         if mine_to_loot is None:
             loot_candidates = self.loot_sniper.find_low_mr_teams(
-                self.address, available_loots, verbose=True
+                self.address, available_loots, min_page_threshold=2, verbose=True
+            )
+
+            mine_to_loot, lowest_mr = self._find_best_loot(team, loot_candidates)
+
+        # if all else fails, just pick an available mine
+        if mine_to_loot is None:
+            loot_candidates = self.loot_sniper.find_low_mr_teams(
+                self.address, available_loots, mp_threshold=1000, min_page_threshold=0, verbose=True
             )
 
             mine_to_loot, lowest_mr = self._find_best_loot(team, loot_candidates)
@@ -796,7 +808,7 @@ class CrabadaMineBot:
         return False
 
     def _start_loot(self, team: Team, available_loots: T.List[IdleGame]) -> bool:
-        mine_to_loot: T.Optional[IdleGame] = self._find_mine_to_loot(team, available_loots)
+        mine_to_loot: int = self._find_mine_to_loot(team, available_loots)
 
         if mine_to_loot is None:
             logger.print_warn(f"Failed to find a mine to loot!")
@@ -901,14 +913,14 @@ class CrabadaMineBot:
                 continue
 
             if not available_loots:
-                available_loots = self.loot_sniper.get_available_loots(self.address, 15, 40, False)
+                available_loots = self.loot_sniper.get_available_loots(
+                    self.address, start_page=1, max_pages=40, verbose=False
+                )
 
-            for i in range(2):
+            for i in range(self.MAX_LOOT_START_ATTEMPTS):
                 if self._start_loot(team, available_loots):
                     self.consecutive_inactive_rounds = 0
                     break
-                elif i == 0:
-                    self._authorize_user()
 
         self._check_and_maybe_start_mines(teams_to_mine)
 
@@ -968,8 +980,7 @@ class CrabadaMineBot:
         loots = [l["game_id"] for l in self.crabada_w2.list_my_open_loots(self.address)]
         mines = [m["game_id"] for m in self.crabada_w2.list_my_mines(self.address)]
 
-        if not teams:
-            self.consecutive_inactive_rounds += 1
+        self.consecutive_inactive_rounds += 1
 
         for team in teams:
             if team["game_id"] is None or team["game_type"] is None:

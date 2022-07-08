@@ -21,6 +21,8 @@ from utils.google_sheets import GoogleSheets
 
 MAX_PAGE_DEPTH = 50
 MIN_MINERS_REVENGE = 36.0
+MIN_MP_THRESHOLD = 225
+MIN_PAGE_THRESHOLD = 3
 
 PURE_LOOT_TEAM_IDLE_GAME_STATS = {
     "CCP": {
@@ -52,8 +54,6 @@ class LootSnipes:
     ADDRESS_GSHEET = "No Reinforce List"
     UPDATE_TIME_DELTA = 60.0 * 5.0
     SEARCH_ADDRESSES_PER_ITERATION = 50
-    MIN_MP_THRESHOLD = 225
-    MIN_PAGE_THRESHOLD = 6
 
     def __init__(
         self,
@@ -101,6 +101,20 @@ class LootSnipes:
             else:
                 self.addresses: T.Dict[str, list] = data
 
+    def consolidate_snipes(self) -> None:
+        sniper_dir = os.path.dirname(self.log_file)
+        snipe_data = self._read_log()
+
+        log_files = [f for f in os.listdir(sniper_dir) if isfile(join(sniper_dir, f))]
+        for log_file in log_files:
+            if not log_file.startswith("no_reinforce"):
+                continue
+            if log_file == self.log_file:
+                continue
+            data = self._read_log(log_file)
+            snipe_data.update(data)
+        self._write_log(snipe_data)
+
     def delete_all_messages(self) -> None:
         logger.print_fail("Deleting all messages")
         for _, hook in self.snipes.items():
@@ -136,11 +150,13 @@ class LootSnipes:
         logger.print_ok_blue("Hunting for low MP loot snipes...")
         self._hunt_low_mp_teams(address, available_loots)
 
-    def _read_log(self) -> T.Dict[str, int]:
-        if not os.path.isfile(self.log_file):
+    def _read_log(self, log_file: str = "") -> T.Dict[str, int]:
+        if not log_file:
+            log_file = self.log_file
+        if not os.path.isfile(log_file):
             return {}
 
-        with open(self.log_file, "r") as infile:
+        with open(log_file, "r") as infile:
             return json.load(infile)
 
     def _write_log(self, data: T.Dict[str, int]) -> None:
@@ -304,7 +320,12 @@ class LootSnipes:
         return mine
 
     def find_low_mr_teams(
-        self, user_address: Address, available_loots: T.List[IdleGame], verbose: bool = False
+        self,
+        user_address: Address,
+        available_loots: T.List[IdleGame],
+        mp_threshold: int = MIN_MP_THRESHOLD,
+        min_page_threshold: int = MIN_PAGE_THRESHOLD,
+        verbose: bool = False,
     ) -> T.Dict[int, T.Any]:
         target_pages = {}
         bot_user_addresses = [v["address"] for _, v in USERS.items()]
@@ -317,10 +338,12 @@ class LootSnipes:
                 continue
 
             faction = mine["faction"].upper()
-            page = int((inx + 9) / 9)
+
+            MINE_PER_PAGE = 8
+            page = int((inx + MINE_PER_PAGE) / MINE_PER_PAGE)
             bp, mp = get_bp_mp_from_mine(mine, is_looting=False, verbose=False)
 
-            if mp > self.MIN_MP_THRESHOLD or page < self.MIN_PAGE_THRESHOLD:
+            if mp > mp_threshold or page < min_page_threshold:
                 continue
 
             if mine["owner"] in self.addresses["blocklist"]:
