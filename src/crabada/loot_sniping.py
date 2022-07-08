@@ -87,7 +87,9 @@ class LootSnipes:
             self.hit_rate = self._read_log()
         else:
             self.log_file = os.path.join(
-                logger.get_logging_dir("crabada"), "sniper", "no_reinforce.json"
+                logger.get_logging_dir("crabada"),
+                "sniper",
+                f"no_reinforce{'_' + log_name_suffix if log_name_suffix else ''}.json",
             )
             data = self._read_log()
             if not data:
@@ -151,7 +153,7 @@ class LootSnipes:
     ) -> T.List[IdleGame]:
 
         available_loots = []
-        pb = tqdm.tqdm(total=max_pages)
+        pb = tqdm.tqdm(total=max_pages - start_page)
         logger.print_ok_blue(f"Searching for available mines...")
         for page in range(start_page, start_page + max_pages):
             params = {
