@@ -105,7 +105,9 @@ class LootSnipes:
         sniper_dir = os.path.dirname(self.log_file)
         snipe_data = self._read_log()
 
-        log_files = [f for f in os.listdir(sniper_dir) if isfile(join(sniper_dir, f))]
+        log_files = [
+            f for f in os.listdir(sniper_dir) if os.path.isfile(os.path.join(sniper_dir, f))
+        ]
         for log_file in log_files:
             if not log_file.startswith("no_reinforce"):
                 continue
