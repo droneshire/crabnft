@@ -89,6 +89,7 @@ class CrabadaWeb2Client:
 
         try:
             self.proxy = FreeProxy(country_id=["US", "BR"], timeout=0.3, rand=True).get()
+            logger.print_ok_blue_arrow(f"Using proxy! {self.proxy}")
         except:
             self.proxy = None
 
