@@ -819,6 +819,14 @@ class CrabadaMineBot:
             f"Attemting to start loot of mine {mine_to_loot} with team {team['team_id']}!"
         )
 
+        # remove it from the available loots list (regardless of success/fail)
+        for i, loot in enumerate(available_loots):
+            if loot["game_id"] != mine_to_loot:
+                continue
+
+            del available_loots[i]
+            break
+
         with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
             tx = self.looting_strategy.start(team["team_id"], mine_to_loot)
 
@@ -838,13 +846,6 @@ class CrabadaMineBot:
                     self.fraud_detection_tracker.add(team["team_id"])
                     logger.print_warn(f"Adding team {team['team_id']} to fraud detection list")
 
-                # remove it from the available loots list
-                for i, loot in enumerate(available_loots):
-                    if loot["game_id"] != mine_to_loot:
-                        continue
-
-                    del available_loots[i]
-                    break
                 return True
 
         logger.print_fail(f"Error starting loot for team {team['team_id']}")
