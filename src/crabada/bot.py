@@ -46,7 +46,7 @@ class CrabadaMineBot:
     ALERT_THROTTLING_TIME = 60.0 * 120.0
     MIN_MINE_POINT = 60
     MAX_INACTIVE_ROUNDS = 2
-    MAX_LOOT_START_ATTEMPTS = 3
+    MAX_LOOT_START_ATTEMPTS = 1
 
     def __init__(
         self,
