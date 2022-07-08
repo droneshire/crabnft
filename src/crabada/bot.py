@@ -885,7 +885,7 @@ class CrabadaMineBot:
         available_teams = self.crabada_w2.list_available_teams(self.address)
         available_loots = []
 
-        teams_to_mine = available_teams[:]
+        teams_to_mine = []
         for team in available_teams:
             if not self._is_team_allowed_to_loot(team):
                 logger.print_warn(f"Skipping team {team['team_id']} for looting...")
@@ -897,14 +897,14 @@ class CrabadaMineBot:
                 continue
 
             if not self.looting_strategy.should_start(team):
+                teams_to_mine.append(team)
                 continue
 
             if not available_loots:
-                available_loots = self.loot_sniper.get_available_loots(self.address, 10, 15, False)
+                available_loots = self.loot_sniper.get_available_loots(self.address, 15, 40, False)
 
             for i in range(2):
                 if self._start_loot(team, available_loots):
-                    teams_to_mine.remove(team)
                     self.consecutive_inactive_rounds = 0
                     break
                 elif i == 0:
