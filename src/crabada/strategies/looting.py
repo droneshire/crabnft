@@ -103,7 +103,7 @@ class LootingStrategy(Strategy):
         return self.crabada_w2.get_num_loot_reinforcements(mine) >= 1
 
     def get_backoff_margin(self) -> int:
-        return 15
+        return 0
 
     def get_gas_margin(self, game_stage: GameStage, mine: T.Optional[IdleGame] = None) -> int:
         if game_stage == GameStage.START:
