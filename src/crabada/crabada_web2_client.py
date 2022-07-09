@@ -467,7 +467,9 @@ class CrabadaWeb2Client:
             nth_crab = int(math.ceil(self.N_CRAB_PERCENT / 100.0 * len(affordable_crabs)))
             nth_crab += reinforcement_search_backoff
         nth_crab = min(len(affordable_crabs), nth_crab)
-        logger.print_ok_blue(f"Crab list: {nth_crab}/{len(affordable_crabs)}")
+        logger.print_ok_blue(
+            f"Crab list: {nth_crab}/{len(affordable_crabs)}, Backoff: {reinforcement_search_backoff}"
+        )
         return n_or_better_or_none(nth_crab, sorted_affordable_crabs)
 
     def get_best_high_mp_crab_for_lending(
