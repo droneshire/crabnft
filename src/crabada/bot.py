@@ -156,6 +156,8 @@ class CrabadaMineBot:
         )
         self.loot_sniper.consolidate_snipes()
 
+        self.inactive_rounds = 0
+
         logger.print_ok_blue(f"Adding bot for user {self.alias} with address {self.address}")
 
     def _authorize_user(self) -> str:
@@ -981,6 +983,11 @@ class CrabadaMineBot:
         loots = [l["game_id"] for l in self.crabada_w2.list_my_open_loots(self.address)]
         mines = [m["game_id"] for m in self.crabada_w2.list_my_mines(self.address)]
 
+        if len(teams) == 0:
+            self.inactive_rounds += 1
+        else:
+            self.inactive_rounds = 0
+
         for team in teams:
             if team["game_id"] is None or team["game_type"] is None:
                 continue
@@ -1028,6 +1035,10 @@ class CrabadaMineBot:
         logger.print_normal("=" * 60)
 
         logger.print_ok(f"User: {self.alias.upper()}")
+
+        if self.inactive_rounds > self.MAX_INACTIVE_ROUNDS:
+            logger.print_warn(f"Skipping {self.alias.upper()} due to inactivity!")
+            return
 
         self.config_mgr.check_for_config_updates()
 
