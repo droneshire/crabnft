@@ -148,7 +148,7 @@ class CrabadaWeb2Client:
     def get_pricing_data(self) -> Prices:
         url = self.MARKETPLACE_URL + "/public/price/using"
 
-        res = self._get_request(url, params)
+        res = self._get_request(url)
         prices: Prices = res["result"]
         return Prices(prices["avax_usd"], prices["tus_usd"], prices["cra_usd"])
 
@@ -724,30 +724,30 @@ class CrabadaWeb2Client:
             return False
 
         if not self.mine_is_open(mine):
-            logger.print_normal(f"Not reinforcing, loot not open")
+            logger.print_normal(f"{mine['game_id']}: Not reinforcing, loot not open")
             return False
 
         if self.mine_is_finished(mine):
-            logger.print_normal(f"Not reinforcing, loot finished")
+            logger.print_normal(f"{mine['game_id']}: Not reinforcing, loot finished")
             return False
 
         if self.mine_is_settled(mine):
-            logger.print_normal(f"Not reinforcing, loot settled")
+            logger.print_normal(f"{mine['game_id']}: Not reinforcing, loot settled")
             return False
 
         process = mine["process"]
         actions = [p["action"] for p in process]
         if actions[-1] not in ["reinforce-defense"]:
-            logger.print_normal(f"Not reinforcing loot, not our turn")
+            logger.print_normal(f"{mine['game_id']}: Not reinforcing loot, not our turn")
             return False
 
         num_reinforcements = len([a for a in actions if "reinforce-attack" in a])
         if num_reinforcements >= 2:
-            logger.print_normal(f"Not reinforcing loot, already did 2x")
+            logger.print_normal(f"{mine['game_id']}: Not reinforcing loot, already did 2x")
             return False
 
         if self.loot_is_winning(mine):
-            logger.print_normal(f"Not reinforcing loot, we're winning")
+            logger.print_normal(f"{mine['game_id']}: Not reinforcing loot, we're winning")
             return False
 
         # make sure we don't reinforce to a legendary when we can't win
