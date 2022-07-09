@@ -779,7 +779,7 @@ class CrabadaMineBot:
 
             self.game_stats[team["team_id"]]["gas_close"] = gas_tus
 
-        logger.print_fail_arrow(f"Error closing game {team['game_id']}")
+        logger.print_fail_arrow(f"Error closing game {team['game_id']}\n{tx}")
         return False
 
     def _start_mine(self, team: Team) -> bool:

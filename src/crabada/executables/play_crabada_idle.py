@@ -21,6 +21,7 @@ from config_crabada import (
     USERS,
 )
 from crabada.bot import CrabadaMineBot
+from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.game_stats import LifetimeGameStats
 from crabada.profitability import get_profitability_message
 from crabada.types import MineOption
@@ -161,13 +162,10 @@ def run_bot() -> None:
             )
         )
 
+    crabda_web2 = CrabadaWeb2Client()
     total_commission_tus = 0.0
     total_tus = 0.0
-    prices = Prices(
-        get_avax_price_usd(IEX_API_TOKEN, dry_run=args.dry_run),
-        get_token_price_usd(COINMARKETCAP_API_TOKEN, "TUS", dry_run=args.dry_run),
-        get_token_price_usd(COINMARKETCAP_API_TOKEN, "CRA", dry_run=args.dry_run),
-    )
+    prices = crabda_web2.get_pricing_data()
 
     for bot in bots:
         bot.update_prices(prices.avax_usd, prices.tus_usd, prices.cra_usd)
@@ -225,10 +223,11 @@ def run_bot() -> None:
 
                 now = time.time()
                 if now - last_price_update > PRICE_UPDATE_TIME:
+                    new_prices = crabda_web2.get_pricing_data()
                     prices.update(
-                        get_avax_price_usd(IEX_API_TOKEN),
-                        get_token_price_usd(COINMARKETCAP_API_TOKEN, "TUS"),
-                        get_token_price_usd(COINMARKETCAP_API_TOKEN, "CRA"),
+                        new_prices.avax_usd,
+                        new_prices.tus_usd,
+                        new_prices.cra_usd,
                     )
                     bot.update_prices(prices.avax_usd, prices.tus_usd, prices.cra_usd)
                     last_price_update = now

@@ -22,7 +22,7 @@ from crabada.types import (
 from crabada.types import CRABADA_ID_TO_CLASS
 from utils import logger
 from utils.general import first_or_none, n_or_better_or_none, get_pretty_seconds
-from utils.price import wei_to_tus, Tus
+from utils.price import wei_to_tus, Prices, Tus
 
 
 class CrabadaWeb2Client:
@@ -72,7 +72,7 @@ class CrabadaWeb2Client:
 
     # reinforcement stuff
     N_CRAB_PERCENT = 15.0
-    REINFORCE_TIME_WINDOW = 60 * (30 - 1)  # 30 minute window + 1 minute buffer
+    REINFORCE_TIME_WINDOW = 60 * 30  # 30 minute window + 1 minute buffer
 
     # game facts
     TIME_PER_MINING_ACTION = 60.0 * 30
@@ -144,6 +144,13 @@ class CrabadaWeb2Client:
 
     def update_auth_token(self, auth_token: str) -> None:
         self.authorization_token = auth_token
+
+    def get_pricing_data(self) -> Prices:
+        url = self.MARKETPLACE_URL + "/public/price/using"
+
+        res = self._get_request(url, params)
+        prices: Prices = res["result"]
+        return Prices(prices["avax_usd"], prices["tus_usd"], prices["cra_usd"])
 
     def get_loot_attack_data(
         self,
@@ -618,7 +625,7 @@ class CrabadaWeb2Client:
     def _can_loot_reinforcement_win(self, mine: IdleGame) -> bool:
         defense_battle_point, attack_battle_point = self._get_battle_points(mine)
         logger.print_normal(
-            f"Loot reinforce check: [D]-{defense_battle_point} [A]-{attack_battle_point + self.MAX_BP_NORMAL_CRAB}"
+            f"Loot reinforce check: [D] {defense_battle_point} [A] {attack_battle_point + self.MAX_BP_NORMAL_CRAB}"
         )
         return attack_battle_point + self.MAX_BP_NORMAL_CRAB > defense_battle_point
 
@@ -627,13 +634,21 @@ class CrabadaWeb2Client:
         Determines if attack looter has won the battle
         """
         try:
-            if mine.get("winner_team_id", -1) == mine["attack_team_id"]:
-                return True
+            return mine.get("winner_team_id", -1) == mine["attack_team_id"]
         except KeyboardInterrupt:
             raise
         except:
             return False
         defense_battle_point, attack_battle_point = self._get_battle_points(mine)
+
+        logger.print_normal(f"Loot win check: [D] {defense_battle_point} [A] {attack_battle_point}")
+
+        if defense_battle_point is None:
+            return True
+
+        if attack_battle_point is None:
+            return False
+
         return attack_battle_point > defense_battle_point
 
     def mine_is_winning(self, mine: IdleGame) -> bool:
@@ -641,8 +656,7 @@ class CrabadaWeb2Client:
         Determines if defense miner has won the battle
         """
         try:
-            if mine.get("winner_team_id", -1) == mine["team_id"]:
-                return True
+            return mine.get("winner_team_id", -1) == mine["team_id"]
         except KeyboardInterrupt:
             raise
         except:
@@ -710,35 +724,45 @@ class CrabadaWeb2Client:
             return False
 
         if not self.mine_is_open(mine):
+            logger.print_normal(f"Not reinforcing, loot not open")
             return False
 
         if self.mine_is_finished(mine):
+            logger.print_normal(f"Not reinforcing, loot finished")
             return False
 
         if self.mine_is_settled(mine):
+            logger.print_normal(f"Not reinforcing, loot settled")
             return False
 
         process = mine["process"]
         actions = [p["action"] for p in process]
         if actions[-1] not in ["reinforce-defense"]:
+            logger.print_normal(f"Not reinforcing loot, not our turn")
             return False
 
         num_reinforcements = len([a for a in actions if "reinforce-attack" in a])
         if num_reinforcements >= 2:
+            logger.print_normal(f"Not reinforcing loot, already did 2x")
             return False
 
         if self.loot_is_winning(mine):
+            logger.print_normal(f"Not reinforcing loot, we're winning")
             return False
 
         # make sure we don't reinforce to a legendary when we can't win
         if not self._can_loot_reinforcement_win(mine):
             logger.print_warn(
-                f"Not reinforcing mine {mine['game_id']} since there's no way we can win"
+                f"Not reinforcing loot {mine['game_id']} since there's no way we can win"
             )
             return False
 
         defense_start_time = process[-1]["transaction_time"]
-        return time.time() - defense_start_time < self.REINFORCE_TIME_WINDOW
+        round_duration = time.time() - defense_start_time
+        logger.print_normal(
+            f"Round duration: {get_pretty_seconds(int(round_duration))}, {'reinforcing' if round_duration < self.REINFORCE_TIME_WINDOW else 'not-reinforcing'}"
+        )
+        return round_duration < self.REINFORCE_TIME_WINDOW
 
     def mine_is_open(self, mine: IdleGame) -> bool:
         """
