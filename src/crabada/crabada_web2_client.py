@@ -654,12 +654,6 @@ class CrabadaWeb2Client:
         """
         Determines if defense miner has won the battle
         """
-        try:
-            return mine.get("winner_team_id", -1) == mine["team_id"]
-        except KeyboardInterrupt:
-            raise
-        except:
-            return False
         defense_battle_point, attack_battle_point = self._get_battle_points(mine)
 
         if defense_battle_point is None:
