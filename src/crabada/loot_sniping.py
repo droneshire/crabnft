@@ -84,7 +84,11 @@ class LootSnipes:
                 "sniper",
                 f"hit_rates{'_' + log_name_suffix if log_name_suffix else ''}.json",
             )
-            self.addresses: T.Dict[str, list] = {"verified": [], "unverified": [], "blocklist": []}
+            self.addresses: T.Dict[str, set] = {
+                "verified": set(),
+                "unverified": set(),
+                "blocklist": set(),
+            }
             self.hit_rate = self._read_log()
         else:
             self.log_file = os.path.join(
@@ -94,28 +98,32 @@ class LootSnipes:
             )
             data = self._read_log()
             if not data:
-                self.addresses: T.Dict[str, list] = {
-                    "verified": [],
-                    "unverified": [],
-                    "blocklist": [],
+                self.addresses: T.Dict[str, set] = {
+                    "verified": set(),
+                    "unverified": set(),
+                    "blocklist": set(),
                 }
             else:
-                self.addresses: T.Dict[str, list] = data
+                self.addresses: T.Dict[str, set] = data
 
     def consolidate_snipes(self) -> None:
         sniper_dir = os.path.dirname(self.log_file)
         snipe_data = self._read_log()
 
         log_files = [
-            f for f in os.listdir(sniper_dir) if os.path.isfile(os.path.join(sniper_dir, f))
+            os.path.join(sniper_dir, f)
+            for f in os.listdir(sniper_dir)
+            if os.path.isfile(os.path.join(sniper_dir, f))
         ]
         for log_file in log_files:
-            if not log_file.startswith("no_reinforce"):
+            if not os.path.basename(log_file).startswith("no_reinforce"):
                 continue
             if log_file == self.log_file:
                 continue
             data = self._read_log(log_file)
-            snipe_data.update(data)
+            for k, v in data.items():
+                snipe_data[k] = set(snipe_data[k])
+                snipe_data[k].update(set(v))
         self._write_log(snipe_data)
 
     def end(self) -> None:
@@ -164,11 +172,20 @@ class LootSnipes:
             return {}
 
         with open(log_file, "r") as infile:
-            return json.load(infile)
+            data = json.load(infile)
+            for k, v in data.items():
+                if isinstance(v, list):
+                    data[k] = set(v)
+            return data
 
-    def _write_log(self, data: T.Dict[str, int]) -> None:
+    def _write_log(self, data: T.Dict[str, T.Any]) -> None:
+        write_data = copy.deepcopy(data)
+        for k, v in data.items():
+            if isinstance(v, set):
+                write_data[k] = list(v)
+
         with open(self.log_file, "w") as outfile:
-            json.dump(data, outfile, indent=4)
+            json.dump(write_data, outfile, indent=4)
 
     def get_available_loots(
         self, user_address: Address, start_page: int = 1, max_pages: int = 8, verbose: bool = False
@@ -221,7 +238,7 @@ class LootSnipes:
         if user_address in self.addresses["verified"]:
             return
         logger.print_ok(f"Found a new no-reinforce snipe {mine['owner']} to list")
-        self.addresses["verified"].append(user_address)
+        self.addresses["verified"].add(user_address)
         self._write_log(self.addresses)
 
     def remove_no_reinforce_address(self, mine: IdleGame) -> None:
@@ -247,7 +264,7 @@ class LootSnipes:
 
         if not address_list:
             address_list = self.addresses["verified"]
-            address_list.extend(self.addresses["unverified"])
+            address_list.update(self.addresses["unverified"])
 
         pb = tqdm.tqdm(total=len(address_list))
         loot_list = {}
@@ -385,9 +402,9 @@ class LootSnipes:
 
         try:
             self.addresses = {
-                "verified": list(set(self.gsheet.read_column(1)[1:])),
-                "unverified": list(set(self.gsheet.read_column(3)[1:])),
-                "blocklist": list(set(self.gsheet.read_column(4)[1:])),
+                "verified": set(self.gsheet.read_column(1)[1:]),
+                "unverified": set(self.gsheet.read_column(3)[1:]),
+                "blocklist": set(self.gsheet.read_column(4)[1:]),
             }
             self.sheets_update_delta = self.UPDATE_TIME_DELTA
         except:

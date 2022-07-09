@@ -71,7 +71,7 @@ class CrabadaWeb2Client:
     }
 
     # reinforcement stuff
-    N_CRAB_PERCENT = 15.0
+    N_CRAB_PERCENT = 1.0
     REINFORCE_TIME_WINDOW = 60 * 30  # 30 minute window + 1 minute buffer
 
     # game facts
@@ -598,8 +598,11 @@ class CrabadaWeb2Client:
         best_crab["price"] = 0
         return best_crab
 
-    def get_reinforcement_crabs(self, mine: IdleGame) -> T.List[int]:
-        return [m["crabada_id"] for m in mine.get("defense_team_info", [])][3:]
+    def get_reinforcement_crabs(self, mine: IdleGame, is_loot: bool = False) -> T.List[int]:
+        if is_loot:
+            return [m["crabada_id"] for m in mine.get("attack_team_info", [])][3:]
+        else:
+            return [m["crabada_id"] for m in mine.get("defense_team_info", [])][3:]
 
     def list_crabs_for_lending_raw(self, params: T.Dict[str, T.Any] = {}) -> T.Any:
         url = self.BASE_URL + "/crabadas/lending"
@@ -625,7 +628,7 @@ class CrabadaWeb2Client:
     def _can_loot_reinforcement_win(self, mine: IdleGame) -> bool:
         defense_battle_point, attack_battle_point = self._get_battle_points(mine)
         logger.print_normal(
-            f"Loot reinforce check: [D] {defense_battle_point} [A] {attack_battle_point + self.MAX_BP_NORMAL_CRAB}"
+            f"Loot[{mine['game_id']}]: reinforce check: [D] {defense_battle_point} [A] {attack_battle_point + self.MAX_BP_NORMAL_CRAB}"
         )
         return attack_battle_point + self.MAX_BP_NORMAL_CRAB > defense_battle_point
 
@@ -633,15 +636,11 @@ class CrabadaWeb2Client:
         """
         Determines if attack looter has won the battle
         """
-        try:
-            return mine.get("winner_team_id", -1) == mine["attack_team_id"]
-        except KeyboardInterrupt:
-            raise
-        except:
-            return False
         defense_battle_point, attack_battle_point = self._get_battle_points(mine)
 
-        logger.print_normal(f"Loot win check: [D] {defense_battle_point} [A] {attack_battle_point}")
+        logger.print_normal(
+            f"Loot[{mine['game_id']}]: win check: [D] {defense_battle_point} [A] {attack_battle_point}"
+        )
 
         if defense_battle_point is None:
             return True

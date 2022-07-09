@@ -194,7 +194,7 @@ def run_bot() -> None:
     should_post_updates = 1 in [int(i) for i in args.groups]
     group_backoff_adjustment = int(args.groups[0]) if len(args.groups) == 1 else 0
 
-    circuit_breaker = CircuitBreaker(min_delta=60.0 * 5.0, backoff=80.0)
+    circuit_breaker = CircuitBreaker(min_delta=20.0 * len(bots), backoff=80.0)
 
     try:
         while True:

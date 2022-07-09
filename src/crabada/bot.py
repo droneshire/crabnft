@@ -463,7 +463,7 @@ class CrabadaMineBot:
             )
 
             reinforments_used_str = logger.format_normal("[")
-            for crab in self.crabada_w2.get_reinforcement_crabs(mine_data):
+            for crab in self.crabada_w2.get_reinforcement_crabs(mine_data, not is_mine):
                 if (
                     crab
                     in self.config_mgr.config["game_specific_configs"]["reinforcing_crabs"].keys()
