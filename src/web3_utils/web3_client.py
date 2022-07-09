@@ -29,6 +29,8 @@ def web3_transaction(err_string_compare: str, handler: T.Callable) -> T.Iterator
             handler()
         else:
             pass
+    except Exception as e:
+        logger.print_fail(f"{e}")
 
 
 class MissingParameter(Exception):
