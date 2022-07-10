@@ -213,7 +213,6 @@ class LootSnipes:
                     continue
                 available_loots.append(loot)
 
-
         pb.close()
 
         return available_loots
