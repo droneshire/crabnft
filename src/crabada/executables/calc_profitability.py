@@ -67,7 +67,9 @@ def calc_profits() -> None:
         alias = get_alias_from_user(user)
         logger.print_ok_blue(f"Profitability Analysis for {alias.upper()}:")
 
-        stats = CrabadaLifetimeGameStatsLogger(user, logger.get_logging_dir(), {}).get_game_stats()
+        stats = CrabadaLifetimeGameStatsLogger(
+            user, logger.get_logging_dir("crabada"), {}, dry_run=args.dry_run
+        ).get_game_stats()
 
         win_percentages = {
             MineOption.MINE: stats[MineOption.MINE]["game_win_percent"],
