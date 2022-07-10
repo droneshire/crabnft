@@ -43,6 +43,13 @@ class LootingStrategy(Strategy):
         tx_hash = self.crabada_w3.attack(game_id, team_id, expired_time, signature)
         tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
         gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+
+        if tx_receipt["status"] != 1:
+            try:
+                logger.print_fail(tx_receipt)
+            except:
+                pass
+
         return CrabadaTransaction(
             tx_hash,
             MineOption.LOOT,
@@ -65,6 +72,13 @@ class LootingStrategy(Strategy):
             result = self._get_game_result(tus)
         else:
             result = Result.UNKNOWN
+
+        if tx_receipt["status"] != 1:
+            try:
+                logger.print_fail(tx_receipt)
+            except:
+                pass
+
         return CrabadaTransaction(
             tx_hash,
             MineOption.LOOT,
@@ -82,6 +96,13 @@ class LootingStrategy(Strategy):
         tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
 
         gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+
+        if tx_receipt["status"] != 1:
+            try:
+                logger.print_fail(tx_receipt)
+            except:
+                pass
+
         return CrabadaTransaction(
             tx_hash,
             MineOption.LOOT,

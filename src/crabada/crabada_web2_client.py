@@ -8,7 +8,11 @@ import time
 from eth_typing import Address
 from fp.fp import FreeProxy
 
-from crabada.factional_advantage import get_faction_adjusted_battle_point, get_bp_mp_from_team
+from crabada.factional_advantage import (
+    get_faction_adjusted_battle_point,
+    get_bp_mp_from_crab,
+    get_bp_mp_from_team,
+)
 from crabada.miners_revenge import calc_miners_revenge
 from crabada.types import (
     Crab,
@@ -452,12 +456,22 @@ class CrabadaWeb2Client:
         max_tus: Tus,
         reinforcement_search_backoff: int,
         lending_category: LendingCategories,
+        min_reinforcement_battle_point: int = -1,
     ) -> CrabForLending:
         """
         From a list of crabs, pick the one with the best characteristic for the
-        cheapest price
+        cheapest price that meets minimum battle point requirements
         """
-        affordable_crabs = [c for c in crabs if wei_to_tus(c.get("price", max_tus)) < max_tus]
+        affordable_crabs = []
+        for crab in crabs:
+            if wei_to_tus(crab.get("price", max_tus)) > max_tus:
+                continue
+
+            bp, mp = get_bp_mp_from_crab(crab)
+            if bp < min_reinforcement_battle_point:
+                continue
+            affordable_crabs.append(crab)
+
         sorted_affordable_crabs = sorted(
             affordable_crabs, key=lambda c: (-c[lending_category], c.get("price", max_tus))
         )
@@ -519,7 +533,11 @@ class CrabadaWeb2Client:
         return cached_high_mp_crab
 
     def get_best_high_bp_crab_for_lending(
-        self, mine: IdleGame, max_tus: Tus, reinforcement_search_backoff: int
+        self,
+        mine: IdleGame,
+        max_tus: Tus,
+        reinforcement_search_backoff: int,
+        min_reinforcement_battle_point: int,
     ) -> T.Optional[CrabForLending]:
         cached_high_bp_crab = None
         for class_id in [
@@ -532,7 +550,11 @@ class CrabadaWeb2Client:
             }
             high_bp_crabs = self.list_high_bp_crabs_for_lending(params=params)
             high_bp_crab = self.get_cheapest_best_crab_from_list_for_lending(
-                high_bp_crabs, max_tus, reinforcement_search_backoff, "battle_point"
+                high_bp_crabs,
+                max_tus,
+                reinforcement_search_backoff,
+                "battle_point",
+                min_reinforcement_battle_point=min_reinforcement_battle_point,
             )
 
             if high_bp_crab is None:
@@ -572,22 +594,35 @@ class CrabadaWeb2Client:
         self,
         user_address: Address,
         reinforcement_list: T.List[int],
+        min_reinforcement_battle_point: int,
     ) -> T.Optional[CrabForLending]:
         return self.get_my_best_crab_for_lending(
-            user_address, reinforcement_list, params={"orderBy": "battle_point"}
+            user_address,
+            reinforcement_list,
+            min_reinforcement_battle_point,
+            params={"orderBy": "battle_point"},
         )
 
     def get_my_best_crab_for_lending(
         self,
         user_address: Address,
         reinforcement_list: T.List[int],
+        min_reinforcement_battle_point: int = -1,
         params: T.Dict[str, T.Any] = {},
     ) -> T.Optional[CrabForLending]:
         my_crabs = self.list_my_available_crabs_for_reinforcement(user_address, params)
         if not my_crabs:
             return None
 
-        available_crabs = [c for c in my_crabs if c["crabada_id"] in reinforcement_list]
+        available_crabs = []
+        for crab in my_crabs:
+            if crab["crabada_id"] not in reinforcement_list:
+                continue
+
+            bp, mp = get_bp_mp_from_crab(crab)
+            if bp < min_reinforcement_battle_point:
+                continue
+            available_crabs.append(crab)
 
         if not available_crabs:
             return None
@@ -617,7 +652,7 @@ class CrabadaWeb2Client:
         actual_params.update(params)
         return self._get_request(url, actual_params)
 
-    def _get_battle_points(self, mine: IdleGame) -> T.Tuple[int, int]:
+    def get_battle_points(self, mine: IdleGame) -> T.Tuple[int, int]:
         defense_battle_point = get_faction_adjusted_battle_point(
             mine, is_looting=False, verbose=False
         )
@@ -628,7 +663,7 @@ class CrabadaWeb2Client:
         return (defense_battle_point, attack_battle_point)
 
     def _can_loot_reinforcement_win(self, mine: IdleGame) -> bool:
-        defense_battle_point, attack_battle_point = self._get_battle_points(mine)
+        defense_battle_point, attack_battle_point = self.get_battle_points(mine)
         logger.print_normal(
             f"Loot[{mine['game_id']}]: reinforce check: [D] {defense_battle_point} [A] {attack_battle_point + self.MAX_BP_NORMAL_CRAB}"
         )
@@ -638,7 +673,7 @@ class CrabadaWeb2Client:
         """
         Determines if attack looter has won the battle
         """
-        defense_battle_point, attack_battle_point = self._get_battle_points(mine)
+        defense_battle_point, attack_battle_point = self.get_battle_points(mine)
 
         logger.print_normal(
             f"Loot[{mine['game_id']}]: win check: [D] {defense_battle_point} [A] {attack_battle_point}"
@@ -656,7 +691,7 @@ class CrabadaWeb2Client:
         """
         Determines if defense miner has won the battle
         """
-        defense_battle_point, attack_battle_point = self._get_battle_points(mine)
+        defense_battle_point, attack_battle_point = self.get_battle_points(mine)
 
         if defense_battle_point is None:
             return False

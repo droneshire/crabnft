@@ -6,6 +6,7 @@ import math
 import os
 import time
 import typing as T
+from discord_webhook import DiscordEmbed, DiscordWebhook
 from eth_account import Account, messages
 from twilio.rest import Client
 from web3.types import Address
@@ -14,7 +15,11 @@ from config_crabada import ADMIN_EMAIL, GAME_BOT_STRING
 from crabada.config_manager_firebase import ConfigManagerFirebase
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
-from crabada.factional_advantage import get_faction_adjusted_battle_points_from_teams
+from crabada.factional_advantage import (
+    get_faction_adjusted_battle_points_from_teams,
+    FACTION_COLORS,
+    FACTION_ICON_URLS,
+)
 from crabada.game_stats import CrabadaLifetimeGameStatsLogger, NULL_GAME_STATS, Result
 from crabada.game_stats import (
     get_daily_stats_message,
@@ -26,7 +31,8 @@ from crabada.profitability import CrabadaTransaction, GameStats, NULL_STATS
 from crabada.profitability import get_actual_game_profit, is_profitable_to_take_action
 from crabada.strategies.strategy import GameStage, Strategy
 from crabada.strategies.strategy_selection import STRATEGY_SELECTION, strategy_to_game_type
-from crabada.types import CrabForLending, IdleGame, Team, MineOption
+from crabada.types import CrabForLending, Faction, IdleGame, MineOption, Team
+from utils import discord
 from utils import logger
 from utils.config_types import UserConfig, SmsConfig
 from utils.csv_logger import CsvLogger
@@ -264,6 +270,29 @@ class CrabadaMineBot:
                 email_message,
             )
 
+    def _send_close_game_discord_activity_update(
+        self, discord_handle: str, result_str: str, faction: Faction, is_loot: bool, mine_id: int
+    ) -> None:
+        webhook = DiscordWebhook(
+            url=discord.DISCORD_WEBHOOK_URL["CRABADA_ACTIVITY"], rate_limit_retry=True
+        )
+        game_type = "LOOT" if is_loot else "MINE"
+        embed = DiscordEmbed(
+            title=f"{game_type} {mine_id}",
+            description=f"Closing game for {discord_handle}\n",
+            color=FACTION_COLORS[faction].value,
+        )
+        embed.add_embed_field(name="Result", value=result_str, inline=True)
+        game_stats = self.stats_logger.lifetime_stats[
+            MineOption.LOOT if is_loot else MineOption.MINE
+        ]
+        win_percent_str = f"{game_stats['game_win_percent']:.2f}"
+        embed.add_embed_field(name=f"{game_type} Win %", value=win_percent_str, inline=True)
+
+        embed.set_thumbnail(url=FACTION_ICON_URLS[faction])
+        webhook.add_embed(embed)
+        webhook.execute()
+
     def _update_bot_stats(self, tx: CrabadaTransaction, team: Team, mine: IdleGame) -> None:
         team_id = team["team_id"]
         if team_id not in self.game_stats:
@@ -296,6 +325,15 @@ class CrabadaMineBot:
         logger.print_bold(f"Profits w/ commission: {profit_tus:.2f} TUS (${profit_usd:.2f})")
 
         message = f"Successfully closed {tx.game_type} {team['game_id']}, we {tx.result} {outcome_emoji}.\n"
+
+        self._send_close_game_discord_activity_update(
+            self.config_mgr.config["discord_handle"].upper(),
+            f"{tx.result} {outcome_emoji}",
+            team["faction"],
+            tx.game_type,
+            mine["game_id"],
+        )
+
         if team["team_id"] in self.reinforcement_skip_tracker:
             self.reinforcement_skip_tracker.discard(team["team_id"])
             message += f"**NOTE: we intentionally did not reinforce this mine due to sustained periods of negative expected profit or high gas!\n"

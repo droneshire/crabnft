@@ -5,6 +5,7 @@ from discord import Webhook, RequestsWebhookAdapter
 DISCORD_WEBHOOK_URL = {
     "CRABADA_HOLDERS": "https://discord.com/api/webhooks/988288028143403008/kG9V_OHQEA9Cj6n_OaqFrp48Y7NllBkKZs8c58r6uUYSZlqIPtPm3n18jzCpwNpZjfl5",
     "CRABADA_UPDATES": "https://discord.com/api/webhooks/988288028143403008/kG9V_OHQEA9Cj6n_OaqFrp48Y7NllBkKZs8c58r6uUYSZlqIPtPm3n18jzCpwNpZjfl5",
+    "CRABADA_ACTIVITY": "https://discord.com/api/webhooks/995581922912772107/WxWRhmM8nN5zNHyeXOHI1Br9MV_7yOFjeigjuHQSOB-5p3NAOhR07vBvu9xXvQnEs1-N",
     "LOOT_SNIPE": "https://discord.com/api/webhooks/965347698796531772/FG7JJS1AaFkUrFutgmUew2Cq8Jw9eragMYcgxFAC1BD3vL9Eje1ylg7WUShLdORTplvI",
     "LOW_MR_LOOT_SNIPE": "https://discord.com/api/webhooks/967646138570248222/uGB8At-fTN-ORWwnRcky4Wb0u311qjNBpDMgHLtuwGUm3PkApu-8VU8Rt25Z9f4SYvSP",
     "WYNDBLAST_UPDATES": "https://discord.com/api/webhooks/988288614343512074/AiVdp_uL_sLTJRO05xhU6E6DEF6aQR1cB65ZO9SjQlzMHlDNTGoHKXv6ucyBErvM1UX6",

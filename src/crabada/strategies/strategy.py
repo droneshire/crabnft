@@ -95,6 +95,8 @@ class Strategy:
             elif now - self.reinforce_time_cache[crab] > self.REINFORCEMENT_REUSE_WINDOW:
                 available_reinforcing_crabs.append(crab)
 
+        defense_battle_point, attack_battle_point = self.crabada_w2.get_battle_points(mine)
+        min_reinforcement_battle_point = defense_battle_point - attack_battle_point + 1
         logger.print_normal(f"Mine[{mine['game_id']}]: using highest bp")
         if self.config_mgr.config["game_specific_configs"]["reinforcing_crabs"]:
             logger.print_normal(
@@ -107,7 +109,9 @@ class Strategy:
                 f"Checking from approved reinforcements {allowed_crabs_str} from group {group_id}"
             )
             reinforcement_crab = self.crabada_w2.get_my_best_bp_crab_for_lending(
-                self.address, available_reinforcing_crabs
+                self.address,
+                available_reinforcing_crabs,
+                min_reinforcement_battle_point,
             )
             logger.print_normal(f"Own reinforcement result: {reinforcement_crab}")
 
@@ -124,6 +128,7 @@ class Strategy:
                 mine,
                 self.config_mgr.config["game_specific_configs"]["max_reinforcement_price_tus"],
                 self.reinforcement_search_backoff,
+                min_reinforcement_battle_point,
             )
 
         return reinforcement_crab
