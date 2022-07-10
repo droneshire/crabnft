@@ -293,7 +293,7 @@ class CrabadaMineBot:
             MineOption.LOOT if is_loot else MineOption.MINE
         ]
         embed.add_embed_field(
-            name=f"Win %", value=f"{game_stats['game_win_percent']:.2f}", inline=True
+            name=f"Win %", value=f"{game_stats['game_win_percent']:.2f}%", inline=True
         )
         embed.add_embed_field(name=f"MR %", value=f"{miners_revenge:.2f}%", inline=True)
 
