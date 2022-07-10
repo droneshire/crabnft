@@ -271,7 +271,13 @@ class CrabadaMineBot:
             )
 
     def _send_close_game_discord_activity_update(
-        self, discord_handle: str, result_str: str, faction: Faction, is_loot: bool, mine_id: int, miners_revenge: float
+        self,
+        discord_handle: str,
+        result_str: str,
+        faction: Faction,
+        is_loot: bool,
+        mine_id: int,
+        miners_revenge: float,
     ) -> None:
         webhook = DiscordWebhook(
             url=discord.DISCORD_WEBHOOK_URL["CRABADA_ACTIVITY"], rate_limit_retry=True
@@ -286,8 +292,9 @@ class CrabadaMineBot:
         game_stats = self.stats_logger.lifetime_stats[
             MineOption.LOOT if is_loot else MineOption.MINE
         ]
-        win_percent_str = f"{game_stats['game_win_percent']:.2f}"
-        embed.add_embed_field(name=f"{game_type} Win %", value=win_percent_str, inline=True)
+        embed.add_embed_field(
+            name=f"Win %", value=f"{game_stats['game_win_percent']:.2f}", inline=True
+        )
         embed.add_embed_field(name=f"MR %", value=f"{miners_revenge:.2f}%", inline=True)
 
         embed.set_thumbnail(url=FACTION_ICON_URLS[faction])
@@ -333,7 +340,7 @@ class CrabadaMineBot:
             team["faction"],
             tx.game_type == MineOption.LOOT,
             mine["game_id"],
-            calc_miners_revenge(mine, False)
+            calc_miners_revenge(mine, False),
         )
 
         if team["team_id"] in self.reinforcement_skip_tracker:
