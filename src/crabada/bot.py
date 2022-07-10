@@ -891,7 +891,7 @@ class CrabadaMineBot:
             self.game_stats[team["team_id"]]["gas_start"] = 0.0
 
         num_reinforcements = self.crabada_w2.get_num_mine_reinforcements(mine)
-        if num_reinforcements == 0:
+        if num_reinforcements <= 1:
             self.loot_sniper.add_no_reinforce_address(mine)
         else:
             self.loot_sniper.remove_no_reinforce_address(mine)
