@@ -33,7 +33,7 @@ from utils.math import Average
 from utils.price import DEFAULT_GAS_USED, get_avax_price_usd, get_token_price_usd, Prices
 
 PRICE_UPDATE_TIME = 60.0 * 60.0
-BOT_TOTALS_UPDATE = 60.0 * 5
+BOT_TOTALS_UPDATE = 60.0 * 15
 PROFITABILITY_UPDATE_TIME = 60.0 * 10.0
 GAS_DOWNSAMPLE_COUNT = 8
 
@@ -130,6 +130,7 @@ def run_bot() -> None:
     webhooks = {
         "CRABADA_HOLDERS": discord.get_discord_hook("CRABADA_HOLDERS"),
         "CRABADA_UPDATES": discord.get_discord_hook("CRABADA_UPDATES"),
+        "CRABADA_ACTIVITY": discord.get_discord_hook("CRABADA_ACTIVITY"),
         "LOOT_SNIPE": discord.get_discord_hook("LOOT_SNIPE"),
     }
 
@@ -181,7 +182,7 @@ def run_bot() -> None:
     logger.print_normal("\n")
 
     last_price_update = 0.0
-    last_discord_update = time.time()
+    last_discord_update = 0.0
     last_profitability_update = time.time()
     avg_gas_tus = Average(DEFAULT_GAS_USED)
     avg_reinforce_tus = Average(9.0)
@@ -264,6 +265,8 @@ def run_bot() -> None:
                 total_users, total_teams = get_users_teams()
                 message += f"**Users: {total_users} Teams: {total_teams}**\n"
                 logger.print_normal(message)
+                if not args.quiet:
+                    webhooks["CRABADA_ACTIVITY"].send(message)
 
             if not should_post_updates:
                 continue
