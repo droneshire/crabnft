@@ -133,7 +133,7 @@ def get_faction_adjusted_battle_point(
         if verbose:
             logger.print_normal("Getting defense point")
         key = "defense_team_info" if "defense_team_info" in game else "defense_team_members"
-        for crab in game(key, []):
+        for crab in game.get(key, []):
             bp, _ = get_bp_mp_from_crab(crab)
             team_points += bp
         total_points = game["defense_point"]
