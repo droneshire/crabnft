@@ -118,27 +118,31 @@ def get_faction_adjusted_battle_point(
 ) -> int:
     team_points = 0
 
-    if is_looting:
-        # we're looting, so get attack_point
-        if verbose:
-            logger.print_normal("Getting attack point")
-        for crab in game["attack_team_members"]:
-            bp, _ = get_bp_mp_from_crab(crab)
-            team_points += bp
-        total_points = game["attack_point"]
-        their_faction = get_defense_faction(game)
-        our_faction = get_attack_faction(game)
-    else:
-        # we're mining, get defense_point
-        if verbose:
-            logger.print_normal("Getting defense point")
-        key = "defense_team_info" if "defense_team_info" in game else "defense_team_members"
-        for crab in game.get(key, []):
-            bp, _ = get_bp_mp_from_crab(crab)
-            team_points += bp
-        total_points = game["defense_point"]
-        their_faction = get_attack_faction(game)
-        our_faction = get_defense_faction(game)
+    try:
+        if is_looting:
+            # we're looting, so get attack_point
+            if verbose:
+                logger.print_normal("Getting attack point")
+            for crab in game["attack_team_members"]:
+                bp, _ = get_bp_mp_from_crab(crab)
+                team_points += bp
+            total_points = game["attack_point"]
+            their_faction = get_defense_faction(game)
+            our_faction = get_attack_faction(game)
+        else:
+            # we're mining, get defense_point
+            if verbose:
+                logger.print_normal("Getting defense point")
+            key = "defense_team_info" if "defense_team_info" in game else "defense_team_members"
+            for crab in game[key]:
+                bp, _ = get_bp_mp_from_crab(crab)
+                team_points += bp
+            total_points = game["defense_point"]
+            their_faction = get_attack_faction(game)
+            our_faction = get_defense_faction(game)
+    except:
+        logger.print_warn(f"Failed to get bp.\n{game}")
+        return 0
 
     reinforce_points = total_points - team_points
 
