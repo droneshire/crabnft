@@ -75,6 +75,7 @@ class LootingStrategy(Strategy):
 
         if tx_receipt["status"] != 1:
             try:
+                logger.print_fail(tx_hash)
                 logger.print_fail(tx_receipt)
             except:
                 pass

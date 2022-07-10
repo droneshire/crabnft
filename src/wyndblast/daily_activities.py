@@ -170,7 +170,7 @@ class DailyActivitiesGame:
         if rounds_completed <= 0:
             return
 
-        self._send_summary_email(len(wynds), account_overview)
+        self._send_summary_email(len(wynds))
         self._update_stats()
 
     def _update_stats(self) -> None:
@@ -190,7 +190,7 @@ class DailyActivitiesGame:
 
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
 
-    def _send_summary_email(self, active_nfts: int, account_overview: AccountOverview) -> None:
+    def _send_summary_email(self, active_nfts: int) -> None:
         content = f"Activity Stats for {self.user.upper()}:\n"
         content += f"Active NFTs: {active_nfts}\n"
         for stage in range(1, 4):
