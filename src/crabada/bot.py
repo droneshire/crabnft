@@ -47,6 +47,7 @@ class CrabadaMineBot:
     MIN_MINE_POINT = 60
     MAX_INACTIVE_ROUNDS = 2
     MAX_LOOT_START_ATTEMPTS = 1
+    REINFORCING_RETRIES = 4
 
     def __init__(
         self,
@@ -681,7 +682,7 @@ class CrabadaMineBot:
         if not self._should_take_action(team, GameStage.REINFORCE, strategy, mine):
             return
 
-        for _ in range(2):
+        for _ in range(self.REINFORCING_RETRIES):
             reinforcement_crab = strategy.get_reinforcement_crab(
                 team, mine, self.reinforcement_search_backoff + strategy.get_backoff_margin()
             )
