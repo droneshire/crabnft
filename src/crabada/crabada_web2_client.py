@@ -868,6 +868,15 @@ class CrabadaWeb2Client:
     def get_total_mine_time_formatted(self, game: IdleGame) -> int:
         return get_pretty_seconds(self.get_total_mine_time(game))
 
+    def is_mine_safe(self, game: IdleGame) -> bool:
+        now = time.time()
+
+        start_time = game.get("start_time", now)
+
+        is_past_attack_window = now - start_time > self.TIME_PER_MINING_ACTION
+
+        return not self.mine_has_been_attacked(game) and is_past_attack_window
+
     def get_remaining_loot_time(self, game: IdleGame) -> int:
         """
         Seconds to the end of the given loot before can settle

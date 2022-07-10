@@ -200,15 +200,18 @@ class LootSnipes:
                 "limit": 100,
             }
             pb.update(1)
-            loots = self.web2.list_available_loots(user_address, params=params)
+            loots: T.List[IdleGame] = self.web2.list_available_loots(user_address, params=params)
 
             if not loots:
                 break
 
+            for loot in loots:
+                if not self.web2.is_mine_safe(loot):
+                    available_loots.append(loot)
+
             if verbose:
                 logger.print_normal(f"Searching through {len(loots)} mines...")
 
-            available_loots.extend(loots)
         pb.close()
 
         return available_loots
