@@ -333,7 +333,7 @@ class CrabadaMineBot:
             team["faction"],
             tx.game_type == MineOption.LOOT,
             mine["game_id"],
-            calc_miners_revenge(mine, tx.game_type == MineOption.LOOT)
+            calc_miners_revenge(mine, False)
         )
 
         if team["team_id"] in self.reinforcement_skip_tracker:
