@@ -183,7 +183,8 @@ class DailyActivitiesGame:
             if isinstance(v, list):
                 self.stats_logger.lifetime_stats[k].extend(v)
             elif isinstance(v, dict):
-                self.stats_logger.lifetime_stats[k].update(v)
+                for i, j in self.stats_logger.lifetime_stats[k].items():
+                    self.stats_logger.lifetime_stats[k][i] += self.current_stats[k][i]
             else:
                 self.stats_logger.lifetime_stats[k] += v
 
