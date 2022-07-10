@@ -288,6 +288,8 @@ class CrabadaMineBot:
         ]
         win_percent_str = f"{game_stats['game_win_percent']:.2f}"
         embed.add_embed_field(name=f"{game_type} Win %", value=win_percent_str, inline=True)
+        miners_revenge = calc_miners_revenge(mine, is_looting=is_loot)
+        embed.add_embed_field(name=f"MR %", value=f"{miners_revenge:.2f}%", inline=True)
 
         embed.set_thumbnail(url=FACTION_ICON_URLS[faction])
         webhook.add_embed(embed)
@@ -330,7 +332,7 @@ class CrabadaMineBot:
             self.config_mgr.config["discord_handle"].upper(),
             f"{tx.result} {outcome_emoji}",
             team["faction"],
-            tx.game_type,
+            tx.game_type == MineOption.LOOT,
             mine["game_id"],
         )
 
