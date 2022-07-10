@@ -205,12 +205,14 @@ class LootSnipes:
             if not loots:
                 break
 
-            for loot in loots:
-                if not self.web2.is_mine_safe(loot):
-                    available_loots.append(loot)
-
             if verbose:
                 logger.print_normal(f"Searching through {len(loots)} mines...")
+
+            for loot in loots:
+                if self.web2.is_mine_safe(loot):
+                    continue
+                available_loots.append(loot)
+
 
         pb.close()
 
