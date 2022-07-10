@@ -634,6 +634,14 @@ class CrabadaMineBot:
             logger.print_normal(f"Miners Revenge: {lowest_mr:.2f}%")
             logger.print_normal(f"{json.dumps(loot_candidates[mine_to_loot], indent=4)}")
 
+        # remove it from the available loots list (regardless of success/fail)
+        for i, loot in enumerate(available_loots):
+            if loot["game_id"] != mine_to_loot:
+                continue
+
+            del available_loots[i]
+            break
+
         return mine_to_loot
 
     def _find_best_loot(
@@ -811,24 +819,10 @@ class CrabadaMineBot:
         logger.print_fail(f"Error starting mine for team {team['team_id']}")
         return False
 
-    def _start_loot(self, team: Team, available_loots: T.List[IdleGame]) -> bool:
-        mine_to_loot: int = self._find_mine_to_loot(team, available_loots)
-
-        if mine_to_loot is None:
-            logger.print_warn(f"Failed to find a mine to loot!")
-            return False
-
+    def _start_loot(self, team: Team, mine_to_loot: int) -> bool:
         logger.print_normal(
             f"Attemting to start loot of mine {mine_to_loot} with team {team['team_id']}!"
         )
-
-        # remove it from the available loots list (regardless of success/fail)
-        for i, loot in enumerate(available_loots):
-            if loot["game_id"] != mine_to_loot:
-                continue
-
-            del available_loots[i]
-            break
 
         with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
             tx = self.looting_strategy.start(team["team_id"], mine_to_loot)
@@ -922,8 +916,15 @@ class CrabadaMineBot:
                     self.address, start_page=1, max_pages=40, verbose=False
                 )
 
+            mine_to_loot: int = self._find_mine_to_loot(team, available_loots)
+
+            if mine_to_loot is None:
+                logger.print_warn(f"Failed to find a mine to loot!")
+                teams_to_mine.append(team)
+                continue
+
             for i in range(self.MAX_LOOT_START_ATTEMPTS):
-                if self._start_loot(team, available_loots):
+                if self._start_loot(team, mine_to_loot):
                     break
 
         self._check_and_maybe_start_mines(teams_to_mine)
