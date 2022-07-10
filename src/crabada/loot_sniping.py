@@ -253,20 +253,15 @@ class LootSnipes:
         self.addresses["verified"].remove(user_address)
         self._write_log(self.addresses)
 
-    def find_loot_snipe(
-        self,
-        user_address: Address,
-        address_list: T.List[str],
-        available_loots: T.List[IdleGame],
-        verbose: bool = False,
-    ) -> T.Dict[int, T.Any]:
-
+    def get_loot_list_from_addresses(
+        self, address_list: T.List[str] = None, verbose: bool = False
+    ) -> T.Dict[int, str]:
         bot_user_addresses = [v["address"] for _, v in USERS.items()]
 
         if verbose:
             logger.print_normal(f"Searching through addresses...")
 
-        if not address_list:
+        if address_list is None:
             address_list = self.addresses["verified"]
             address_list.update(self.addresses["unverified"])
 
@@ -286,7 +281,15 @@ class LootSnipes:
 
         if verbose:
             logger.print_normal(f"Checking against {len(loot_list)} no-reinforce mines...")
+        return loot_list
 
+    def find_loot_snipe(
+        self,
+        user_address: Address,
+        available_loots: T.List[IdleGame],
+        loot_list: T.Dict[int, str],
+        verbose: bool = False,
+    ) -> T.Dict[int, T.Any]:
         target_pages = {}
         for inx, mine in enumerate(available_loots):
             page = int((inx + 9) / 9)
@@ -503,8 +506,9 @@ class LootSnipes:
         available_loots: T.List[IdleGame],
         verified: bool,
     ) -> None:
+        no_reinforce_list = self.get_loot_list_from_addresses(address_list)
         update_loot_snipes = self.find_loot_snipe(
-            address, address_list, available_loots, verbose=self.verbose
+            address, address_list, available_loots, no_reinforce_list, verbose=self.verbose
         )
 
         def get_embed(mine: int, data: T.Dict[str, T.Any]) -> DiscordEmbed:

@@ -642,11 +642,14 @@ class CrabadaMineBot:
         self,
         team: Team,
         available_loots: T.List[IdleGame],
+        no_reinforce_list: T.Dict[int, str],
     ) -> int:
         mine_to_loot = None
 
         # first try from known no reinforce list
-        loot_candidates = self.loot_sniper.find_loot_snipe(self.address, [], available_loots)
+        loot_candidates = self.loot_sniper.find_loot_snipe(
+            self.address, available_loots, no_reinforce_list
+        )
 
         mine_to_loot, lowest_mr = self._find_best_loot(team, loot_candidates)
 
@@ -934,6 +937,7 @@ class CrabadaMineBot:
     def _check_and_maybe_start(self) -> None:
         available_teams = self.crabada_w2.list_available_teams(self.address)
         available_loots = []
+        no_reinforce_list = {}
 
         teams_to_mine = []
         for team in available_teams:
@@ -955,7 +959,10 @@ class CrabadaMineBot:
                     self.address, start_page=1, max_pages=40, verbose=False
                 )
 
-            mine_to_loot: int = self._find_mine_to_loot(team, available_loots)
+            if not no_reinforce_list:
+                no_reinforce_list = self.loot_sniper.get_loot_list_from_addresses()
+
+            mine_to_loot: int = self._find_mine_to_loot(team, available_loots, no_reinforce_list)
 
             if mine_to_loot is None:
                 logger.print_warn(f"Failed to find a mine to loot!")
