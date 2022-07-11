@@ -39,7 +39,7 @@ class MiningStrategy(Strategy):
         tx_hash = self.crabada_w3.start_game(team_id)
         tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
 
-        if tx_receipt["status"] != 1:
+        if tx_receipt.get("status", 0) != 1:
             try:
                 logger.print_fail(tx_receipt)
             except:
@@ -51,7 +51,7 @@ class MiningStrategy(Strategy):
             MineOption.MINE,
             None,
             None,
-            tx_receipt["status"] == 1,
+            tx_receipt.get("status", 0) == 1,
             None,
             gas,
             tx_receipt.get("gasUsed", 0.0),
@@ -62,7 +62,7 @@ class MiningStrategy(Strategy):
         tx_hash = self.crabada_w3.close_game(game_id)
         tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
 
-        if tx_receipt["status"] != 1:
+        if tx_receipt.get("status", 0) != 1:
             try:
                 logger.print_fail(tx_receipt)
             except:
@@ -79,7 +79,7 @@ class MiningStrategy(Strategy):
             MineOption.MINE,
             tus,
             cra,
-            tx_receipt["status"] == 1,
+            tx_receipt.get("status", 0) == 1,
             result,
             gas,
             tx_receipt.get("gasUsed", 0.0),
@@ -90,7 +90,7 @@ class MiningStrategy(Strategy):
         tx_hash = self.crabada_w3.reinforce_defense(game_id, crabada_id, borrow_price)
         tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
 
-        if tx_receipt["status"] != 1:
+        if tx_receipt.get("status", 0) != 1:
             try:
                 logger.print_fail(tx_receipt)
             except:
@@ -103,7 +103,7 @@ class MiningStrategy(Strategy):
             MineOption.MINE,
             None,
             None,
-            tx_receipt["status"] == 1,
+            tx_receipt.get("status", 0) == 1,
             None,
             gas,
             tx_receipt.get("gasUsed", 0.0),

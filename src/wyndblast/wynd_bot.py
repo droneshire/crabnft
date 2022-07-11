@@ -92,7 +92,7 @@ class WyndBot:
         logger.print_bold(f"Paid {gas} AVAX in gas")
 
         self.stats_logger.lifetime_stats["avax_gas"] += gas
-        if tx_receipt["status"] != 1:
+        if tx_receipt.get("status", 0) != 1:
             logger.print_fail(f"Failed to move wynds to game!\n{tx_receipt}")
         else:
             logger.print_ok(f"Successfully moved to game")

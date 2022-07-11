@@ -240,7 +240,7 @@ def collect_tus_commission(
                 failed_to_collect.append(alias)
                 continue
 
-            if tx_receipt["status"] != 1:
+            if tx_receipt.get("status", 0) != 1:
                 logger.print_fail_arrow(
                     f"Error in tx {commission:.2f} TUS from {from_address}->{to_address}"
                 )

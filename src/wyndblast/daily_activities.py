@@ -75,7 +75,7 @@ class DailyActivitiesGame:
 
         self.stats_logger.lifetime_stats["avax_gas"] += gas
 
-        if tx_receipt["status"] != 1:
+        if tx_receipt.get("status", 0) != 1:
             logger.print_fail(f"Failed to claim CHRO!")
         else:
             logger.print_ok(f"Successfully transferred CHRO")

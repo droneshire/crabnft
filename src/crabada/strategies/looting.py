@@ -44,7 +44,7 @@ class LootingStrategy(Strategy):
         tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
         gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
 
-        if tx_receipt["status"] != 1:
+        if tx_receipt.get("status", 0) != 1:
             try:
                 logger.print_fail(tx_receipt)
             except:
@@ -55,7 +55,7 @@ class LootingStrategy(Strategy):
             MineOption.LOOT,
             None,
             None,
-            tx_receipt["status"] == 1,
+            tx_receipt.get("status", 0) == 1,
             None,
             gas,
             tx_receipt.get("gasUsed", 0.0),
@@ -73,7 +73,7 @@ class LootingStrategy(Strategy):
         else:
             result = Result.UNKNOWN
 
-        if tx_receipt["status"] != 1:
+        if tx_receipt.get("status", 0) != 1:
             try:
                 logger.print_fail(tx_hash)
                 logger.print_fail(tx_receipt)
@@ -85,7 +85,7 @@ class LootingStrategy(Strategy):
             MineOption.LOOT,
             tus,
             cra,
-            tx_receipt["status"] == 1,
+            tx_receipt.get("status", 0) == 1,
             result,
             gas,
             tx_receipt.get("gasUsed", 0.0),
@@ -98,7 +98,7 @@ class LootingStrategy(Strategy):
 
         gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
 
-        if tx_receipt["status"] != 1:
+        if tx_receipt.get("status", 0) != 1:
             try:
                 logger.print_fail(tx_receipt)
             except:
@@ -109,7 +109,7 @@ class LootingStrategy(Strategy):
             MineOption.LOOT,
             None,
             None,
-            tx_receipt["status"] == 1,
+            tx_receipt.get("status", 0) == 1,
             None,
             gas,
             tx_receipt.get("gasUsed", 0.0),
