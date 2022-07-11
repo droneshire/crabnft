@@ -676,7 +676,7 @@ class CrabadaWeb2Client:
         defense_battle_point, attack_battle_point = self.get_battle_points(mine)
 
         logger.print_normal(
-            f"Loot[{mine['game_id']}]: win check: [D] {defense_battle_point} [A] {attack_battle_point}"
+            f"Loot[{mine.get('game_id', '')}]: win check: [D] {defense_battle_point} [A] {attack_battle_point}"
         )
 
         if defense_battle_point is None:
