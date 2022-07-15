@@ -523,7 +523,11 @@ class CrabadaMineBot:
                     reinforments_used_str += logger.format_normal(f"{crab} ")
             reinforments_used_str += logger.format_normal("]")
 
-            if mine_data is not None and len(mine_data.get("process", [])) > 0:
+            if (
+                mine_data is not None
+                and mine_data.get("process") is not None
+                and len(mine_data.get("process", [])) > 0
+            ):
                 round_str = mine_data["process"][-1].get("action", "unknown")
                 team_str = str(mine_data[team_id])
                 game_str = str(mine["game_id"])
