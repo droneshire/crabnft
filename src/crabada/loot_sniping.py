@@ -217,9 +217,6 @@ class LootSnipes:
                     continue
                 available_loots.append(loot)
 
-            if len(available_loots) >= num_mines_needed:
-                break
-
         pb.close()
 
         return available_loots
@@ -283,7 +280,11 @@ class LootSnipes:
                 continue
             mines = {m["game_id"]: address for m in self.web2.list_my_mines(address)}
             loot_list.update(mines)
-            pb.update(1)
+
+            if len(loot_list) >= num_mines_needed:
+                break
+            else:
+                pb.update(1)
         pb.close()
 
         if verbose:
