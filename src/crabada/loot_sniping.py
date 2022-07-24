@@ -145,7 +145,7 @@ class LootSnipes:
 
     def hunt(self, address: str) -> None:
         self._update_addresses_from_sheet()
-        available_loots = self.get_available_loots(address, 1000, 1, 9, False)
+        available_loots = self.get_available_loots(address, 1, 9, False)
 
         if len(self.addresses["verified"]) > 0:
             addresses_to_search = self._update_address_search_circ_buffer(
@@ -190,7 +190,6 @@ class LootSnipes:
     def get_available_loots(
         self,
         user_address: Address,
-        num_mines_needed: int,
         start_page: int = 1,
         max_pages: int = 8,
         verbose: bool = False,
@@ -262,7 +261,7 @@ class LootSnipes:
         self._write_log(self.addresses)
 
     def get_loot_list_from_addresses(
-        self, address_list: T.List[str] = None, verbose: bool = False
+        self, num_mines_needed: int, address_list: T.List[str] = None, verbose: bool = False
     ) -> T.Dict[int, str]:
         bot_user_addresses = [v["address"] for _, v in USERS.items()]
 
@@ -514,7 +513,9 @@ class LootSnipes:
         available_loots: T.List[IdleGame],
         verified: bool,
     ) -> None:
-        no_reinforce_list = self.get_loot_list_from_addresses(address_list)
+        no_reinforce_list = self.get_loot_list_from_addresses(
+            num_mines_needed=1000, address_list=address_list
+        )
         update_loot_snipes = self.find_loot_snipe(
             address, address_list, available_loots, no_reinforce_list, verbose=self.verbose
         )
