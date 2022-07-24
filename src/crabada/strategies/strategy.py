@@ -18,6 +18,7 @@ class Strategy:
     # before the api updates. keep it small in case we fail to actually
     # use as reinforcement due to blockchain failure
     REINFORCEMENT_REUSE_WINDOW = 20.0
+    TX_RECEIPT_RETRY_ATTEMPTS = 4
 
     def __init__(
         self,
@@ -74,6 +75,19 @@ class Strategy:
 
     def have_reinforced_at_least_once(self, mine: IdleGame) -> bool:
         raise NotImplementedError
+
+    def _check_for_tx_receipt(self, tx_hash: str) -> T.Dict[T.Any, T.Any]:
+        for i in range(self.TX_RECEIPT_RETRY_ATTEMPTS):
+            tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
+            if tx_receipt.get("status", 0) != 1:
+                try:
+                    logger.print_warn(f"Failed to get tx_receipt\n{tx_hash}\n{tx_receipt}")
+                except:
+                    pass
+                time.sleep(1.0 * i)
+            else:
+                return tx_receipt
+        return {}
 
     def _use_bp_reinforcement(
         self, mine: IdleGame, group_id: int, use_own_crabs: bool = False

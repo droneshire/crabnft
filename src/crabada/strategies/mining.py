@@ -37,13 +37,7 @@ class MiningStrategy(Strategy):
 
     def start(self, team_id: int, game_id: T.Optional[int] = None) -> CrabadaTransaction:
         tx_hash = self.crabada_w3.start_game(team_id)
-        tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
-
-        if tx_receipt.get("status", 0) != 1:
-            try:
-                logger.print_fail(tx_receipt)
-            except:
-                pass
+        tx_receipt = self._check_for_tx_receipt(tx_hash)
 
         gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         return CrabadaTransaction(
@@ -60,13 +54,7 @@ class MiningStrategy(Strategy):
     def close(self, game_id: int) -> CrabadaTransaction:
         logger.print_normal(f"Mine[{game_id}]: Closing game")
         tx_hash = self.crabada_w3.close_game(game_id)
-        tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
-
-        if tx_receipt.get("status", 0) != 1:
-            try:
-                logger.print_fail(tx_receipt)
-            except:
-                pass
+        tx_receipt = self._check_for_tx_receipt(tx_hash)
 
         gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         tus, cra = get_rewards_from_tx_receipt(tx_receipt)
@@ -88,13 +76,7 @@ class MiningStrategy(Strategy):
     def reinforce(self, game_id: int, crabada_id: int, borrow_price: Wei) -> CrabadaTransaction:
         logger.print_normal(f"Mine[{game_id}]: reinforcing")
         tx_hash = self.crabada_w3.reinforce_defense(game_id, crabada_id, borrow_price)
-        tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
-
-        if tx_receipt.get("status", 0) != 1:
-            try:
-                logger.print_fail(tx_receipt)
-            except:
-                pass
+        tx_receipt = self._check_for_tx_receipt(tx_hash)
 
         gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
 

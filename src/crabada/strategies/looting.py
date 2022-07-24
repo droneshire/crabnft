@@ -41,14 +41,8 @@ class LootingStrategy(Strategy):
         logger.print_normal(f"Starting loot")
         signature, expired_time = self._get_loot_signature(game_id, team_id)
         tx_hash = self.crabada_w3.attack(game_id, team_id, expired_time, signature)
-        tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
+        tx_receipt = self._check_for_tx_receipt(tx_hash)
         gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
-
-        if tx_receipt.get("status", 0) != 1:
-            try:
-                logger.print_fail(tx_receipt)
-            except:
-                pass
 
         return CrabadaTransaction(
             tx_hash,
@@ -64,7 +58,7 @@ class LootingStrategy(Strategy):
     def close(self, game_id: int) -> T.Dict[T.Any, T.Any]:
         logger.print_normal(f"Loot[{game_id}]: Settling game")
         tx_hash = self.crabada_w3.settle_game(game_id)
-        tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
+        tx_receipt = self._check_for_tx_receipt(tx_hash)
 
         gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         tus, cra = get_rewards_from_tx_receipt(tx_receipt)
@@ -72,13 +66,6 @@ class LootingStrategy(Strategy):
             result = self._get_game_result(tus)
         else:
             result = Result.UNKNOWN
-
-        if tx_receipt.get("status", 0) != 1:
-            try:
-                logger.print_fail(tx_hash)
-                logger.print_fail(tx_receipt)
-            except:
-                pass
 
         return CrabadaTransaction(
             tx_hash,
@@ -94,15 +81,9 @@ class LootingStrategy(Strategy):
     def reinforce(self, game_id: int, crabada_id: int, borrow_price: Wei) -> T.Dict[T.Any, T.Any]:
         logger.print_normal(f"Loot[{game_id}]: reinforcing")
         tx_hash = self.crabada_w3.reinforce_attack(game_id, crabada_id, borrow_price)
-        tx_receipt = self.crabada_w3.get_transaction_receipt(tx_hash)
+        tx_receipt = self._check_for_tx_receipt(tx_hash)
 
         gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
-
-        if tx_receipt.get("status", 0) != 1:
-            try:
-                logger.print_fail(tx_receipt)
-            except:
-                pass
 
         return CrabadaTransaction(
             tx_hash,
