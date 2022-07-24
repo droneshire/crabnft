@@ -977,7 +977,7 @@ class CrabadaMineBot:
 
             if not no_reinforce_list:
                 no_reinforce_list = self.loot_sniper.get_loot_list_from_addresses(
-                    num_mines_needed=len(available_teams) * 2
+                    num_mines_needed=len(available_teams) * 2, verbose=True
                 )
 
             mine_to_loot: int = self._find_mine_to_loot(team, available_loots, no_reinforce_list)
