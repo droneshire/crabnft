@@ -263,7 +263,7 @@ class LootSnipes:
         bot_user_addresses = [v["address"] for _, v in USERS.items()]
 
         if verbose:
-            logger.print_normal(f"Searching through addresses...")
+            logger.print_normal(f"Searching through max of {num_mines_needed} addresses...")
 
         if address_list is None:
             address_list = self.addresses["verified"]
@@ -281,14 +281,14 @@ class LootSnipes:
             mines = {m["game_id"]: address for m in self.web2.list_my_mines(address)}
             loot_list.update(mines)
 
-            if len(loot_list) >= num_mines_needed:
+            if len(loot_list.keys()) >= num_mines_needed:
                 break
             else:
                 pb.update(1)
         pb.close()
 
         if verbose:
-            logger.print_normal(f"Checking against {len(loot_list)} no-reinforce mines...")
+            logger.print_normal(f"Found {len(loot_list)} no-reinforce mines...")
         return loot_list
 
     def find_loot_snipe(
