@@ -969,7 +969,11 @@ class CrabadaMineBot:
 
             if not available_loots:
                 available_loots = self.loot_sniper.get_available_loots(
-                    self.address, start_page=1, max_pages=10, verbose=False
+                    self.address,
+                    len(available_teams) * 2,
+                    start_page=1,
+                    max_pages=10,
+                    verbose=False,
                 )
 
             if not no_reinforce_list:

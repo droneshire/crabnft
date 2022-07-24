@@ -145,7 +145,7 @@ class LootSnipes:
 
     def hunt(self, address: str) -> None:
         self._update_addresses_from_sheet()
-        available_loots = self.get_available_loots(address, 1, 9, False)
+        available_loots = self.get_available_loots(address, 1000, 1, 9, False)
 
         if len(self.addresses["verified"]) > 0:
             addresses_to_search = self._update_address_search_circ_buffer(
@@ -188,7 +188,12 @@ class LootSnipes:
             json.dump(write_data, outfile, indent=4)
 
     def get_available_loots(
-        self, user_address: Address, start_page: int = 1, max_pages: int = 8, verbose: bool = False
+        self,
+        user_address: Address,
+        num_mines_needed: int,
+        start_page: int = 1,
+        max_pages: int = 8,
+        verbose: bool = False,
     ) -> T.List[IdleGame]:
 
         available_loots = []
@@ -212,6 +217,9 @@ class LootSnipes:
                 if self.web2.is_mine_safe(loot):
                     continue
                 available_loots.append(loot)
+
+            if len(available_loots) >= num_mines_needed:
+                break
 
         pb.close()
 
