@@ -122,7 +122,7 @@ class LootSnipes:
                 continue
             data = self._read_log(log_file)
             for k, v in data.items():
-                snipe_data[k] = set(snipe_data[k])
+                snipe_data[k] = set(snipe_data.get(k, []))
                 snipe_data[k].update(set(v))
         self._write_log(snipe_data)
 
