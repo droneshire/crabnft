@@ -15,7 +15,7 @@ class LifetimeStats(T.TypedDict):
     stage_1: T.Dict[str, float]
     stage_2: T.Dict[str, float]
     stage_3: T.Dict[str, float]
-    commission_tus: T.Dict[str, float]
+    commission_chro: T.Dict[str, float]
     avax_gas: float
 
 
@@ -43,7 +43,7 @@ NULL_GAME_STATS = {
         "wins": 0,
         "losses": 0,
     },
-    "commission_tus": {},
+    "commission_chro": {},
     "avax_gas": 0.0,
 }
 
@@ -106,7 +106,7 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
             merged_stats[item] = merged_stats.get(item, 0.0) + user_a_stats.get(item, 0.0)
             merged_stats[item] = merged_stats.get(item, 0.0) + user_b_stats.get(item, 0.0)
 
-        for item in ["commission_tus", "elemental_stones", "stage_1", "stage_2", "stage_3"]:
+        for item in ["commission_chro", "elemental_stones", "stage_1", "stage_2", "stage_3"]:
             for k, v in user_a_stats.get(item, {}).items():
                 merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
 
