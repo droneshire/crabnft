@@ -198,10 +198,9 @@ class DailyActivitiesGame:
         )
 
         chro_rewards = self.current_stats["chro"]
-        for address, commission in self.stats_logger.lifetime_stats["commission_chro"].items():
-            commission_percent = self.config_mgr.config["commission_percent_per_mine"].get(
-                address, 0.0
-            )
+        for address, commission_percent in self.config_mgr.config[
+            "commission_percent_per_mine"
+        ].items():
             commission_chro = chro_rewards * (commission_percent / 100.0)
 
             self.stats_logger.lifetime_stats["commission_chro"][address] = (
