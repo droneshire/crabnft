@@ -4,6 +4,7 @@ import json
 import time
 import typing as T
 
+from config_wyndblast import COMMISSION_WALLET_ADDRESS
 from utils import logger
 from utils.config_types import UserConfig
 from utils.email import Email, send_email
@@ -180,6 +181,10 @@ class DailyActivitiesGame:
                     f"Mismatched stats:\n{self.current_stats}\n{self.stats_logger.lifetime_stats}"
                 )
                 continue
+
+            if k in ["commission_tus"]:
+                continue
+
             if isinstance(v, list):
                 self.stats_logger.lifetime_stats[k].extend(v)
             elif isinstance(v, dict):
@@ -189,7 +194,7 @@ class DailyActivitiesGame:
                 self.stats_logger.lifetime_stats[k] += v
 
         self.stats_logger.lifetime_stats["commission_chro"] = self.stats_logger.lifetime_stats.get(
-            "commission_chro", 0.0
+            "commission_chro", {COMMISSION_WALLET_ADDRESS: 0.0}
         )
 
         chro_rewards = self.current_stats["chro"]
