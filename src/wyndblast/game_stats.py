@@ -109,11 +109,13 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
             merged_stats[item] = merged_stats.get(item, 0.0) + user_b_stats.get(item, 0.0)
 
         for item in ["commission_chro", "elemental_stones", "stage_1", "stage_2", "stage_3"]:
-            for k, v in user_a_stats.get(item, {}).items():
-                merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
+            if item in user_a_stats:
+                for k, v in user_a_stats.get(item, {}).items():
+                    merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
 
-            for k, v in user_b_stats.get(item, {}).items():
-                merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
+            if item in user_b_stats:
+                for k, v in user_b_stats.get(item, {}).items():
+                    merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
 
         if verbose:
             logger.print_bold("Merging game stats:")
