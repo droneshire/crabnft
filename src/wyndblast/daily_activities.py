@@ -312,11 +312,11 @@ class DailyActivitiesGame:
         )
 
         best_score = 0
-        if "variation\ns" not in actions:
+        if "variations" not in actions:
             logger.print_warn(f"Failed to get variation in actions:\n{actions}")
             return None
 
-        for action, info in actions.get("variation\ns", {}).items():
+        for action, info in actions.get("variations", {}).items():
             score = 0
 
             success_rate = int(info["success_rate"].strip("%"))
