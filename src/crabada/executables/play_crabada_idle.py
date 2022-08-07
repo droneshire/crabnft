@@ -121,11 +121,12 @@ def clean_up_stats_for_user(log_dir: str, user: str) -> None:
 
     files_to_delete = []
 
-    game_stats_file = get_lifetime_game_stats(log_dir, alias.lower())
-    files_to_delete.append(game_stats_file)
+    if alias == user:
+        game_stats_file = get_lifetime_game_stats(log_dir, alias.lower())
+        files_to_delete.append(game_stats_file)
 
-    game_stats_csv = game_stats_file.split(".")[0] + ".csv"
-    files_to_delete.append(game_stats_csv)
+        game_stats_csv = game_stats_file.split(".")[0] + ".csv"
+        files_to_delete.append(game_stats_csv)
 
     files_to_delete.append(get_config_file(log_dir, user))
 
