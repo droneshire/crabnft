@@ -225,7 +225,7 @@ def collect_tus_commission(
             )
             continue
 
-        did_fail = False
+        did_fail = True
         tx_hashes = []
         for to_address, commission in game_stats["commission_tus"].items():
             logger.print_bold(
@@ -234,19 +234,32 @@ def collect_tus_commission(
             try:
                 tx_hash = tus_w3.transfer_tus(to_address, commission)
                 tx_hashes.append(tx_hash)
-                tx_receipt = tus_w3.get_transaction_receipt(tx_hash)
             except:
                 logger.print_fail(f"Failed to collect from {alias}")
                 failed_to_collect.append(alias)
                 continue
+
+            for i in range(5):
+                try:
+                    tx_receipt = tus_w3.get_transaction_receipt(tx_hash)
+                    break
+                except:
+                    if i >= 4:
+                        failed_to_collect.append(alias)
+                        logger.print_fail(f"Failed to get tx receipt for hash: {tx_hash}")
+                    else:
+                        logger.print_warn(
+                            f"Failed to get tx receipt for hash: {tx_hash}. Retrying..."
+                        )
+                        time.sleep(i * 1.0)
 
             if tx_receipt.get("status", 0) != 1:
                 logger.print_fail_arrow(
                     f"Error in tx {commission:.2f} TUS from {from_address}->{to_address}"
                 )
                 failed_to_collect.append(alias)
-                did_fail = True
             else:
+                did_fail = False
                 logger.print_ok_arrow(
                     f"Successfully tx {commission:.2f} TUS from {from_address}->{to_address}"
                 )

@@ -312,6 +312,10 @@ class DailyActivitiesGame:
         )
 
         best_score = 0
+        if "varations" not in actions:
+            logger.print_warn(f"Failed to get variation in actions:\n{actions}")
+            return None
+
         for action, info in actions["variations"].items():
             score = 0
 

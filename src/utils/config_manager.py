@@ -12,6 +12,10 @@ from utils.email import Email, send_email
 from utils.user import get_alias_from_user
 
 
+def get_config_file(log_dir: str, user: str) -> str:
+    return os.path.join(log_dir, "stats", f"{user.lower()}_config.json")
+
+
 class ConfigManager:
     CONFIG_UPDATE_TIME = 60.0 * 30.0
 
@@ -64,8 +68,7 @@ class ConfigManager:
         return save_config
 
     def _get_config_file(self) -> str:
-        config_file = os.path.join(self.log_dir, "stats", f"{self.user.lower()}_config.json")
-        return config_file
+        return get_config_file(self.log_dir, self.user.lower())
 
     def _save_config(self) -> None:
         if self.dry_run:

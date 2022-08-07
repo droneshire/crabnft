@@ -8,6 +8,10 @@ from utils.price import Prices, wei_to_cra_raw, wei_to_tus_raw
 from utils.user import get_alias_from_user
 
 
+def get_lifetime_game_stats(log_dir: str, user: str) -> str:
+    return os.path.join(log_dir, "stats", user.lower() + "_lifetime_game_bot_stats.json")
+
+
 class LifetimeGameStatsLogger:
     def __init__(
         self,
@@ -60,9 +64,7 @@ class LifetimeGameStatsLogger:
             )
 
     def get_lifetime_stats_file(self) -> str:
-        return os.path.join(
-            self.log_dir, "stats", self.alias.lower() + "_lifetime_game_bot_stats.json"
-        )
+        return get_lifetime_game_stats(self.log_dir, self.alias.lower())
 
     def get_game_stats(self) -> T.Dict[T.Any, T.Any]:
         game_stats_file = self.get_lifetime_stats_file()
