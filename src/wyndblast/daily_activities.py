@@ -193,7 +193,7 @@ class DailyActivitiesGame:
         )
 
         chro_rewards = self.current_stats["chro"]
-        for address, commission in commission.items():
+        for address, commission in self.stats_logger.lifetime_stats["commission_chro"].items():
             commission_chro = chro_rewards * (commission / 100.0)
 
             self.stats_logger.lifetime_stats["commission_chro"][address] = (
@@ -206,6 +206,10 @@ class DailyActivitiesGame:
             )
 
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
+
+        logger.print_ok_blue(
+            f"Lifetime Stats for {self.user.upper()}\n{json.dumps(self.stats_logger.lifetime_stats, indent=4)}"
+        )
 
     def _send_summary_email(self, active_nfts: int) -> None:
         content = f"Activity Stats for {self.user.upper()}:\n"
