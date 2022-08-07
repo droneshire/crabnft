@@ -182,7 +182,7 @@ class DailyActivitiesGame:
                 )
                 continue
 
-            if k in ["commission_tus"]:
+            if k in ["commission_chro"]:
                 continue
 
             if isinstance(v, list):
