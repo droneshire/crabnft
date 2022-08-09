@@ -20,8 +20,7 @@ def web3_transaction(err_string_compare: str, handler: T.Callable) -> T.Iterator
     try:
         yield
     except exceptions.ContractLogicError as e:
-        print(e)
-        if err_string_compare in e.args[0]["message"]:
+        if err_string_compare in e:
             handler()
         logger.print_fail(f"{e}")
     except requests.exceptions.HTTPError as e:
