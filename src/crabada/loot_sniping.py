@@ -302,33 +302,34 @@ class LootSnipes:
         for inx, mine in enumerate(available_loots):
             page = int((inx + 9) / 9)
             faction = mine["faction"].upper()
-            if mine["game_id"] in loot_list.keys():
+            if mine["game_id"] not in loot_list.keys():
+                continue
 
-                if mine["owner"] in self.addresses["blocklist"]:
-                    logger.print_warn(
-                        f"Skipping low mp mine b/c owner ({mine['owner']}) is on blocklist"
-                    )
-                    continue
+            if mine["owner"] in self.addresses["blocklist"]:
+                logger.print_warn(
+                    f"Skipping low mp mine b/c owner ({mine['owner']}) is on blocklist"
+                )
+                continue
 
-                address = loot_list[mine["game_id"]]
+            address = loot_list[mine["game_id"]]
 
-                self.hit_rate[address] = self.hit_rate.get(address, 0) + 1
+            self.hit_rate[address] = self.hit_rate.get(address, 0) + 1
 
-                bp, mp = get_bp_mp_from_mine(mine, is_looting=False, verbose=False)
+            bp, mp = get_bp_mp_from_mine(mine, is_looting=False, verbose=False)
 
-                data = {
-                    "page": page,
-                    "faction": faction,
-                    "defense_battle_point": bp,
-                    "defense_mine_point": mp,
-                    "address": address,
-                }
-                target_pages[mine["game_id"]] = data
+            data = {
+                "page": page,
+                "faction": faction,
+                "defense_battle_point": bp,
+                "defense_mine_point": mp,
+                "address": address,
+            }
+            target_pages[mine["game_id"]] = data
 
-                if verbose:
-                    logger.print_normal(
-                        f"Found target {mine['game_id']} on page {data['page']} faction {data['faction']}"
-                    )
+            if verbose:
+                logger.print_normal(
+                    f"Found target {mine['game_id']} on page {data['page']} faction {data['faction']}"
+                )
         logger.print_ok_arrow(f"Found {len(target_pages.keys())} snipes")
         return target_pages
 
