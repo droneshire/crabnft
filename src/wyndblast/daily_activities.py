@@ -207,7 +207,7 @@ class DailyActivitiesGame:
             )
 
             logger.print_ok(
-                f"Added {commission_chro} CHRO for {address} in commission ({commission}%)!"
+                f"Added {commission_chro} CHRO for {address} in commission ({commission_percent}%)!"
             )
 
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
