@@ -879,7 +879,7 @@ class CrabadaMineBot:
             f"Attemting to start loot of mine {mine_to_loot} with team {team['team_id']}!"
         )
 
-        with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
+        with web3_transaction("GAME:EXPIRED CERT", self._authorize_user):
             tx = self.looting_strategy.start(team["team_id"], mine_to_loot)
 
             gas_tus = self._calculate_and_log_gas_price(tx)
