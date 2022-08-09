@@ -43,7 +43,7 @@ class DailyActivitiesGame:
         stats_logger: WyndblastLifetimeGameStatsLogger,
     ):
         self.user = user
-        self.config_mgr = config
+        self.config = config
         self.email_accounts = email_accounts
         self.wynd_w2 = wynd_w2
         self.wynd_w3 = wynd_w3
@@ -198,9 +198,7 @@ class DailyActivitiesGame:
         )
 
         chro_rewards = self.current_stats["chro"]
-        for address, commission_percent in self.config_mgr.config[
-            "commission_percent_per_mine"
-        ].items():
+        for address, commission_percent in self.config["commission_percent_per_mine"].items():
             commission_chro = chro_rewards * (commission_percent / 100.0)
 
             self.stats_logger.lifetime_stats["commission_chro"][address] = (
@@ -237,9 +235,7 @@ class DailyActivitiesGame:
 
         logger.print_bold(content)
 
-        send_email(
-            self.email_accounts, self.config_mgr["email"], "Wyndblast Daily Activities", content
-        )
+        send_email(self.email_accounts, self.config["email"], "Wyndblast Daily Activities", content)
 
     def _play_round(
         self, wynd_id: int, current_stage: int, wynd_info: ProductMetadata, verbose: bool = False
