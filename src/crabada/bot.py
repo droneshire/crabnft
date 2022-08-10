@@ -672,7 +672,7 @@ class CrabadaMineBot:
                 self.address, available_loots, min_page_threshold=2, verbose=True
             )
 
-            mine_to_loot, lowest_mr = self._find_best_loot(team, loot_candidates)
+            mine_to_loot, lowest_mr = self._find_best_loot(team, loot_candidates, use_high_mr=True)
 
         # if all else fails, just pick an available mine
         if mine_to_loot is None:
@@ -680,7 +680,7 @@ class CrabadaMineBot:
                 self.address, available_loots, mp_threshold=1000, min_page_threshold=0, verbose=True
             )
 
-            mine_to_loot, lowest_mr = self._find_best_loot(team, loot_candidates)
+            mine_to_loot, lowest_mr = self._find_best_loot(team, loot_candidates, use_high_mr=True)
 
         if mine_to_loot is not None:
             logger.print_normal(
@@ -700,10 +700,10 @@ class CrabadaMineBot:
         return mine_to_loot
 
     def _find_best_loot(
-        self, team: Team, loot_candidates: T.Dict[int, T.Any]
+        self, team: Team, loot_candidates: T.Dict[int, T.Any], use_high_mr: bool = False
     ) -> T.Tuple[int, float]:
         mine_to_loot: int = None
-        lowest_mr = 100.0
+        best_mr = 0.0 if use_high_mr else 100.0
         highest_page = 0
         for loot, data in loot_candidates.items():
             mine_team: Team = Team(
@@ -715,14 +715,18 @@ class CrabadaMineBot:
             mr = miners_revenge(
                 mine_points, loot_points, data["defense_mine_point"], [], 3, False, False
             )
-            if loot_points > mine_points and (
-                mr < lowest_mr or mr == lowest_mr and data["page"] > highest_page
-            ):
+
+            if loot_points <= mine_points:
+                continue
+
+            is_better_mp = mr > best_mr if use_high_mr else mr < best_mr
+
+            if is_better_mp or mr == best_mr and data["page"] > highest_page:
                 mine_to_loot = loot
-                lowest_mr = mr
+                best_mr = mr
                 highest_page = data["page"]
 
-        return mine_to_loot, lowest_mr
+        return mine_to_loot, best_mr
 
     def _reinforce_loot_or_mine(
         self,
