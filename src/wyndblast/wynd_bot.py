@@ -120,5 +120,5 @@ class WyndBot:
 
     def end(self) -> None:
         self.config_mgr.close()
-        self.stats_logger.write()
+        self.stats_logger.write(verbose=True)
         logger.print_normal(f"Shutting down {self.user} bot...")

@@ -77,23 +77,23 @@ class LifetimeGameStatsLogger:
             logger.print_fail(f"Failed to read game stats from {game_stats_file}")
             return {}
 
-    def write(self) -> None:
+    def write(self, verbose: bool = False) -> None:
         delta_stats = self.delta_game_stats(
-            self.lifetime_stats, self.last_lifetime_stats, verbose=self.verbose
+            self.lifetime_stats, self.last_lifetime_stats, verbose=verbose
         )
         file_stats = self.read()
         combined_stats = self.merge_game_stats(
-            delta_stats, file_stats, self.log_dir, verbose=self.verbose
+            delta_stats, file_stats, self.log_dir, verbose=verbose
         )
 
-        if self.verbose:
+        if verbose:
             logger.print_bold(f"Writing stats for {self.user} [alias: {self.alias}]")
 
         self.write_game_stats(combined_stats, dry_run=self.dry_run)
         self.last_lifetime_stats = copy.deepcopy(self.lifetime_stats)
 
-    def read(self) -> T.Dict[T.Any, T.Any]:
-        if self.verbose:
+    def read(self, verbose: bool = False) -> T.Dict[T.Any, T.Any]:
+        if verbose:
             logger.print_bold(f"Reading stats for {self.user} [alias: {self.alias}]")
 
         return self.get_game_stats()
