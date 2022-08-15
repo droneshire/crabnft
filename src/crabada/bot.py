@@ -672,7 +672,7 @@ class CrabadaMineBot:
                 self.address, available_loots, min_page_threshold=2, verbose=True
             )
 
-            mine_to_loot, lowest_mr = self._find_best_loot(team, loot_candidates, use_high_mr=True)
+            mine_to_loot, lowest_mr = self._find_best_loot(team, loot_candidates, use_high_mr=False)
 
         # if all else fails, just pick an available mine
         if mine_to_loot is None:
@@ -680,7 +680,7 @@ class CrabadaMineBot:
                 self.address, available_loots, mp_threshold=1000, min_page_threshold=0, verbose=True
             )
 
-            mine_to_loot, lowest_mr = self._find_best_loot(team, loot_candidates, use_high_mr=True)
+            mine_to_loot, lowest_mr = self._find_best_loot(team, loot_candidates, use_high_mr=False)
 
         if mine_to_loot is not None:
             logger.print_normal(
