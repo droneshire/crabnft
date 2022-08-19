@@ -153,7 +153,11 @@ class CrabadaWeb2Client:
         url = self.MARKETPLACE_URL + "/public/price/using"
 
         res = self._get_request(url)
-        prices: Prices = res["result"]
+        prices: Prices = res.get("result", None)
+
+        if prices is None:
+            return Prices(0.0, 0.0, 0.0)
+
         return Prices(prices["avax_usd"], prices["tus_usd"], prices["cra_usd"])
 
     def get_loot_attack_data(
