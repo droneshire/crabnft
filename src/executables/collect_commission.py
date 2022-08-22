@@ -81,7 +81,7 @@ def setup_log(log_level: str, log_dir: str) -> None:
 def send_collection_notice(
     from_users: T.List[str],
     log_dir: str,
-    token: GameCollection,
+    game: GameCollection,
     encrypt_password: str = "",
     dry_run: bool = False,
 ) -> None:
@@ -100,6 +100,7 @@ def send_collection_notice(
             logger.print_normal(f"Multi-wallet, skipping {user} b/c we already sent notice")
             continue
 
+        token = game(user, config, log_dir, dry_run=dry_run)
         game_stats_commission = token.commission
 
         commission_token = 0.0
@@ -150,7 +151,7 @@ def collect_commission(
     to_user: str,
     from_users: T.List[str],
     log_dir: str,
-    token: GameCollection,
+    game: GameCollection,
     encrypt_password: str = "",
     dry_run: bool = False,
 ) -> None:
@@ -181,6 +182,7 @@ def collect_commission(
             else decrypt(str.encode(encrypt_password), config["private_key"]).decode()
         )
 
+        token = game(user, config, log_dir, dry_run=dry_run)
         game_stats_commission = token.commission
 
         from_address = config["address"]
