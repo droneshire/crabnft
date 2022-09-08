@@ -106,6 +106,7 @@ class DailyActivitiesGame:
 
         if available_wynds <= 0:
             logger.print_warn(f"No wynds available for daily activities...")
+            self._send_close_game_discord_activity_update()
             return
 
         logger.print_bold(f"Found {available_wynds} Wynds available for daily activities\n\n")
@@ -185,7 +186,7 @@ class DailyActivitiesGame:
         embed = DiscordEmbed(
             title=f"DAILY ACTIVITIES",
             description=f"Finished for {self.config['discord_handle']}\n",
-            color=Color.purple().value,
+            color=Color.red().value,
         )
         totals = {
             "wins": 0,
@@ -194,7 +195,11 @@ class DailyActivitiesGame:
         for games in ["stage_1", "stage_2", "stage_3"]:
             for result in ["wins", "losses"]:
                 totals[result] += self.stats_logger.lifetime_stats[games][result]
-        win_percent = totals["wins"] / float(totals["losses"] + totals["wins"])
+        total_games = float(totals["losses"] + totals["wins"])
+        if total_games > 0:
+            win_percent = totals["wins"] / total_games
+        else:
+            win_percent = 0.0
 
         embed.add_embed_field(name=f"Win %", value=f"{win_percent:.2f}%", inline=False)
         embed.add_embed_field(name=f"CHRO", value=f"{int(self.current_stats['chro'])}", inline=True)
@@ -205,7 +210,7 @@ class DailyActivitiesGame:
             inline=True,
         )
 
-        embed.set_thumbnail(url=WYNDBLAST_ASSETS["wynd"], height=90, width=90)
+        embed.set_thumbnail(url=WYNDBLAST_ASSETS["wynd"], height=100, width=100)
         webhook.add_embed(embed)
         webhook.execute()
 
