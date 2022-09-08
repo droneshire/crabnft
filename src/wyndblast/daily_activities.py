@@ -184,7 +184,7 @@ class DailyActivitiesGame:
         )
         embed = DiscordEmbed(
             title=f"DAILY ACTIVITIES",
-            description=f"Finished for {self.config['discord_handle']}\n",
+            description=f"Finished for {self.config['discord_handle'].upper()}\n",
             color=Color.red().value,
         )
         totals = {
