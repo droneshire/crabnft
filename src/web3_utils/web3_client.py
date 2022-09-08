@@ -25,8 +25,6 @@ def web3_transaction(err_string_compare: str, handler: T.Callable) -> T.Iterator
             handler()
     except requests.exceptions.HTTPError as e:
         logger.print_fail(f"{e}")
-        if err_string_compare in e:
-            handler()
     except ValueError as e:
         logger.print_fail(f"{e}")
         if err_string_compare in e.args[0]["message"]:
