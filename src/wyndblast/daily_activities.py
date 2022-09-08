@@ -106,7 +106,6 @@ class DailyActivitiesGame:
 
         if available_wynds <= 0:
             logger.print_warn(f"No wynds available for daily activities...")
-            self._send_close_game_discord_activity_update()
             return
 
         logger.print_bold(f"Found {available_wynds} Wynds available for daily activities\n\n")
