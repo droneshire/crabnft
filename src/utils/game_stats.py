@@ -34,16 +34,21 @@ class LifetimeGameStatsLogger:
 
         if not os.path.isfile(self.get_lifetime_stats_file()):
             if backup_stats:
-                self.last_lifetime_stats = copy.deepcopy(backup_stats)
+                logger.print_normal(f"Using backup stats...")
+                self.lifetime_stats = copy.deepcopy(backup_stats)
             else:
+                logger.print_normal(f"Using null stats...")
                 self.lifetime_stats = copy.deepcopy(self.null_game_stats)
         else:
             game_stats = self.get_game_stats()
             if game_stats:
+                logger.print_normal(f"Using previous game stats...")
                 self.lifetime_stats = game_stats
             elif backup_stats:
+                logger.print_normal(f"Using backup stats even though stats present...")
                 self.lifetime_stats = backup_stats
             else:
+                logger.print_normal(f"Using null stats even though stats present...")
                 self.lifetime_stats = copy.deepcopy(self.null_game_stats)
 
         self.write_game_stats(self.lifetime_stats, dry_run=dry_run)

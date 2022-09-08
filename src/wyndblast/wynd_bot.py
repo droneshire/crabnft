@@ -116,7 +116,7 @@ class WyndBot:
 
         self.wynd_w2.update_account()
         self.daily_activities.check_and_claim_if_needed()
-        self.stats_logger.write()
+        self.stats_logger.write(verbose=True)
 
     def end(self) -> None:
         self.config_mgr.close()

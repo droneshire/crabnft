@@ -67,7 +67,7 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
     ) -> LifetimeStats:
         diff = deepdiff.DeepDiff(user_a_stats, user_b_stats)
         if not diff:
-            return NULL_GAME_STATS
+            return copy.deepcopy(NULL_GAME_STATS)
 
         diffed_stats = copy.deepcopy(NULL_GAME_STATS)
 
@@ -104,18 +104,23 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
 
         merged_stats = copy.deepcopy(NULL_GAME_STATS)
 
+        if verbose:
+            logger.print_bold("Merge inputs:")
+            logger.print_ok_blue_arrow("A:")
+            logger.print_normal(json.dumps(user_a_stats, indent=4))
+            logger.print_ok_blue_arrow("B:")
+            logger.print_normal(json.dumps(user_b_stats, indent=4))
+
         for item in ["avax_gas", "gas_tus", "chro", "wams"]:
             merged_stats[item] = merged_stats.get(item, 0.0) + user_a_stats.get(item, 0.0)
             merged_stats[item] = merged_stats.get(item, 0.0) + user_b_stats.get(item, 0.0)
 
         for item in ["commission_chro", "elemental_stones", "stage_1", "stage_2", "stage_3"]:
-            if item in user_a_stats:
-                for k, v in user_a_stats.get(item, {}).items():
-                    merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
+            for k, v in user_a_stats.get(item, {}).items():
+                merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
 
-            if item in user_b_stats:
-                for k, v in user_b_stats.get(item, {}).items():
-                    merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
+            for k, v in user_b_stats.get(item, {}).items():
+                merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
 
         if verbose:
             logger.print_bold("Merging game stats:")
