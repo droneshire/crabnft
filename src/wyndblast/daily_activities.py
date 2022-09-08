@@ -196,9 +196,14 @@ class DailyActivitiesGame:
                 totals[result] += self.stats_logger.lifetime_stats[games][result]
         win_percent = totals["wins"] / float(totals["losses"] + totals["wins"])
 
-        embed.add_embed_field(name=f"Win %", value=f"{win_percent:.2f}%", inline=True)
+        embed.add_embed_field(name=f"Win %", value=f"{win_percent:.2f}%", inline=False)
         embed.add_embed_field(name=f"CHRO", value=f"{int(self.current_stats['chro'])}", inline=True)
         embed.add_embed_field(name=f"WAMS", value=f"{int(self.current_stats['wams'])}", inline=True)
+        embed.add_embed_field(
+            name=f"ESTONES",
+            value=f"{int(self.current_stats['elemental_stones']['elemental_stones_qty'])}",
+            inline=True,
+        )
 
         embed.set_thumbnail(url=WYNDBLAST_ASSETS["wynd"], height=90, width=90)
         webhook.add_embed(embed)
