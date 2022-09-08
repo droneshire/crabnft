@@ -13,6 +13,7 @@ class SmsConfig(T.TypedDict):
 class UserConfig(T.TypedDict):
     group: int
     game: str
+    discord_handle: str
     private_key: str
     address: Address
     game_specific_configs: T.Dict[T.Any, T.Any]

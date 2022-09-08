@@ -3,12 +3,16 @@ import datetime
 import json
 import time
 import typing as T
+from discord import Color
+from discord_webhook import DiscordEmbed, DiscordWebhook
 
 from config_wyndblast import COMMISSION_WALLET_ADDRESS
+from utils import discord
 from utils import logger
 from utils.config_types import UserConfig
 from utils.email import Email, send_email
 from utils.price import wei_to_chro_raw
+from wyndblast.assets import WYNDBLAST_LOGO
 from wyndblast.game_stats import NULL_GAME_STATS
 from wyndblast.game_stats import WyndblastLifetimeGameStatsLogger
 from wyndblast.types import (
@@ -174,6 +178,32 @@ class DailyActivitiesGame:
         self._send_summary_email(len(wynds))
         self._update_stats()
 
+    def _send_close_game_discord_activity_update(self) -> None:
+        webhook = DiscordWebhook(
+            url=discord.DISCORD_WEBHOOK_URL["WYNDBLAST_ACTIVITY"], rate_limit_retry=True
+        )
+        embed = DiscordEmbed(
+            title=f"DAILY ACTIVITIES",
+            description=f"Finished for {self.config['discord_handle']}\n",
+            color=Color.purple().value,
+        )
+        totals = {
+            "wins": 0,
+            "losses": 0,
+        }
+        for games in ["stage_1", "stage_2", "stage_3"]:
+            for result in ["wins", "losses"]:
+                totals[result] += self.stats_logger.lifetime_stats[games][result]
+        win_percent = totals["wins"] / float(totals["losses"] + totals["wins"])
+
+        embed.add_embed_field(name=f"Win %", value=f"{win_percent:.2f}%", inline=True)
+        embed.add_embed_field(name=f"CHRO", value=f"{int(self.current_stats['chro'])}", inline=True)
+        embed.add_embed_field(name=f"WAMS", value=f"{int(self.current_stats['wams'])}", inline=True)
+
+        embed.set_thumbnail(url=WYNDBLAST_ASSETS["wynd"], height=90, width=90)
+        webhook.add_embed(embed)
+        webhook.execute()
+
     def _update_stats(self) -> None:
         for k, v in self.current_stats.items():
             if type(v) != type(self.stats_logger.lifetime_stats[k]):
@@ -209,6 +239,8 @@ class DailyActivitiesGame:
             logger.print_ok(
                 f"Added {commission_chro} CHRO for {address} in commission ({commission_percent}%)!"
             )
+
+        self._send_close_game_discord_activity_update()
 
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
 
