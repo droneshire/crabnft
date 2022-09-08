@@ -12,7 +12,7 @@ from utils import logger
 from utils.config_types import UserConfig
 from utils.email import Email, send_email
 from utils.price import wei_to_chro_raw
-from wyndblast.assets import WYNDBLAST_LOGO
+from wyndblast.assets import WYNDBLAST_ASSETS
 from wyndblast.game_stats import NULL_GAME_STATS
 from wyndblast.game_stats import WyndblastLifetimeGameStatsLogger
 from wyndblast.types import (
