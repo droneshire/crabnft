@@ -81,14 +81,12 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
             else:
                 diffed_stats[item] = user_a_stats[item] - user_b_stats[item]
 
-        for item in ["commission_tus", "elemental_stones", "stage_1", "stage_2", "stage_3"]:
-            if item in user_a_stats:
-                for k, v in user_a_stats[item].items():
-                    diffed_stats[item][k] = v
+        for item in ["commission_chro", "elemental_stones", "stage_1", "stage_2", "stage_3"]:
+            for k, v in user_a_stats[item].items():
+                diffed_stats[item][k] = v
 
-            if item in user_b_stats:
-                for k, v in user_b_stats[item].items():
-                    diffed_stats[item][k] = diffed_stats[item].get(k, 0.0) - v
+            for k, v in user_b_stats[item].items():
+                diffed_stats[item][k] = diffed_stats[item].get(k, 0.0) - v
 
         if verbose:
             logger.print_bold("Subtracting game stats:")
