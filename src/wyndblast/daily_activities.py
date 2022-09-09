@@ -196,7 +196,7 @@ class DailyActivitiesGame:
                 totals[result] += self.stats_logger.lifetime_stats[games][result]
         total_games = float(totals["losses"] + totals["wins"])
         if total_games > 0:
-            win_percent = totals["wins"] / total_games
+            win_percent = totals["wins"] / total_games * 100.0
         else:
             win_percent = 0.0
 
