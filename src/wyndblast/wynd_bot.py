@@ -116,9 +116,9 @@ class WyndBot:
 
         self.wynd_w2.update_account()
         self.daily_activities.check_and_claim_if_needed()
-        self.stats_logger.write(verbose=True)
+        self.stats_logger.write()
 
     def end(self) -> None:
         self.config_mgr.close()
-        self.stats_logger.write(verbose=True)
+        self.stats_logger.write()
         logger.print_normal(f"Shutting down {self.user} bot...")
