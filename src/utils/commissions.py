@@ -1,8 +1,10 @@
 import logging
+import os
 import typing as T
 
 from crabada.game_stats import CrabadaLifetimeGameStatsLogger
 from utils.game_stats import LifetimeGameStatsLogger
+from utils import logger
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.chro_web3_client import ChroWeb3Client
 from web3_utils.swimmer_network_web3_client import SwimmerNetworkClient
@@ -12,41 +14,43 @@ from wyndblast.game_stats import WyndblastLifetimeGameStatsLogger
 
 
 class GameCollection:
+    TOKEN: T.Optional[str] = None
+    GAME: T.Optional[str] = None
+
     def __init__(
         self,
-        name: str,
-        token: str,
         user: str,
         config: T.Dict[str, T.Any],
         min_amount_to_transfer: int,
     ) -> None:
         self.stats_logger: LifetimeGameStatsLogger = None
         self.client: Web3Client = None
-        self.token: str = token
         self.min_amount_to_transfer: int = min_amount_to_transfer
-        self.name: str = name
         self.commission: float = None
         self.explorer_url: str = ""
         self.lifetime_stats_file: str = os.path.join(
-            logger.get_logging_dir(name.lower()), "stats", "commission_lifetime_bot_stats.json"
+            logger.get_logging_dir(self.GAME.lower()), "stats", "commission_lifetime_bot_stats.json"
         )
         logger.print_ok_arrow(f"Using {self} token for collections")
 
     def __repr__(self) -> str:
-        return self.token
+        return self.TOKEN
 
     def __str__(self) -> str:
-        return self.token
+        return self.TOKEN
 
 
 class Crabada(GameCollection):
+    TOKEN = "TUS"
+    GAME = "Crabada"
+
     def __init__(
         self, user: str, config: T.Dict[str, T.Any], log_dir: str, dry_run: bool = False
     ) -> None:
-        super().__init__("Crabada", "TUS", user, config, 15)
+        super().__init__(user, config, 15)
 
         self.stats_logger = CrabadaLifetimeGameStatsLogger(user, log_dir, {})
-        self.commission = stats_logger.get_game_stats()["commission_tus"]
+        self.commission = self.stats_logger.get_game_stats()["commission_tus"]
         self.client = token_client = T.cast(
             TusSwimmerWeb3Client,
             (
@@ -60,13 +64,16 @@ class Crabada(GameCollection):
 
 
 class Wyndblast(GameCollection):
+    TOKEN = "CHRO"
+    GAME = "Wyndblast"
+
     def __init__(
         self, user: str, config: T.Dict[str, T.Any], log_dir: str, dry_run: bool = False
     ) -> None:
-        super().__init__("Wyndblast", "CHRO", user, config, 50)
+        super().__init__(user, config, 50)
 
         self.stats_logger = WyndblastLifetimeGameStatsLogger(user, log_dir, {})
-        self.commission = stats_logger.get_game_stats()["commission_tus"]
+        self.commission = self.stats_logger.get_game_stats()["commission_chro"]
         self.client = T.cast(
             ChroWeb3Client,
             (

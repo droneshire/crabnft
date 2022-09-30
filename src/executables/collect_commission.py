@@ -100,18 +100,19 @@ def send_collection_notice(
             logger.print_normal(f"Multi-wallet, skipping {user} b/c we already sent notice")
             continue
 
+        private_key = (
+            ""
+            if not encrypt_password
+            else decrypt(str.encode(encrypt_password), config["private_key"]).decode()
+        )
+        config["private_key"] = private_key
+
         token = game(user, config, log_dir, dry_run=dry_run)
         game_stats_commission = token.commission
 
         commission_token = 0.0
         for address, commission in game_stats_commission.items():
             commission_token += commission
-
-        private_key = (
-            ""
-            if not encrypt_password
-            else decrypt(str.encode(encrypt_password), config["private_key"]).decode()
-        )
 
         token_w3 = token.client
 
@@ -155,7 +156,7 @@ def collect_commission(
     encrypt_password: str = "",
     dry_run: bool = False,
 ) -> None:
-    totals_key = f"total_commission_{token.lower()}"
+    totals_key = f"total_commission_{game.TOKEN.lower()}"
     total_stats = {totals_key: {}}
 
     run_all_users = "ALL" in from_users
@@ -181,6 +182,7 @@ def collect_commission(
             if not encrypt_password
             else decrypt(str.encode(encrypt_password), config["private_key"]).decode()
         )
+        config["private_key"] = private_key
 
         token = game(user, config, log_dir, dry_run=dry_run)
         game_stats_commission = token.commission
@@ -348,7 +350,7 @@ def main() -> None:
         )
         return
 
-    logger.print_ok(f"Collecting {token} Commissions from {', '.join(from_users)}")
+    logger.print_ok(f"Collecting {game_commission.TOKEN} Commissions from {', '.join(from_users)}")
 
     collect_commission(
         args.to_user, args.from_users, args.log_dir, game_commission, encrypt_password, args.dry_run
