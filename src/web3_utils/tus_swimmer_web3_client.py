@@ -27,6 +27,6 @@ class TusSwimmerWeb3Client(SwimmerNetworkClient):
             return 0
         return wei_to_tus(balance)
 
-    def transfer_tus(self, to_address: Address, tus: Tus) -> HexStr:
+    def transfer_token(self, to_address: Address, tus: Tus) -> HexStr:
         tx: TxParams = self.build_transaction_with_value_in_wei(to_address, tus_to_wei(tus))
         return self.sign_and_send_transaction(tx)

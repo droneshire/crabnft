@@ -32,7 +32,7 @@ class TusWeb3Client(AvalancheCWeb3Client):
             return 0
         return wei_to_tus(balance)
 
-    def transfer_tus(self, to_address: Address, tus: Tus) -> HexStr:
+    def transfer_token(self, to_address: Address, tus: Tus) -> HexStr:
         tx: TxParams = self.build_contract_transaction(
             self.contract.functions.transfer(to_address, tus_to_wei(tus))
         )

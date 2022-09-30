@@ -16,6 +16,7 @@ from wyndblast.game_stats import WyndblastLifetimeGameStatsLogger
 class GameCollection:
     TOKEN: T.Optional[str] = None
     GAME: T.Optional[str] = None
+    DISCORD: T.Optional[str] = None
 
     def __init__(
         self,
@@ -43,6 +44,7 @@ class GameCollection:
 class Crabada(GameCollection):
     TOKEN = "TUS"
     GAME = "Crabada"
+    DISCORD = "CRABADA_UPDATES"
 
     def __init__(
         self, user: str, config: T.Dict[str, T.Any], log_dir: str, dry_run: bool = False
@@ -66,6 +68,7 @@ class Crabada(GameCollection):
 class Wyndblast(GameCollection):
     TOKEN = "CHRO"
     GAME = "Wyndblast"
+    DISCORD = "WYNDBLAST_UPDATES"
 
     def __init__(
         self, user: str, config: T.Dict[str, T.Any], log_dir: str, dry_run: bool = False

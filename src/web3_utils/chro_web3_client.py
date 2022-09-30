@@ -32,7 +32,7 @@ class ChroWeb3Client(AvalancheCWeb3Client):
             return 0
         return wei_to_chro(balance)
 
-    def transfer_chro(self, to_address: Address, chro: Chro) -> HexStr:
+    def transfer_token(self, to_address: Address, chro: Chro) -> HexStr:
         tx: TxParams = self.build_contract_transaction(
             self.contract.functions.transfer(to_address, chro_to_wei(chro))
         )

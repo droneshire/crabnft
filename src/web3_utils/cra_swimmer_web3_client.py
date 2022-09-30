@@ -33,7 +33,7 @@ class CraSwimmerWeb3Client(SwimmerNetworkClient):
             return 0
         return wei_to_cra(balance)
 
-    def transfer_tus(self, to_address: Address, cra: Cra) -> HexStr:
+    def transfer_token(self, to_address: Address, cra: Cra) -> HexStr:
         tx: TxParams = self.build_contract_transaction(
             self.contract.functions.transfer(Web3.toChecksumAddress(to_address), cra_to_wei(cra))
         )
