@@ -96,7 +96,7 @@ class WyndBot:
             logger.print_fail(f"Failed to move wynds to game!\n{tx_receipt}")
         else:
             logger.print_ok(f"Successfully moved to game")
-            logger.print_normal(f"Explorer: https://explorer.swimmer.network/tx/{tx_hash}\n\n")
+            logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
 
     def init(self) -> None:
         self.config_mgr.init()
