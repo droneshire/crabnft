@@ -129,8 +129,9 @@ dmypy.json
 .pyre/
 
 # configuration file
-config_crabada.py*
-config_wyndblast.py*
+config_crabada.py
+config_wyndblast.py
+config_pumpskin.py
 
 # logs dir
 logs/
