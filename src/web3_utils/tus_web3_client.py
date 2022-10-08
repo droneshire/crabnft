@@ -8,7 +8,7 @@ from web3.middleware import geth_poa_middleware
 from web3.types import TxParams, Wei
 
 from utils.price import Tus
-from utils.price import tus_to_wei, wei_to_tus
+from utils.price import tus_to_wei, wei_to_token
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.web3_client import Web3Client
 
@@ -30,7 +30,7 @@ class TusWeb3Client(AvalancheCWeb3Client):
             raise
         except:
             return 0
-        return wei_to_tus(balance)
+        return wei_to_token(balance)
 
     def transfer_token(self, to_address: Address, tus: Tus) -> HexStr:
         tx: TxParams = self.build_contract_transaction(

@@ -9,7 +9,7 @@ from web3.middleware import geth_poa_middleware
 from web3.types import TxParams, Wei
 
 from utils.price import Cra
-from utils.price import cra_to_wei, wei_to_cra
+from utils.price import token_to_wei, wei_to_token
 from web3_utils.swimmer_network_web3_client import SwimmerNetworkClient
 from web3_utils.web3_client import Web3Client
 
@@ -31,10 +31,10 @@ class CraSwimmerWeb3Client(SwimmerNetworkClient):
             raise
         except:
             return 0
-        return wei_to_cra(balance)
+        return wei_to_token(balance)
 
     def transfer_token(self, to_address: Address, cra: Cra) -> HexStr:
         tx: TxParams = self.build_contract_transaction(
-            self.contract.functions.transfer(Web3.toChecksumAddress(to_address), cra_to_wei(cra))
+            self.contract.functions.transfer(Web3.toChecksumAddress(to_address), token_to_wei(cra))
         )
         return self.sign_and_send_transaction(tx)

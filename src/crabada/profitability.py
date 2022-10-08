@@ -9,7 +9,7 @@ from crabada.types import Team, CrabadaClass, MineOption, CRABADA_ID_TO_CLASS
 from crabada.crabada_web3_client import CrabadaWeb3Client
 from utils import csv_logger, logger
 from utils.general import TIMESTAMP_FORMAT
-from utils.price import Prices, wei_to_tus_raw, wei_to_tus_raw
+from utils.price import Prices, wei_to_token_raw
 
 NORMALIZED_TIME = 4.0
 
@@ -403,7 +403,7 @@ def get_rewards_from_tx_receipt(tx_receipt: T.Any) -> T.Tuple[T.Optional[float],
             continue
 
         if int(data[0], 16) == int(CrabadaWeb3Client().contract_address.lower(), 16):
-            tus_rewards = wei_to_tus_raw(int(data[2], 16))
+            tus_rewards = wei_to_token_raw(int(data[2], 16))
 
     return (tus_rewards, cra_rewards)
 
