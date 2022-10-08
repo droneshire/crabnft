@@ -10,7 +10,7 @@ from crabada.profitability import CrabadaTransaction, GameStage, REWARDS_TUS, Re
 from crabada.types import IdleGame, Team, TeamMember
 from utils import logger
 from utils.config_manager import ConfigManager
-from utils.price import Tus, wei_to_cra_raw, wei_to_tus_raw
+from utils.price import Tus, wei_to_token_raw
 
 
 class Strategy:

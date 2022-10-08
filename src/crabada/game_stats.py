@@ -10,7 +10,7 @@ from utils import logger
 from utils.csv_logger import CsvLogger
 from utils.game_stats import LifetimeGameStatsLogger
 from utils.general import TIMESTAMP_FORMAT
-from utils.price import Prices, wei_to_cra_raw, wei_to_tus_raw
+from utils.price import Prices, wei_to_token_raw
 from utils.user import get_alias_from_user
 from crabada.profitability import CrabadaTransaction, GameStats, MineOption, Result, NULL_STATS
 from crabada.types import IdleGame, MineOption, Team

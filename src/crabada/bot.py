@@ -40,7 +40,7 @@ from utils.email import Email, send_email
 from utils.general import dict_sum, get_pretty_seconds, TIMESTAMP_FORMAT
 from utils.math import Average
 from utils.price import Prices, DEFAULT_GAS_USED
-from utils.price import is_gas_too_high, wei_to_tus, wei_to_cra_raw, wei_to_tus_raw
+from utils.price import is_gas_too_high, wei_to_token_raw
 from utils.user import get_alias_from_user
 from web3_utils.swimmer_network_web3_client import SwimmerNetworkClient
 from web3_utils.tus_swimmer_web3_client import TusSwimmerWeb3Client
@@ -432,7 +432,7 @@ class CrabadaMineBot:
         gas_price_wei = self.crabada_w3.get_gas_price("wei")
         if gas_used is None or gas_price_wei is None:
             return None
-        return wei_to_tus_raw(gas_price_wei * gas_used)
+        return wei_to_token_raw(gas_price_wei * gas_used)
 
     def _calculate_and_log_gas_price(self, tx: CrabadaTransaction) -> float:
         if tx.gas is None or self.prices.tus_usd is None:
@@ -776,7 +776,7 @@ class CrabadaMineBot:
             logger.print_warn(f"Mine[{mine['game_id']}: Unable to find suitable reinforcement...")
             return
 
-        price_tus = wei_to_tus_raw(reinforcement_crab["price"])
+        price_tus = wei_to_token_raw(reinforcement_crab["price"])
         battle_points = reinforcement_crab["battle_point"]
         mine_points = reinforcement_crab["mine_point"]
         crabada_id = reinforcement_crab["crabada_id"]

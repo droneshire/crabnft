@@ -26,7 +26,7 @@ from crabada.types import (
 from crabada.types import CRABADA_ID_TO_CLASS
 from utils import logger
 from utils.general import first_or_none, n_or_better_or_none, get_pretty_seconds
-from utils.price import wei_to_tus, Prices, Tus
+from utils.price import wei_to_token, Prices, Tus
 
 
 class CrabadaWeb2Client:
@@ -468,7 +468,7 @@ class CrabadaWeb2Client:
         """
         affordable_crabs = []
         for crab in crabs:
-            if wei_to_tus(crab.get("price", max_tus)) > max_tus:
+            if wei_to_token(crab.get("price", max_tus)) > max_tus:
                 continue
 
             bp, mp = get_bp_mp_from_crab(crab)

@@ -6,7 +6,7 @@ import typing as T
 from utils import logger
 from utils.config_types import UserConfig
 from utils.email import Email
-from utils.price import wei_to_chro_raw
+from utils.price import wei_to_token_raw
 from utils.user import get_alias_from_user
 from utils.security import decrypt_secret
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
@@ -88,7 +88,7 @@ class WyndBot:
         logger.print_bold(f"Attempting to move wynds from inventory to game...")
         tx_hash = self.wynd_w3.move_out_of_inventory(token_ids=wynds_to_move_to_game)
         tx_receipt = self.wynd_w3.get_transaction_receipt(tx_hash)
-        gas = wei_to_chro_raw(self.wynd_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        gas = wei_to_token_raw(self.wynd_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         logger.print_bold(f"Paid {gas} AVAX in gas")
 
         self.stats_logger.lifetime_stats["avax_gas"] += gas

@@ -14,7 +14,9 @@ Cra = T.NewType("Cra", int)
 Chro = T.NewType("Chro", int)
 Avax = T.NewType("Avax", int)
 
-DEFAULT_GAS_USED = 0.01259
+Token = T.NewType("Token", int)
+
+DEFAULT_GAS_USED = 0.001259
 
 
 class Prices:
@@ -78,71 +80,23 @@ def get_token_price_usd(api_token: str, symbol: str, dry_run: bool = False) -> T
     return None
 
 
-def tus_to_wei(tus: int) -> Wei:
+def token_to_wei(token: Token) -> Wei:
     """
-    Convert TUS to Wei; this is required before making comparisons
-    because the Crabada APIs (both Web2 and Web3) always return Wei.
-
-    The conversion is 1 TUS = 10^18 Wei.
+    The conversion is 1 token = 10^18 Wei.
     """
-    return Web3.toWei(tus, "ether")
+    return T.cast(Wei, Web3.toWei(token, "ether"))
 
 
-def wei_to_tus(wei: Wei) -> Tus:
+def wei_to_token(wei: Wei) -> Token:
     """
-    Convert Wei to TUS
+    Convert Wei to token
     """
-    return T.cast(Tus, Web3.fromWei(wei, "ether"))
+    return T.cast(Token, Web3.fromWei(wei, "ether"))
 
 
-def cra_to_wei(cra: int) -> Wei:
+def wei_to_token_raw(wei: Wei) -> float:
     """
-    Convert CRA to Wei; this is required before making comparisons
-    because the Crabada APIs (both Web2 and Web3) always return Wei.
-
-    The conversion is 1 CRA = 10^18 Wei.
-    """
-    return Web3.toWei(cra, "ether")
-
-
-def chro_to_wei(chro: int) -> Wei:
-    """
-    The conversion is 1 chro = 10^18 Wei.
-    """
-    return Web3.toWei(chro, "ether")
-
-
-def wei_to_cra(wei: Wei) -> Tus:
-    """
-    Convert Wei to CRA
-    """
-    return T.cast(Cra, Web3.fromWei(wei, "ether"))
-
-
-def wei_to_chro(wei: Wei) -> Tus:
-    """
-    Convert Wei to CHRO
-    """
-    return T.cast(Chro, Web3.fromWei(wei, "ether"))
-
-
-def wei_to_tus_raw(wei: Wei) -> float:
-    """
-    Convert Wei to TUS in float
-    """
-    return T.cast(float, float(Web3.fromWei(wei, "ether")))
-
-
-def wei_to_cra_raw(wei: Wei) -> float:
-    """
-    Convert Wei to CRA in float
-    """
-    return T.cast(float, float(Web3.fromWei(wei, "ether")))
-
-
-def wei_to_chro_raw(wei: Wei) -> float:
-    """
-    Convert Wei to CHRO in float
+    Convert Wei to token in float
     """
     return T.cast(float, float(Web3.fromWei(wei, "ether")))
 

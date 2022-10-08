@@ -4,7 +4,7 @@ import os
 import typing as T
 
 from utils import logger
-from utils.price import Prices, wei_to_cra_raw, wei_to_tus_raw
+from utils.price import Prices, wei_to_token_raw
 from utils.user import get_alias_from_user
 
 
