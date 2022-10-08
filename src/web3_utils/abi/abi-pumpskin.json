@@ -1,0 +1,29 @@
+[
+    { "inputs": [], "stateMutability": "nonpayable", "type": "constructor" },
+    {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "uint256",
+            "name": "tid",
+            "type": "uint256"
+          }
+        ],
+        "name": "levelUpPumpkin",
+        "type": "function"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "uint256[]",
+            "name": "tokenId",
+            "type": "uint256[]"
+          }
+        ],
+        "name": "stake",
+        "type": "event"
+      },
+  ]
