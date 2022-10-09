@@ -266,8 +266,10 @@ def collect_commission(
                     total_stats[totals_key].get(to_address, 0.0) + commission
                 )
                 game_stats_commission[to_address] -= commission
+                game_stats = token.stats_logger.get_game_stats()
+                game_stats["commission_tus"][to_address] -= commission
                 if not dry_run:
-                    token.stats_logger.write_game_stats(game_stats_commission)
+                    token.stats_logger.write_game_stats(game_stats)
                 logger.print_normal(
                     f"New {token} commission balance: {game_stats_commission} {token}"
                 )

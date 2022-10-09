@@ -27,7 +27,7 @@ class GameCollection:
         self.stats_logger: LifetimeGameStatsLogger = None
         self.client: Web3Client = None
         self.min_amount_to_transfer: int = min_amount_to_transfer
-        self.commission: float = None
+        self.commission: T.Dict[str, float] = None
         self.explorer_url: str = ""
         self.lifetime_stats_file: str = os.path.join(
             logger.get_logging_dir(self.GAME.lower()), "stats", "commission_lifetime_bot_stats.json"
@@ -52,7 +52,6 @@ class Crabada(GameCollection):
         super().__init__(user, config, 15)
 
         self.stats_logger = CrabadaLifetimeGameStatsLogger(user, log_dir, {})
-        print(log_dir, self.stats_logger.get_game_stats())
         self.commission = self.stats_logger.get_game_stats()["commission_tus"]
         self.client = token_client = T.cast(
             TusSwimmerWeb3Client,
