@@ -290,7 +290,7 @@ class PumpskinBot:
             # Drink POTN needed if we have enough
             if potn_balance < potn_to_level:
                 logger.print_warn(
-                    f"Not enough $POTN to level up {token_id}. Have: {potn_balance} Need: {potn_to_level}. Skipping..."
+                    f"Not enough $POTN to level up {token_id}. Have: {potn_balance:.2f} Need: {potn_to_level:.2f}. Skipping..."
                 )
                 continue
 
@@ -312,6 +312,7 @@ class PumpskinBot:
                 logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
 
             # Level Pumpskin who can be leveled up
+            logger.print_normal(f"Attempting to Level up pumpskin {token_id} to {level + 1}...")
             tx_hash = self.collection_w3.level_up_pumpkin(token_id)
             tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
             gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
@@ -322,7 +323,7 @@ class PumpskinBot:
             if tx_receipt.get("status", 0) != 1:
                 logger.print_fail(f"Failed to level up pumpskin {token_id}!")
             else:
-                logger.print_ok(f"Successfully leveled up pumpskin {token_id}")
+                logger.print_ok(f"Successfully leveled up pumpskin {token_id} to {level + 1}")
                 logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
                 self._send_leveling_discord_activity_update(token_id, level + 1)
 
