@@ -1,16 +1,17 @@
-
 import copy
 import datetime
 import json
 import requests
 import time
 import typing as T
+from eth_typing import Address
+from web3 import Web3
 
 from utils import logger
-from pumpskin.api_headers import PUMPSKIN_HEADERS
 from pumpskin.types import Pumpskin
 
 TIMESTAMP_FORMAT = "%Y-%m-%d"
+
 
 class PumpskinWeb2Client:
     """Access api endpoints of Pumpskin Game"""
@@ -60,20 +61,20 @@ class PumpskinWeb2Client:
     def get_pumpskin_info(self, token_id: int, params: T.Dict[str, T.Any] = {}) -> Pumpskin:
         try:
             res = self._get_pumpskin_info_raw(token_id=token_id, params=params)
-            return res["result"]
+            return res
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed to get server time:\n{res if res else ''}")
+            logger.print_fail(f"Failed to get pumpskin info:\n{res if res else ''}")
             return {}
 
     def get_pumpskin_image(self, token_id: int, params: T.Dict[str, T.Any] = {}) -> Pumpskin:
         try:
             res = self._get_pumpskin_info_raw(token_id=token_id, params=params)
-            image_path = res["result"]["image"].split("://")[1]
+            image_path = res["image"].split("://")[1]
             return self.BASE_URL + "/" + image_path
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed to get server time:\n{res if res else ''}")
+            logger.print_fail(f"Failed to get pumpskin image:\n{res if res else ''}")
             return {}

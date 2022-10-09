@@ -25,14 +25,12 @@ class PumpskinCollectionWeb3Client(AvalancheCWeb3Client):
         os.path.dirname(this_dir), "web3_utils", "abi", "abi-pumpskin-collection.json"
     )
     abi = Web3Client._get_contract_abi_from_file(abi_dir)
-    holder_place = 0x01
 
     def level_up_pumpkin(self, token_id: int) -> HexStr:
         """
         Level up a pumpskin
         """
         try:
-            self.contract.functions.levelUpPumpkin(token_id).call()
             tx: TxParams = self.build_contract_transaction(
                 self.contract.functions.levelUpPumpkin(token_id)
             )
@@ -46,7 +44,6 @@ class PumpskinCollectionWeb3Client(AvalancheCWeb3Client):
         Claim pies earned from staking pumpskin
         """
         try:
-            self.contract.functions.claimPies(token_ids).call()
             tx: TxParams = self.build_contract_transaction(
                 self.contract.functions.claimPies(token_ids)
             )
@@ -60,7 +57,6 @@ class PumpskinCollectionWeb3Client(AvalancheCWeb3Client):
         Stake pumpskins
         """
         try:
-            self.contract.functions.stake(token_ids).call()
             tx: TxParams = self.build_contract_transaction(self.contract.functions.stake(token_ids))
             return self.sign_and_send_transaction(tx)
         except Exception as e:
@@ -88,7 +84,7 @@ class PumpskinCollectionWeb3Client(AvalancheCWeb3Client):
                 eaten_amount=pumpskin_info[3],
                 cooldown_ts=pumpskin_info[4],
             )
-            return pumpskin_info
+            return pumpskin
         except Exception as e:
             logger.print_fail(f"{e}")
             return {}
@@ -123,7 +119,6 @@ class PumpskinContractWeb3Client(AvalancheCWeb3Client):
         Drink potion for a pumpskin
         """
         try:
-            self.contract.functions.potionPumpkin(token_id, num_potn_wei).call()
             tx: TxParams = self.build_contract_transaction(
                 self.contract.functions.potionPumpkin(token_id, num_potn_wei)
             )
@@ -137,7 +132,6 @@ class PumpskinContractWeb3Client(AvalancheCWeb3Client):
         Stake PPIE
         """
         try:
-            self.contract.functions.staking(amount_ppie_wei).call()
             tx: TxParams = self.build_contract_transaction(
                 self.contract.functions.staking(amount_ppie_wei)
             )
@@ -151,19 +145,18 @@ class PumpskinContractWeb3Client(AvalancheCWeb3Client):
         Claim POTN
         """
         try:
-            self.contract.functions.claimpotion().call()
             tx: TxParams = self.build_contract_transaction(self.contract.functions.claimpotion())
             return self.sign_and_send_transaction(tx)
         except Exception as e:
             logger.print_fail(f"{e}")
             return ""
 
-    def get_claimable_potn(self, token_id: int) -> Token:
+    def get_claimable_potn(self, user_address: Address) -> Token:
         """
         Get claimable POTN per token
         """
         try:
-            ppie_wei: Token = self.contract.functions.claimableView(token_id).call()
+            ppie_wei: Token = self.contract.functions.claimableView(user_address).call()
             return ppie_wei
         except Exception as e:
             logger.print_fail(f"{e}")
@@ -181,14 +174,9 @@ class PumpskinNftWeb3Client(AvalancheCWeb3Client):
     abi_dir = os.path.join(os.path.dirname(this_dir), "web3_utils", "abi", "abi-pumpskin-nft.json")
     abi = Web3Client._get_contract_abi_from_file(abi_dir)
 
-    def _correct_data_header(self, tx: TxParams) -> TxParams:
-        tx["data"] = f"{self.drink_potion_header:x}{tx['data'][8:]}"
-        return tx
-
     def get_token_of_owner_by_index(self, user_address: Address, slot_index: int) -> int:
         """
-        Get the token ID at given index for the user. We use this as a hack way to get all the
-        NFTs owned by a user by iterating through indices until we error out
+        Get the token ID at given index for the user.
         """
         try:
             return self.contract.functions.tokenOfOwnerByIndex(user_address, slot_index).call()

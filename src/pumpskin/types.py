@@ -10,6 +10,7 @@ class StakedPumpskin(T.TypedDict):
     eaten_amount: int
     cooldown_ts: int
 
+
 class Pumpskin(T.TypedDict):
     name: str
     description: str
