@@ -194,8 +194,16 @@ class PumpskinBot:
         # get all pumpskin id's that correspond to the user
         pumpskin_ids: T.List[int] = self._get_pumpskin_ids()
 
+        potn_balance = self.potn_w3.get_balance()
+        ppie_balance = self.ppie_w3.get_balance()
+
+        logger.print_bold(f"{self.user} Balances:")
+        logger.print_ok_arrow(f"PPIE: {ppie_balance:.2f}")
+        logger.print_ok_arrow(f"POTN: {potn_balance:.2f}")
+        logger.print_ok_arrow(f"\U0001F383: {len(pumpskin_ids)}")
+
         # Claim POTN
-        logger.print_ok_blue_arrow(f"Checking $POTN for claims...")
+        logger.print_ok_blue(f"Checking $POTN for claims...")
         total_claimable_potn = wei_to_token_raw(self.game_w3.get_claimable_potn(self.address))
 
         if (
@@ -222,7 +230,7 @@ class PumpskinBot:
             logger.print_warn(f"Not enough $POTN to claim ({total_claimable_potn:.2f})")
 
         # Claim PPIE
-        logger.print_ok_blue_arrow(f"Checking $PPIE for claims...")
+        logger.print_ok_blue(f"Checking $PPIE for claims...")
         total_claimable_ppie = 0.0
 
         ppie_tokens = []
@@ -267,7 +275,7 @@ class PumpskinBot:
             if cooldown_time >= 0:
                 time_left_pretty = get_pretty_seconds(cooldown_time)
                 logger.print_warn(
-                    f"Pumpskin {token_id} not ready for levelling yet. Remaining time: {time_left_pretty}"
+                    f"Pumpskin {token_id} not ready for leveling yet. Remaining time: {time_left_pretty}"
                 )
                 continue
 
@@ -275,13 +283,15 @@ class PumpskinBot:
 
             # check to see how much POTN needed to level up
             level = pumpskin["kg"] / 100
-            logger.print_normal(f"Pumpskin {token_id}, Level {level}")
             level_potn = self._calc_potn_from_level(level + 1)
+            logger.print_ok_blue(f"Pumpskin {token_id}, Level {level} POTN needed: {level_potn}")
             potn_to_level = level_potn - pumpskin["eaten_amount"]
 
             # Drink POTN needed if we have enough
             if potn_balance < potn_to_level:
-                logger.print_warn(f"Not enough $POTN to level up {token_id}. Skipping...")
+                logger.print_warn(
+                    f"Not enough $POTN to level up {token_id}. Have: {potn_balance} Need: {potn_to_level}. Skipping..."
+                )
                 continue
 
             num_potn_wei = token_to_wei(potn_to_level)
@@ -321,12 +331,12 @@ class PumpskinBot:
         min_ppie_to_stake = self.config_mgr.config["game_specific_configs"]["min_ppie_stake"]
         if ppie_balance <= min_ppie_to_stake:
             logger.print_warn(
-                f"Not going to stake $PPIE since it is below our threshold ({ppie_balance} < {min_ppie_to_stake})"
+                f"Not going to stake $PPIE since it is below our threshold ({ppie_balance:.2f} < {min_ppie_to_stake:.2f})"
             )
             return
 
         # Try to stake PPIE
-        logger.print_bold(f"Attempting to stake {ppie_balance} $PPIE...")
+        logger.print_bold(f"Attempting to stake {ppie_balance:.2f} $PPIE...")
         tx_hash = self.game_w3.staking_ppie(token_to_wei(ppie_balance))
         tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
         gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
@@ -335,9 +345,9 @@ class PumpskinBot:
         self.stats_logger.lifetime_stats["avax_gas"] += gas
 
         if tx_receipt.get("status", 0) != 1:
-            logger.print_fail(f"Failed to stake ${ppie_balance} $PPIE!")
+            logger.print_fail(f"Failed to stake ${ppie_balance:.2f} $PPIE!")
         else:
-            logger.print_ok(f"Successfully staked ${ppie_balance} $PPIE")
+            logger.print_ok(f"Successfully staked ${ppie_balance:.2f} $PPIE")
             logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
 
     def init(self) -> None:

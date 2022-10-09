@@ -6,13 +6,14 @@ import time
 from yaspin import yaspin
 
 from config_pumpskin import GMAIL, USERS, USER_GROUPS
+from utils import discord
 from utils import logger
 from utils.email import Email, get_email_accounts_from_password
 from utils.security import decrypt_secret
 from pumpskin.pumpskin_bot import PumpskinBot
 
-TIME_BETWEEN_PLAYERS = 60.0
-TIME_BETWEEN_RUNS = 3.0 * 60.0 * 60.0
+TIME_BETWEEN_PLAYERS = 30.0
+TIME_BETWEEN_RUNS = 60.0 * 60.0
 
 
 def parse_args() -> argparse.Namespace:
@@ -64,6 +65,8 @@ def run_bot() -> None:
     encrypt_password = ""
     email_accounts = []
 
+    alerts_enabled = not args.quiet and not args.dry_run
+
     if not args.dry_run:
         encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
         email_accounts = get_email_accounts_from_password(encrypt_password, GMAIL)
@@ -92,7 +95,24 @@ def run_bot() -> None:
                 wait(TIME_BETWEEN_PLAYERS)
             logger.print_normal(f"Waiting for next round of botting...")
             wait(TIME_BETWEEN_RUNS)
-
+    except KeyboardInterrupt:
+        pass
+    except Exception as e:
+        stop_message = f"Pumpskin Alert \U0001F383\n\n"
+        stop_message += f"Pumpskin Bot Stopped \U0000203C\n"
+        if alerts_enabled and TWILIO_CONFIG["enable_admin_sms"]:
+            message = sms_client.messages.create(
+                body=stop_message,
+                from_=TWILIO_CONFIG["from_sms_number"],
+                to=TWILIO_CONFIG["admin_sms_number"],
+            )
+        if alerts_enabled:
+            stop_message += "Please manually attend your pumpskins until we're back up"
+            try:
+                discord.get_discord_hook("PUMPSKIN_UPDATES").send(stop_message)
+            except:
+                pass
+        logger.print_fail(traceback.format_exc())
     finally:
         for bot in bots:
             bot.end()
