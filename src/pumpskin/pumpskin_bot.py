@@ -1,8 +1,10 @@
 import getpass
 import time
 import typing as T
+from discord import Color
+from discord_webhook import DiscordEmbed, DiscordWebhook
 
-
+from utils import discord
 from utils import logger
 from utils.config_types import UserConfig
 from utils.email import Email
@@ -141,6 +143,67 @@ class PumpskinBot:
 
         return pumpskin_ids
 
+    def _send_leveling_discord_activity_update(self, token_id: int, level: int) -> None:
+        webhook = DiscordWebhook(
+            url=discord.DISCORD_WEBHOOK_URL["PUMPSKIN_ACTIVITY"], rate_limit_retry=True
+        )
+        embed = DiscordEmbed(
+            title=f"PUMPSKIN LEVELING",
+            description=f"Finished leveling pumpskin for {self.config['discord_handle'].upper()}\n",
+            color=Color.orange().value,
+        )
+
+        embed.add_embed_field(name=f"Pumpskin", value=f"{token_id}", inline=False)
+        embed.add_embed_field(name=f"Level", value=f"{level}", inline=True)
+
+        pumpskin_image_uri = self.pumpskin_w2.get_pumpskin_image(token_id)
+
+        embed.set_thumbnail(url=pumpskin_image_uri, height=100, width=100)
+        webhook.add_embed(embed)
+        webhook.execute()
+
+    def _update_stats(self) -> None:
+        for k, v in self.current_stats.items():
+            if type(v) != type(self.stats_logger.lifetime_stats.get(k)):
+                logger.print_warn(
+                    f"Mismatched stats:\n{self.current_stats}\n{self.stats_logger.lifetime_stats}"
+                )
+                continue
+
+            if k in ["commission_ppie"]:
+                continue
+
+            if isinstance(v, list):
+                self.stats_logger.lifetime_stats[k].extend(v)
+            elif isinstance(v, dict):
+                for i, j in self.stats_logger.lifetime_stats[k].items():
+                    self.stats_logger.lifetime_stats[k][i] += self.current_stats[k][i]
+            else:
+                self.stats_logger.lifetime_stats[k] += v
+
+        self.stats_logger.lifetime_stats["commission_ppie"] = self.stats_logger.lifetime_stats.get(
+            "commission_ppie", {COMMISSION_WALLET_ADDRESS: 0.0}
+        )
+
+        ppie_rewards = self.current_stats["ppie"]
+        for address, commission_percent in self.config["commission_percent_per_mine"].items():
+            commission_ppie = ppie_rewards * (commission_percent / 100.0)
+
+            self.stats_logger.lifetime_stats["commission_ppie"][address] = (
+                self.stats_logger.lifetime_stats["commission_ppie"].get(address, 0.0)
+                + commission_ppie
+            )
+
+            logger.print_ok(
+                f"Added {commission_ppie} $PPIE for {address} in commission ({commission_percent}%)!"
+            )
+
+        self.current_stats = copy.deepcopy(NULL_GAME_STATS)
+
+        logger.print_ok_blue(
+            f"Lifetime Stats for {self.user.upper()}\n{json.dumps(self.stats_logger.lifetime_stats, indent=4)}"
+        )
+
     def _run_game_loop(self) -> None:
         # get all pumpskin id's that correspond to the user
         pumpskin_ids: T.List[int] = self._get_pumpskin_ids()
@@ -249,6 +312,7 @@ class PumpskinBot:
             else:
                 logger.print_ok(f"Successfully leveled up ${token}")
                 logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+                self._send_leveling_discord_activity_update(token_id, level + 1)
 
         ppie_balance = self.ppie_w3.get_balance()
 
