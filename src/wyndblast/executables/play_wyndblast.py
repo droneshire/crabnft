@@ -3,6 +3,8 @@ import getpass
 import logging
 import os
 import time
+import traceback
+from twilio.rest import Client
 from yaspin import yaspin
 
 from config_wyndblast import GMAIL, USERS, USER_GROUPS
@@ -101,6 +103,7 @@ def run_bot() -> None:
         stop_message = f"Wyndblast Alert \U0001F432\n\n"
         stop_message += f"Wyndblast Bot Stopped \U0000203C\n"
         if alerts_enabled and TWILIO_CONFIG["enable_admin_sms"]:
+            sms_client = Client(TWILIO_CONFIG["account_sid"], TWILIO_CONFIG["account_auth_token"])
             message = sms_client.messages.create(
                 body=stop_message,
                 from_=TWILIO_CONFIG["from_sms_number"],

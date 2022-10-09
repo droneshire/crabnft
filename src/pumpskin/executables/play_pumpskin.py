@@ -3,9 +3,11 @@ import getpass
 import logging
 import os
 import time
+import traceback
+from twilio.rest import Client
 from yaspin import yaspin
 
-from config_pumpskin import GMAIL, USERS, USER_GROUPS
+from config_pumpskin import GMAIL, TWILIO_CONFIG, USERS, USER_GROUPS
 from utils import discord
 from utils import logger
 from utils.email import Email, get_email_accounts_from_password
@@ -101,6 +103,7 @@ def run_bot() -> None:
         stop_message = f"Pumpskin Alert \U0001F383\n\n"
         stop_message += f"Pumpskin Bot Stopped \U0000203C\n"
         if alerts_enabled and TWILIO_CONFIG["enable_admin_sms"]:
+            sms_client = Client(TWILIO_CONFIG["account_sid"], TWILIO_CONFIG["account_auth_token"])
             message = sms_client.messages.create(
                 body=stop_message,
                 from_=TWILIO_CONFIG["from_sms_number"],
