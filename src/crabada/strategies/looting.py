@@ -12,7 +12,7 @@ from crabada.strategies.strategy import GameStage, Strategy
 from crabada.types import MineOption, IdleGame, Team, TeamMember
 from utils import logger
 from utils.config_manager import ConfigManager
-from utils.price import Tus, wei_to_tus_raw
+from utils.price import Tus, wei_to_token_raw
 
 
 class LootingStrategy(Strategy):
@@ -42,7 +42,7 @@ class LootingStrategy(Strategy):
         signature, expired_time = self._get_loot_signature(game_id, team_id)
         tx_hash = self.crabada_w3.attack(game_id, team_id, expired_time, signature)
         tx_receipt = self._check_for_tx_receipt(tx_hash)
-        gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        gas = wei_to_token_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
 
         return CrabadaTransaction(
             tx_hash,
@@ -60,7 +60,7 @@ class LootingStrategy(Strategy):
         tx_hash = self.crabada_w3.settle_game(game_id)
         tx_receipt = self._check_for_tx_receipt(tx_hash)
 
-        gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        gas = wei_to_token_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         tus, cra = get_rewards_from_tx_receipt(tx_receipt)
         if tus is not None:
             result = self._get_game_result(tus)
@@ -83,7 +83,7 @@ class LootingStrategy(Strategy):
         tx_hash = self.crabada_w3.reinforce_attack(game_id, crabada_id, borrow_price)
         tx_receipt = self._check_for_tx_receipt(tx_hash)
 
-        gas = wei_to_tus_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        gas = wei_to_token_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
 
         return CrabadaTransaction(
             tx_hash,

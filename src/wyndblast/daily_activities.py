@@ -11,7 +11,7 @@ from utils import discord
 from utils import logger
 from utils.config_types import UserConfig
 from utils.email import Email, send_email
-from utils.price import wei_to_chro_raw
+from utils.price import wei_to_token_raw
 from wyndblast.assets import WYNDBLAST_ASSETS
 from wyndblast.game_stats import NULL_GAME_STATS
 from wyndblast.game_stats import WyndblastLifetimeGameStatsLogger
@@ -75,7 +75,7 @@ class DailyActivitiesGame:
         logger.print_ok(f"Claiming rewards! {unclaimed_chro} CHRO")
         tx_hash = self.wynd_w3.claim_rewards()
         tx_receipt = self.wynd_w3.get_transaction_receipt(tx_hash)
-        gas = wei_to_chro_raw(self.wynd_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        gas = wei_to_token_raw(self.wynd_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         logger.print_bold(f"Paid {gas} AVAX in gas")
 
         self.stats_logger.lifetime_stats["avax_gas"] += gas
@@ -84,7 +84,7 @@ class DailyActivitiesGame:
             logger.print_fail(f"Failed to claim CHRO!")
         else:
             logger.print_ok(f"Successfully transferred CHRO")
-            logger.print_normal(f"Explorer: https://explorer.swimmer.network/tx/{tx_hash}\n\n")
+            logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
 
         return True
 
