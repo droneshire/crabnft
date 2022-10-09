@@ -52,6 +52,7 @@ class Crabada(GameCollection):
         super().__init__(user, config, 15)
 
         self.stats_logger = CrabadaLifetimeGameStatsLogger(user, log_dir, {})
+        print(log_dir, self.stats_logger.get_game_stats())
         self.commission = self.stats_logger.get_game_stats()["commission_tus"]
         self.client = token_client = T.cast(
             TusSwimmerWeb3Client,
