@@ -84,7 +84,7 @@ class DailyActivitiesGame:
             logger.print_fail(f"Failed to claim CHRO!")
         else:
             logger.print_ok(f"Successfully transferred CHRO")
-            logger.print_normal(f"Explorer: https://explorer.swimmer.network/tx/{tx_hash}\n\n")
+            logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
 
         return True
 
