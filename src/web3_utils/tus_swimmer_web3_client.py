@@ -8,7 +8,7 @@ from web3.middleware import geth_poa_middleware
 from web3.types import TxParams, Wei
 
 from utils.price import Tus
-from utils.price import tus_to_wei, wei_to_token
+from utils.price import token_to_wei, wei_to_token
 from web3_utils.swimmer_network_web3_client import SwimmerNetworkClient
 from web3_utils.web3_client import Web3Client
 
@@ -28,5 +28,5 @@ class TusSwimmerWeb3Client(SwimmerNetworkClient):
         return wei_to_token(balance)
 
     def transfer_token(self, to_address: Address, tus: Tus) -> HexStr:
-        tx: TxParams = self.build_transaction_with_value_in_wei(to_address, tus_to_wei(tus))
+        tx: TxParams = self.build_transaction_with_value_in_wei(to_address, token_to_wei(tus))
         return self.sign_and_send_transaction(tx)
