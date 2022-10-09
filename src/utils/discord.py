@@ -10,6 +10,7 @@ DISCORD_WEBHOOK_URL = {
     "LOW_MR_LOOT_SNIPE": "https://discord.com/api/webhooks/967646138570248222/uGB8At-fTN-ORWwnRcky4Wb0u311qjNBpDMgHLtuwGUm3PkApu-8VU8Rt25Z9f4SYvSP",
     "WYNDBLAST_UPDATES": "https://discord.com/api/webhooks/988288614343512074/AiVdp_uL_sLTJRO05xhU6E6DEF6aQR1cB65ZO9SjQlzMHlDNTGoHKXv6ucyBErvM1UX6",
     "WYNDBLAST_ACTIVITY": "https://discord.com/api/webhooks/1017484506397159506/uGjNtG68Zkq5nCzDmzJ-MuT2N8X2-W0QrQqmhlamqmPSkZbvgcf_H3jxZVvx3em6P_l8",
+    "PUMPSKIN_ACTIVITY": "https://discord.com/api/webhooks/1028476865607901254/LFh2xkGWQqiOHaR1gwhdYIEbKPc9iJmXMknnJIyy3jIawv1XR-yr-XjwnYGVYkOWoAEx",
     # paid subscriptions
     "HEYA_SUBSCRIPTION": "https://discord.com/api/webhooks/969388295253553192/QZ3XqguHVi3DEQRLiMUMqjLyaspLxfb1gfqtKizYF6rW_azim9D0dhs0eXZzXlJf8bvw",
 }
