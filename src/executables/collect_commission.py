@@ -12,8 +12,15 @@ import typing as T
 from eth_typing import Address
 from twilio.rest import Client
 
-import config_crabada
-import config_wyndblast
+try:
+    import config_crabada
+except ModuleNotFoundError:
+    pass
+try:
+    import config_wyndblast
+except ModuleNotFoundError:
+    pass
+
 from utils import discord, email, logger
 from utils.commissions import GameCollection, COMMISSION_GAMES
 from utils.price import is_gas_too_high
