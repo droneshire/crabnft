@@ -114,7 +114,7 @@ class PumpskinBot:
 
     @staticmethod
     def _calc_potn_from_level(level: int) -> int:
-        return 25 if level <= 1 else int(25 + 50 * level + 25 * level**2)
+        return 25 * level**2
 
     @staticmethod
     def _calc_cooldown_from_level(level: int) -> int:
@@ -195,12 +195,13 @@ class PumpskinBot:
         )
 
     def _send_email_update(self, num_staked_pumpskins: int) -> None:
-        content = f"Activity Stats for {self.user.upper()}:\n"
+        content = f"Gourd Stats for {self.user.upper()}:\n"
         content += f"Active Pumpskins: {num_staked_pumpskins}\n"
-        content += f"Pumpskins Levels: {self.current_stats['levels']}\n"
-        content += f"CLAIMED:"
+        content += f"Pumpskins Levels: {self.current_stats['levels']}\n\n"
+        content += f"-----CLAIMED--------\n"
         content += f"$POTN: {self.current_stats['potn']}\n"
         content += f"$PPIE: {self.current_stats['ppie']}\n"
+        content += f"--------------------\n"
 
         logger.print_bold("\n" + content + "\n")
 
@@ -249,8 +250,10 @@ class PumpskinBot:
 
     def _level_pumpskins(self, pumpskin_ids: T.List[int]) -> None:
         # Now try to level pumpskins...
+        pumpskins = {}
         for token_id in pumpskin_ids:
             pumpskin: StakedPumpskin = self.collection_w3.get_staked_pumpskin_info(token_id)
+            pumpskins.extend(pumpskin)
 
             # check to see if we're past the cooldown period
             now = time.time()
@@ -266,8 +269,11 @@ class PumpskinBot:
 
             # check to see how much POTN needed to level up
             level = pumpskin["kg"] / 100
-            level_potn = self._calc_potn_from_level(level + 1)
-            logger.print_ok_blue(f"Pumpskin {token_id}, Level {level} POTN needed: {level_potn}")
+            next_level = level + 1
+            level_potn = self._calc_potn_from_level(level)
+            logger.print_ok_blue(
+                f"Pumpskin {token_id}, Level {level} POTN needed for {next_level}: {level_potn}"
+            )
             potn_to_level = level_potn - pumpskin["eaten_amount"]
 
             # Drink POTN needed if we have enough
@@ -295,7 +301,7 @@ class PumpskinBot:
                 logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
 
             # Level Pumpskin who can be leveled up
-            logger.print_normal(f"Attempting to Level up pumpskin {token_id} to {level + 1}...")
+            logger.print_normal(f"Attempting to Level up pumpskin {token_id} to {next_level}...")
             tx_hash = self.collection_w3.level_up_pumpkin(token_id)
             tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
             gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
@@ -306,10 +312,10 @@ class PumpskinBot:
             if tx_receipt.get("status", 0) != 1:
                 logger.print_fail(f"Failed to level up pumpskin {token_id}!")
             else:
-                logger.print_ok(f"Successfully leveled up pumpskin {token_id} to {level + 1}")
+                logger.print_ok(f"Successfully leveled up pumpskin {token_id} to {next_level}")
                 logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
                 self.current_stats["levels"] += 1
-                self._send_leveling_discord_activity_update(token_id, level + 1)
+                self._send_leveling_discord_activity_update(token_id, next_level)
 
     def _claim_ppie(self, pumpskin_ids: T.List[int]) -> None:
         # Claim PPIE
