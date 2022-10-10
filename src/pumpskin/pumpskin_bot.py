@@ -253,7 +253,7 @@ class PumpskinBot:
         pumpskins = {}
         for token_id in pumpskin_ids:
             pumpskin: StakedPumpskin = self.collection_w3.get_staked_pumpskin_info(token_id)
-            pumpskins.extend(pumpskin)
+            pumpskins[token_id] = pumpskin
 
             # check to see if we're past the cooldown period
             now = time.time()
