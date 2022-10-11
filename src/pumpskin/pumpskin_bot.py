@@ -396,10 +396,12 @@ class PumpskinBot:
         logger.print_ok_arrow(f"POTN: {potn_balance:.2f}")
         logger.print_ok_arrow(f"\U0001F383: {len(pumpskin_ids)}")
 
-        self._claim_potn()
         self._claim_ppie(pumpskin_ids)
         self._level_pumpskins(pumpskin_ids)
         self._check_and_stake_ppie()
+        # staking PPIE should claim all outstanding POTN in one transaction
+        # so we should really never hit this
+        self._claim_potn()
         self._send_email_update(len(pumpskin_ids))
         self._update_stats()
 
