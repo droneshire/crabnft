@@ -162,6 +162,7 @@ def collect_commission(
     game: GameCollection,
     encrypt_password: str = "",
     dry_run: bool = False,
+    quiet: bool = False,
 ) -> None:
     totals_key = f"total_commission_{game.TOKEN.lower()}"
     total_stats = {totals_key: {}}
@@ -275,16 +276,21 @@ def collect_commission(
                     f"New {token} commission balance: {game_stats_commission} {token}"
                 )
 
-        if not did_fail:
-            new_commission = sum([c for _, c in game_stats_commission.items()])
-            message = f"\U0000203C  Commission Collection: \U0000203C\n"
-            message += f"Successful tx of {commission_token:.2f} {token} from {alias}\n"
-            transactions = "\n\t".join([f"{token.explorer_url}/{t}" for t in tx_hashes])
-            message += f"Explorer: {transactions}\n\n"
-            message += f"New {token} commission balance: {new_commission} {token}\n"
-            logger.print_ok_blue(message)
-            if not dry_run:
-                send_sms_message(encrypt_password, config["email"], config["sms_number"], message)
+        if did_fail:
+            continue
+
+        new_commission = sum([c for _, c in game_stats_commission.items()])
+        message = f"\U0000203C  Commission Collection: \U0000203C\n"
+        message += f"Successful tx of {commission_token:.2f} {token} from {alias}\n"
+        transactions = "\n\t".join([f"{token.explorer_url}/{t}" for t in tx_hashes])
+        message += f"Explorer: {transactions}\n\n"
+        message += f"New {token} commission balance: {new_commission} {token}\n"
+        logger.print_ok_blue(message)
+
+        if dry_run or quiet:
+            continue
+
+        send_sms_message(encrypt_password, config["email"], config["sms_number"], message)
 
     logger.print_bold(
         f"Collected {sum([c for _, c in total_stats[totals_key].items()])} {token} in commission!!!"
@@ -319,6 +325,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--from-users", default="ALL", nargs="+")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--quiet", action="store_true")
     parser.add_argument("--log-level", choices=["INFO", "DEBUG", "ERROR", "NONE"], default="INFO")
     parser.add_argument(
         "--game", choices=list(COMMISSION_GAMES.keys()), help="Token to collect commission with"
@@ -373,7 +380,9 @@ def main() -> None:
 
     logger.print_ok(f"Collecting {game_commission.TOKEN} Commissions from {', '.join(from_users)}")
 
-    collect_commission(from_users, log_dir, game_commission, encrypt_password, args.dry_run)
+    collect_commission(
+        from_users, log_dir, game_commission, encrypt_password, args.dry_run, args.quiet
+    )
 
 
 if __name__ == "__main__":
