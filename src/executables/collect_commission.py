@@ -268,7 +268,7 @@ def collect_commission(
                 )
                 game_stats_commission[to_address] -= commission
                 game_stats = token.stats_logger.get_game_stats()
-                commission_key = f"commission_{token.lower()}"
+                commission_key = f"commission_{token}".lower()
                 game_stats[commission_key][to_address] -= commission
                 if not dry_run:
                     token.stats_logger.write_game_stats(game_stats)
