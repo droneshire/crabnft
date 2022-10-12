@@ -344,9 +344,16 @@ class PumpskinBot:
             if claimable_tokens > 0.0:
                 ppie_tokens.append(token_id)
 
+        ppie_staked = wei_to_token_raw(self.game_w3.get_ppie_staked(self.address))
+        potn_per_day = ppie_staked * 3.0
+
+        logger.print_normal(
+            f"{ppie_staked:.2f} staked $PPIE producing {potn_per_day:.2f} $POTN daily"
+        )
+
         if (
             total_claimable_ppie
-            >= self.config_mgr.config["game_specific_configs"]["min_ppie_claim"]
+            >= max(self.config_mgr.config["game_specific_configs"]["min_ppie_claim"], ppie_staked)
             or force
         ):
             self._claim_ppie(ppie_tokens, total_claimable_ppie)

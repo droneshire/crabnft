@@ -162,6 +162,17 @@ class PumpskinContractWeb3Client(AvalancheCWeb3Client):
             logger.print_fail(f"{e}")
             return -1
 
+    def get_ppie_staked(self, user_address: Address) -> Token:
+        """
+        Get staked PPIE
+        """
+        try:
+            ppie_wei: Token = self.contract.functions.pieStakeHolders(user_address).call()
+            return ppie_wei
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return -1
+
 
 class PumpskinNftWeb3Client(AvalancheCWeb3Client):
     """
