@@ -317,8 +317,21 @@ class PumpskinBot:
                 self.current_stats["levels"] += 1
                 self._send_leveling_discord_activity_update(token_id, next_level)
 
-    def _claim_ppie(self, pumpskin_ids: T.List[int]) -> None:
-        # Claim PPIE
+    def _check_and_claim_potn(self, pumpskin_ids: T.List[int], force: bool = False) -> None:
+        logger.print_ok_blue(f"Checking $POTN for claims...")
+        total_claimable_potn = wei_to_token_raw(self.game_w3.get_claimable_potn(self.address))
+
+        if (
+            total_claimable_potn
+            >= self.config_mgr.config["game_specific_configs"]["min_potn_claim"]
+            or force
+        ):
+            # claim PPIE b/c it will auto claim all POTN at the same time (2 for 1 deal)
+            self._check_and_claim_ppie(pumpskin_ids, force)
+        else:
+            logger.print_warn(f"Not enough $POTN to claim ({total_claimable_potn:.2f})")
+
+    def _check_and_claim_ppie(self, pumpskin_ids: T.List[int], force: bool = False) -> None:
         logger.print_ok_blue(f"Checking $PPIE for claims...")
         total_claimable_ppie = 0.0
 
@@ -334,55 +347,47 @@ class PumpskinBot:
         if (
             total_claimable_ppie
             >= self.config_mgr.config["game_specific_configs"]["min_ppie_claim"]
+            or force
         ):
-            logger.print_normal(
-                f"Attempting to claim {total_claimable_ppie:.2f} $PPIE for {self.user}..."
-            )
-
-            tx_hash = self.collection_w3.claim_pies(ppie_tokens)
-            tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
-            gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
-            logger.print_bold(f"Paid {gas} AVAX in gas")
-
-            self.stats_logger.lifetime_stats["avax_gas"] += gas
-
-            if tx_receipt.get("status", 0) != 1:
-                logger.print_fail(f"Failed to claim $PPIE!")
-            else:
-                logger.print_ok(f"Successfully claimed $PPIE")
-                logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
-                self.current_stats["ppie"] += total_claimable_ppie
+            self._claim_ppie(pumpskin_ids)
         else:
             logger.print_warn(f"Not enough $PPIE to claim ({total_claimable_ppie:.2f})")
 
-    def _claim_potn(self) -> None:
-        # Claim POTN
-        logger.print_ok_blue(f"Checking $POTN for claims...")
-        total_claimable_potn = wei_to_token_raw(self.game_w3.get_claimable_potn(self.address))
+    def _claim_ppie(self, pumpskin_ids: T.List[int], force: bool) -> None:
+        logger.print_normal(
+            f"Attempting to claim {total_claimable_ppie:.2f} $PPIE for {self.user}..."
+        )
 
-        if (
-            total_claimable_potn
-            >= self.config_mgr.config["game_specific_configs"]["min_potn_claim"]
-        ):
-            logger.print_normal(
-                f"Attempting to claim {total_claimable_potn:.2f} $POTN for {self.user}..."
-            )
+        tx_hash = self.collection_w3.claim_pies(ppie_tokens)
+        tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
+        gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        logger.print_bold(f"Paid {gas} AVAX in gas")
 
-            tx_hash = self.game_w3.claim_potn()
-            tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
-            gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
-            logger.print_bold(f"Paid {gas} AVAX in gas")
+        self.stats_logger.lifetime_stats["avax_gas"] += gas
 
-            self.stats_logger.lifetime_stats["avax_gas"] += gas
-
-            if tx_receipt.get("status", 0) != 1:
-                logger.print_fail(f"Failed to claim $POTN!")
-            else:
-                logger.print_ok(f"Successfully claimed {total_claimable_potn:.2f} $POTN")
-                logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
-                self.current_stats["potn"] += total_claimable_potn
+        if tx_receipt.get("status", 0) != 1:
+            logger.print_fail(f"Failed to claim $PPIE!")
         else:
-            logger.print_warn(f"Not enough $POTN to claim ({total_claimable_potn:.2f})")
+            logger.print_ok(f"Successfully claimed $PPIE")
+            logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+            self.current_stats["ppie"] += total_claimable_ppie
+
+    def _claim_potn(self, potn_to_claim: float) -> None:
+        logger.print_normal(f"Attempting to claim {potn_to_claim:.2f} $POTN for {self.user}...")
+
+        tx_hash = self.game_w3.claim_potn()
+        tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
+        gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        logger.print_bold(f"Paid {gas} AVAX in gas")
+
+        self.stats_logger.lifetime_stats["avax_gas"] += gas
+
+        if tx_receipt.get("status", 0) != 1:
+            logger.print_fail(f"Failed to claim $POTN!")
+        else:
+            logger.print_ok(f"Successfully claimed {potn_to_claim:.2f} $POTN")
+            logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+            self.current_stats["potn"] += potn_to_claim
 
     def _run_game_loop(self) -> None:
         # get all pumpskin id's that correspond to the user
@@ -396,12 +401,13 @@ class PumpskinBot:
         logger.print_ok_arrow(f"POTN: {potn_balance:.2f}")
         logger.print_ok_arrow(f"\U0001F383: {len(pumpskin_ids)}")
 
-        self._claim_ppie(pumpskin_ids)
+        self._check_and_claim_ppie(pumpskin_ids)
         self._level_pumpskins(pumpskin_ids)
         self._check_and_stake_ppie()
         # staking PPIE should claim all outstanding POTN in one transaction
-        # so we should really never hit this
-        self._claim_potn()
+        # so we should really not trigger this often
+        self._check_and_claim_potn()
+
         self._send_email_update(len(pumpskin_ids))
         self._update_stats()
 
