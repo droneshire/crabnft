@@ -167,8 +167,8 @@ class PumpskinContractWeb3Client(AvalancheCWeb3Client):
         Get staked PPIE
         """
         try:
-            ppie_wei: Token = self.contract.functions.pieStakeHolders(user_address).call()
-            return ppie_wei
+            results: T.List[T.Any] = self.contract.functions.pieStakeHolders(user_address).call()
+            return ppie_wei[2]
         except Exception as e:
             logger.print_fail(f"{e}")
             return -1
