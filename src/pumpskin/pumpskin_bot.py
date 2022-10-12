@@ -349,14 +349,12 @@ class PumpskinBot:
             >= self.config_mgr.config["game_specific_configs"]["min_ppie_claim"]
             or force
         ):
-            self._claim_ppie(pumpskin_ids)
+            self._claim_ppie(ppie_tokens, total_claimable_ppie)
         else:
             logger.print_warn(f"Not enough $PPIE to claim ({total_claimable_ppie:.2f})")
 
-    def _claim_ppie(self, pumpskin_ids: T.List[int], force: bool) -> None:
-        logger.print_normal(
-            f"Attempting to claim {total_claimable_ppie:.2f} $PPIE for {self.user}..."
-        )
+    def _claim_ppie(self, ppie_tokens: T.List[int], ppie_to_claim: float) -> None:
+        logger.print_normal(f"Attempting to claim {ppie_to_claim:.2f} $PPIE for {self.user}...")
 
         tx_hash = self.collection_w3.claim_pies(ppie_tokens)
         tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
@@ -370,7 +368,7 @@ class PumpskinBot:
         else:
             logger.print_ok(f"Successfully claimed $PPIE")
             logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
-            self.current_stats["ppie"] += total_claimable_ppie
+            self.current_stats["ppie"] += ppie_to_claim
 
     def _claim_potn(self, potn_to_claim: float) -> None:
         logger.print_normal(f"Attempting to claim {potn_to_claim:.2f} $POTN for {self.user}...")
@@ -406,7 +404,7 @@ class PumpskinBot:
         self._check_and_stake_ppie()
         # staking PPIE should claim all outstanding POTN in one transaction
         # so we should really not trigger this often
-        self._check_and_claim_potn()
+        self._check_and_claim_potn(pumpskin_ids)
 
         self._send_email_update(len(pumpskin_ids))
         self._update_stats()
