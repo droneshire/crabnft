@@ -239,9 +239,9 @@ class PumpskinBot:
             logger.print_bold(f"Paid {gas} AVAX in gas")
 
             if tx_receipt.get("status", 0) != 1:
-                logger.print_fail(f"Failed to stake ${ppie_balance:.2f} $PPIE!")
+                logger.print_fail(f"Failed to stake {ppie_balance:.2f} $PPIE!")
             else:
-                logger.print_ok(f"Successfully staked ${ppie_balance:.2f} $PPIE")
+                logger.print_ok(f"Successfully staked {ppie_balance:.2f} $PPIE")
                 logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
         else:
             logger.print_warn(
