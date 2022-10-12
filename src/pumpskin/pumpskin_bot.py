@@ -353,7 +353,7 @@ class PumpskinBot:
 
         if (
             total_claimable_ppie
-            >= max(self.config_mgr.config["game_specific_configs"]["min_ppie_claim"], ppie_staked)
+            >= self.config_mgr.config["game_specific_configs"]["min_ppie_claim"]
             or force
         ):
             self._claim_ppie(ppie_tokens, total_claimable_ppie)
