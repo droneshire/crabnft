@@ -327,7 +327,7 @@ class PumpskinBot:
             or force
         ):
             # claim PPIE b/c it will auto claim all POTN at the same time (2 for 1 deal)
-            self._check_and_claim_ppie(pumpskin_ids, force)
+            self._check_and_claim_ppie(pumpskin_ids, True)
         else:
             logger.print_warn(f"Not enough $POTN to claim ({total_claimable_potn:.2f})")
 
