@@ -168,7 +168,7 @@ class PumpskinContractWeb3Client(AvalancheCWeb3Client):
         """
         try:
             results: T.List[T.Any] = self.contract.functions.pieStakeHolders(user_address).call()
-            return ppie_wei[2]
+            return results[2]
         except Exception as e:
             logger.print_fail(f"{e}")
             return -1
