@@ -160,7 +160,7 @@ class PumpskinContractWeb3Client(AvalancheCWeb3Client):
             return ppie_wei
         except Exception as e:
             logger.print_fail(f"{e}")
-            return -1
+            return 0
 
     def get_ppie_staked(self, user_address: Address) -> Token:
         """
@@ -171,7 +171,7 @@ class PumpskinContractWeb3Client(AvalancheCWeb3Client):
             return results[2]
         except Exception as e:
             logger.print_fail(f"{e}")
-            return -1
+            return 0
 
 
 class PumpskinNftWeb3Client(AvalancheCWeb3Client):
