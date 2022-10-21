@@ -1,7 +1,7 @@
 import discord
 import os
 
-from config_admin import DISOCORD_BOT_SERVER, DISCORD_BOT_TOKEN
+from config_admin import DISCORD_BOT_SERVER, DISCORD_BOT_TOKEN
 from utils import logger
 from discord_bots import behavior, pumpskin
 
@@ -17,7 +17,7 @@ BOT_RESPONSES: behavior.OnMessage = [
 
 @client.event
 async def on_ready() -> None:
-    guild = discord.utils.get(client.guilds, name=DISOCORD_BOT_SERVER)
+    guild = discord.utils.get(client.guilds, name=DISCORD_BOT_SERVER)
 
     logger.print_ok(
         f"{client.user} is connected to the following guild:\n" f"{guild.name}(id: {guild.id})"
