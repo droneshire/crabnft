@@ -11,15 +11,8 @@ import typing as T
 from discord import Webhook
 from twilio.rest import Client
 
-from config_crabada import (
-    COINMARKETCAP_API_TOKEN,
-    GAME_BOT_STRING,
-    GMAIL,
-    USER_GROUPS,
-    IEX_API_TOKEN,
-    TWILIO_CONFIG,
-    USERS,
-)
+from config_admin import COINMARKETCAP_API_TOKEN, GMAIL, IEX_API_TOKEN, TWILIO_CONFIG
+from config_crabada import GAME_BOT_STRING, USER_GROUPS, USERS
 from crabada.bot import CrabadaMineBot
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.game_stats import LifetimeGameStats

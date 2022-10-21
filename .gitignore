@@ -132,6 +132,7 @@ dmypy.json
 config_crabada.py
 config_wyndblast.py
 config_pumpskin.py
+config_admin.py
 
 # logs dir
 logs/

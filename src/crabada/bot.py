@@ -11,7 +11,8 @@ from eth_account import Account, messages
 from twilio.rest import Client
 from web3.types import Address
 
-from config_crabada import ADMIN_EMAIL, GAME_BOT_STRING
+from config_admin import ADMIN_EMAIL
+from config_crabada import GAME_BOT_STRING
 from crabada.config_manager_firebase import ConfigManagerFirebase
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
