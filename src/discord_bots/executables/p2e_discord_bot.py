@@ -17,24 +17,23 @@ BOT_RESPONSES: behavior.OnMessage = [
 
 @client.event
 async def on_ready() -> None:
-    guild = discord.utils.get(client.guilds, name=DISCORD_BOT_SERVER)
-
-    logger.print_ok(
-        f"{client.user} is connected to the following guild:\n" f"{guild.name}(id: {guild.id})"
-    )
+    for guild in client.guilds:
+        logger.print_ok(f"{client.user} is connected to guild:\n" f"{guild.name}(id: {guild.id})")
 
 
 @client.event
 async def on_message(message: discord.message.Message) -> None:
-    print(message.content)
 
     if message.author == client.user:
         return
 
     for bot in BOT_RESPONSES:
-        response = bot.response(message.content)
+        response = bot.response(message)
         if response:
-            await message.channel.send(response)
+            if type(response) == discord.Embed:
+                await message.channel.send(embed=response)
+            else:
+                await message.channel.send(response)
 
 
 client.run(DISCORD_BOT_TOKEN)

@@ -18,10 +18,7 @@ class PumpskinWeb2Client:
 
     BASE_URL = "https://gateway.ipfscdn.io/ipfs"
 
-    def __init__(self, private_key: str, user_address: Address) -> None:
-        self.private_key = private_key
-        self.user_address = Web3.toChecksumAddress(user_address)
-
+    def __init__(self) -> None:
         self.session_token = None
         self.object_id = None
         self.username = None

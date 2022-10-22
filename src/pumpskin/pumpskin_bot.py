@@ -59,9 +59,7 @@ class PumpskinBot:
             verbose=True,
         )
 
-        self.pumpskin_w2: PumpskinWeb2Client = PumpskinWeb2Client(
-            self.config_mgr.config["private_key"], self.address
-        )
+        self.pumpskin_w2: PumpskinWeb2Client = PumpskinWeb2Client()
 
         self.collection_w3: PumpskinCollectionWeb3Client = (
             PumpskinCollectionWeb3Client()
