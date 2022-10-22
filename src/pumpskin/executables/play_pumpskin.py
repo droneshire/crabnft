@@ -7,7 +7,8 @@ import traceback
 from twilio.rest import Client
 from yaspin import yaspin
 
-from config_pumpskin import GMAIL, TWILIO_CONFIG, USERS, USER_GROUPS
+from config_admin import GMAIL, TWILIO_CONFIG
+from config_pumpskin import USERS, USER_GROUPS
 from utils import discord
 from utils import logger
 from utils.email import Email, get_email_accounts_from_password
