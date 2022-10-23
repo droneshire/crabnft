@@ -9,6 +9,7 @@ from config_admin import ADMIN_ADDRESS
 from discord_bots.behavior import OnMessage
 from utils import logger
 from utils.general import get_pretty_seconds
+from pumpskin.pumpskin_bot import PumpskinBot
 from pumpskin.pumpskin_web3_client import PumpskinCollectionWeb3Client
 from pumpskin.pumpskin_web2_client import PumpskinWeb2Client
 from pumpskin.types import StakedPumpskin
@@ -31,7 +32,9 @@ class GetPumpkinLevel(OnMessage):
         )
 
         embed.add_field(name=f"Pumpskin", value=f"{token_id}", inline=False)
-        embed.add_field(name=f"Magickness Level", value=f"{level}", inline=True)
+        embed.add_field(name=f"Level", value=f"{level}", inline=True)
+        ppie_per_day = PumpskinBot._calc_ppie_per_day_from_level(level)
+        embed.add_field(name=f"$PPIE/Day", value=f"{ppie_per_day}", inline=True)
 
         embed.set_thumbnail(url=image_uri)
         return embed
