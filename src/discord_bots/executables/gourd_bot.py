@@ -24,7 +24,7 @@ async def status_task():
         logger.print_normal(f"Updating: {mint_status}")
         await client.user.edit(username=mint_status)
         await client.user.edit()
-        await asyncio.sleep(10)
+        await asyncio.sleep(60)
 
 
 @client.event
