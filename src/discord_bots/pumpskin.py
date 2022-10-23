@@ -6,13 +6,14 @@ from discord import Color
 from discord_webhook import DiscordEmbed, DiscordWebhook
 
 from config_admin import ADMIN_ADDRESS
+from crabada.crabada_web2_client import CrabadaWeb2Client
 from discord_bots.behavior import OnMessage
-from utils import logger
-from utils.general import get_pretty_seconds
 from pumpskin.pumpskin_bot import PumpskinBot
 from pumpskin.pumpskin_web3_client import PumpskinCollectionWeb3Client
 from pumpskin.pumpskin_web2_client import PumpskinWeb2Client
 from pumpskin.types import StakedPumpskin
+from utils import logger
+from utils.general import get_pretty_seconds
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 
 
@@ -23,7 +24,7 @@ class GetPumpkinLevel(OnMessage):
         1027614935523532900,  # test channel in p2e auto
         1032890276420800582,  # pumpskin main channel p2e auto
         # 1032276350045798441, # farmers market in pumpskin
-        1033839826182619228, # pumpskin bot channel
+        1033839826182619228,  # pumpskin bot channel
     ]
 
     @staticmethod
@@ -136,4 +137,15 @@ class GetPumpkinRoi(OnMessage):
         if not text.startswith(cls.HOTKEY):
             return ""
 
-        PumpskinBot.calc_roi_from_mint(ppie_price_usd, avax_usd, pumpskin_price_avax)
+        try:
+            pumpskin_price_avax = float(text.strip().split(cls.HOTKEY)[1].strip())
+        except ValueError:
+            return ""
+
+        crabada_web2 = CrabadaWeb2Client()
+        prices = crabda_web2.get_pricing_data()
+
+        # TODO: get price from LP
+        ppie_price_usd = 0.0
+
+        PumpskinBot.calc_roi_from_mint(ppie_price_usd, prices.avax_usd, pumpskin_price_avax)
