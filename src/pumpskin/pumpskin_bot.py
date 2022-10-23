@@ -264,7 +264,7 @@ class PumpskinBot:
         ppie_balance = float(self.ppie_w3.get_balance())
 
         ppie_available_to_stake = (
-            ppie_balance * self.config_mgr.config["game_specific_configs"]["percent_stake"]
+            ppie_balance * (self.config_mgr.config["game_specific_configs"]["percent_stake"] / 100.0)
         )
 
         min_ppie_to_stake = self.config_mgr.config["game_specific_configs"]["min_ppie_stake"]
