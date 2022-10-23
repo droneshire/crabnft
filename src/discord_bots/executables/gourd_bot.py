@@ -20,7 +20,7 @@ BOT_RESPONSES: behavior.OnMessage = [
 async def status_task():
     while True:
         minted, supply = pumpskin.get_mint_stats()
-        mint_status = f"Mint: {minted}/{supply}"
+        mint_status = f"Mint {minted}/{supply}"
         logger.print_normal(f"Updating: {mint_status}")
         await client.user.edit(username=mint_status)
         await client.user.edit()
