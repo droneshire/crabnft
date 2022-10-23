@@ -422,7 +422,7 @@ class PumpskinBot:
         # so we should really not trigger this often
         self._check_and_claim_potn(pumpskin_ids)
 
-        self._send_email_update(len(pumpskin_ids), txns)
+        self._send_email_update(len(pumpskin_ids))
         self._update_stats()
 
     def init(self) -> None:
