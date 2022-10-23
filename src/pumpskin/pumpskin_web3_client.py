@@ -194,3 +194,23 @@ class PumpskinNftWeb3Client(AvalancheCWeb3Client):
         except Exception as e:
             logger.print_fail(f"{e}")
             return -1
+
+    def get_total_pumpskins_minted(self) -> int:
+        """
+        Get the total NFTs minted
+        """
+        try:
+            return self.contract.functions.totalSupply().call()
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return -1
+
+    def get_max_total_pumpskins_to_mint(self) -> int:
+        """
+        Get the total NFTs minted
+        """
+        try:
+            return self.contract.functions.maxTotalSupply().call()
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return -1

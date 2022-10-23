@@ -263,11 +263,15 @@ class PumpskinBot:
     def _check_and_stake_ppie(self) -> None:
         ppie_balance = self.ppie_w3.get_balance()
 
+        ppie_available_to_stake = (
+            ppie_balance * self.config_mgr.config["game_specific_configs"]["percent_stake"]
+        )
+
         min_ppie_to_stake = self.config_mgr.config["game_specific_configs"]["min_ppie_stake"]
-        if ppie_balance > min_ppie_to_stake:
+        if ppie_available_to_stake > min_ppie_to_stake:
             # Try to stake PPIE
-            logger.print_bold(f"Attempting to stake {ppie_balance:.2f} $PPIE...")
-            tx_hash = self.game_w3.staking_ppie(token_to_wei(ppie_balance))
+            logger.print_bold(f"Attempting to stake {ppie_available_to_stake:.2f} $PPIE...")
+            tx_hash = self.game_w3.staking_ppie(token_to_wei(ppie_available_to_stake))
             tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
             gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
 
@@ -276,14 +280,14 @@ class PumpskinBot:
             logger.print_bold(f"Paid {gas} AVAX in gas")
 
             if tx_receipt.get("status", 0) != 1:
-                logger.print_fail(f"Failed to stake {ppie_balance:.2f} $PPIE!")
+                logger.print_fail(f"Failed to stake {ppie_available_to_stake:.2f} $PPIE!")
             else:
-                logger.print_ok(f"Successfully staked {ppie_balance:.2f} $PPIE")
+                logger.print_ok(f"Successfully staked {ppie_available_to_stake:.2f} $PPIE")
                 self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
                 logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
         else:
             logger.print_warn(
-                f"Not going to stake $PPIE since it is below our threshold ({ppie_balance:.2f} < {min_ppie_to_stake:.2f})"
+                f"Not going to stake $PPIE since it is below our threshold ({ppie_available_to_stake:.2f} < {min_ppie_to_stake:.2f})"
             )
 
     def _level_pumpskins(self, pumpskin_ids: T.List[int]) -> None:
