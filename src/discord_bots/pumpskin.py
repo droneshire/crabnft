@@ -155,7 +155,7 @@ class GetPumpkinRoi(OnMessage):
         prices = crabada_web2.get_pricing_data()
 
         # TODO: get price from LP
-        ppie_price_usd = 0.005
+        ppie_price_usd = 0.3
 
         roi_days = PumpskinBot.calc_roi_from_mint(
             ppie_price_usd, prices.avax_usd, pumpskin_price_avax
