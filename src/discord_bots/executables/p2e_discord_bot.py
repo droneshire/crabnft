@@ -17,6 +17,10 @@ BOT_RESPONSES: behavior.OnMessage = [
 
 @client.event
 async def on_ready() -> None:
+    await client.change_presence(
+        status=discord.Status.online,
+        activity=discord.Activity(type=discord.ActivityType.watching, name="Pump$kin Contract"),
+    )
     for guild in client.guilds:
         logger.print_ok(f"{client.user} is connected to guild:\n" f"{guild.name}(id: {guild.id})")
 
