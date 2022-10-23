@@ -200,10 +200,11 @@ class PumpskinBot:
         content += f"-----CLAIMED--------\n"
         content += f"$POTN: {self.current_stats['potn']}\n"
         content += f"$PPIE: {self.current_stats['ppie']}\n\n"
-        content += f"TXs:\n"
-        for tx in self.txns:
-            content += f"{tx}\n"
-        self.txns.clear()
+        if self.txns:
+            content += f"TXs:\n"
+            for tx in self.txns:
+                content += f"{tx}\n"
+            self.txns.clear()
         content += f"--------------------\n"
 
         logger.print_bold("\n" + content + "\n")
