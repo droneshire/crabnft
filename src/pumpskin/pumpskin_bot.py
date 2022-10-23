@@ -112,16 +112,49 @@ class PumpskinBot:
         )
 
     @staticmethod
-    def _calc_potn_from_level(level: int) -> int:
+    def calc_potn_from_level(level: int) -> int:
         return 25 * level**2
 
     @staticmethod
-    def _calc_cooldown_from_level(level: int) -> int:
+    def calc_cooldown_from_level(level: int) -> int:
         return level + 1
 
     @staticmethod
-    def _calc_ppie_per_day_from_level(level: int) -> int:
+    def calc_ppie_per_day_from_level(level: int) -> int:
         return level + 3
+
+    @staticmethod
+    def calc_roi_from_mint(
+        ppie_price_usd: float, avax_usd: float, pumpskin_price_avax: float
+    ) -> float:
+        ppie_accumulations = {1: {"days": 2.1, "ppie": 8, "potn": 12}}
+        for level in range(2, 101):
+            ppie_accumulations[level] = {}
+
+            potn_per_day = 3 * PumpskinBot.calc_ppie_per_day_from_level(level)
+            ppie_accumulations[level]["potn"] = ppie_accumulations[level - 1]["potn"] + potn_per_day
+
+            cost_to_level = PumpskinBot.calc_potn_from_level(level)
+            days_to_level = cost_to_level / ppie_accumulations[level]["potn"]
+            ppie_while_waiting_to_level = days_to_level * PumpskinBot.calc_ppie_per_day_from_level(
+                level
+            )
+            ppie_accumulations[level]["ppie"] = (
+                ppie_accumulations[level - 1]["ppie"] + ppie_while_waiting_to_level
+            )
+            ppie_accumulations[level]["days"] = (
+                ppie_accumulations[level - 1]["days"] + days_to_level
+            )
+
+        pumpskin_price_usd = pumpskin_price_avax * avax_usd
+        ppie_per_pumpskin = pumpskin_price_usd / ppie_price_usd
+
+        roi_days = ppie_accumulations[100]["days"]
+        for level, stats in ppie_accumulations.items():
+            if stats["ppie"] > ppie_per_pumpskin:
+                roi_days = stats["days"]
+                break
+        return roi_days
 
     def _get_pumpskin_ids(self) -> T.List[int]:
         pumpskin_ids: T.List[int] = self.collection_w3.get_staked_pumpskins(self.address)
@@ -275,7 +308,7 @@ class PumpskinBot:
             # check to see how much POTN needed to level up
             level = pumpskin["kg"] / 100
             next_level = level + 1
-            level_potn = self._calc_potn_from_level(level)
+            level_potn = self.calc_potn_from_level(level)
             logger.print_ok_blue(
                 f"Pumpskin {token_id}, Level {level} POTN needed for {next_level}: {level_potn}"
             )

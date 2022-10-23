@@ -15,8 +15,8 @@ from utils.email import Email, get_email_accounts_from_password
 from utils.security import decrypt_secret
 from pumpskin.pumpskin_bot import PumpskinBot
 
-TIME_BETWEEN_PLAYERS = 30.0
-TIME_BETWEEN_RUNS = 60.0 * 60.0
+TIME_BETWEEN_PLAYERS = 10.0
+TIME_BETWEEN_RUNS = 60.0
 
 
 def parse_args() -> argparse.Namespace:
