@@ -288,22 +288,23 @@ class PumpskinBot:
                 continue
 
             num_potn_wei = token_to_wei(potn_to_level)
-            logger.print_normal(
-                f"Attempting to have pumpskin {token_id} drink {potn_to_level} $POTN"
-            )
-            tx_hash = self.game_w3.drink_potion(token_id, num_potn_wei)
-            tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
-            gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
-            logger.print_bold(f"Paid {gas} AVAX in gas")
+            if num_potn_wei > 0.0:
+                logger.print_normal(
+                    f"Attempting to have pumpskin {token_id} drink {potn_to_level} $POTN"
+                )
+                tx_hash = self.game_w3.drink_potion(token_id, num_potn_wei)
+                tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
+                gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+                logger.print_bold(f"Paid {gas} AVAX in gas")
 
-            self.stats_logger.lifetime_stats["avax_gas"] += gas
+                self.stats_logger.lifetime_stats["avax_gas"] += gas
 
-            if tx_receipt.get("status", 0) != 1:
-                logger.print_fail(f"Failed to drink potion for {token_id}!")
-            else:
-                logger.print_ok(f"Successfully drank potion for {token_id}")
-                self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
-                logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+                if tx_receipt.get("status", 0) != 1:
+                    logger.print_fail(f"Failed to drink potion for {token_id}!")
+                else:
+                    logger.print_ok(f"Successfully drank potion for {token_id}")
+                    self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
+                    logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
 
             # Level Pumpskin who can be leveled up
             logger.print_normal(f"Attempting to Level up pumpskin {token_id} to {next_level}...")
