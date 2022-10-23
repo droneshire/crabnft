@@ -318,6 +318,12 @@ class PumpskinBot:
             )
             potn_to_level = level_potn - pumpskin["eaten_amount"]
 
+            if next_level > self.config_mgr.config["game_specific_configs"]["max_level"]:
+                logger.print_warn(
+                    f"Skipping level up for {token_id} since at max user level: {level}"
+                )
+                continue
+
             # Drink POTN needed if we have enough
             if potn_balance < potn_to_level:
                 logger.print_warn(
