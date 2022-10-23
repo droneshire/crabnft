@@ -117,23 +117,19 @@ class GetPumpkinRoi(OnMessage):
     ALLOWLIST_CHANNELS = [1027614935523532900, 1032890276420800582, 1032276350045798441]
 
     @staticmethod
-    def _get_pumpskin_info_embed(
-        token_id: int, level: int, image_uri: str, cooldown_time: str
+    def _get_pumpskin_roi_embed(
+        pumpskin_price_avax: float, ppie_price_usd: float, roi_days: float
     ) -> None:
         embed = discord.Embed(
-            title=f"PUMP$KIN INFO",
-            description=f"Cooldown time: {cooldown_time}\n",
-            color=Color.orange().value,
+            title=f"PUMP$KIN ROI",
+            description=f"Return on investment for a new mint\n",
+            color=Color.red().value,
         )
-
-        embed.add_field(name=f"Pumpskin", value=f"{token_id}", inline=False)
-        embed.add_field(name=f"Level", value=f"{level}", inline=True)
-        ppie_per_day = PumpskinBot.calc_ppie_per_day_from_level(level)
-        embed.add_field(name=f"$PPIE/Day", value=f"{ppie_per_day}", inline=True)
-        potn_to_level = PumpskinBot.calc_potn_from_level(level)
-        embed.add_field(name=f"Cost For Next Level:", value=f"{potn_to_level} $POTN", inline=False)
-
-        embed.set_thumbnail(url=image_uri)
+        embed.add_field(name=f"ROI", value=f"{roi_days:.2f} days", inline=False)
+        embed.add_field(
+            name=f"\U0001F383 Price", value=f"{pumpskin_price_avax:.2f} $AVAX", inline=True
+        )
+        embed.add_field(name=f"$PPIE Price", value=f"{ppie_price_usd:.5f} $USD", inline=True)
         return embed
 
     @classmethod
@@ -149,15 +145,19 @@ class GetPumpkinRoi(OnMessage):
         if not text.startswith(cls.HOTKEY):
             return ""
 
+        logger.print_normal(f"{message.channel.id}")
         try:
             pumpskin_price_avax = float(text.strip().split(cls.HOTKEY)[1].strip())
         except ValueError:
             return ""
 
         crabada_web2 = CrabadaWeb2Client()
-        prices = crabda_web2.get_pricing_data()
+        prices = crabada_web2.get_pricing_data()
 
         # TODO: get price from LP
-        ppie_price_usd = 0.0
+        ppie_price_usd = 0.005
 
-        PumpskinBot.calc_roi_from_mint(ppie_price_usd, prices.avax_usd, pumpskin_price_avax)
+        roi_days = PumpskinBot.calc_roi_from_mint(
+            ppie_price_usd, prices.avax_usd, pumpskin_price_avax
+        )
+        return cls._get_pumpskin_roi_embed(pumpskin_price_avax, ppie_price_usd, roi_days)

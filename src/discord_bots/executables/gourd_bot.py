@@ -36,7 +36,7 @@ async def on_ready() -> None:
     for guild in client.guilds:
         logger.print_ok(f"{client.user} is connected to guild:\n" f"{guild.name}(id: {guild.id})")
 
-    client.loop.create_task(status_task())
+    # client.loop.create_task(status_task())
 
 
 @client.event
