@@ -48,6 +48,7 @@ class PumpskinBot:
         self.address: Address = config["address"]
 
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
+        self.txns: T.List[str] = []
 
         self.config_mgr = PumpskinConfigManager(
             user,
@@ -198,7 +199,11 @@ class PumpskinBot:
         content += f"Pumpskins Levels: {self.current_stats['levels']}\n\n"
         content += f"-----CLAIMED--------\n"
         content += f"$POTN: {self.current_stats['potn']}\n"
-        content += f"$PPIE: {self.current_stats['ppie']}\n"
+        content += f"$PPIE: {self.current_stats['ppie']}\n\n"
+        content += f"TXs:\n"
+        for tx in txns:
+            content += f"{tx}\n"
+        self.txns.clear()
         content += f"--------------------\n"
 
         logger.print_bold("\n" + content + "\n")
@@ -240,6 +245,7 @@ class PumpskinBot:
                 logger.print_fail(f"Failed to stake {ppie_balance:.2f} $PPIE!")
             else:
                 logger.print_ok(f"Successfully staked {ppie_balance:.2f} $PPIE")
+                self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
                 logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
         else:
             logger.print_warn(
@@ -296,6 +302,7 @@ class PumpskinBot:
                 logger.print_fail(f"Failed to drink potion for {token_id}!")
             else:
                 logger.print_ok(f"Successfully drank potion for {token_id}")
+                self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
                 logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
 
             # Level Pumpskin who can be leveled up
@@ -311,6 +318,7 @@ class PumpskinBot:
                 logger.print_fail(f"Failed to level up pumpskin {token_id}!")
             else:
                 logger.print_ok(f"Successfully leveled up pumpskin {token_id} to {next_level}")
+                self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
                 logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
                 self.current_stats["levels"] += 1
                 self._send_leveling_discord_activity_update(token_id, next_level)
@@ -372,6 +380,7 @@ class PumpskinBot:
             logger.print_fail(f"Failed to claim $PPIE!")
         else:
             logger.print_ok(f"Successfully claimed $PPIE")
+            self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
             logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
             self.current_stats["ppie"] += ppie_to_claim
 
@@ -389,6 +398,7 @@ class PumpskinBot:
             logger.print_fail(f"Failed to claim $POTN!")
         else:
             logger.print_ok(f"Successfully claimed {potn_to_claim:.2f} $POTN")
+            self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
             logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
             self.current_stats["potn"] += potn_to_claim
 
@@ -411,7 +421,7 @@ class PumpskinBot:
         # so we should really not trigger this often
         self._check_and_claim_potn(pumpskin_ids)
 
-        self._send_email_update(len(pumpskin_ids))
+        self._send_email_update(len(pumpskin_ids), txns)
         self._update_stats()
 
     def init(self) -> None:
