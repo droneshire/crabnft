@@ -17,7 +17,7 @@ from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 
 
 class GetPumpkinLevel(OnMessage):
-    HOTKEY = f"?plvll"
+    HOTKEY = f"?plvl"
     ALLOWLIST_GUILDS = [986151371923410975, 1020800321569697792]
     ALLOWLIST_CHANNELS = [1027614935523532900, 1032890276420800582, 1032276350045798441]
 
