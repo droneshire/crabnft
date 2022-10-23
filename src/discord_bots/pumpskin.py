@@ -23,6 +23,7 @@ class GetPumpkinLevel(OnMessage):
         1027614935523532900,  # test channel in p2e auto
         1032890276420800582,  # pumpskin main channel p2e auto
         # 1032276350045798441, # farmers market in pumpskin
+        1033839826182619228, # pumpskin bot channel
     ]
 
     @staticmethod
@@ -124,5 +125,15 @@ class GetPumpkinRoi(OnMessage):
 
     @classmethod
     def response(cls, message: discord.message.Message) -> T.Union[str, discord.Embed]:
+        if not any([g for g in cls.ALLOWLIST_GUILDS if message.guild.id == g]):
+            return ""
+
+        logger.print_normal(f"{message.channel.name} id: {message.channel.id}")
+        if not any([c for c in cls.ALLOWLIST_CHANNELS if message.channel.id == c]):
+            return ""
+
+        text = message.content.lower().strip()
+        if not text.startswith(cls.HOTKEY):
+            return ""
 
         PumpskinBot.calc_roi_from_mint(ppie_price_usd, avax_usd, pumpskin_price_avax)
