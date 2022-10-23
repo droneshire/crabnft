@@ -1,3 +1,4 @@
+import asyncio
 import discord
 import os
 
@@ -16,6 +17,16 @@ BOT_RESPONSES: behavior.OnMessage = [
 ]
 
 
+async def status_task():
+    while True:
+        minted, supply = pumpskin.get_mint_stats()
+        mint_status = f"{minted}/{supply} Minted"
+        logger.print_normal(f"Updating: {mint_status}")
+        await client.user.edit(username=mint_status)
+        await client.user.edit()
+        await asyncio.sleep(10)
+
+
 @client.event
 async def on_ready() -> None:
     await client.change_presence(
@@ -24,6 +35,8 @@ async def on_ready() -> None:
     )
     for guild in client.guilds:
         logger.print_ok(f"{client.user} is connected to guild:\n" f"{guild.name}(id: {guild.id})")
+
+    client.loop.create_task(status_task())
 
 
 @client.event

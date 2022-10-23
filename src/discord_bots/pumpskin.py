@@ -9,12 +9,24 @@ from config_admin import ADMIN_ADDRESS
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from discord_bots.behavior import OnMessage
 from pumpskin.pumpskin_bot import PumpskinBot
-from pumpskin.pumpskin_web3_client import PumpskinCollectionWeb3Client
+from pumpskin.pumpskin_web3_client import PumpskinCollectionWeb3Client, PumpskinNftWeb3Client
 from pumpskin.pumpskin_web2_client import PumpskinWeb2Client
 from pumpskin.types import StakedPumpskin
 from utils import logger
 from utils.general import get_pretty_seconds
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
+
+
+def get_mint_stats() -> T.Tuple[int, int]:
+    w3: PumpskinNftWeb3Client = (
+        PumpskinNftWeb3Client()
+        .set_credentials(ADMIN_ADDRESS, "")
+        .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+        .set_dry_run(False)
+    )
+    minted = w3.get_total_pumpskins_minted()
+    supply = 3333
+    return (minted, supply)
 
 
 class GetPumpkinLevel(OnMessage):
