@@ -52,17 +52,19 @@ class GetPumpkinLevel(OnMessage):
         )
 
         trait_count = 0
+        overall_rarity = 0.0
         for trait, rarity in PumpskinBot.calculate_rarity(
             token_id, PumpskinBot.get_attributes_file()
         ).items():
             if trait == "Overall":
+                overall_rarity = rarity * 100.0
                 continue
             rarity_percent = rarity * 100.0
             trait_count += 1
             inline = trait_count % 9 != 0
             embed.add_field(name=f"{trait[:9]}", value=f"{rarity_percent:.2f}%", inline=inline)
 
-        embed.add_field(name=f"\U0000200b", value=f"\U0000200b", inline=True)
+        embed.add_field(name=f"Overall", value=f"{overall_rarity:.2f}%", inline=True)
         embed.set_thumbnail(url=image_uri)
         embed.set_author(name="NftCashFlow", url=AUTHOR_TWITTER_URL, icon_url=AUTHOR_ICON_URL)
         embed.set_footer(text=f"Tips appreciated {ADMIN_ADDRESS} \U0001F64F")
