@@ -114,7 +114,12 @@ class GetPumpkinLevel(OnMessage):
 class GetPumpkinRoi(OnMessage):
     HOTKEY = f"?proi"
     ALLOWLIST_GUILDS = [986151371923410975, 1020800321569697792]
-    ALLOWLIST_CHANNELS = [1027614935523532900, 1032890276420800582, 1032276350045798441]
+    ALLOWLIST_CHANNELS = [
+        1027614935523532900,  # test channel in p2e auto
+        1032890276420800582,  # pumpskin main channel p2e auto
+        # 1032276350045798441, # farmers market in pumpskin
+        # 1033839826182619228,  # pumpskin bot channel
+    ]
 
     @staticmethod
     def _get_pumpskin_roi_embed(
@@ -161,3 +166,23 @@ class GetPumpkinRoi(OnMessage):
             ppie_price_usd, prices.avax_usd, pumpskin_price_avax
         )
         return cls._get_pumpskin_roi_embed(pumpskin_price_avax, ppie_price_usd, roi_days)
+
+
+class SnoopChannel(OnMessage):
+    ALLOWLIST_GUILDS = [986151371923410975, 1020800321569697792]
+    ALLOWLIST_CHANNELS = [
+        1027614935523532900,  # test channel in p2e auto
+        1021670710344687666,  # early founders channel for pumpskin
+    ]
+
+    @classmethod
+    def response(cls, message: discord.message.Message) -> T.Union[str, discord.Embed]:
+        if not any([g for g in cls.ALLOWLIST_GUILDS if message.guild.id == g]):
+            return ""
+
+        logger.print_normal(f"{message.channel.name} id: {message.channel.id}")
+        if not any([c for c in cls.ALLOWLIST_CHANNELS if message.channel.id == c]):
+            return ""
+
+        logger.print_normal(f"From: {message.author}\n\n{message.content}\n")
+        return ""

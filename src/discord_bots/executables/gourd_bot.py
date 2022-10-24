@@ -14,6 +14,7 @@ client = discord.Client(intents=intents)
 BOT_RESPONSES: behavior.OnMessage = [
     pumpskin.GetPumpkinLevel,
     pumpskin.GetPumpkinRoi,
+    pumpskin.SnoopChannel,
 ]
 
 
