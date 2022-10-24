@@ -22,7 +22,7 @@ AUTHOR_TWITTER_URL = "https://twitter.com/Nftcashflow1"
 
 
 class GetPumpkinLevel(OnMessage):
-    HOTKEY = f"?plvll"
+    HOTKEY = f"?plvl"
     ALLOWLIST_GUILDS = [986151371923410975, 1020800321569697792]
     ALLOWLIST_CHANNELS = [
         1027614935523532900,  # pumpskin main channel p2e auto
