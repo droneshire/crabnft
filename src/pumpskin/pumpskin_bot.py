@@ -225,6 +225,9 @@ class PumpskinBot:
         pumpskin_rarity = {k: 0.0 for k in pumpskin_stats.keys()}
         pumpskin_traits = {k: 0.0 for k in pumpskin_stats.keys()}
 
+        if "attributes" not in pumpskin_info:
+            return {}
+
         for attribute in pumpskin_info["attributes"]:
             pumpskin_traits[attribute["trait_type"]] = attribute["value"]
 
@@ -239,11 +242,12 @@ class PumpskinBot:
                     total_trait_count += count
 
             rarity = float(pumpkin_trait_count) / total_count
-            pumpskin_rarity[trait] = rarity
+            pumpskin_rarity[trait] = {"trait": pumpskin_traits[trait], "rarity": rarity}
 
-        pumpskin_rarity["Overall"] = float(total_trait_count) / (
-            total_count * len(pumpskin_stats.keys())
-        )
+        pumpskin_rarity["Overall"] = {
+            "trait": None,
+            "rarity": float(total_trait_count) / (total_count * len(pumpskin_stats.keys())),
+        }
 
         return pumpskin_rarity
 

@@ -17,12 +17,24 @@ from utils.general import get_pretty_seconds
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 
 
-AUTHOR_ICON_URL = "https://dwrcsi0lsmew9.cloudfront.net/AIWU_0x0c7cb7d9bbc1c2c9adc5406e9633d5e1fef2e883_56__width_750.jpg"
-AUTHOR_TWITTER_URL = "https://twitter.com/Nftcashflow1"
+JOEPEGS_URL = "https://joepegs.com/item/0x0a27e02fdaf3456bd8843848b728ecbd882510d1/"
+JOEPEGS_ICON_URL = "https://drive.google.com/uc?export=view&id=1mLBMY7-XPtLbSZrWRpCujFCc6cIJ_VIE"
+
+ATTRIBUTE_TO_EMOJI = {
+    "Facial": "\U0001F604",
+    "Background": "\U0001F5BC",
+    "Body": "\U0001F9CD",
+    "Eyes": "\U0001F440",
+    "Frame": "\U0001FA9F",
+    "Head": "\U0001F383",
+    "Item": "\U0001F45C",
+    "Neck": "\U0001F454",
+    "Overall": "\U0001F4C8",
+}
 
 
 class GetPumpkinLevel(OnMessage):
-    HOTKEY = f"?plvl"
+    HOTKEY = f"?plvll"
     ALLOWLIST_GUILDS = [986151371923410975, 1020800321569697792]
     ALLOWLIST_CHANNELS = [
         1027614935523532900,  # pumpskin main channel p2e auto
@@ -36,38 +48,45 @@ class GetPumpkinLevel(OnMessage):
         token_id: int, level: int, image_uri: str, cooldown_time: str
     ) -> None:
         embed = discord.Embed(
-            title=f"PUMP$KIN INFO",
-            description=f"Cooldown time: {cooldown_time}\n",
+            title=f"PUMP$KIN {token_id}",
+            description=f"Level {level}",
             color=Color.orange().value,
         )
 
-        embed.add_field(name=f"Pumpskin", value=f"{token_id}", inline=False)
-        embed.add_field(name=f"Level", value=f"{level}", inline=True)
+        embed.add_field(name=f"Pumpskin", value=f"{token_id}", inline=True)
+        embed.add_field(name=f"Cooldown", value=f"{cooldown_time}", inline=False)
         ppie_per_day = PumpskinBot.calc_ppie_per_day_from_level(level)
         embed.add_field(name=f"$PPIE/Day", value=f"{ppie_per_day}", inline=True)
         potn_to_level = PumpskinBot.calc_potn_from_level(level)
-        embed.add_field(name=f"Level Up:", value=f"{potn_to_level} $POTN", inline=True)
-        embed.add_field(
-            name=f"\U0000200b", value=f"------------Attribute Rarity------------", inline=False
-        )
+        embed.add_field(name=f"Level Up:", value=f"{potn_to_level} $POTN", inline=False)
+        embed.add_field(name=f"\U0000200b", value=f"**Attribute Rarity**", inline=False)
+
+        pumpskin_rarity = PumpskinBot.calculate_rarity(token_id, PumpskinBot.get_attributes_file())
+
+        if not pumpskin_rarity:
+            return ""
 
         trait_count = 0
         overall_rarity = 0.0
-        for trait, rarity in PumpskinBot.calculate_rarity(
-            token_id, PumpskinBot.get_attributes_file()
-        ).items():
+        for trait, info in pumpskin_rarity.items():
             if trait == "Overall":
-                overall_rarity = rarity * 100.0
+                overall_rarity = info["rarity"] * 100.0
                 continue
-            rarity_percent = rarity * 100.0
+            rarity_percent = info["rarity"] * 100.0
             trait_count += 1
             inline = trait_count % 9 != 0
-            embed.add_field(name=f"{trait[:9]}", value=f"{rarity_percent:.2f}%", inline=inline)
+            embed.add_field(
+                name=f"{ATTRIBUTE_TO_EMOJI[trait]} {trait}",
+                value=f"{info['trait']}: {rarity_percent:.2f}%",
+                inline=inline,
+            )
 
-        embed.add_field(name=f"Overall", value=f"{overall_rarity:.2f}%", inline=True)
+        embed.add_field(
+            name=f"{ATTRIBUTE_TO_EMOJI[trait]} Overall", value=f"{overall_rarity:.2f}%", inline=True
+        )
         embed.set_thumbnail(url=image_uri)
-        embed.set_author(name="NftCashFlow", url=AUTHOR_TWITTER_URL, icon_url=AUTHOR_ICON_URL)
-        embed.set_footer(text=f"Tips appreciated {ADMIN_ADDRESS} \U0001F64F")
+        embed.set_author(name="JoePeg Link", url=JOEPEGS_URL, icon_url=JOEPEGS_ICON_URL)
+        # embed.set_footer(text=f"Tips appreciated {ADMIN_ADDRESS} \U0001F64F")
         return embed
 
     @classmethod
@@ -88,34 +107,43 @@ class GetPumpkinLevel(OnMessage):
         except ValueError:
             return ""
 
-        # try:
-        w3: PumpskinCollectionWeb3Client = (
-            PumpskinCollectionWeb3Client()
-            .set_credentials(ADMIN_ADDRESS, "")
-            .set_node_uri(AvalancheCWeb3Client.NODE_URL)
-            .set_dry_run(False)
-        )
+        minted, _ = PumpskinBot.get_mint_stats()
 
-        w2: PumpskinWeb2Client = PumpskinWeb2Client()
+        if token_id > minted:
+            return "Not yet minted"
 
-        pumpskin_info: StakedPumpskin = w3.get_staked_pumpskin_info(token_id)
-        pumpskin_image_uri = w2.get_pumpskin_image(token_id)
+        try:
+            w3: PumpskinCollectionWeb3Client = (
+                PumpskinCollectionWeb3Client()
+                .set_credentials(ADMIN_ADDRESS, "")
+                .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+                .set_dry_run(False)
+            )
 
-        now = time.time()
-        cooldown_time = pumpskin_info["cooldown_ts"] - now
-        if cooldown_time < 0:
-            cooldown_time = 0
-        cooldown_time_pretty = get_pretty_seconds(cooldown_time)
+            w2: PumpskinWeb2Client = PumpskinWeb2Client()
 
-        ml = int(pumpskin_info["kg"] / 100)
+            pumpskin_info: StakedPumpskin = w3.get_staked_pumpskin_info(token_id)
+            pumpskin_image_uri = w2.get_pumpskin_image(token_id)
 
-        embed = cls._get_pumpskin_info_embed(token_id, ml, pumpskin_image_uri, cooldown_time_pretty)
+            now = time.time()
+            cooldown_time = pumpskin_info["cooldown_ts"] - now
+            if cooldown_time < 0:
+                cooldown_time = 0
+            cooldown_time_pretty = get_pretty_seconds(cooldown_time)
 
-        logger.print_normal(f"\U0001F383 **Pumpskin {token_id}**: ` ML {ml} `-> {message.channel}")
-        return embed
-        # except:
-        #     logger.print_normal(f"Unknown level for Pumpskin \U0001F937")
-        #     return f"Unknown level for Pumpskin \U0001F937"
+            ml = int(pumpskin_info["kg"] / 100)
+
+            embed = cls._get_pumpskin_info_embed(
+                token_id, ml, pumpskin_image_uri, cooldown_time_pretty
+            )
+
+            logger.print_normal(
+                f"\U0001F383 **Pumpskin {token_id}**: ` ML {ml} `-> {message.channel}"
+            )
+            return embed
+        except:
+            logger.print_normal(f"Unknown level for Pumpskin \U0001F937")
+            return f"Unknown level for Pumpskin \U0001F937"
 
 
 class GetPumpkinRoi(OnMessage):

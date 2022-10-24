@@ -18,6 +18,8 @@ BOT_RESPONSES: behavior.OnMessage = [
     pumpskin.SnoopChannel,
 ]
 
+STATUS_UPDATE_TIME = 60 * 2
+
 
 async def status_task():
     while True:
@@ -26,7 +28,7 @@ async def status_task():
         logger.print_normal(f"Updating: {mint_status}")
         await client.user.edit(username=mint_status)
         await client.user.edit()
-        await asyncio.sleep(60)
+        await asyncio.sleep(STATUS_UPDATE_TIME)
 
 
 @client.event
@@ -38,7 +40,7 @@ async def on_ready() -> None:
     for guild in client.guilds:
         logger.print_ok(f"{client.user} is connected to guild:\n" f"{guild.name}(id: {guild.id})")
 
-    # client.loop.create_task(status_task())
+    client.loop.create_task(status_task())
 
 
 @client.event
