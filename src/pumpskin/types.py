@@ -18,3 +18,14 @@ class Pumpskin(T.TypedDict):
     attributes: T.List[T.Dict[str, str]]
     dna: str
     edition: int
+
+
+class Rarity(T.TypedDict):
+    Background: float
+    Frame: float
+    Body: float
+    Neck: float
+    Eyes: float
+    Head: float
+    Facial: float
+    Item: float

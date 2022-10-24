@@ -5,6 +5,7 @@ import os
 from config_admin import DISCORD_BOT_SERVER, DISCORD_BOT_TOKEN
 from utils import logger
 from discord_bots import behavior, pumpskin
+from pumpskin.pumpskin_bot import PumpskinBot
 
 intents: discord.Intents = discord.Intents.default()
 intents.typing = False
@@ -20,7 +21,7 @@ BOT_RESPONSES: behavior.OnMessage = [
 
 async def status_task():
     while True:
-        minted, supply = pumpskin.get_mint_stats()
+        minted, supply = PumpskinBot.get_mint_stats()
         mint_status = f"Mint {minted}/{supply}"
         logger.print_normal(f"Updating: {mint_status}")
         await client.user.edit(username=mint_status)

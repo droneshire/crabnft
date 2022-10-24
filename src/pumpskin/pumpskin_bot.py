@@ -3,12 +3,14 @@ import datetime
 import deepdiff
 import getpass
 import json
+import os
 import time
 import typing as T
 from discord import Color
 from discord_webhook import DiscordEmbed, DiscordWebhook
 from eth_typing import Address
 
+from config_admin import ADMIN_ADDRESS
 from config_pumpskin import COMMISSION_WALLET_ADDRESS
 from utils import discord
 from utils import logger
@@ -22,7 +24,7 @@ from web3_utils.potn_web3_client import PotnWeb3Client
 from web3_utils.ppie_web3_client import PpieWeb3Client
 from pumpskin.config_manager_pumpskin import PumpskinConfigManager
 from pumpskin.game_stats import NULL_GAME_STATS, PumpskinLifetimeGameStatsLogger
-from pumpskin.types import StakedPumpskin
+from pumpskin.types import Rarity, StakedPumpskin
 from pumpskin.pumpskin_web2_client import PumpskinWeb2Client
 from pumpskin.pumpskin_web3_client import (
     PumpskinCollectionWeb3Client,
@@ -32,6 +34,9 @@ from pumpskin.pumpskin_web3_client import (
 
 
 class PumpskinBot:
+    MAX_PUMPSKINS = 3333
+    ATTRIBUTES_FILE = "attributes.json"
+
     def __init__(
         self,
         user: str,
@@ -112,6 +117,12 @@ class PumpskinBot:
         )
 
     @staticmethod
+    def get_attributes_file() -> str:
+        this_dir = os.path.dirname(os.path.realpath(__file__))
+        attributes_file_path = os.path.join(this_dir, PumpskinBot.ATTRIBUTES_FILE)
+        return attributes_file_path
+
+    @staticmethod
     def calc_potn_from_level(level: int) -> int:
         return 25 * level**2
 
@@ -155,6 +166,86 @@ class PumpskinBot:
                 roi_days = stats["days"]
                 break
         return roi_days
+
+    @staticmethod
+    def get_mint_stats() -> T.Tuple[int, int]:
+        w3: PumpskinNftWeb3Client = (
+            PumpskinNftWeb3Client()
+            .set_credentials(ADMIN_ADDRESS, "")
+            .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+            .set_dry_run(False)
+        )
+        minted = w3.get_total_pumpskins_minted()
+        supply = PumpskinBot.MAX_PUMPSKINS
+        return (minted, supply)
+
+    @staticmethod
+    def _update_nft_collection_attributes(attributes_file: str) -> T.Dict[int, float]:
+        pumpskin_w2: PumpskinWeb2Client = PumpskinWeb2Client()
+        pumpskins_info = {}
+        pumpskins_stats = {
+            "Background": {},
+            "Frame": {},
+            "Body": {},
+            "Neck": {},
+            "Eyes": {},
+            "Head": {},
+            "Facial": {},
+            "Item": {},
+        }
+        minted, _ = PumpskinBot.get_mint_stats()
+        for pumpskin in range(minted):
+            pumpskins_info[pumpskin] = pumpskin_w2.get_pumpskin_info(pumpskin)
+            for attribute in pumpskins_info[pumpskin]["attributes"]:
+                if attribute["trait_type"] not in pumpskins_stats:
+                    logger.print_fail(f"Unknown attribute: {attribute['trait_type']}")
+                    continue
+                trait_type = attribute["trait_type"]
+                trait_value = attribute["value"]
+                pumpskins_stats[trait_type][trait_value] = (
+                    pumpskins_stats[trait_type].get(trait_value, 0) + 1
+                )
+
+        with open(attributes_file, "w") as outfile:
+            json.dump(
+                pumpskins_stats,
+                outfile,
+                indent=4,
+                sort_keys=True,
+            )
+
+    @staticmethod
+    def calculate_rarity(token_id: int, attributes_file: str) -> Rarity:
+        pumpskin_w2: PumpskinWeb2Client = PumpskinWeb2Client()
+        pumpskin_info = pumpskin_w2.get_pumpskin_info(token_id)
+
+        with open(attributes_file, "r") as infile:
+            pumpskin_stats = json.load(infile)
+
+        pumpskin_rarity = {k: 0.0 for k in pumpskin_stats.keys()}
+        pumpskin_traits = {k: 0.0 for k in pumpskin_stats.keys()}
+
+        for attribute in pumpskin_info["attributes"]:
+            pumpskin_traits[attribute["trait_type"]] = attribute["value"]
+
+        total_trait_count = 0
+        for trait, values in pumpskin_stats.items():
+            total_count = 0
+            pumpkin_trait_count = 0
+            for value, count in values.items():
+                total_count += count
+                if value == pumpskin_traits[trait]:
+                    pumpkin_trait_count = count
+                    total_trait_count += count
+
+            rarity = float(pumpkin_trait_count) / total_count
+            pumpskin_rarity[trait] = rarity
+
+        pumpskin_rarity["Overall"] = float(total_trait_count) / (
+            total_count * len(pumpskin_stats.keys())
+        )
+
+        return pumpskin_rarity
 
     def _get_pumpskin_ids(self) -> T.List[int]:
         pumpskin_ids: T.List[int] = self.collection_w3.get_staked_pumpskins(self.address)
