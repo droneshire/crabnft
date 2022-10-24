@@ -33,8 +33,8 @@ class GetPumpkinLevel(OnMessage):
     HOTKEY = f"?plvl"
     ALLOWLIST_GUILDS = [986151371923410975, 1020800321569697792]
     ALLOWLIST_CHANNELS = [
-        1027614935523532900,  # test channel in p2e auto
-        1032890276420800582,  # pumpskin main channel p2e auto
+        1027614935523532900,  # pumpskin main channel p2e auto
+        1032890276420800582,  # test channel in p2e auto
         # 1032276350045798441, # farmers market in pumpskin
         1033839826182619228,  # pumpskin bot channel
     ]
@@ -115,8 +115,8 @@ class GetPumpkinRoi(OnMessage):
     HOTKEY = f"?proi"
     ALLOWLIST_GUILDS = [986151371923410975, 1020800321569697792]
     ALLOWLIST_CHANNELS = [
-        1027614935523532900,  # test channel in p2e auto
-        1032890276420800582,  # pumpskin main channel p2e auto
+        1027614935523532900,  # pumpskin main channel p2e auto
+        1032890276420800582,  # test channel in p2e auto
         # 1032276350045798441, # farmers market in pumpskin
         # 1033839826182619228,  # pumpskin bot channel
     ]
@@ -171,7 +171,7 @@ class GetPumpkinRoi(OnMessage):
 class SnoopChannel(OnMessage):
     ALLOWLIST_GUILDS = [986151371923410975, 1020800321569697792]
     ALLOWLIST_CHANNELS = [
-        1027614935523532900,  # test channel in p2e auto
+        1032890276420800582,  # test channel in p2e auto
         1021670710344687666,  # early founders channel for pumpskin
     ]
 
