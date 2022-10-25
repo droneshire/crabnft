@@ -204,6 +204,7 @@ class SnoopChannel(OnMessage):
     ALLOWLIST_CHANNELS = [
         1032890276420800582,  # test channel in p2e auto
         1021670710344687666,  # early founders channel for pumpskin
+        1021704887127511090,  # mod channel pumpskin
     ]
 
     @classmethod
