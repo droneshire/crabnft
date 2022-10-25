@@ -137,7 +137,7 @@ def snipe() -> None:
                 next_target_id = mint_targets[next_index]
                 rarity = sorted_rarity_unminted[next_target_id]
                 rank = list(sorted_rarity_unminted.keys()).index(next_target_id)
-                if rank < 5:
+                if rank < 15:
                     printer = logger.print_ok
                 else:
                     printer = logger.print_bold
