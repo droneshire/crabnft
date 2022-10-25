@@ -83,6 +83,7 @@ def snipe() -> None:
 
     encrypt_password = ""
     private_key = ""
+    address = USERS["ROSS"]["address"]
     email_accounts = []
 
     if not args.dry_run:
@@ -93,7 +94,7 @@ def snipe() -> None:
 
     w3: PumpskinNftWeb3Client = (
         PumpskinNftWeb3Client()
-        .set_credentials(ADMIN_ADDRESS, private_key)
+        .set_credentials(address, private_key)
         .set_node_uri(AvalancheCWeb3Client.NODE_URL)
         .set_dry_run(False)
     )
@@ -174,12 +175,13 @@ def snipe() -> None:
                     )
                     last_alert = target_id
             except KeyboardInterrupt:
-                # TODO: trigger a buy when you keyboard interrupt
                 answer = getpass.getpass("Buy? Y/N")
-                if answer in ["Y", "y", "N", "n"]:
+                if answer in ["Y", "y", "Yes", "YES"]:
                     buy_amount = getpass.getpass("Buy amount?")
                     try:
                         buy_num = int(buy_amount)
+                        logger.print_ok_blue(f"Minting {buy_num} pumps...")
+                        w3.mint(address, buy_num)
                     except:
                         logger.print_warn(f"Invalid buy amount")
                         pass

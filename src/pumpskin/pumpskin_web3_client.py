@@ -180,6 +180,7 @@ class PumpskinNftWeb3Client(AvalancheCWeb3Client):
     https://snowtrace.io/address/0x0a27e02fdaf3456bd8843848b728ecbd882510d1
     """
 
+    PT_TOKEN_ADDRESS = T.cast(Address, "0xd38188B000b42E463C305b5004BC9ff80D638dE2")
     contract_address = T.cast(Address, "0x0a27e02fdaf3456bd8843848b728ecbd882510d1")
     this_dir = os.path.dirname(os.path.realpath(__file__))
     abi_dir = os.path.join(os.path.dirname(this_dir), "web3_utils", "abi", "abi-pumpskin-nft.json")
@@ -214,3 +215,17 @@ class PumpskinNftWeb3Client(AvalancheCWeb3Client):
         except Exception as e:
             logger.print_fail(f"{e}")
             return -1
+
+    def mint(self, user_address: Address, quantity: int) -> HexStr:
+        """
+        Mint pumpskin[s]
+        """
+        try:
+            tx: TxParams = self.contract.functions.claim(
+                user_address, quantity, self.PT_TOKEN_ADDRESS, 1, [], 1
+            )
+            print(tx)
+            return ""
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return ""
