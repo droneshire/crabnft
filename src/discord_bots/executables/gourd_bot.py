@@ -31,10 +31,10 @@ async def status_task():
             try:
                 await client.user.edit(username=mint_status)
                 wait_time = 60
+                last_status = mint_status
             except:
                 wait_time = wait_time * 2
                 logger.print_fail(f"Failed to update username status")
-        last_status = mint_status
 
 
 @client.event
