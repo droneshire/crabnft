@@ -2,14 +2,11 @@ import discord
 import time
 import typing as T
 
-from discord import Color
-from discord_webhook import DiscordEmbed, DiscordWebhook
-
 from config_admin import ADMIN_ADDRESS
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from discord_bots.behavior import OnMessage
-from pumpskin.pumpskin_bot import PumpskinBot
-from pumpskin.pumpskin_web3_client import PumpskinCollectionWeb3Client, PumpskinNftWeb3Client
+from pumpskin.pumpskin_bot import PumpskinBot, ATTRIBUTES_FILE
+from pumpskin.pumpskin_web3_client import PumpskinCollectionWeb3Client
 from pumpskin.pumpskin_web2_client import PumpskinWeb2Client
 from pumpskin.types import StakedPumpskin
 from utils import logger
@@ -48,9 +45,9 @@ class GetPumpkinLevel(OnMessage):
         token_id: int, level: int, image_uri: str, cooldown_time: str
     ) -> None:
         embed = discord.Embed(
-            title=f"PUMP$KIN {token_id}",
+            title=f"PUMPʂKIN {token_id}",
             description=f"Level {level}",
-            color=Color.orange().value,
+            color=discord.Color.orange().value,
         )
 
         embed.add_field(name=f"Pumpskin", value=f"{token_id}", inline=True)
@@ -61,7 +58,9 @@ class GetPumpkinLevel(OnMessage):
         embed.add_field(name=f"Level Up:", value=f"{potn_to_level} $POTN", inline=False)
         embed.add_field(name=f"\U0000200b", value=f"**Attribute Rarity**", inline=False)
 
-        pumpskin_rarity = PumpskinBot.calculate_rarity(token_id, PumpskinBot.get_attributes_file())
+        pumpskin_rarity = PumpskinBot.calculate_rarity(
+            token_id, PumpskinBot.get_json_path(ATTRIBUTES_FILE)
+        )
 
         if not pumpskin_rarity:
             return ""
@@ -86,7 +85,6 @@ class GetPumpkinLevel(OnMessage):
         )
         embed.set_thumbnail(url=image_uri)
         embed.set_author(name="JoePeg Link", url=JOEPEGS_URL, icon_url=JOEPEGS_ICON_URL)
-        # embed.set_footer(text=f"Tips appreciated {ADMIN_ADDRESS} \U0001F64F")
         return embed
 
     @classmethod
@@ -94,7 +92,6 @@ class GetPumpkinLevel(OnMessage):
         if not any([g for g in cls.ALLOWLIST_GUILDS if message.guild.id == g]):
             return ""
 
-        logger.print_normal(f"{message.channel.name} id: {message.channel.id}")
         if not any([c for c in cls.ALLOWLIST_CHANNELS if message.channel.id == c]):
             return ""
 
@@ -161,9 +158,9 @@ class GetPumpkinRoi(OnMessage):
         pumpskin_price_avax: float, ppie_price_usd: float, roi_days: float
     ) -> None:
         embed = discord.Embed(
-            title=f"PUMP$KIN ROI",
+            title=f"PUMPʂKIN ROI",
             description=f"Return on investment for a new mint\n",
-            color=Color.red().value,
+            color=discord.Color.red().value,
         )
         embed.add_field(name=f"ROI", value=f"{roi_days:.2f} days", inline=False)
         embed.add_field(
@@ -185,7 +182,6 @@ class GetPumpkinRoi(OnMessage):
         if not text.startswith(cls.HOTKEY):
             return ""
 
-        logger.print_normal(f"{message.channel.id}")
         try:
             pumpskin_price_avax = float(text.strip().split(cls.HOTKEY)[1].strip())
         except ValueError:
@@ -219,5 +215,6 @@ class SnoopChannel(OnMessage):
         if not any([c for c in cls.ALLOWLIST_CHANNELS if message.channel.id == c]):
             return ""
 
+        logger.print_normal(f"{message.channel.name} id: {message.channel.id}")
         logger.print_normal(f"From: {message.author}\n\n{message.content}\n")
         return ""

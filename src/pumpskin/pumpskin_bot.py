@@ -32,10 +32,14 @@ from pumpskin.pumpskin_web3_client import (
     PumpskinNftWeb3Client,
 )
 
+ATTRIBUTES_FILE = "attributes.json"
+COLLECTION_FILE = "collection.json"
+RARITY_FILE = "rarity.json"
+
 
 class PumpskinBot:
-    MAX_PUMPSKINS = 3333
-    ATTRIBUTES_FILE = "attributes.json"
+    MAX_PUMPSKINS = 4444
+    MAX_TOTAL_SUPPLY = 6666
 
     def __init__(
         self,
@@ -117,10 +121,10 @@ class PumpskinBot:
         )
 
     @staticmethod
-    def get_attributes_file() -> str:
+    def get_json_path(file_name: str) -> str:
         this_dir = os.path.dirname(os.path.realpath(__file__))
-        attributes_file_path = os.path.join(this_dir, PumpskinBot.ATTRIBUTES_FILE)
-        return attributes_file_path
+        file_path = os.path.join(this_dir, file_name)
+        return file_path
 
     @staticmethod
     def calc_potn_from_level(level: int) -> int:
@@ -180,7 +184,10 @@ class PumpskinBot:
         return (minted, supply)
 
     @staticmethod
-    def _update_nft_collection_attributes(attributes_file: str) -> T.Dict[int, float]:
+    def update_nft_collection_attributes(
+        attributes_file: str,
+        pumpskin_collection: str,
+    ) -> T.Dict[int, float]:
         pumpskin_w2: PumpskinWeb2Client = PumpskinWeb2Client()
         pumpskins_info = {}
         pumpskins_stats = {
@@ -193,10 +200,11 @@ class PumpskinBot:
             "Facial": {},
             "Item": {},
         }
-        minted, _ = PumpskinBot.get_mint_stats()
-        for pumpskin in range(minted):
+
+        for pumpskin in range(PumpskinBot.MAX_TOTAL_SUPPLY):
             pumpskins_info[pumpskin] = pumpskin_w2.get_pumpskin_info(pumpskin)
-            for attribute in pumpskins_info[pumpskin]["attributes"]:
+            logger.print_normal(f"Processing pumpskin {pumpskin}...")
+            for attribute in pumpskins_info[pumpskin].get("attributes", []):
                 if attribute["trait_type"] not in pumpskins_stats:
                     logger.print_fail(f"Unknown attribute: {attribute['trait_type']}")
                     continue
@@ -213,15 +221,67 @@ class PumpskinBot:
                 indent=4,
                 sort_keys=True,
             )
+        with open(pumpskin_collection, "w") as outfile:
+            json.dump(
+                pumpskins_info,
+                outfile,
+                indent=4,
+                sort_keys=True,
+            )
 
     @staticmethod
-    def calculate_rarity(token_id: int, attributes_file: str) -> Rarity:
+    def calculate_rarity_for_collection(
+        rarity_file: str = None,
+        save_to_disk: bool = False,
+    ) -> T.Dict[int, float]:
+        pumpskins_rarity = {}
+
+        attributes_file = PumpskinBot.get_json_path(ATTRIBUTES_FILE)
+        with open(attributes_file, "r") as infile:
+            pumpskin_stats = json.load(infile)
+
+        collections_file = PumpskinBot.get_json_path(COLLECTION_FILE)
+        with open(collections_file, "r") as infile:
+            collection_traits = json.load(infile)
+
+        for pumpskin in range(PumpskinBot.MAX_TOTAL_SUPPLY):
+            pumpskins_rarity[pumpskin] = PumpskinBot.calculate_rarity(
+                pumpskin, collection_traits[str(pumpskin)], pumpskin_stats
+            )
+
+        sorted_pumpskins_rarity = dict(
+            sorted(
+                pumpskins_rarity.items(),
+                key=lambda y: y[1].get("Overall", {"rarity": 1000.0})["rarity"],
+            )
+        )
+
+        if save_to_disk and rarity_file is not None:
+            with open(rarity_file, "w") as outfile:
+                json.dump(
+                    sorted_pumpskins_rarity,
+                    outfile,
+                    indent=4,
+                )
+
+        return sorted_pumpskins_rarity
+
+    @staticmethod
+    def calculate_rarity_from_query(token_id: int, attributes_file: str) -> Rarity:
         pumpskin_w2: PumpskinWeb2Client = PumpskinWeb2Client()
         pumpskin_info = pumpskin_w2.get_pumpskin_info(token_id)
 
         with open(attributes_file, "r") as infile:
             pumpskin_stats = json.load(infile)
 
+        PumpskinBot.calculate_rarity(token_id, pumpskin_info, pumpskin_stats)
+
+    @staticmethod
+    def calculate_rarity(
+        token_id: int,
+        pumpskin_info: T.Dict[str, T.List[T.Dict[str, str]]],
+        pumpskin_stats: T.Dict[str, T.Any],
+    ) -> Rarity:
         pumpskin_rarity = {k: 0.0 for k in pumpskin_stats.keys()}
         pumpskin_traits = {k: 0.0 for k in pumpskin_stats.keys()}
 

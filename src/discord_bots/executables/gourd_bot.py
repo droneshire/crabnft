@@ -22,12 +22,14 @@ STATUS_UPDATE_TIME = 60 * 2
 
 
 async def status_task():
+    last_status = ""
     while True:
         minted, supply = PumpskinBot.get_mint_stats()
         mint_status = f"Mint {minted}/{supply}"
         logger.print_normal(f"Updating: {mint_status}")
-        await client.user.edit(username=mint_status)
-        await client.user.edit()
+        if last_status != mint_status:
+            await client.user.edit(username=mint_status)
+        last_status = mint_status
         await asyncio.sleep(STATUS_UPDATE_TIME)
 
 
