@@ -117,6 +117,7 @@ def snipe() -> None:
     last_minted = 0
     mint_targets = sorted(sorted_rarity_unminted.keys(), key=lambda y: int(y))
     target_id = mint_targets[target_inx]
+    last_alert = 0
 
     try:
         while True:
@@ -126,34 +127,53 @@ def snipe() -> None:
                 target_inx += 1
                 target_id = mint_targets[target_inx]
 
-            if last_minted != minted:
-                logger.print_ok_arrow(f"Mint status: {minted} minted")
-                for i in range(min(len(mint_targets[target_inx:]), 5)):
-                    next_index = target_inx + i
-                    next_target_id = mint_targets[next_index]
-                    rarity = sorted_rarity_unminted[next_target_id]
-                    rank = list(sorted_rarity_unminted.keys()).index(next_target_id)
-                    logger.print_bold(
-                        f"Next target: {next_target_id}, rarity {rarity:.2f}% rank: {rank} mints left: {next_target_id - minted}"
-                    )
-                last_minted = minted
+            if last_minted == minted or minted == -1:
+                wait(1.0)
+                continue
 
-            if minted + 10 > target_id and str(target_id) in sorted_rarity_unminted:
+            logger.print_ok_arrow(f"Mint status: {minted} minted")
+            for i in range(min(len(mint_targets[target_inx:]), 5)):
+                next_index = target_inx + i
+                next_target_id = mint_targets[next_index]
+                rarity = sorted_rarity_unminted[next_target_id]
+                rank = list(sorted_rarity_unminted.keys()).index(next_target_id)
+                if rank < 5:
+                    printer = logger.print_ok
+                else:
+                    printer = logger.print_bold
+                printer(
+                    f"Next target: {next_target_id}, rarity {rarity:.2f}% rank: {rank} mints left: {next_target_id - minted}"
+                )
+            last_minted = minted
+
+            if (
+                minted + 40 > target_id
+                and target_id in sorted_rarity_unminted
+                and last_alert != target_id
+            ):
+                if not args.quiet and TWILIO_CONFIG["enable_admin_sms"]:
+                    alert_message = f"Time to get ready to buy {target_id}!!!"
+                    sms_client = Client(
+                        TWILIO_CONFIG["account_sid"], TWILIO_CONFIG["account_auth_token"]
+                    )
+                    message = sms_client.messages.create(
+                        body=alert_message,
+                        from_=TWILIO_CONFIG["from_sms_number"],
+                        to=TWILIO_CONFIG["admin_sms_number"],
+                    )
                 rarity = sorted_rarity_unminted[target_id]
                 logger.print_ok(
                     f"Get ready to mint rare Pumpskin {target_id}, rarity {rarity:.2f}%"
                 )
+                last_alert = target_id
 
-            wait(1.0)
     except KeyboardInterrupt:
-        answer = getpass.getpass(prompt="Purchase mint: ")
-        if answer in ["Y", "y", "yes", "YES"]:
-            buy_number = int(getpass.getpass(prompt="Number to buy: "))
-
+        # TODO: trigger a buy when you keyboard interrupt
+        pass
     except Exception as e:
         stop_message = f"Pumpskin Alert \U0001F383\n\n"
         stop_message += f"Pumpskin Sniper Bot Stopped \U0000203C\n"
-        if args.quiet and TWILIO_CONFIG["enable_admin_sms"]:
+        if not args.quiet and TWILIO_CONFIG["enable_admin_sms"]:
             sms_client = Client(TWILIO_CONFIG["account_sid"], TWILIO_CONFIG["account_auth_token"])
             message = sms_client.messages.create(
                 body=stop_message,
