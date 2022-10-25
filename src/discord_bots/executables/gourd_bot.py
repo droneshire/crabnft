@@ -19,9 +19,12 @@ BOT_RESPONSES: behavior.OnMessage = [
 ]
 
 
+DEFAULT_WAIT_TIME = 400
+
+
 async def status_task():
     last_status = ""
-    wait_time = 120
+    wait_time = DEFAULT_WAIT_TIME
     while True:
         await asyncio.sleep(wait_time)
         minted, supply = PumpskinBot.get_mint_stats()
@@ -30,7 +33,7 @@ async def status_task():
         if last_status != mint_status:
             try:
                 await client.user.edit(username=mint_status)
-                wait_time = 120
+                wait_time = DEFAULT_WAIT_TIME
                 last_status = mint_status
             except:
                 wait_time = wait_time * 2
