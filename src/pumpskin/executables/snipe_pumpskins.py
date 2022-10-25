@@ -151,7 +151,7 @@ def snipe() -> None:
             last_minted = minted
 
             if (
-                minted + args.mint_margin > target_id
+                minted + args.margin > target_id
                 and target_id in sorted_rarity_unminted
                 and last_alert != target_id
             ):
