@@ -23,6 +23,8 @@ from pumpskin.pumpskin_web3_client import (
 )
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 
+MINT_MARGIN = 100
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -34,6 +36,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--rarity-threshold", type=float, default=15.0, help="Rarity percent max threshold"
     )
+    parser.add_argument("--margin", type=int, default=MINT_MARGIN, help="margin before target mint")
+
     return parser.parse_args()
 
 
@@ -147,7 +151,7 @@ def snipe() -> None:
             last_minted = minted
 
             if (
-                minted + 40 > target_id
+                minted + args.mint_margin > target_id
                 and target_id in sorted_rarity_unminted
                 and last_alert != target_id
             ):
