@@ -18,19 +18,22 @@ BOT_RESPONSES: behavior.OnMessage = [
     pumpskin.SnoopChannel,
 ]
 
-STATUS_UPDATE_TIME = 60 * 3
-
 
 async def status_task():
     last_status = ""
+    wait_time = 60
     while True:
         minted, supply = PumpskinBot.get_mint_stats()
         mint_status = f"Mint {minted}/{supply}"
         logger.print_normal(f"Updating: {mint_status}")
         if last_status != mint_status:
-            await client.user.edit(username=mint_status)
+            try:
+                await client.user.edit(username=mint_status)
+                wait_time = 60
+            except:
+                wait_time = wait_time * 2
         last_status = mint_status
-        await asyncio.sleep(STATUS_UPDATE_TIME)
+        await asyncio.sleep(wait_time)
 
 
 @client.event
