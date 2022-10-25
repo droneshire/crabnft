@@ -10,7 +10,7 @@ from twilio.rest import Client
 from yaspin import yaspin
 
 from config_admin import ADMIN_ADDRESS, GMAIL, TWILIO_CONFIG
-from config_pumpskin import USERS, USER_GROUPS
+from config_pumpskin import USERS
 from utils import discord
 from utils import logger
 from utils.email import Email, get_email_accounts_from_password
@@ -76,9 +76,19 @@ def snipe() -> None:
 
     sorted_rarity_unminted = {}
 
+    encrypt_password = ""
+    private_key = ""
+    email_accounts = []
+
+    if not args.dry_run:
+        encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
+        email_accounts = get_email_accounts_from_password(encrypt_password, GMAIL)
+
+        private_key = decrypt_secret(encrypt_password, USERS["ROSS"]["private_key"])
+
     w3: PumpskinNftWeb3Client = (
         PumpskinNftWeb3Client()
-        .set_credentials(ADMIN_ADDRESS, "")
+        .set_credentials(ADMIN_ADDRESS, private_key)
         .set_node_uri(AvalancheCWeb3Client.NODE_URL)
         .set_dry_run(False)
     )
@@ -116,15 +126,20 @@ def snipe() -> None:
                 target_inx += 1
                 target_id = mint_targets[target_inx]
 
-            rarity = sorted_rarity_unminted[target_id]
-
             if last_minted != minted:
                 logger.print_ok_arrow(f"Mint status: {minted} minted")
-                rank = list(sorted_rarity_unminted.keys()).index(target_id)
-                logger.print_bold(f"Next target: {target_id}, rarity {rarity:.2f}% rank: {rank}")
+                for i in range(min(len(mint_targets[target_inx:]), 5)):
+                    next_index = target_inx + i
+                    next_target_id = mint_targets[next_index]
+                    rarity = sorted_rarity_unminted[next_target_id]
+                    rank = list(sorted_rarity_unminted.keys()).index(next_target_id)
+                    logger.print_bold(
+                        f"Next target: {next_target_id}, rarity {rarity:.2f}% rank: {rank} mints left: {next_target_id - minted}"
+                    )
                 last_minted = minted
 
             if minted + 10 > target_id and str(target_id) in sorted_rarity_unminted:
+                rarity = sorted_rarity_unminted[target_id]
                 logger.print_ok(
                     f"Get ready to mint rare Pumpskin {target_id}, rarity {rarity:.2f}%"
                 )
@@ -133,7 +148,8 @@ def snipe() -> None:
     except KeyboardInterrupt:
         answer = getpass.getpass(prompt="Purchase mint: ")
         if answer in ["Y", "y", "yes", "YES"]:
-            answer = getpass.getpass(prompt="Purchase mint: ")
+            buy_number = int(getpass.getpass(prompt="Number to buy: "))
+
     except Exception as e:
         stop_message = f"Pumpskin Alert \U0001F383\n\n"
         stop_message += f"Pumpskin Sniper Bot Stopped \U0000203C\n"
