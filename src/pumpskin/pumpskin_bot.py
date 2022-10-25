@@ -38,7 +38,7 @@ RARITY_FILE = "rarity.json"
 
 
 class PumpskinBot:
-    MAX_PUMPSKINS = 4444
+    MAX_PUMPSKINS = 5555
     MAX_TOTAL_SUPPLY = 6666
 
     def __init__(
