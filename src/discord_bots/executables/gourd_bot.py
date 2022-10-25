@@ -23,6 +23,7 @@ async def status_task():
     last_status = ""
     wait_time = 60
     while True:
+        await asyncio.sleep(wait_time)
         minted, supply = PumpskinBot.get_mint_stats()
         mint_status = f"Mint {minted}/{supply}"
         logger.print_normal(f"Updating: {mint_status}")
@@ -33,7 +34,6 @@ async def status_task():
             except:
                 wait_time = wait_time * 2
         last_status = mint_status
-        await asyncio.sleep(wait_time)
 
 
 @client.event
