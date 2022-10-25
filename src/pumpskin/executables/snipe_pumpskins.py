@@ -131,17 +131,19 @@ def snipe() -> None:
 
             wait(1.0)
     except KeyboardInterrupt:
-        pass
+        answer = getpass.getpass(prompt="Purchase mint: ")
+        if answer in ["Y", "y", "yes", "YES"]:
+            answer = getpass.getpass(prompt="Purchase mint: ")
     except Exception as e:
         stop_message = f"Pumpskin Alert \U0001F383\n\n"
         stop_message += f"Pumpskin Sniper Bot Stopped \U0000203C\n"
-        # if TWILIO_CONFIG["enable_admin_sms"]:
-        #     sms_client = Client(TWILIO_CONFIG["account_sid"], TWILIO_CONFIG["account_auth_token"])
-        #     message = sms_client.messages.create(
-        #         body=stop_message,
-        #         from_=TWILIO_CONFIG["from_sms_number"],
-        #         to=TWILIO_CONFIG["admin_sms_number"],
-        #     )
+        if args.quiet and TWILIO_CONFIG["enable_admin_sms"]:
+            sms_client = Client(TWILIO_CONFIG["account_sid"], TWILIO_CONFIG["account_auth_token"])
+            message = sms_client.messages.create(
+                body=stop_message,
+                from_=TWILIO_CONFIG["from_sms_number"],
+                to=TWILIO_CONFIG["admin_sms_number"],
+            )
         logger.print_fail(traceback.format_exc())
 
 
