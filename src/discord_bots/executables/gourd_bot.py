@@ -33,6 +33,7 @@ async def status_task():
                 wait_time = 60
             except:
                 wait_time = wait_time * 2
+                logger.print_fail(f"Failed to update username status")
         last_status = mint_status
 
 
