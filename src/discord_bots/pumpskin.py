@@ -31,7 +31,7 @@ ATTRIBUTE_TO_EMOJI = {
 
 
 class GetPumpkinLevel(OnMessage):
-    HOTKEY = f"?plvl"
+    HOTKEY = f"?plvll"
     ALLOWLIST_GUILDS = [986151371923410975, 1020800321569697792]
     ALLOWLIST_CHANNELS = [
         1027614935523532900,  # pumpskin main channel p2e auto
@@ -58,7 +58,7 @@ class GetPumpkinLevel(OnMessage):
         embed.add_field(name=f"Level Up:", value=f"{potn_to_level} $POTN", inline=False)
         embed.add_field(name=f"\U0000200b", value=f"**Attribute Rarity**", inline=False)
 
-        pumpskin_rarity = PumpskinBot.calculate_rarity(
+        pumpskin_rarity = PumpskinBot.calculate_rarity_from_query(
             token_id, PumpskinBot.get_json_path(ATTRIBUTES_FILE)
         )
 
@@ -109,34 +109,38 @@ class GetPumpkinLevel(OnMessage):
         if token_id > minted:
             return "Not yet minted"
 
-        # try:
-        w3: PumpskinCollectionWeb3Client = (
-            PumpskinCollectionWeb3Client()
-            .set_credentials(ADMIN_ADDRESS, "")
-            .set_node_uri(AvalancheCWeb3Client.NODE_URL)
-            .set_dry_run(False)
-        )
+        try:
+            w3: PumpskinCollectionWeb3Client = (
+                PumpskinCollectionWeb3Client()
+                .set_credentials(ADMIN_ADDRESS, "")
+                .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+                .set_dry_run(False)
+            )
 
-        w2: PumpskinWeb2Client = PumpskinWeb2Client()
+            w2: PumpskinWeb2Client = PumpskinWeb2Client()
 
-        pumpskin_info: StakedPumpskin = w3.get_staked_pumpskin_info(token_id)
-        pumpskin_image_uri = w2.get_pumpskin_image(token_id)
+            pumpskin_info: StakedPumpskin = w3.get_staked_pumpskin_info(token_id)
+            pumpskin_image_uri = w2.get_pumpskin_image(token_id)
 
-        now = time.time()
-        cooldown_time = pumpskin_info["cooldown_ts"] - now
-        if cooldown_time < 0:
-            cooldown_time = 0
-        cooldown_time_pretty = get_pretty_seconds(cooldown_time)
+            now = time.time()
+            cooldown_time = pumpskin_info["cooldown_ts"] - now
+            if cooldown_time < 0:
+                cooldown_time = 0
+            cooldown_time_pretty = get_pretty_seconds(cooldown_time)
 
-        ml = int(pumpskin_info["kg"] / 100)
+            ml = int(pumpskin_info["kg"] / 100)
 
-        embed = cls._get_pumpskin_info_embed(token_id, ml, pumpskin_image_uri, cooldown_time_pretty)
+            embed = cls._get_pumpskin_info_embed(
+                token_id, ml, pumpskin_image_uri, cooldown_time_pretty
+            )
 
-        logger.print_normal(f"\U0001F383 **Pumpskin {token_id}**: ` ML {ml} `-> {message.channel}")
-        return embed
-        # except:
-        #     logger.print_normal(f"Unknown level for Pumpskin \U0001F937")
-        #     return f"Unknown level for Pumpskin \U0001F937"
+            logger.print_normal(
+                f"\U0001F383 **Pumpskin {token_id}**: ` ML {ml} `-> {message.channel}"
+            )
+            return embed
+        except:
+            logger.print_normal(f"Unknown level for Pumpskin \U0001F937")
+            return f"Unknown level for Pumpskin \U0001F937"
 
 
 class GetPumpkinRoi(OnMessage):

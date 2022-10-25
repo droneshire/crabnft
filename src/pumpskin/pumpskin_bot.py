@@ -274,7 +274,7 @@ class PumpskinBot:
         with open(attributes_file, "r") as infile:
             pumpskin_stats = json.load(infile)
 
-        PumpskinBot.calculate_rarity(token_id, pumpskin_info, pumpskin_stats)
+        return PumpskinBot.calculate_rarity(token_id, pumpskin_info, pumpskin_stats)
 
     @staticmethod
     def calculate_rarity(
