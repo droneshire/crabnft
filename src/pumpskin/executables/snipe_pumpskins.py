@@ -132,12 +132,12 @@ def snipe() -> None:
                 continue
 
             logger.print_ok_arrow(f"Mint status: {minted} minted")
-            for i in range(min(len(mint_targets[target_inx:]), 5)):
+            for i in range(min(len(mint_targets[target_inx:]), 10)):
                 next_index = target_inx + i
                 next_target_id = mint_targets[next_index]
                 rarity = sorted_rarity_unminted[next_target_id]
                 rank = list(sorted_rarity_unminted.keys()).index(next_target_id)
-                if rank < 15:
+                if rank < 5:
                     printer = logger.print_ok
                 else:
                     printer = logger.print_bold
