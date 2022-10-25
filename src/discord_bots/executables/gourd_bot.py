@@ -18,7 +18,7 @@ BOT_RESPONSES: behavior.OnMessage = [
     pumpskin.SnoopChannel,
 ]
 
-STATUS_UPDATE_TIME = 60 * 2
+STATUS_UPDATE_TIME = 60 * 3
 
 
 async def status_task():
