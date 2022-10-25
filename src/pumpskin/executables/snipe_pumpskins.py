@@ -142,7 +142,7 @@ def snipe() -> None:
                 else:
                     printer = logger.print_bold
                 printer(
-                    f"Next target: {next_target_id}, rarity {rarity:.2f}% rank: {rank} mints left: {next_target_id - minted}"
+                    f"Next target: {next_target_id} | rarity {rarity:.2f}% | rank: {rank} | mints till target: {next_target_id - minted}"
                 )
             last_minted = minted
 
