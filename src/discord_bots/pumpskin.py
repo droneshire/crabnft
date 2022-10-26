@@ -242,4 +242,4 @@ class MintNumber(OnMessage):
 
         minted, supply = PumpskinBot.get_mint_stats()
 
-        return "Minted: `{minted}/{supply}`"
+        return f"Minted: `{minted}/{supply}`"
