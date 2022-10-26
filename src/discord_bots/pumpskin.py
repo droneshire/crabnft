@@ -203,7 +203,7 @@ class SnoopChannel(OnMessage):
     ALLOWLIST_GUILDS = [986151371923410975, 1020800321569697792]
     ALLOWLIST_CHANNELS = [
         1032890276420800582,  # test channel in p2e auto
-        1021670710344687666,  # early founders channel for pumpskin
+        # 1021670710344687666,  # early founders channel for pumpskin
         1021704887127511090,  # mod channel pumpskin
     ]
 
@@ -219,3 +219,27 @@ class SnoopChannel(OnMessage):
         logger.print_normal(f"{message.channel.name} id: {message.channel.id}")
         logger.print_normal(f"From: {message.author}\n\n{message.content}\n")
         return ""
+
+
+class MintNumber(OnMessage):
+    HOTKEY = f"?mint"
+    ALLOWLIST_GUILDS = [986151371923410975, 1020800321569697792]
+    ALLOWLIST_CHANNELS = [
+        1027614935523532900,  # pumpskin main channel p2e auto
+        1032890276420800582,  # test channel in p2e auto
+        1032276350045798441,  # farmers market in pumpskin
+        1033839826182619228,  # pumpskin bot channel
+    ]
+
+    @classmethod
+    def response(cls, message: discord.message.Message) -> T.Union[str, discord.Embed]:
+        if not any([g for g in cls.ALLOWLIST_GUILDS if message.guild.id == g]):
+            return ""
+
+        # logger.print_normal(f"{message.channel.name} id: {message.channel.id}")
+        # if not any([c for c in cls.ALLOWLIST_CHANNELS if message.channel.id == c]):
+        #     return ""
+
+        minted, supply = PumpskinBot.get_mint_stats()
+
+        return "Minted: `{minted}/{supply}`"
