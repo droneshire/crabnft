@@ -304,7 +304,7 @@ class Web3Client:
         self.w3 = self._get_provider()
         self.nonce = self.get_nonce()
         # Set the contract if possible, e.g. if the subclass defines address & ABI.
-        self.set_contract(address=self.contract_address, abi=self.abi)
+        self.set_contract(address=self.contract_checksum_address, abi=self.abi)
         return self
 
     def set_credentials(self, user_address: Address, private_key: str) -> Web3Client:
