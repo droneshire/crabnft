@@ -236,9 +236,9 @@ class MintNumber(OnMessage):
         if not any([g for g in cls.ALLOWLIST_GUILDS if message.guild.id == g]):
             return ""
 
-        # logger.print_normal(f"{message.channel.name} id: {message.channel.id}")
-        # if not any([c for c in cls.ALLOWLIST_CHANNELS if message.channel.id == c]):
-        #     return ""
+        text = message.content.lower().strip()
+        if not text.startswith(cls.HOTKEY):
+            return ""
 
         minted, supply = PumpskinBot.get_mint_stats()
 
