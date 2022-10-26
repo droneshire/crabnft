@@ -541,11 +541,7 @@ class PumpskinBot:
             >= self.config_mgr.config["game_specific_configs"]["min_potn_claim"]
             or force
         ):
-            if len(pumpskin_ids) > 0:
-                # claim PPIE b/c it will auto claim all POTN at the same time (2 for 1 deal)
-                self._check_and_claim_ppie(pumpskin_ids, True)
-            else:
-                self._claim_potn(total_claimable_potn)
+            self._claim_potn(total_claimable_potn)
         else:
             logger.print_warn(f"Not enough $POTN to claim ({total_claimable_potn:.2f})")
 

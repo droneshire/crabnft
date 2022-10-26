@@ -16,6 +16,7 @@ BOT_RESPONSES: behavior.OnMessage = [
     pumpskin.GetPumpkinLevel,
     pumpskin.GetPumpkinRoi,
     pumpskin.SnoopChannel,
+    pumpskin.MintNumber,
 ]
 
 
