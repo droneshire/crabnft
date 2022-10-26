@@ -305,7 +305,7 @@ class Web3Client:
         self.nonce = self.get_nonce()
         # Set the contract if possible, e.g. if the subclass defines address & ABI.
         try:
-            self.set_contract(address=self.contract_address, abi=self.abi)
+            self.set_contract(address=self.contract_checksum_address, abi=self.abi)
         except KeyboardInterrupt:
             raise
         except:

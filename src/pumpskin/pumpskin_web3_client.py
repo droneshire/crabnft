@@ -132,11 +132,13 @@ class PumpskinContractWeb3Client(AvalancheCWeb3Client):
         Stake PPIE
         """
         try:
+            self.contract.functions.staking(amount_ppie_wei).call()
             tx: TxParams = self.build_contract_transaction(
                 self.contract.functions.staking(amount_ppie_wei)
             )
             return self.sign_and_send_transaction(tx)
         except Exception as e:
+            logger.print_warn(f"web3: PPIE amount: {amount_ppie_wei}")
             logger.print_fail(f"{e}")
             return ""
 
