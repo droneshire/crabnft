@@ -46,10 +46,11 @@ async def on_ready() -> None:
         status=discord.Status.online,
         activity=discord.Activity(type=discord.ActivityType.watching, name="Pump$kin Contract"),
     )
+    await client.user.edit(username="Pumpskin Bot")
+
     for guild in client.guilds:
         logger.print_ok(f"{client.user} is connected to guild:\n" f"{guild.name}(id: {guild.id})")
 
-    client.loop.create_task(status_task())
 
 
 @client.event
