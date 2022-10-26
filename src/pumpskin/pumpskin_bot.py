@@ -312,7 +312,15 @@ class PumpskinBot:
         return pumpskin_rarity
 
     def _get_pumpskin_ids(self) -> T.List[int]:
-        pumpskin_ids: T.List[int] = self.collection_w3.get_staked_pumpskins(self.address)
+        # NOTE: for some reason getting weird failure when using
+        # pumpskin_ids: T.List[int] = self.collection_w3.get_staked_pumpskins(self.address)
+        # which is what we previously used...so we use this hack now...
+        pumpskin_ids = []
+        for index in range(1000):
+            pumpskin_id = self.nft_w3.get_token_of_owner_by_index(self.address, index)
+            if pumpskin_id < 0:
+                break
+            pumpskin_ids.append(pumpskin_id)
 
         logger.print_ok_blue(f"Found {len(pumpskin_ids)} Pumpskins for user {self.user}!")
 
@@ -533,8 +541,11 @@ class PumpskinBot:
             >= self.config_mgr.config["game_specific_configs"]["min_potn_claim"]
             or force
         ):
-            # claim PPIE b/c it will auto claim all POTN at the same time (2 for 1 deal)
-            self._check_and_claim_ppie(pumpskin_ids, True)
+            if len(pumpskin_ids) > 0:
+                # claim PPIE b/c it will auto claim all POTN at the same time (2 for 1 deal)
+                self._check_and_claim_ppie(pumpskin_ids, True)
+            else:
+                self._claim_potn(total_claimable_potn)
         else:
             logger.print_warn(f"Not enough $POTN to claim ({total_claimable_potn:.2f})")
 

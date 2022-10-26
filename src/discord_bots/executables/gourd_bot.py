@@ -52,7 +52,6 @@ async def on_ready() -> None:
         logger.print_ok(f"{client.user} is connected to guild:\n" f"{guild.name}(id: {guild.id})")
 
 
-
 @client.event
 async def on_message(message: discord.message.Message) -> None:
 
