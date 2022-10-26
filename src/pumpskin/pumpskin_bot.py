@@ -9,6 +9,7 @@ import typing as T
 from discord import Color
 from discord_webhook import DiscordEmbed, DiscordWebhook
 from eth_typing import Address
+from web3 import Web3
 
 from config_admin import ADMIN_ADDRESS
 from config_pumpskin import COMMISSION_WALLET_ADDRESS
@@ -54,7 +55,7 @@ class PumpskinBot:
         self.emails: T.List[Email] = email_accounts
         self.log_dir: str = log_dir
         self.dry_run: bool = dry_run
-        self.address: Address = config["address"]
+        self.address: Address = Web3.toChecksumAddress(config["address"])
 
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
         self.txns: T.List[str] = []
@@ -483,7 +484,7 @@ class PumpskinBot:
             potn_to_level = level_potn - pumpskin["eaten_amount"]
 
             if next_level > self.config_mgr.config["game_specific_configs"]["max_level"]:
-                logger.print_warn(
+                logger.print_ok_blue(
                     f"Skipping level up for {token_id} since at max user level: {level}"
                 )
                 continue
