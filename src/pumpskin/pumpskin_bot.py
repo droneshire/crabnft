@@ -313,15 +313,7 @@ class PumpskinBot:
         return pumpskin_rarity
 
     def _get_pumpskin_ids(self) -> T.List[int]:
-        # NOTE: for some reason getting weird failure when using
-        # pumpskin_ids: T.List[int] = self.collection_w3.get_staked_pumpskins(self.address)
-        # which is what we previously used...so we use this hack now...
-        pumpskin_ids = []
-        for index in range(1000):
-            pumpskin_id = self.nft_w3.get_token_of_owner_by_index(self.address, index)
-            if pumpskin_id < 0:
-                break
-            pumpskin_ids.append(pumpskin_id)
+        pumpskin_ids: T.List[int] = self.collection_w3.get_staked_pumpskins(self.address)
 
         logger.print_ok_blue(f"Found {len(pumpskin_ids)} Pumpskins for user {self.user}!")
 
