@@ -151,6 +151,15 @@ class PumpskinBot:
         return level + 3
 
     @staticmethod
+    def calc_ppie_earned_per_day(pumpskins: T.Dict[int, T.Dict[int, T.Any]]) -> int:
+        return sum(
+            [
+                PumpskinBot.calc_ppie_per_day_from_level(p.get("kg", 0) / 100)
+                for _, p in pumpskins.items()
+            ]
+        )
+
+    @staticmethod
     def calc_roi_from_mint(
         ppie_price_usd: float, avax_usd: float, pumpskin_price_avax: float
     ) -> float:
@@ -427,10 +436,7 @@ class PumpskinBot:
         )
 
         divisor = self.config_mgr.config["game_specific_configs"]["min_ppie_stake_ratio"]
-        min_ppie_to_stake = (
-            sum([self.calc_ppie_per_day_from_level(p["kg"] / 100) for _, p in pumpskins.items()])
-            / divisor
-        )
+        min_ppie_to_stake = self.calc_ppie_earned_per_day(pumpskins) / divisor
 
         if ppie_available_to_stake > min_ppie_to_stake:
             # Try to stake PPIE
@@ -536,11 +542,7 @@ class PumpskinBot:
 
         # wait to claim at a 1/3rd day's earnings in POTN (i.e. 3 * PPIE / day)
         divisor = self.config_mgr.config["game_specific_configs"]["min_potn_claim_ratio"]
-        min_potn_to_claim = (
-            sum([self.calc_ppie_per_day_from_level(p["kg"] / 100) for _, p in pumpskins.items()])
-            * 3
-            / divisor
-        )
+        min_potn_to_claim = self.calc_ppie_earned_per_day(pumpskins) * 3 / divisor
 
         if total_claimable_potn >= min_potn_to_claim or force:
             self._claim_potn(total_claimable_potn)
@@ -564,9 +566,7 @@ class PumpskinBot:
 
         ppie_staked = wei_to_token_raw(self.game_w3.get_ppie_staked(self.address))
         potn_per_day = ppie_staked * 3.0
-        ppie_per_day = sum(
-            [self.calc_ppie_per_day_from_level(p["kg"] / 100) for _, p in pumpskins.items()]
-        )
+        ppie_per_day = self.calc_ppie_earned_per_day(pumpskins)
 
         logger.print_normal(
             f"{ppie_staked:.2f} staked $PPIE producing {potn_per_day:.2f} $POTN daily"
