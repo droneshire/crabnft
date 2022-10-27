@@ -419,7 +419,7 @@ class PumpskinBot:
                 content,
             )
 
-    def _check_and_stake_ppie(self) -> None:
+    def _check_and_stake_ppie(self, pumpskins: T.Dict[int, T.Dict[int, T.Any]]) -> None:
         ppie_balance = float(self.ppie_w3.get_balance())
 
         ppie_available_to_stake = ppie_balance * (
@@ -428,7 +428,8 @@ class PumpskinBot:
 
         divisor = self.config_mgr.config["game_specific_configs"]["min_ppie_stake_ratio"]
         min_ppie_to_stake = (
-            sum([self.calc_ppie_per_day_from_level(p["kg"] / 100) for p in pumpskins]) / divisor
+            sum([self.calc_ppie_per_day_from_level(p["kg"] / 100) for _, p in pumpskins.items()])
+            / divisor
         )
 
         if ppie_available_to_stake > min_ppie_to_stake:
@@ -536,7 +537,9 @@ class PumpskinBot:
         # wait to claim at a 1/3rd day's earnings in POTN (i.e. 3 * PPIE / day)
         divisor = self.config_mgr.config["game_specific_configs"]["min_potn_claim_ratio"]
         min_potn_to_claim = (
-            sum([self.calc_ppie_per_day_from_level(p["kg"] / 100) for p in pumpskins]) * 3 / divisor
+            sum([self.calc_ppie_per_day_from_level(p["kg"] / 100) for _, p in pumpskins.items()])
+            * 3
+            / divisor
         )
 
         if total_claimable_potn >= min_potn_to_claim or force:
@@ -561,16 +564,20 @@ class PumpskinBot:
 
         ppie_staked = wei_to_token_raw(self.game_w3.get_ppie_staked(self.address))
         potn_per_day = ppie_staked * 3.0
+        ppie_per_day = sum(
+            [self.calc_ppie_per_day_from_level(p["kg"] / 100) for _, p in pumpskins.items()]
+        )
 
         logger.print_normal(
             f"{ppie_staked:.2f} staked $PPIE producing {potn_per_day:.2f} $POTN daily"
         )
+        logger.print_normal(
+            f"{len(pumpskins.keys())} Pumpskins producing {ppie_per_day:.2f} $PPIE daily"
+        )
 
         # wait to claim at a half day's earnings
         divisor = self.config_mgr.config["game_specific_configs"]["min_ppie_claim_ratio"]
-        min_ppie_to_claim = (
-            sum([self.calc_ppie_per_day_from_level(p["kg"] / 100) for p in pumpskins]) / divisor
-        )
+        min_ppie_to_claim = ppie_per_day / divisor
 
         if total_claimable_ppie >= min_ppie_to_claim or force:
             self._claim_ppie(ppie_tokens, total_claimable_ppie)
@@ -638,7 +645,7 @@ class PumpskinBot:
 
         self._check_and_claim_ppie(ordered_pumpskins)
         self._level_pumpskins(ordered_pumpskins)
-        self._check_and_stake_ppie()
+        self._check_and_stake_ppie(ordered_pumpskins)
         # staking PPIE should claim all outstanding POTN in one transaction
         # so we should really not trigger this often
         self._check_and_claim_potn(ordered_pumpskins)
