@@ -25,6 +25,7 @@ class PumpskinCollectionWeb3Client(AvalancheCWeb3Client):
         os.path.dirname(this_dir), "web3_utils", "abi", "abi-pumpskin-collection.json"
     )
     abi = Web3Client._get_contract_abi_from_file(abi_dir)
+    NODE_URL = "https://nd-649-527-621.p2pify.com/310e4898cbdec5754dfb9abfc8fbd9f4/ext/bc/C/rpc"
 
     def level_up_pumpkin(self, token_id: int) -> HexStr:
         """
@@ -113,6 +114,7 @@ class PumpskinContractWeb3Client(AvalancheCWeb3Client):
         os.path.dirname(this_dir), "web3_utils", "abi", "abi-pumpskin-contract.json"
     )
     abi = Web3Client._get_contract_abi_from_file(abi_dir)
+    NODE_URL = "https://nd-649-527-621.p2pify.com/310e4898cbdec5754dfb9abfc8fbd9f4/ext/bc/C/rpc"
 
     def drink_potion(self, token_id: int, num_potn_wei: Wei) -> HexStr:
         """
@@ -186,6 +188,7 @@ class PumpskinNftWeb3Client(AvalancheCWeb3Client):
     this_dir = os.path.dirname(os.path.realpath(__file__))
     abi_dir = os.path.join(os.path.dirname(this_dir), "web3_utils", "abi", "abi-pumpskin-nft.json")
     abi = Web3Client._get_contract_abi_from_file(abi_dir)
+    NODE_URL = "https://nd-649-527-621.p2pify.com/310e4898cbdec5754dfb9abfc8fbd9f4/ext/bc/C/rpc"
 
     def get_token_of_owner_by_index(self, user_address: Address, slot_index: int) -> int:
         """
