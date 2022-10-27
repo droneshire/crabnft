@@ -75,21 +75,21 @@ class PumpskinBot:
         self.collection_w3: PumpskinCollectionWeb3Client = (
             PumpskinCollectionWeb3Client()
             .set_credentials(config["address"], config["private_key"])
-            .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+            .set_node_uri(PumpskinCollectionWeb3Client.NODE_URL)
             .set_dry_run(dry_run)
         )
 
         self.game_w3: PumpskinContractWeb3Client = (
             PumpskinContractWeb3Client()
             .set_credentials(config["address"], config["private_key"])
-            .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+            .set_node_uri(PumpskinCollectionWeb3Client.NODE_URL)
             .set_dry_run(dry_run)
         )
 
         self.nft_w3: PumpskinNftWeb3Client = (
             PumpskinNftWeb3Client()
             .set_credentials(config["address"], config["private_key"])
-            .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+            .set_node_uri(PumpskinCollectionWeb3Client.NODE_URL)
             .set_dry_run(dry_run)
         )
 
