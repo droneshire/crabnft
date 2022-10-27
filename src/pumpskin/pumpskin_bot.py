@@ -547,7 +547,9 @@ class PumpskinBot:
         if total_claimable_potn >= min_potn_to_claim or force:
             self._claim_potn(total_claimable_potn)
         else:
-            logger.print_warn(f"Not enough $POTN to claim ({total_claimable_potn:.2f})")
+            logger.print_warn(
+                f"Not enough $POTN to claim ({total_claimable_potn:.2f} < {min_potn_to_claim})"
+            )
 
     def _check_and_claim_ppie(
         self, pumpskins: T.Dict[int, T.Dict[int, T.Any]], force: bool = False
