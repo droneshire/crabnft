@@ -37,6 +37,17 @@ ATTRIBUTES_FILE = "attributes.json"
 COLLECTION_FILE = "collection.json"
 RARITY_FILE = "rarity.json"
 
+PUMPSKIN_ATTRIBUTES = {
+    "Background": {},
+    "Frame": {},
+    "Body": {},
+    "Neck": {},
+    "Eyes": {},
+    "Head": {},
+    "Facial": {},
+    "Item": {},
+}
+
 
 class PumpskinBot:
     MAX_PUMPSKINS = 5555
@@ -191,16 +202,7 @@ class PumpskinBot:
     ) -> T.Dict[int, float]:
         pumpskin_w2: PumpskinWeb2Client = PumpskinWeb2Client()
         pumpskins_info = {}
-        pumpskins_stats = {
-            "Background": {},
-            "Frame": {},
-            "Body": {},
-            "Neck": {},
-            "Eyes": {},
-            "Head": {},
-            "Facial": {},
-            "Item": {},
-        }
+        pumpskins_stats = copy.deepcopy(PUMPSKIN_ATTRIBUTES)
 
         for pumpskin in range(PumpskinBot.MAX_TOTAL_SUPPLY):
             pumpskins_info[pumpskin] = pumpskin_w2.get_pumpskin_info(pumpskin)
@@ -424,7 +426,11 @@ class PumpskinBot:
             self.config_mgr.config["game_specific_configs"]["percent_stake"] / 100.0
         )
 
-        min_ppie_to_stake = self.config_mgr.config["game_specific_configs"]["min_ppie_stake"]
+        divisor = self.config_mgr.config["game_specific_configs"]["min_ppie_stake_ratio"]
+        min_ppie_to_stake = (
+            sum([self.calc_ppie_per_day_from_level(p["kg"] / 100) for p in pumpskins]) / divisor
+        )
+
         if ppie_available_to_stake > min_ppie_to_stake:
             # Try to stake PPIE
             logger.print_bold(f"Attempting to stake {ppie_available_to_stake:.2f} $PPIE...")
@@ -447,24 +453,12 @@ class PumpskinBot:
                 f"Not going to stake $PPIE since it is below our threshold ({ppie_available_to_stake:.2f} < {min_ppie_to_stake:.2f})"
             )
 
-    def _level_pumpskins(self, pumpskin_ids: T.List[int]) -> None:
+    def _level_pumpskins(self, pumpskins: T.Dict[int, T.Dict[int, T.Any]]) -> None:
         # Now try to level pumpskins...
-        pumpskins = {}
-        for token_id in pumpskin_ids:
-            pumpskin: StakedPumpskin = self.collection_w3.get_staked_pumpskin_info(token_id)
-            pumpskins[token_id] = pumpskin
-
-        ordered_pumpskins = dict(
-            sorted(
-                pumpskins.items(),
-                key=lambda y: y[1].get("kg", 10000) / 100,
-            )
-        )
-
-        for token_id, pumpskin in ordered_pumpskins.items():
+        for token_id, pumpskin in pumpskins.items():
             # check to see if we're past the cooldown period
             now = time.time()
-            cooldown_time = pumpskin["cooldown_ts"] - now
+            cooldown_time = pumpskin.get("cooldown_ts", now) - now
             if cooldown_time >= 0:
                 time_left_pretty = get_pretty_seconds(cooldown_time)
                 logger.print_warn(
@@ -475,13 +469,13 @@ class PumpskinBot:
             potn_balance = self.potn_w3.get_balance()
 
             # check to see how much POTN needed to level up
-            level = pumpskin["kg"] / 100
+            level = pumpskin.get("kg", 10000) / 100
             next_level = level + 1
             level_potn = self.calc_potn_from_level(level)
             logger.print_ok_blue(
                 f"Pumpskin {token_id}, Level {level} POTN needed for {next_level}: {level_potn}"
             )
-            potn_to_level = level_potn - pumpskin["eaten_amount"]
+            potn_to_level = level_potn - pumpskin.get("eaten_amount", 100000)
 
             if next_level > self.config_mgr.config["game_specific_configs"]["max_level"]:
                 logger.print_ok_blue(
@@ -533,25 +527,31 @@ class PumpskinBot:
                 self.current_stats["levels"] += 1
                 self._send_leveling_discord_activity_update(token_id, next_level)
 
-    def _check_and_claim_potn(self, pumpskin_ids: T.List[int], force: bool = False) -> None:
+    def _check_and_claim_potn(
+        self, pumpskins: T.Dict[int, T.Dict[int, T.Any]], force: bool = False
+    ) -> None:
         logger.print_ok_blue(f"Checking $POTN for claims...")
         total_claimable_potn = wei_to_token_raw(self.game_w3.get_claimable_potn(self.address))
 
-        if (
-            total_claimable_potn
-            >= self.config_mgr.config["game_specific_configs"]["min_potn_claim"]
-            or force
-        ):
+        # wait to claim at a 1/3rd day's earnings in POTN (i.e. 3 * PPIE / day)
+        divisor = self.config_mgr.config["game_specific_configs"]["min_potn_claim_ratio"]
+        min_potn_to_claim = (
+            sum([self.calc_ppie_per_day_from_level(p["kg"] / 100) for p in pumpskins]) * 3 / divisor
+        )
+
+        if total_claimable_potn >= min_potn_to_claim or force:
             self._claim_potn(total_claimable_potn)
         else:
             logger.print_warn(f"Not enough $POTN to claim ({total_claimable_potn:.2f})")
 
-    def _check_and_claim_ppie(self, pumpskin_ids: T.List[int], force: bool = False) -> None:
+    def _check_and_claim_ppie(
+        self, pumpskins: T.Dict[int, T.Dict[int, T.Any]], force: bool = False
+    ) -> None:
         logger.print_ok_blue(f"Checking $PPIE for claims...")
         total_claimable_ppie = 0.0
 
         ppie_tokens = []
-        for token_id in pumpskin_ids:
+        for token_id in pumpskins.keys():
             claimable_tokens = wei_to_token_raw(self.collection_w3.get_claimable_ppie(token_id))
             logger.print_normal(f"Pumpskin {token_id} has {claimable_tokens:.2f} $PPIE to claim")
             total_claimable_ppie += claimable_tokens
@@ -566,11 +566,13 @@ class PumpskinBot:
             f"{ppie_staked:.2f} staked $PPIE producing {potn_per_day:.2f} $POTN daily"
         )
 
-        if (
-            total_claimable_ppie
-            >= self.config_mgr.config["game_specific_configs"]["min_ppie_claim"]
-            or force
-        ):
+        # wait to claim at a half day's earnings
+        divisor = self.config_mgr.config["game_specific_configs"]["min_ppie_claim_ratio"]
+        min_ppie_to_claim = (
+            sum([self.calc_ppie_per_day_from_level(p["kg"] / 100) for p in pumpskins]) / divisor
+        )
+
+        if total_claimable_ppie >= min_ppie_to_claim or force:
             self._claim_ppie(ppie_tokens, total_claimable_ppie)
         else:
             logger.print_warn(f"Not enough $PPIE to claim ({total_claimable_ppie:.2f})")
@@ -614,6 +616,17 @@ class PumpskinBot:
     def _run_game_loop(self) -> None:
         # get all pumpskin id's that correspond to the user
         pumpskin_ids: T.List[int] = self._get_pumpskin_ids()
+        pumpskins = {}
+        for token_id in pumpskin_ids:
+            pumpskin: StakedPumpskin = self.collection_w3.get_staked_pumpskin_info(token_id)
+            pumpskins[token_id] = pumpskin
+
+        ordered_pumpskins = dict(
+            sorted(
+                pumpskins.items(),
+                key=lambda y: y[1].get("kg", 10000) / 100,
+            )
+        )
 
         potn_balance = self.potn_w3.get_balance()
         ppie_balance = self.ppie_w3.get_balance()
@@ -623,14 +636,14 @@ class PumpskinBot:
         logger.print_ok_arrow(f"POTN: {potn_balance:.2f}")
         logger.print_ok_arrow(f"\U0001F383: {len(pumpskin_ids)}")
 
-        self._check_and_claim_ppie(pumpskin_ids)
-        self._level_pumpskins(pumpskin_ids)
+        self._check_and_claim_ppie(ordered_pumpskins)
+        self._level_pumpskins(ordered_pumpskins)
         self._check_and_stake_ppie()
         # staking PPIE should claim all outstanding POTN in one transaction
         # so we should really not trigger this often
-        self._check_and_claim_potn(pumpskin_ids)
+        self._check_and_claim_potn(ordered_pumpskins)
 
-        self._send_email_update(len(pumpskin_ids))
+        self._send_email_update(len(ordered_pumpskins.keys()))
         self._update_stats()
 
     def init(self) -> None:
