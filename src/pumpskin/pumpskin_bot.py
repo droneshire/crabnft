@@ -454,6 +454,14 @@ class PumpskinBot:
             pumpskin: StakedPumpskin = self.collection_w3.get_staked_pumpskin_info(token_id)
             pumpskins[token_id] = pumpskin
 
+        ordered_pumpskins = dict(
+            sorted(
+                pumpskins.items(),
+                key=lambda y: y[1].get("kg", 10000) / 100,
+            )
+        )
+
+        for token_id, pumpskin in ordered_pumpskins.items():
             # check to see if we're past the cooldown period
             now = time.time()
             cooldown_time = pumpskin["cooldown_ts"] - now

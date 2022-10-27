@@ -25,12 +25,15 @@ def send_email_raw(
     to_addresses: T.List[str],
     subject: str,
     content: T.List[str],
+    attachments: T.List[str] = None,
     verbose: bool = False,
 ) -> None:
     with yagmail.SMTP(email["address"], email["password"]) as email_sender:
         if isinstance(to_addresses, str):
             to_addresses = [to_addresses]
-        email_sender.send(to_addresses, subject, content)
+            email_sender.send(
+                to=to_addresses, subject=subject, contents=content, attachments=attachments
+            )
         if verbose:
             logger.print_ok(f"To: {', '.join(to_addresses)}\nFrom: {email['address']}")
             logger.print_ok(f"Subject: {subject}")
@@ -42,11 +45,14 @@ def send_email(
     to_addresses: T.List[str],
     subject: str,
     content: T.List[str],
+    attachments: T.List[str] = None,
     verbose: bool = False,
 ) -> None:
     for email in emails:
         try:
-            send_email_raw(email, to_addresses, subject, content)
+            send_email_raw(
+                email, to_addresses, subject, content, attachments=attachments, verbose=verbose
+            )
             return
         except KeyboardInterrupt:
             raise
