@@ -540,9 +540,10 @@ class PumpskinBot:
         logger.print_ok_blue(f"Checking $POTN for claims...")
         total_claimable_potn = wei_to_token_raw(self.game_w3.get_claimable_potn(self.address))
 
-        # wait to claim at a 1/3rd day's earnings in POTN (i.e. 3 * PPIE / day)
         divisor = self.config_mgr.config["game_specific_configs"]["min_potn_claim_ratio"]
-        min_potn_to_claim = self.calc_ppie_earned_per_day(pumpskins) * 3 / divisor
+
+        ppie_staked = self.game_w3.get_ppie_staked(self.address)
+        min_potn_to_claim = ppie_staked * 3 / divisor
 
         if total_claimable_potn >= min_potn_to_claim or force:
             self._claim_potn(total_claimable_potn)
