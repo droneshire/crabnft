@@ -85,7 +85,9 @@ class GetPumpkinLevel(OnMessage):
             name=f"{ATTRIBUTE_TO_EMOJI[trait]} Overall", value=f"{overall_rarity:.2f}%", inline=True
         )
         embed.set_thumbnail(url=image_uri)
-        embed.set_author(name="JoePeg Link", url=JOEPEGS_URL, icon_url=JOEPEGS_ICON_URL)
+        embed.set_author(
+            name="JoePeg Link", url=JOEPEGS_URL, icon_url=f"{JOEPEGS_ICON_URL}/{token_id}"
+        )
         return embed
 
     @classmethod

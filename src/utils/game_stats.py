@@ -56,7 +56,7 @@ class LifetimeGameStatsLogger:
         self.last_lifetime_stats: T.Dict[T.Any, T.Any] = copy.deepcopy(self.lifetime_stats)
 
     def write_game_stats(self, game_stats: T.Dict[T.Any, T.Any], dry_run=False) -> None:
-        if dry_run:
+        if dry_run or not os.path.isdir(self.log_dir):
             return
 
         game_stats_file = self.get_lifetime_stats_file()

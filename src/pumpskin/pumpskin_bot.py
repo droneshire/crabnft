@@ -332,7 +332,7 @@ class PumpskinBot:
 
         return pumpskin_rarity
 
-    def _get_pumpskin_ids(self) -> T.List[int]:
+    def get_pumpskin_ids(self) -> T.List[int]:
         pumpskin_ids: T.List[int] = self.collection_w3.get_staked_pumpskins(self.address)
 
         logger.print_ok_blue(f"Found {len(pumpskin_ids)} Pumpskins for user {self.user}!")
@@ -672,7 +672,7 @@ class PumpskinBot:
             )
 
     def _run_game_loop(self) -> None:
-        pumpskin_ids: T.List[int] = self._get_pumpskin_ids()
+        pumpskin_ids: T.List[int] = self.get_pumpskin_ids()
         pumpskins = {}
         for token_id in pumpskin_ids:
             pumpskin: StakedPumpskin = self.collection_w3.get_staked_pumpskin_info(token_id)
