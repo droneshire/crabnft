@@ -31,7 +31,7 @@ class CsvLogger:
 
             row = [""] * len(self.header)
             for k, v in data.items():
-                inx = self.col_map.get(k, None)
+                inx = self.col_map.get(k.lower(), None)
                 if inx is None:
                     continue
                 row[inx] = v

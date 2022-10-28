@@ -4,8 +4,8 @@ import getpass
 import tempfile
 
 from config_admin import GMAIL
-from config_crabada import USERS
-from discord_bots.pumpskin import JOEPEGS_ICON_URL
+from config_pumpskin import USERS
+from discord_bots.pumpskin import JOEPEGS_URL
 from utils import logger
 from utils import email
 from utils.csv_logger import CsvLogger
@@ -46,13 +46,14 @@ def create_patch_csv(csv_file: str, bot: PumpskinBot, dry_run: bool = False) -> 
 
     for pumpskin in pumpskins:
         row = {}
+        row["Pumpskin ID"] = pumpskin
         pumpskin_info: StakedPumpskin = bot.collection_w3.get_staked_pumpskin_info(pumpskin)
         row["NFT Image URL"] = bot.pumpskin_w2.get_pumpskin_image(pumpskin)
         level = int(pumpskin_info["kg"] / 100)
         row["Level"] = level
         row["PPIE/Day"] = bot.calc_ppie_per_day_from_level(level)
         row["Level Up Cost"] = PumpskinBot.calc_potn_from_level(level)
-        row["JoePeg Link"] = f"{JOEPEGS_ICON_URL}/{pumpskin}"
+        row["JoePeg Link"] = f"{JOEPEGS_URL}/{pumpskin}"
         pumpskin_rarity = PumpskinBot.calculate_rarity_from_query(
             pumpskin, PumpskinBot.get_json_path(ATTRIBUTES_FILE)
         )
