@@ -73,7 +73,7 @@ class PumpskinCollectionWeb3Client(AvalancheCWeb3Client):
             return ppie_wei
         except Exception as e:
             logger.print_fail(f"{e}")
-            return -1
+            return 0
 
     def get_staked_pumpskin_info(self, token_id: int) -> StakedPumpskin:
         try:
