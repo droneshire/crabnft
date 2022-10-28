@@ -594,7 +594,9 @@ class PumpskinBot:
         if total_claimable_ppie >= min_ppie_to_claim or force:
             self._claim_ppie(ppie_tokens, total_claimable_ppie)
         else:
-            logger.print_warn(f"Not enough $PPIE to claim ({total_claimable_ppie:.2f} < {min_ppie_to_claim})")
+            logger.print_warn(
+                f"Not enough $PPIE to claim ({total_claimable_ppie:.2f} < {min_ppie_to_claim})"
+            )
 
     def _claim_ppie(self, ppie_tokens: T.List[int], ppie_to_claim: float) -> None:
         logger.print_normal(f"Attempting to claim {ppie_to_claim:.2f} $PPIE for {self.user}...")
