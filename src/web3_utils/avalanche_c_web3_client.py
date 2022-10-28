@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from eth_typing import Address
+from utils.price import Avax
 from web3.middleware import geth_poa_middleware
 from web3_utils.web3_client import Web3Client
 

@@ -38,6 +38,7 @@ class GetPumpkinLevel(OnMessage):
         1032890276420800582,  # test channel in p2e auto
         # 1032276350045798441, # farmers market in pumpskin
         1033839826182619228,  # pumpskin bot channel
+        1035266046480896141,  # p2e auto bot command pumskin channel
     ]
 
     @staticmethod
@@ -114,6 +115,7 @@ class GetPumpkinLevel(OnMessage):
                 PumpskinCollectionWeb3Client()
                 .set_credentials(ADMIN_ADDRESS, "")
                 .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+                .set_contract()
                 .set_dry_run(False)
             )
 
@@ -151,6 +153,7 @@ class GetPumpkinRoi(OnMessage):
         1032890276420800582,  # test channel in p2e auto
         # 1032276350045798441, # farmers market in pumpskin
         # 1033839826182619228,  # pumpskin bot channel
+        1035266046480896141,  # p2e auto bot command pumskin channel
     ]
 
     @staticmethod
@@ -205,6 +208,7 @@ class SnoopChannel(OnMessage):
         1032890276420800582,  # test channel in p2e auto
         # 1021670710344687666,  # early founders channel for pumpskin
         1021704887127511090,  # mod channel pumpskin
+        1035266046480896141,  # p2e auto bot command pumskin channel
     ]
 
     @classmethod
@@ -229,6 +233,7 @@ class MintNumber(OnMessage):
         1032890276420800582,  # test channel in p2e auto
         1032276350045798441,  # farmers market in pumpskin
         1033839826182619228,  # pumpskin bot channel
+        1035266046480896141,  # p2e auto bot command pumskin channel
     ]
 
     @classmethod

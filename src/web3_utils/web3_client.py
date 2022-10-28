@@ -273,23 +273,14 @@ class Web3Client:
     # Setters
     ####################
 
-    def set_contract(
-        self, address: Address, abi_file: str = None, abi: T.Dict[str, T.Any] = None
-    ) -> Web3Client:
+    def set_contract(self) -> Web3Client:
         """
         Load the smart contract, required before running
         build_contract_transaction().
 
         Run only after setting the node URI (set_node_uri)
         """
-        self.contract_address = address
-        self.contract_checksum_address = Web3.toChecksumAddress(address)
-        if abi_file:  # Read the contract's ABI from a JSON file
-            self.abi = self._get_contract_abi_from_file(abi_file)
-        elif abi:  # read the contract's ABI from a string
-            self.abi = abi
-        if not self.abi:
-            raise MissingParameter("Missing ABI")
+        self.contract_checksum_address = Web3.toChecksumAddress(self.contract_address)
         self.contract = self.w3.eth.contract(address=self.contract_checksum_address, abi=self.abi)
         return self
 
@@ -303,8 +294,6 @@ class Web3Client:
         self.node_uri = node_uri
         self.w3 = self._get_provider()
         self.nonce = self.get_nonce()
-        # Set the contract if possible, e.g. if the subclass defines address & ABI.
-        self.set_contract(address=self.contract_address, abi=self.abi)
         return self
 
     def set_credentials(self, user_address: Address, private_key: str) -> Web3Client:

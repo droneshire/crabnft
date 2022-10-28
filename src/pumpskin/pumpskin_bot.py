@@ -21,6 +21,7 @@ from utils.general import get_pretty_seconds
 from utils.price import token_to_wei, wei_to_token_raw
 from utils.user import get_alias_from_user
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
+from web3_utils.avax_web3_client import AvaxCWeb3Client
 from web3_utils.potn_web3_client import PotnWeb3Client
 from web3_utils.ppie_web3_client import PpieWeb3Client
 from pumpskin.config_manager_pumpskin import PumpskinConfigManager
@@ -52,6 +53,7 @@ PUMPSKIN_ATTRIBUTES = {
 class PumpskinBot:
     MAX_PUMPSKINS = 5555
     MAX_TOTAL_SUPPLY = 6666
+    MIN_AVAX_BALANCE = 0.5
 
     def __init__(
         self,
@@ -63,6 +65,7 @@ class PumpskinBot:
         dry_run: bool,
     ):
         self.user: str = user
+        self.alias: str = get_alias_from_user(user)
         self.emails: T.List[Email] = email_accounts
         self.log_dir: str = log_dir
         self.dry_run: bool = dry_run
@@ -87,6 +90,7 @@ class PumpskinBot:
             PumpskinCollectionWeb3Client()
             .set_credentials(config["address"], config["private_key"])
             .set_node_uri(PumpskinCollectionWeb3Client.NODE_URL)
+            .set_contract()
             .set_dry_run(dry_run)
         )
 
@@ -94,6 +98,7 @@ class PumpskinBot:
             PumpskinContractWeb3Client()
             .set_credentials(config["address"], config["private_key"])
             .set_node_uri(PumpskinCollectionWeb3Client.NODE_URL)
+            .set_contract()
             .set_dry_run(dry_run)
         )
 
@@ -101,6 +106,7 @@ class PumpskinBot:
             PumpskinNftWeb3Client()
             .set_credentials(config["address"], config["private_key"])
             .set_node_uri(PumpskinCollectionWeb3Client.NODE_URL)
+            .set_contract()
             .set_dry_run(dry_run)
         )
 
@@ -110,6 +116,7 @@ class PumpskinBot:
                 PotnWeb3Client()
                 .set_credentials(config["address"], config["private_key"])
                 .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+                .set_contract()
                 .set_dry_run(dry_run)
             ),
         )
@@ -120,6 +127,7 @@ class PumpskinBot:
                 PpieWeb3Client()
                 .set_credentials(config["address"], config["private_key"])
                 .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+                .set_contract()
                 .set_dry_run(dry_run)
             ),
         )
@@ -198,6 +206,7 @@ class PumpskinBot:
             PumpskinNftWeb3Client()
             .set_credentials(ADMIN_ADDRESS, "")
             .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+            .set_contract()
             .set_dry_run(False)
         )
         minted = w3.get_total_pumpskins_minted()
@@ -542,7 +551,7 @@ class PumpskinBot:
 
         divisor = self.config_mgr.config["game_specific_configs"]["min_potn_claim_ratio"]
 
-        ppie_staked = self.game_w3.get_ppie_staked(self.address)
+        ppie_staked = wei_to_token_raw(self.game_w3.get_ppie_staked(self.address))
         min_potn_to_claim = ppie_staked * 3 / divisor
 
         if total_claimable_potn >= min_potn_to_claim or force:
@@ -623,8 +632,44 @@ class PumpskinBot:
             logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
             self.current_stats["potn"] += potn_to_claim
 
+    def _check_for_low_gas(self) -> None:
+        avax_w3: AvaxCWeb3Client = T.cast(
+            AvaxCWeb3Client,
+            (
+                AvaxCWeb3Client()
+                .set_credentials(
+                    self.config_mgr.config["address"], self.config_mgr.config["private_key"]
+                )
+                .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+                .set_dry_run(self.dry_run)
+            ),
+        )
+        avax_balance = avax_w3.get_balance()
+        if avax_balance > self.MIN_AVAX_BALANCE:
+            return
+
+        email_message = f"Hello {self.alias}!\n"
+        email_message += f"You're running low on gas! Please make sure to top "
+        email_message += f"off wallet {self.address} so that your patch can "
+        email_message += f"continue to grow!\n\n"
+        email_message += f"\U000026FD Balance: {avax_balance:.2f} $AVAX"
+
+        logger.print_warn("\n" + email_message + "\n")
+
+        if self.dry_run:
+            return
+
+        subject = f"\U000026FD\U000026FD Pumpskin Bot Gas Alert!"
+
+        if self.config_mgr.config["email"]:
+            send_email(
+                self.emails,
+                self.config_mgr.config["email"],
+                subject,
+                email_message,
+            )
+
     def _run_game_loop(self) -> None:
-        # get all pumpskin id's that correspond to the user
         pumpskin_ids: T.List[int] = self._get_pumpskin_ids()
         pumpskins = {}
         for token_id in pumpskin_ids:
@@ -654,6 +699,7 @@ class PumpskinBot:
         self._check_and_claim_potn(ordered_pumpskins)
 
         self._send_email_update(len(ordered_pumpskins.keys()))
+        self._check_for_low_gas()
         self._update_stats()
 
     def init(self) -> None:

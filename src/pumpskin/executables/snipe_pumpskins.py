@@ -96,6 +96,7 @@ def snipe() -> None:
         PumpskinNftWeb3Client()
         .set_credentials(address, private_key)
         .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+        .set_contract()
         .set_dry_run(False)
     )
     minted = w3.get_total_pumpskins_minted()

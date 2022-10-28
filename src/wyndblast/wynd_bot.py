@@ -57,6 +57,7 @@ class WyndBot:
             WyndblastGameWeb3Client()
             .set_credentials(config["address"], config["private_key"])
             .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+            .set_contract()
             .set_dry_run(dry_run)
         )
 
