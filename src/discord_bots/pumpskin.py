@@ -86,7 +86,7 @@ class GetPumpkinLevel(OnMessage):
         )
         embed.set_thumbnail(url=image_uri)
         embed.set_author(
-            name="JoePeg Link", url=JOEPEGS_URL, icon_url=f"{JOEPEGS_ICON_URL}/{token_id}"
+            name="JoePeg Link", url=f"JOEPEGS_URL/{token_id}", icon_url=f"{JOEPEGS_ICON_URL}"
         )
         return embed
 
