@@ -5,6 +5,8 @@ import typing as T
 from config_admin import ADMIN_ADDRESS
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from discord_bots.behavior import OnMessage
+from joepegs.joepegs_api import JOEPEGS_ICON_URL, JOEPEGS_URL
+from pumpskin.listings import post_rarist_listings
 from pumpskin.pumpskin_bot import PumpskinBot, ATTRIBUTES_FILE
 from pumpskin.pumpskin_web3_client import PumpskinCollectionWeb3Client
 from pumpskin.pumpskin_web2_client import PumpskinWeb2Client
@@ -13,9 +15,6 @@ from utils import logger
 from utils.general import get_pretty_seconds
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 
-
-JOEPEGS_URL = "https://joepegs.com/item/0x0a27e02fdaf3456bd8843848b728ecbd882510d1/"
-JOEPEGS_ICON_URL = "https://drive.google.com/uc?export=view&id=1mLBMY7-XPtLbSZrWRpCujFCc6cIJ_VIE"
 
 ATTRIBUTE_TO_EMOJI = {
     "Facial": "\U0001F604",
@@ -250,3 +249,31 @@ class MintNumber(OnMessage):
         minted, supply = PumpskinBot.get_mint_stats()
 
         return f"Minted: `{minted}/{supply}`"
+
+
+class MintNumber(OnMessage):
+    HOTKEY = f"?deals"
+    ALLOWLIST_GUILDS = [986151371923410975]
+    ALLOWLIST_CHANNELS = [
+        1032890276420800582,  # test channel in p2e auto
+        1032881170838462474,  # p2e pumpskin market deals
+        1035266046480896141,  # p2e auto bot command pumskin channel
+    ]
+
+    @classmethod
+    def response(cls, message: discord.message.Message) -> T.Union[str, discord.Embed]:
+        if not any([g for g in cls.ALLOWLIST_GUILDS if message.guild.id == g]):
+            return ""
+
+        text = message.content.lower().strip()
+        if not text.startswith(cls.HOTKEY):
+            return ""
+
+        try:
+            max_price_avax = float(text.strip().split(cls.HOTKEY)[1].strip())
+        except ValueError:
+            return ""
+
+        post_rarist_listings(30.0, max_price_avax, True)
+
+        return ""

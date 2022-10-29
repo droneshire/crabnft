@@ -5,11 +5,11 @@ import tempfile
 
 from config_admin import GMAIL
 from config_pumpskin import USERS
-from discord_bots.pumpskin import JOEPEGS_URL
+from joepegs.joepegs_api import JOEPEGS_ICON_URL, JOEPEGS_URL
+from pumpskin.pumpskin_bot import PumpskinBot, ATTRIBUTES_FILE, PUMPSKIN_ATTRIBUTES
 from utils import logger
 from utils import email
 from utils.csv_logger import CsvLogger
-from pumpskin.pumpskin_bot import PumpskinBot, ATTRIBUTES_FILE, PUMPSKIN_ATTRIBUTES
 from utils.security import decrypt
 from utils.user import get_alias_from_user
 

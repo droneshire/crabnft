@@ -12,6 +12,7 @@ DISCORD_WEBHOOK_URL = {
     "WYNDBLAST_ACTIVITY": "https://discord.com/api/webhooks/1017484506397159506/uGjNtG68Zkq5nCzDmzJ-MuT2N8X2-W0QrQqmhlamqmPSkZbvgcf_H3jxZVvx3em6P_l8",
     "PUMPSKIN_ACTIVITY": "https://discord.com/api/webhooks/1028476865607901254/LFh2xkGWQqiOHaR1gwhdYIEbKPc9iJmXMknnJIyy3jIawv1XR-yr-XjwnYGVYkOWoAEx",
     "PUMPSKIN_UPDATES": "https://discord.com/api/webhooks/1028501975219847198/otDCjM8kR0K0oiJHSI3_ZuBq5aJ88cKchxNAKNbuWlYAb2tXMmrxzC8DwrUF-6e6K7ed",
+    "PUMPSKIN_MARKET": "https://discord.com/api/webhooks/1035833369314983967/DfepvsK-M32izIfjTSxV4mU5q72E7WbkL43TWSOnx6n8jRXCCHF5oJHhYdNPfhAJQaCO",
     # paid subscriptions
     "HEYA_SUBSCRIPTION": "https://discord.com/api/webhooks/969388295253553192/QZ3XqguHVi3DEQRLiMUMqjLyaspLxfb1gfqtKizYF6rW_azim9D0dhs0eXZzXlJf8bvw",
 }
