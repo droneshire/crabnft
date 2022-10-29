@@ -562,7 +562,10 @@ class PumpskinBot:
             )
 
     def _check_and_claim_ppie(
-        self, pumpskins: T.Dict[int, T.Dict[int, T.Any]], force: bool = False
+        self,
+        pumpskins: T.Dict[int, T.Dict[int, T.Any]],
+        force: bool = False,
+        verbose: bool = False,
     ) -> None:
         logger.print_ok_blue(f"Checking $PPIE for claims...")
         total_claimable_ppie = 0.0
@@ -570,7 +573,10 @@ class PumpskinBot:
         ppie_tokens = []
         for token_id in pumpskins.keys():
             claimable_tokens = wei_to_token_raw(self.collection_w3.get_claimable_ppie(token_id))
-            logger.print_normal(f"Pumpskin {token_id} has {claimable_tokens:.2f} $PPIE to claim")
+            if verbose:
+                logger.print_normal(
+                    f"Pumpskin {token_id} has {claimable_tokens:.2f} $PPIE to claim"
+                )
             total_claimable_ppie += claimable_tokens
 
             if claimable_tokens > 0.0:
