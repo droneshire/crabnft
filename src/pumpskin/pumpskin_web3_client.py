@@ -4,6 +4,7 @@ import typing as T
 
 from eth_typing import Address
 from eth_typing.encoding import HexStr
+from web3 import Web3
 from web3.types import TxParams, Wei
 
 from utils import logger
@@ -96,7 +97,8 @@ class PumpskinCollectionWeb3Client(AvalancheCWeb3Client):
         NFTs owned by a user by iterating through indices until we error out
         """
         try:
-            return self.contract.functions.getStakedTokens(user_address).call()
+            address = Web3.toChecksumAddress(user_address)
+            return self.contract.functions.getStakedTokens(address).call()
         except Exception as e:
             logger.print_fail(f"{e}")
             return []
@@ -159,7 +161,8 @@ class PumpskinContractWeb3Client(AvalancheCWeb3Client):
         Get claimable POTN per token
         """
         try:
-            ppie_wei: Token = self.contract.functions.claimableView(user_address).call()
+            address = Web3.toChecksumAddress(user_address)
+            ppie_wei: Token = self.contract.functions.claimableView(address).call()
             return ppie_wei
         except Exception as e:
             logger.print_fail(f"{e}")
@@ -170,7 +173,8 @@ class PumpskinContractWeb3Client(AvalancheCWeb3Client):
         Get staked PPIE
         """
         try:
-            results: T.List[T.Any] = self.contract.functions.pieStakeHolders(user_address).call()
+            address = Web3.toChecksumAddress(user_address)
+            results: T.List[T.Any] = self.contract.functions.pieStakeHolders(address).call()
             return results[2]
         except Exception as e:
             logger.print_fail(f"{e}")
@@ -195,7 +199,8 @@ class PumpskinNftWeb3Client(AvalancheCWeb3Client):
         Get the token ID at given index for the user.
         """
         try:
-            return self.contract.functions.tokenOfOwnerByIndex(user_address, slot_index).call()
+            address = Web3.toChecksumAddress(user_address)
+            return self.contract.functions.tokenOfOwnerByIndex(address, slot_index).call()
         except Exception as e:
             logger.print_fail(f"{e}")
             return -1
@@ -225,8 +230,9 @@ class PumpskinNftWeb3Client(AvalancheCWeb3Client):
         Mint pumpskin[s]
         """
         try:
+            address = Web3.toChecksumAddress(user_address)
             tx: TxParams = self.contract.functions.claim(
-                user_address, quantity, self.PT_TOKEN_ADDRESS, 1, [], 1
+                address, quantity, self.PT_TOKEN_ADDRESS, 1, [], 1
             )
             print(tx)
             return ""
