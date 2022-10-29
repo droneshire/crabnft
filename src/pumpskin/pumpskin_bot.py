@@ -595,7 +595,7 @@ class PumpskinBot:
         )
 
         # wait to claim at a half day's earnings
-        mulitplier = self.config_mgr.config["game_specific_configs"]["ppie_claim_mulitplier"]
+        mulitplier = self.config_mgr.config["game_specific_configs"]["ppie_claim_multiplier"]
         min_ppie_to_claim = ppie_per_day * mulitplier
 
         if total_claimable_ppie >= min_ppie_to_claim or force:
