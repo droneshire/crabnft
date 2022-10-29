@@ -16,7 +16,7 @@ class ManageAccounts(OnMessage):
     ALLOWLIST_GUILDS = [986151371923410975]
     ALLOWLIST_CHANNELS = [
         1032890276420800582,  # test channel in p2e auto
-        1033839826182619228,  # pumpskin bot channel
+        1035266046480896141,  # p2e pumpskin bot channel
     ]
 
     @staticmethod
