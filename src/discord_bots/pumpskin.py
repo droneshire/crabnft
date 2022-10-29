@@ -206,10 +206,11 @@ class GetPumpkinRoi(OnMessage):
 class SnoopChannel(OnMessage):
     ALLOWLIST_GUILDS = [986151371923410975, 1020800321569697792]
     ALLOWLIST_CHANNELS = [
-        1032890276420800582,  # test channel in p2e auto
+        # 1032890276420800582,  # test channel in p2e auto
         # 1021670710344687666,  # early founders channel for pumpskin
-        1021704887127511090,  # mod channel pumpskin
-        1035266046480896141,  # p2e auto bot command pumskin channel
+        # 1021704887127511090,  # mod channel pumpskin
+        # 1035266046480896141,  # p2e auto bot command pumskin channel
+        1021670920772931604,  # ogs cahnnel pumpskin
     ]
 
     @classmethod
