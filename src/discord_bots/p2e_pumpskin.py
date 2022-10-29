@@ -111,10 +111,10 @@ class ManageAccounts(OnMessage):
         ppie_per_day = PumpskinBot.calc_ppie_earned_per_day(pumpskins)
         logger.print_normal(f"{user} -> PPIE/Day: {ppie_per_day} POTN/Day: {potn_per_day}")
 
-        # try:
-        return cls._get_config_stats(
-            discord_user, pfp, potn_per_day, ppie_per_day, user_config["game_specific_configs"]
-        )
-        # except:
-        #     logger.print_normal(f"Failed to get config")
-        #     return f"Failed to get config"
+        try:
+            return cls._get_config_stats(
+                discord_user, pfp, potn_per_day, ppie_per_day, user_config["game_specific_configs"]
+            )
+        except:
+            logger.print_normal(f"Failed to get config")
+            return f"Failed to get config"
