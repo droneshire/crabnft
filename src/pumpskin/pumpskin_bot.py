@@ -598,8 +598,6 @@ class PumpskinBot:
         mulitplier = self.config_mgr.config["game_specific_configs"]["ppie_claim_mulitplier"]
         min_ppie_to_claim = ppie_per_day * mulitplier
 
-        self.config_mgr.save_config()
-
         if total_claimable_ppie >= min_ppie_to_claim or force:
             self._claim_ppie(ppie_tokens, total_claimable_ppie)
         else:
