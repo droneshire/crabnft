@@ -54,6 +54,7 @@ class PumpskinBot:
     MAX_PUMPSKINS = 5555
     MAX_TOTAL_SUPPLY = 6666
     MIN_AVAX_BALANCE = 0.5
+    LOW_GAS_INTERVAL = 60.0 * 60.0 * 24
 
     def __init__(
         self,
@@ -696,7 +697,7 @@ class PumpskinBot:
         logger.print_warn("\n" + email_message + "\n")
 
         now = time.time()
-        if now - self.last_gas_notification < 60.0 * 60.0 * 24:
+        if now - self.last_gas_notification < self.LOW_GAS_INTERVAL:
             return
 
         self.last_gas_notification = now
