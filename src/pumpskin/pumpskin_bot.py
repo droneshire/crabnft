@@ -359,6 +359,21 @@ class PumpskinBot:
         webhook.add_embed(embed)
         webhook.execute()
 
+    def _send_discord_low_gas_notification(self, avax_gas: float) -> None:
+        webhook = DiscordWebhook(
+            url=discord.DISCORD_WEBHOOK_URL["PUMPSKIN_ACTIVITY"], rate_limit_retry=True
+        )
+        discord_username = self.config_mgr.config["discord_handle"].split("#")[0].upper()
+        embed = DiscordEmbed(
+            title=f"\U000026FD Gas Alert!",
+            description=f"Low $AVAX gas warning for {discord_username}\n",
+            color=Color.red().value,
+        )
+        embed.add_embed_field(name=f"AVAX", value=f"{avax_gas:.3f}", inline=False)
+        embed.set_thumbnail(url="https://plantatree.finance/images/avax.png", height=100, width=100)
+        webhook.add_embed(embed)
+        webhook.execute()
+
     def _update_stats(self) -> None:
         for k, v in self.current_stats.items():
             if type(v) != type(self.stats_logger.lifetime_stats.get(k)):
@@ -470,20 +485,65 @@ class PumpskinBot:
                 f"Not going to stake $PPIE since it is below our threshold ({ppie_available_to_stake:.2f} < {min_ppie_to_stake:.2f})"
             )
 
-    def _level_pumpskins(self, pumpskins: T.Dict[int, T.Dict[int, T.Any]]) -> None:
+    def _drink_potion(self, token_id: int, potn_to_level: int) -> bool:
+        num_potn_wei = token_to_wei(potn_to_level)
+        if num_potn_wei > 0.0:
+            logger.print_normal(
+                f"Attempting to have pumpskin {token_id} drink {potn_to_level} $POTN"
+            )
+            tx_hash = self.game_w3.drink_potion(token_id, num_potn_wei)
+            tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
+            gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+            logger.print_bold(f"Paid {gas} AVAX in gas")
+
+            self.stats_logger.lifetime_stats["avax_gas"] += gas
+
+            if tx_receipt.get("status", 0) != 1:
+                logger.print_fail(f"Failed to drink potion for {token_id}!")
+                return False
+            else:
+                logger.print_ok(f"Successfully drank potion for {token_id}")
+                self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
+                logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+
+        return True
+
+    def _level_pumpskins(self, token_id: int, next_level: int) -> None:
+        # Level Pumpskin who can be leveled up
+        logger.print_normal(f"Attempting to Level up pumpskin {token_id} to {next_level}...")
+        tx_hash = self.collection_w3.level_up_pumpkin(token_id)
+        tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
+        gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        logger.print_bold(f"Paid {gas} AVAX in gas")
+
+        self.stats_logger.lifetime_stats["avax_gas"] += gas
+
+        if tx_receipt.get("status", 0) != 1:
+            logger.print_fail(f"Failed to level up pumpskin {token_id}!")
+        else:
+            logger.print_ok(f"Successfully leveled up pumpskin {token_id} to {next_level}")
+            self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
+            logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+            self.current_stats["levels"] += 1
+            self._send_leveling_discord_activity_update(token_id, next_level)
+
+    def _is_cooled_down(self, token_id: int, pumpskin: T.Dict[str, T.Any]) -> bool:
+        # check to see if we're past the cooldown period
+        now = time.time()
+        cooldown_time = pumpskin.get("cooldown_ts", now) - now
+        if cooldown_time < 0:
+            return True
+        time_left_pretty = get_pretty_seconds(cooldown_time)
+        logger.print_warn(
+            f"Pumpskin {token_id} not ready for leveling yet. Remaining time: {time_left_pretty}"
+        )
+        return False
+
+    def _try_to_level_pumpskins(self, pumpskins: T.Dict[int, T.Dict[int, T.Any]]) -> None:
         # Now try to level pumpskins...
         for token_id, pumpskin in pumpskins.items():
-            # check to see if we're past the cooldown period
-            now = time.time()
-            cooldown_time = pumpskin.get("cooldown_ts", now) - now
-            if cooldown_time >= 0:
-                time_left_pretty = get_pretty_seconds(cooldown_time)
-                logger.print_warn(
-                    f"Pumpskin {token_id} not ready for leveling yet. Remaining time: {time_left_pretty}"
-                )
+            if not self._is_cooled_down(token_id, pumpskin):
                 continue
-
-            potn_balance = self.potn_w3.get_balance()
 
             # check to see how much POTN needed to level up
             level = pumpskin.get("kg", 10000) / 100
@@ -500,49 +560,17 @@ class PumpskinBot:
                 )
                 continue
 
-            # Drink POTN needed if we have enough
+            potn_balance = self.potn_w3.get_balance()
             if potn_balance < potn_to_level:
                 logger.print_warn(
                     f"Not enough $POTN to level up {token_id}. Have: {potn_balance:.2f} Need: {potn_to_level:.2f}. Skipping..."
                 )
                 continue
 
-            num_potn_wei = token_to_wei(potn_to_level)
-            if num_potn_wei > 0.0:
-                logger.print_normal(
-                    f"Attempting to have pumpskin {token_id} drink {potn_to_level} $POTN"
-                )
-                tx_hash = self.game_w3.drink_potion(token_id, num_potn_wei)
-                tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
-                gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
-                logger.print_bold(f"Paid {gas} AVAX in gas")
+            if not self._drink_potion(token_id, potn_to_level):
+                continue
 
-                self.stats_logger.lifetime_stats["avax_gas"] += gas
-
-                if tx_receipt.get("status", 0) != 1:
-                    logger.print_fail(f"Failed to drink potion for {token_id}!")
-                else:
-                    logger.print_ok(f"Successfully drank potion for {token_id}")
-                    self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
-                    logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
-
-            # Level Pumpskin who can be leveled up
-            logger.print_normal(f"Attempting to Level up pumpskin {token_id} to {next_level}...")
-            tx_hash = self.collection_w3.level_up_pumpkin(token_id)
-            tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
-            gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
-            logger.print_bold(f"Paid {gas} AVAX in gas")
-
-            self.stats_logger.lifetime_stats["avax_gas"] += gas
-
-            if tx_receipt.get("status", 0) != 1:
-                logger.print_fail(f"Failed to level up pumpskin {token_id}!")
-            else:
-                logger.print_ok(f"Successfully leveled up pumpskin {token_id} to {next_level}")
-                self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
-                logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
-                self.current_stats["levels"] += 1
-                self._send_leveling_discord_activity_update(token_id, next_level)
+            self._level_pumpskins(token_id, next_level)
 
     def _check_and_claim_potn(
         self, pumpskins: T.Dict[int, T.Dict[int, T.Any]], force: bool = False
@@ -668,6 +696,8 @@ class PumpskinBot:
         if self.dry_run:
             return
 
+        self._send_discord_low_gas_notification(avax_balance)
+
         subject = f"\U000026FD\U000026FD Pumpskin Bot Gas Alert!"
 
         if self.config_mgr.config["email"]:
@@ -701,7 +731,7 @@ class PumpskinBot:
         logger.print_ok_arrow(f"\U0001F383: {len(pumpskin_ids)}")
 
         self._check_and_claim_ppie(ordered_pumpskins)
-        self._level_pumpskins(ordered_pumpskins)
+        self._try_to_level_pumpskins(ordered_pumpskins)
         self._check_and_stake_ppie(ordered_pumpskins)
         # staking PPIE should claim all outstanding POTN in one transaction
         # so we should really not trigger this often
