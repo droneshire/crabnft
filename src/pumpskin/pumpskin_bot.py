@@ -362,11 +362,6 @@ class PumpskinBot:
         webhook.execute()
 
     def _send_discord_low_gas_notification(self, avax_gas: float) -> None:
-        now = time.time()
-        if now - self.last_gas_notification < 60.0 * 60.0 * 1:
-            return
-        self.last_gas_notification = now
-
         webhook = DiscordWebhook(
             url=discord.DISCORD_WEBHOOK_URL["PUMPSKIN_ACTIVITY"], rate_limit_retry=True
         )
@@ -699,6 +694,12 @@ class PumpskinBot:
         email_message += f"\U000026FD Balance: {avax_balance:.2f} $AVAX"
 
         logger.print_warn("\n" + email_message + "\n")
+
+        now = time.time()
+        if now - self.last_gas_notification < 60.0 * 60.0 * 24:
+            return
+
+        self.last_gas_notification = now
 
         if self.dry_run:
             return
