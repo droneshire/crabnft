@@ -3,10 +3,12 @@ import os
 import typing as T
 
 from crabada.game_stats import CrabadaLifetimeGameStatsLogger
+from pumpskin.game_stats import PumpskinLifetimeGameStatsLogger
 from utils.game_stats import LifetimeGameStatsLogger
 from utils import logger
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.chro_web3_client import ChroWeb3Client
+from web3_utils.ppie_web3_client import PpieWeb3Client
 from web3_utils.swimmer_network_web3_client import SwimmerNetworkClient
 from web3_utils.tus_swimmer_web3_client import TusSwimmerWeb3Client
 from web3_utils.web3_client import Web3Client
@@ -91,7 +93,33 @@ class Wyndblast(GameCollection):
         self.explorer_url = "https://snowtrace.io/tx"
 
 
+class Pumpskin(GameCollection):
+    TOKEN = "PPIE"
+    GAME = "Pumpskin"
+    DISCORD = "PUMPSKIN_UPDATES"
+
+    def __init__(
+        self, user: str, config: T.Dict[str, T.Any], log_dir: str, dry_run: bool = False
+    ) -> None:
+        super().__init__(user, config, 25)
+
+        self.stats_logger = PumpskinLifetimeGameStatsLogger(user, log_dir, {})
+        self.commission = self.stats_logger.get_game_stats()["commission_ppie"]
+        self.client = T.cast(
+            PpieWeb3Client,
+            (
+                PpieWeb3Client()
+                .set_credentials(config["address"], config["private_key"])
+                .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+                .set_contract()
+                .set_dry_run(dry_run)
+            ),
+        )
+        self.explorer_url = "https://snowtrace.io/tx"
+
+
 COMMISSION_GAMES: T.Dict[str, GameCollection] = {
     "CRABADA": Crabada,
     "WYNDBLAST": Wyndblast,
+    "PUMPSKIN": Pumpskin,
 }
