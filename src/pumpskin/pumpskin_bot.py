@@ -53,7 +53,6 @@ PUMPSKIN_ATTRIBUTES = {
 class PumpskinBot:
     MAX_PUMPSKINS = 5555
     MAX_TOTAL_SUPPLY = 6666
-    MIN_AVAX_BALANCE = 0.5
     LOW_GAS_INTERVAL = 60.0 * 60.0 * 24
 
     def __init__(
@@ -672,7 +671,7 @@ class PumpskinBot:
             logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
             self.current_stats["potn"] += potn_to_claim
 
-    def _check_for_low_gas(self) -> None:
+    def _check_for_low_gas(self, num_pumpskins: int) -> None:
         avax_w3: AvaxCWeb3Client = T.cast(
             AvaxCWeb3Client,
             (
@@ -685,7 +684,13 @@ class PumpskinBot:
             ),
         )
         avax_balance = avax_w3.get_balance()
-        if avax_balance > self.MIN_AVAX_BALANCE:
+        avg_gas_per_action = 0.002
+        action_per_pump = 2
+        gas_needed_per_pump = avg_gas_per_action * action_per_pump
+        num_pump_activites_buffer = 5
+        gas_needed = num_pump_activites_buffer * gas_needed_per_pump
+
+        if avax_balance > gas_needed:
             return
 
         email_message = f"Hello {self.alias}!\n"

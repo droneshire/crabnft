@@ -8,15 +8,14 @@ from web3 import Web3
 from web3.types import TxParams, Wei
 
 from utils import logger
-from utils.price import wei_to_token_raw, Token
+from utils.price import Token, token_to_wei, wei_to_token_raw
 from web3_utils.web3_client import Web3Client
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
-from pumpskin.types import StakedPumpskin
 
 
-class PumpskinCollectionWeb3Client(AvalancheCWeb3Client):
+class PlantATreeWeb3Client(AvalancheCWeb3Client):
     """
-    Interact with a smart contract of the Pumpskins collection
+    Interact with a smart contract of the Plant a Tree collection
     https://snowtrace.io/address/0x94fde8DF71106cf2CF0141ce77546c2B3E35B243
     """
 
@@ -25,14 +24,28 @@ class PumpskinCollectionWeb3Client(AvalancheCWeb3Client):
     abi_dir = os.path.join(os.path.dirname(this_dir), "web3_utils", "abi", "abi-plant-a-tree.json")
     abi = Web3Client._get_contract_abi_from_file(abi_dir)
 
-    def re_plant(self, user_address: Address) -> HexStr:
+    def re_plant(self, referral_address: Address) -> HexStr:
         """
         Re-plant trees
         """
         try:
-            address = Web3.toChecksumAddress(user_address)
+            address = Web3.toChecksumAddress(referral_address)
             tx: TxParams = self.build_contract_transaction(
                 self.contract.functions.RePlantATree(address)
+            )
+            return self.sign_and_send_transaction(tx)
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return ""
+
+    def plant_tree(self, avax: float, referral_address: Address) -> HexStr:
+        """
+        Plant new trees
+        """
+        try:
+            address = Web3.toChecksumAddress(referral_address)
+            tx: TxParams = self.build_contract_transaction(
+                self.contract.functions.PlantATree(address), token_to_wei(avax)
             )
             return self.sign_and_send_transaction(tx)
         except Exception as e:
@@ -50,51 +63,38 @@ class PumpskinCollectionWeb3Client(AvalancheCWeb3Client):
             logger.print_fail(f"{e}")
             return ""
 
-    def get_rewards(self, token_ids: T.List[int]) -> HexStr:
+    def get_current_day_tax(self, extra_48_tax: bool) -> float:
         """
-        Stake pumpskins
+        Get today's tax
         """
         try:
-            tx: TxParams = self.build_contract_transaction(self.contract.functions.stake(token_ids))
-            return self.sign_and_send_transaction(tx)
+            return float(
+                self.contract.functions.getCurrentDayExtraTax(token_id).call(
+                    {"from": self.user_address}
+                )
+            )
         except Exception as e:
             logger.print_fail(f"{e}")
-            return ""
+            return 0.0
 
-    def get_claimable_ppie(self, token_id: int) -> Token:
+    def is_harvest_day(self) -> bool:
         """
-        Get claimable PPIE per token
+        Is harvest day, yo? i.e. tax is 0%
         """
         try:
-            ppie_wei: Token = self.contract.functions.claimableView(token_id).call()
-            return ppie_wei
+            return self.contract.functions.isHarvestDay().call({"from": self.user_address})
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return False
+
+    def get_my_referral_rewards(self) -> int:
+        """
+        Referral awards
+        """
+        try:
+            return self.contract.functions.getMyReferralsRewardsTotal().call(
+                {"from": self.user_address}
+            )
         except Exception as e:
             logger.print_fail(f"{e}")
             return 0
-
-    def get_staked_pumpskin_info(self, token_id: int) -> StakedPumpskin:
-        try:
-            pumpskin_info = self.contract.functions.stakedPumpskins(token_id).call()
-            pumpskin: StakedPumpskin = StakedPumpskin(
-                kg=pumpskin_info[0],
-                since_ts=pumpskin_info[1],
-                last_skipped_ts=pumpskin_info[2],
-                eaten_amount=pumpskin_info[3],
-                cooldown_ts=pumpskin_info[4],
-            )
-            return pumpskin
-        except Exception as e:
-            logger.print_fail(f"{e}")
-            return {}
-
-    def get_staked_pumpskins(self, user_address: Address) -> T.List[int]:
-        """
-        Get the token ID at given index for the user. We use this as a hack way to get all the
-        NFTs owned by a user by iterating through indices until we error out
-        """
-        try:
-            address = Web3.toChecksumAddress(user_address)
-            return self.contract.functions.getStakedTokens(address).call()
-        except Exception as e:
-            logger.print_fail(f"{e}")
-            return []
