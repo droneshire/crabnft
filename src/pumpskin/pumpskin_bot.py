@@ -71,6 +71,8 @@ class PumpskinBot:
         self.dry_run: bool = dry_run
         self.address: Address = Web3.toChecksumAddress(config["address"])
 
+        self.last_gas_notification = 0
+
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
         self.txns: T.List[str] = []
 
@@ -360,6 +362,11 @@ class PumpskinBot:
         webhook.execute()
 
     def _send_discord_low_gas_notification(self, avax_gas: float) -> None:
+        now = time.time()
+        if now - self.last_gas_notification < 60.0 * 60.0 * 1:
+            return
+        self.last_gas_notification = now
+
         webhook = DiscordWebhook(
             url=discord.DISCORD_WEBHOOK_URL["PUMPSKIN_ACTIVITY"], rate_limit_retry=True
         )
