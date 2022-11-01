@@ -751,8 +751,9 @@ class PumpskinBot:
         # so we should really not trigger this often
         self._check_and_claim_potn(ordered_pumpskins)
 
-        self._send_email_update(len(ordered_pumpskins.keys()))
-        self._check_for_low_gas()
+        num_pumpskins = len(ordered_pumpskins.keys())
+        self._send_email_update(num_pumpskins)
+        self._check_for_low_gas(num_pumpskins)
         self._update_stats()
 
     def init(self) -> None:
