@@ -462,8 +462,10 @@ class PumpskinBot:
             self.config_mgr.config["game_specific_configs"]["percent_ppie_stake"] / 100.0
         )
 
-        mulitplier = self.config_mgr.config["game_specific_configs"]["ppie_stake_multiplier"]
-        min_ppie_to_stake = self.calc_ppie_earned_per_day(pumpskins) * mulitplier
+        multiplier = max(
+            0.1, self.config_mgr.config["game_specific_configs"]["ppie_stake_multiplier"]
+        )
+        min_ppie_to_stake = self.calc_ppie_earned_per_day(pumpskins) * multiplier
 
         if ppie_available_to_stake > min_ppie_to_stake:
             # Try to stake PPIE
@@ -580,10 +582,12 @@ class PumpskinBot:
         logger.print_ok_blue(f"Checking $POTN for claims...")
         total_claimable_potn = wei_to_token_raw(self.game_w3.get_claimable_potn(self.address))
 
-        mulitplier = self.config_mgr.config["game_specific_configs"]["potn_claim_multiplier"]
+        multiplier = max(
+            0.1, self.config_mgr.config["game_specific_configs"]["potn_claim_multiplier"]
+        )
 
         ppie_staked = wei_to_token_raw(self.game_w3.get_ppie_staked(self.address))
-        min_potn_to_claim = ppie_staked * 3 * mulitplier
+        min_potn_to_claim = ppie_staked * 3 * multiplier
 
         if total_claimable_potn >= min_potn_to_claim or force:
             self._claim_potn(total_claimable_potn)
@@ -625,8 +629,10 @@ class PumpskinBot:
         )
 
         # wait to claim at a half day's earnings
-        mulitplier = self.config_mgr.config["game_specific_configs"]["ppie_claim_multiplier"]
-        min_ppie_to_claim = ppie_per_day * mulitplier
+        multiplier = max(
+            0.1, self.config_mgr.config["game_specific_configs"]["ppie_claim_multiplier"]
+        )
+        min_ppie_to_claim = ppie_per_day * multiplier
 
         if total_claimable_ppie >= min_ppie_to_claim or force:
             self._claim_ppie(ppie_tokens, total_claimable_ppie)
