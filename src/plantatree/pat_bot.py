@@ -182,7 +182,7 @@ class PatBot:
             f"Lifetime Stats for {self.user.upper()}\n{json.dumps(self.stats_logger.lifetime_stats, indent=4)}"
         )
 
-    def _harvest(self) -> bool:
+    def _harvest(self) -> None:
         logger.print_bold(f"It's HARVEST DAY! Attempting to reap \U0001F332 \U0001F332...")
         tx_hash = self.pat_w3.harvest()
         tx_receipt = self.pat_w3.get_transaction_receipt(tx_hash)
@@ -194,16 +194,14 @@ class PatBot:
 
         if tx_receipt.get("status", 0) != 1:
             logger.print_fail(f"Failed to harvest rewards!")
-            return False
         else:
             logger.print_ok(f"Successfully completed harvest!\n{tx_receipt}")
             self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
             logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
             self.current_stats["harvests"] += 1
             self._send_discord_activity_update(Action.HARVEST, gas)
-        return True
 
-    def _replant(self) -> bool:
+    def _replant(self) -> None:
         logger.print_bold(f"Attempting to replant \U0001F332 \U0001F332...")
         tx_hash = self.pat_w3.re_plant(self.referral_address)
         tx_receipt = self.pat_w3.get_transaction_receipt(tx_hash)
@@ -215,16 +213,15 @@ class PatBot:
 
         if tx_receipt.get("status", 0) != 1:
             logger.print_fail(f"Failed to replant!")
-            return False
         else:
             logger.print_ok(f"Successfully completed harvest!")
             self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
             logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
             self.current_stats["replants"] += 1
             self._send_discord_activity_update(Action.REPLANT, gas)
-        return True
 
     def run(self, avax_usd: float) -> None:
+        # always assume we're replanting daily, so no tax
         gas_price_gwei = self.pat_w3.get_gas_price()
         if gas_price_gwei is None:
             gas_price_gwei = -1.0
@@ -237,13 +234,12 @@ class PatBot:
         logger.print_ok_arrow(f"Referral Awards: {self.pat_w3.get_my_referral_rewards()} trees")
         logger.print_ok_blue_arrow(f"Today's tax: {self.todays_tax:.2f}%")
 
-        did_harvest = False
         if is_harvest_day and self.pat_w3.is_harvest_day():
-            did_harvest = self._harvest()
+            self._harvest()
 
         last_replant = self.pat_w3.get_seconds_since_last_replant()
         min_time_replant = 60.0 * 60.0
-        if not did_harvest and last_replant > max(
+        if last_replant > max(
             min_time_replant, self.config_mgr.config["game_specific_configs"]["time_between_plants"]
         ):
             self._replant()
