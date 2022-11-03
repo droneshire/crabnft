@@ -11,14 +11,14 @@ from yaspin import yaspin
 
 from config_admin import ADMIN_ADDRESS, GMAIL, TWILIO_CONFIG
 from config_pat import USERS
+from plantatree.pat_bot import PatBot
 from utils import discord
 from utils import logger
 from utils.email import Email, get_email_accounts_from_password
 from utils.security import decrypt_secret
-from plantatree.pat_web3_client import PlantATreeWeb3Client
-from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 
-MINT_MARGIN = 100
+TIME_BETWEEN_PLAYERS = 5.0
+TIME_BETWEEN_RUNS = 30.0
 
 
 def parse_args() -> argparse.Namespace:
@@ -74,10 +74,57 @@ def harvester() -> None:
         encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
         email_accounts = get_email_accounts_from_password(encrypt_password, GMAIL)
 
-    for user, config in USERS.item():
+    bots = []
+    referral_address = ADMIN_ADDRESS
+    for user, config in USERS.items():
         address = config["address"]
         private_key = decrypt_secret(encrypt_password, config["private_key"])
+        config["private_key"] = private_key
+        bots.append(
+            PatBot(
+                user,
+                config,
+                email_accounts,
+                encrypt_password,
+                referral_address,
+                args.log_dir,
+                args.dry_run,
+            )
+        )
+
+    alerts_enabled = not args.quiet and not args.dry_run
+
+    # try:
+    while True:
+        for bot in bots:
+            bot.run()
+            logger.print_normal(f"Waiting before next user...")
+            wait(TIME_BETWEEN_PLAYERS)
+        logger.print_normal(f"Waiting for next round of botting...")
+        wait(TIME_BETWEEN_RUNS)
+    # except KeyboardInterrupt:
+    #     pass
+    # except Exception as e:
+    #     stop_message = f"PAT Alert \U0001F332\n\n"
+    #     stop_message += f"PAT Bot Stopped \U0000203C\n"
+    #     if alerts_enabled and TWILIO_CONFIG["enable_admin_sms"]:
+    #         sms_client = Client(TWILIO_CONFIG["account_sid"], TWILIO_CONFIG["account_auth_token"])
+    #         message = sms_client.messages.create(
+    #             body=stop_message,
+    #             from_=TWILIO_CONFIG["from_sms_number"],
+    #             to=TWILIO_CONFIG["admin_sms_number"],
+    #         )
+    #     if alerts_enabled:
+    #         stop_message += "Please manually attend your trees until we're back up"
+    #         try:
+    #             discord.get_discord_hook("PAT_UPDATES").send(stop_message)
+    #         except:
+    #             pass
+    #     logger.print_fail(traceback.format_exc())
+    # finally:
+    #     for bot in bots:
+    #         bot.end()
 
 
 if __name__ == "__main__":
-    snipe()
+    harvester()

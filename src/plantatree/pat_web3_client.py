@@ -16,10 +16,10 @@ from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 class PlantATreeWeb3Client(AvalancheCWeb3Client):
     """
     Interact with a smart contract of the Plant a Tree collection
-    https://snowtrace.io/address/0x94fde8DF71106cf2CF0141ce77546c2B3E35B243
+    https://snowtrace.io/address/0xFd97C61962FF2aE3D08491Db4805E7E46F38C502
     """
 
-    contract_address = T.cast(Address, "0x94fde8DF71106cf2CF0141ce77546c2B3E35B243")
+    contract_address = T.cast(Address, "0xFd97C61962FF2aE3D08491Db4805E7E46F38C502")
     this_dir = os.path.dirname(os.path.realpath(__file__))
     abi_dir = os.path.join(os.path.dirname(this_dir), "web3_utils", "abi", "abi-plant-a-tree.json")
     abi = Web3Client._get_contract_abi_from_file(abi_dir)
@@ -69,7 +69,7 @@ class PlantATreeWeb3Client(AvalancheCWeb3Client):
         """
         try:
             return float(
-                self.contract.functions.getCurrentDayExtraTax(token_id).call(
+                self.contract.functions.getCurrentDayExtraTax(extra_48_tax).call(
                     {"from": self.user_address}
                 )
             )
