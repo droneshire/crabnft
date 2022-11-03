@@ -52,7 +52,7 @@ class PlantATreeWeb3Client(AvalancheCWeb3Client):
             logger.print_fail(f"{e}")
             return ""
 
-    def harvest(self, token_ids: T.List[int]) -> HexStr:
+    def harvest(self) -> HexStr:
         """
         Harvest rewards
         """
@@ -98,3 +98,16 @@ class PlantATreeWeb3Client(AvalancheCWeb3Client):
         except Exception as e:
             logger.print_fail(f"{e}")
             return 0
+
+    def get_seconds_since_last_replant(self) -> float:
+        """
+        Get time in seconds since last replant
+        """
+        try:
+            seconds = self.contract.functions.diffTimeSinceLastRePlantTree().call(
+                {"from": self.user_address}
+            )
+            return float(seconds)
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return -1.0

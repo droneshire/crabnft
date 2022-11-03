@@ -1,22 +1,36 @@
+import copy
+import deepdiff
+import json
 import math
 import typing as T
+
+from discord import Color
+from discord_webhook import DiscordEmbed, DiscordWebhook
 from eth_typing import Address
 from web3 import Web3
 
-from config_admin import COINMARKETCAP_API_TOKEN
+from config_pat import COMMISSION_WALLET_ADDRESS
 from plantatree.config_manager_pat import PatConfigManager
-from plantatree.game_stats import PatLifetimeGameStatsLogger
+from plantatree.game_stats import NULL_GAME_STATS, PatLifetimeGameStatsLogger
 from plantatree.pat_web3_client import PlantATreeWeb3Client
-from utils import logger
+from utils import discord, logger
 from utils.config_types import UserConfig
-from utils.email import Email
+from utils.email import Email, send_email
 from utils.math import Average
-from utils.price import get_avax_price_usd
+from utils.price import wei_to_token_raw
 from utils.user import get_alias_from_user
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 
 
+class Action:
+    REPLANT = "replant"
+    PLANT = "plant"
+    HARVEST = "harvest"
+
+
 class PatBot:
+    REPLANT_TIME_DELTA = 60.0 * 60.0 * 4.0
+
     def __init__(
         self,
         user: str,
@@ -38,11 +52,15 @@ class PatBot:
         self.user = user
         self.alias = get_alias_from_user(self.user)
         self.log_dir = log_dir
+        self.emails = email_accounts
         self.dry_run = dry_run
 
         self.avg_gas_gwei: Average = Average()
-        self.last_replant: float = None
+        self.avg_gas_used: Average = Average(0.001570347)
+
         self.referral_address: Address = Web3.toChecksumAddress(referral_address)
+
+        self.txns = []
 
         self.config_mgr = PatConfigManager(
             user,
@@ -54,6 +72,8 @@ class PatBot:
             verbose=True,
         )
 
+        self.current_stats = copy.deepcopy(NULL_GAME_STATS)
+
         self.stats_logger = PatLifetimeGameStatsLogger(
             self.alias,
             self.log_dir,
@@ -62,20 +82,159 @@ class PatBot:
             verbose=False,
         )
 
-    def run(self) -> None:
-        # always assume we're replanting daily, so no tax
-        current_day_tax = self.pat_w3.get_current_day_tax(extra_48_tax=False)
-        if not math.isclose(0.0, current_day_tax):
-            logger.print_ok_blue(f"Today's tax: {current_day_tax:.2f}%")
+    def _send_discord_activity_update(self, action: Action, gas: float) -> None:
+        webhook = DiscordWebhook(
+            url=discord.DISCORD_WEBHOOK_URL["PAT_ACTIVITY"], rate_limit_retry=True
+        )
+        discord_username = self.config_mgr.config["discord_handle"].split("#")[0].upper()
+        embed = DiscordEmbed(
+            title=f"\U0001F332 PAT Activity",
+            description=f"Bot action for {discord_username}\n",
+            color=Color.green().value,
+        )
+        embed.add_embed_field(name=f"Action", value=f"{action.upper()}", inline=False)
+        embed.add_embed_field(name=f"Gas", value=f"{gas}", inline=False)
+        embed.set_thumbnail(url="https://plantatree.finance/images/logo/Plant_A_Tree_Logo_1.png", height=100, width=100)
+        webhook.add_embed(embed)
+        webhook.execute()
+
+    def _send_email_update(self) -> None:
+        content = f"Plant A Tree Stats for {self.user.upper()}:\n"
+        content += f"Replants: {self.current_stats['replants']}\n"
+        content += f"Harvests: {self.current_stats['harvests']}\n\n"
+        if self.txns:
+            content += f"TXs:\n"
+            for tx in self.txns:
+                content += f"{tx}\n"
+            self.txns.clear()
+        content += f"Lifetime Stats:\n{json.dumps(self.stats_logger.lifetime_stats, indent=4)}\n\n"
+        content += f"--------------------\n"
+
+        logger.print_bold("\n" + content + "\n")
+
+        diff = deepdiff.DeepDiff(self.current_stats, NULL_GAME_STATS)
+        if not diff:
+            logger.print_normal(f"Didn't update any stats, not sending email...")
             return
 
+        if self.dry_run:
+            return
+
+        subject = f"\U0001F332 Plant a Tree Bot Update"
+
+        if self.config_mgr.config["email"]:
+            send_email(
+                self.emails,
+                self.config_mgr.config["email"],
+                subject,
+                content,
+            )
+
+    def _update_stats(self) -> None:
+        for k, v in self.current_stats.items():
+            if type(v) != type(self.stats_logger.lifetime_stats.get(k)):
+                logger.print_warn(
+                    f"Mismatched stats:\n{self.current_stats}\n{self.stats_logger.lifetime_stats}"
+                )
+                continue
+
+            if k in ["commission_avax"]:
+                continue
+
+            if isinstance(v, list):
+                self.stats_logger.lifetime_stats[k].extend(v)
+            elif isinstance(v, dict):
+                for i, j in self.stats_logger.lifetime_stats[k].items():
+                    self.stats_logger.lifetime_stats[k][i] += self.current_stats[k][i]
+            else:
+                self.stats_logger.lifetime_stats[k] += v
+
+        self.stats_logger.lifetime_stats["commission_avax"] = self.stats_logger.lifetime_stats.get(
+            "commission_avax", {COMMISSION_WALLET_ADDRESS: 0.0}
+        )
+
+        avax_rewards = self.current_stats["avax_harvested"]
+        for address, commission_percent in self.config_mgr.config[
+            "commission_percent_per_mine"
+        ].items():
+            commission_avax = avax_rewards * (commission_percent / 100.0)
+
+            self.stats_logger.lifetime_stats["commission_avax"][address] = (
+                self.stats_logger.lifetime_stats["commission_avax"].get(address, 0.0)
+                + commission_avax
+            )
+
+            logger.print_ok(
+                f"Added {commission_avax} $AVAX for {address} in commission ({commission_percent}%)!"
+            )
+
+        self.current_stats = copy.deepcopy(NULL_GAME_STATS)
+
+        logger.print_ok_blue(
+            f"Lifetime Stats for {self.user.upper()}\n{json.dumps(self.stats_logger.lifetime_stats, indent=4)}"
+        )
+
+    def _harvest(self) -> None:
+        logger.print_bold(f"It's HARVEST DAY! Attempting to reap \U0001F332 \U0001F332...")
+        tx_hash = self.pat_w3.harvest()
+        tx_receipt = self.pat_w3.get_transaction_receipt(tx_hash)
+
+        gas = wei_to_token_raw(self.pat_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        self.avg_gas_used.update(gas)
+        self.stats_logger.lifetime_stats["avax_gas"] += gas
+        logger.print_bold(f"Paid {gas} AVAX in gas")
+
+        if tx_receipt.get("status", 0) != 1:
+            logger.print_fail(f"Failed to harvest rewards!")
+        else:
+            logger.print_ok(f"Successfully completed harvest!\n{tx_receipt}")
+            self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
+            logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+            self.current_stats["harvests"] += 1
+            self._send_discord_activity_update(Action.HARVEST, gas)
+
+    def _replant(self) -> None:
+        logger.print_bold(f"Attempting to replant \U0001F332 \U0001F332...")
+        tx_hash = self.pat_w3.re_plant(self.referral_address)
+        tx_receipt = self.pat_w3.get_transaction_receipt(tx_hash)
+
+        gas = wei_to_token_raw(self.pat_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        self.avg_gas_used.update(gas)
+        self.stats_logger.lifetime_stats["avax_gas"] += gas
+        logger.print_bold(f"Paid {gas} AVAX in gas")
+
+        if tx_receipt.get("status", 0) != 1:
+            logger.print_fail(f"Failed to replant!")
+        else:
+            logger.print_ok(f"Successfully completed harvest!")
+            self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
+            logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+            self.current_stats["replants"] += 1
+            self._send_discord_activity_update(Action.REPLANT, gas)
+
+    def run(self, avax_usd: float) -> None:
+        # always assume we're replanting daily, so no tax
         gas_price_gwei = self.pat_w3.get_gas_price()
         if gas_price_gwei is None:
             gas_price_gwei = -1.0
         self.avg_gas_gwei.update(gas_price_gwei)
 
-        avax_usd = get_avax_price_usd(COINMARKETCAP_API_TOKEN, self.dry_run)
-        logger.print_ok(f"AVAX: ${avax_usd:.3f}, Gas: {gas_price_gwei:.2f}")
+        current_day_tax = self.pat_w3.get_current_day_tax(extra_48_tax=False)
+        is_harvest_day = math.isclose(0.0, current_day_tax)
+
+        logger.print_bold(f"{self.user.upper()} \U0001F332 Stats:")
+        logger.print_ok_arrow(f"Referral Awards: {self.pat_w3.get_my_referral_rewards()} trees")
+        logger.print_ok_blue_arrow(f"Today's tax: {current_day_tax:.2f}%")
+
+        if is_harvest_day and self.pat_w3.is_harvest_day():
+            self._harvest()
+
+        last_replant = self.pat_w3.get_seconds_since_last_replant()
+        if last_replant > self.config_mgr.config["game_specific_configs"]["time_between_plants"]:
+            self._replant()
+
+        self._send_email_update()
+        self._update_stats()
 
     def end(self) -> None:
         logger.print_normal(f"Shutting down bot for {self.user}...")

@@ -9,12 +9,14 @@ import traceback
 from twilio.rest import Client
 from yaspin import yaspin
 
-from config_admin import ADMIN_ADDRESS, GMAIL, TWILIO_CONFIG
+from config_admin import ADMIN_ADDRESS, GMAIL, IEX_API_TOKEN, TWILIO_CONFIG
 from config_pat import USERS
 from plantatree.pat_bot import PatBot
 from utils import discord
 from utils import logger
 from utils.email import Email, get_email_accounts_from_password
+from utils.math import Average
+from utils.price import get_avax_price_usd
 from utils.security import decrypt_secret
 
 TIME_BETWEEN_PLAYERS = 5.0
@@ -94,11 +96,22 @@ def harvester() -> None:
 
     alerts_enabled = not args.quiet and not args.dry_run
 
+    avg_gas_gwei: Average = Average()
+    avg_gas_used: Average = Average()
+
     # try:
     while True:
+        avax_usd = get_avax_price_usd(IEX_API_TOKEN, args.dry_run)
+        avax_usd_value = avax_usd if avax_usd is not None else 0.0
+        gas_gwei = avg_gas_gwei.get_avg()
+        gas_gwei_value = gas_gwei if gas_gwei else 0
+        logger.print_bold(f"AVAX: ${avax_usd_value:.3f}, Gas: {gas_gwei_value}")
+
         for bot in bots:
-            bot.run()
+            bot.run(avax_usd)
             logger.print_normal(f"Waiting before next user...")
+            avg_gas_gwei.update(bot.avg_gas_gwei.get_avg())
+            avg_gas_used.update(bot.avg_gas_used.get_avg())
             wait(TIME_BETWEEN_PLAYERS)
         logger.print_normal(f"Waiting for next round of botting...")
         wait(TIME_BETWEEN_RUNS)
