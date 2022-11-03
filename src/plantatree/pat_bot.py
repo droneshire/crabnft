@@ -170,9 +170,10 @@ class PatBot:
                 + commission_avax
             )
 
-            logger.print_ok(
-                f"Added {commission_avax} $AVAX for {address} in commission ({commission_percent}%)!"
-            )
+            if not math.isclose(0.0, commission_avax):
+                logger.print_ok(
+                    f"Added {commission_avax} $AVAX for {address} in commission ({commission_percent}%)!"
+                )
 
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
 
