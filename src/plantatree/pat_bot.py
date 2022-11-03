@@ -59,6 +59,7 @@ class PatBot:
         self.avg_gas_used: Average = Average(0.001570347)
 
         self.referral_address: Address = Web3.toChecksumAddress(referral_address)
+        self.todays_tax = 100.0
 
         self.txns = []
 
@@ -94,7 +95,12 @@ class PatBot:
         )
         embed.add_embed_field(name=f"Action", value=f"{action.upper()}", inline=False)
         embed.add_embed_field(name=f"Gas", value=f"{gas}", inline=False)
-        embed.set_thumbnail(url="https://plantatree.finance/images/logo/Plant_A_Tree_Logo_1.png", height=100, width=100)
+        embed.add_embed_field(name=f"Today's Tax", value=f"{self.todays_tax:.1f}%", inline=False)
+        embed.set_thumbnail(
+            url="https://plantatree.finance/images/logo/Plant_A_Tree_Logo_1.png",
+            height=100,
+            width=100,
+        )
         webhook.add_embed(embed)
         webhook.execute()
 
@@ -219,18 +225,21 @@ class PatBot:
             gas_price_gwei = -1.0
         self.avg_gas_gwei.update(gas_price_gwei)
 
-        current_day_tax = self.pat_w3.get_current_day_tax(extra_48_tax=False)
-        is_harvest_day = math.isclose(0.0, current_day_tax)
+        self.todays_tax = self.pat_w3.get_current_day_tax(extra_48_tax=False)
+        is_harvest_day = math.isclose(0.0, self.todays_tax)
 
         logger.print_bold(f"{self.user.upper()} \U0001F332 Stats:")
         logger.print_ok_arrow(f"Referral Awards: {self.pat_w3.get_my_referral_rewards()} trees")
-        logger.print_ok_blue_arrow(f"Today's tax: {current_day_tax:.2f}%")
+        logger.print_ok_blue_arrow(f"Today's tax: {self.todays_tax:.2f}%")
 
         if is_harvest_day and self.pat_w3.is_harvest_day():
             self._harvest()
 
         last_replant = self.pat_w3.get_seconds_since_last_replant()
-        if last_replant > self.config_mgr.config["game_specific_configs"]["time_between_plants"]:
+        min_time_replant = 60.0 * 60.0
+        if last_replant > max(
+            min_time_replant, self.config_mgr.config["game_specific_configs"]["time_between_plants"]
+        ):
             self._replant()
 
         self._send_email_update()
