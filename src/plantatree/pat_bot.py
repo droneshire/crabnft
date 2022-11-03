@@ -113,10 +113,11 @@ class PatBot:
             for tx in self.txns:
                 content += f"{tx}\n"
             self.txns.clear()
-        content += f"Lifetime Stats:\n{json.dumps(self.stats_logger.lifetime_stats, indent=4)}\n\n"
-        content += f"--------------------\n"
 
         logger.print_bold("\n" + content + "\n")
+
+        content += f"Lifetime Stats:\n{json.dumps(self.stats_logger.lifetime_stats, indent=4)}\n\n"
+        content += f"--------------------\n"
 
         diff = deepdiff.DeepDiff(self.current_stats, NULL_GAME_STATS)
         if not diff:

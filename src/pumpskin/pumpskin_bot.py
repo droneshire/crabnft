@@ -414,6 +414,7 @@ class PumpskinBot:
                 f"Added {commission_ppie} $PPIE for {address} in commission ({commission_percent}%)!"
             )
 
+        self.ppie_since_last_claimed = self.current_stats["ppie"]
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
 
         logger.print_ok_blue(

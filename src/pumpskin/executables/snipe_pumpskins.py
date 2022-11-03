@@ -38,6 +38,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--margin", type=int, default=MINT_MARGIN, help="margin before target mint")
     parser.add_argument("--sms-rank", type=int, default=1000, help="rank for sms alert")
+    parser.add_argument("--auto", action="store_true", help="Auto buy")
 
     return parser.parse_args()
 
@@ -129,6 +130,8 @@ def snipe() -> None:
     try:
         while True:
             try:
+                check_mint_status(w3, mint_targets, target_id)
+
                 minted = w3.get_total_pumpskins_minted()
 
                 if minted > target_id:
