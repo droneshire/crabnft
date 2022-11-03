@@ -230,11 +230,10 @@ class PumpskinNftWeb3Client(AvalancheCWeb3Client):
         """
         try:
             address = Web3.toChecksumAddress(user_address)
-            tx: TxParams = self.contract.functions.claim(
-                address, quantity, self.PT_TOKEN_ADDRESS, 1, [], 0
+            tx: TxParams = self.build_base_transaction(
+                self.contract.functions.claim(address, quantity, self.PT_TOKEN_ADDRESS, 1, [], 0)
             )
-            print(tx)
-            return ""
+            return self.sign_and_send_transaction(tx)
         except Exception as e:
             logger.print_fail(f"{e}")
             return ""
