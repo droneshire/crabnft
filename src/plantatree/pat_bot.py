@@ -16,6 +16,7 @@ from plantatree.pat_web3_client import PlantATreeWeb3Client
 from utils import discord, logger
 from utils.config_types import UserConfig
 from utils.email import Email, send_email
+from utils.general import get_pretty_seconds
 from utils.math import Average
 from utils.price import wei_to_token_raw
 from utils.user import get_alias_from_user
@@ -241,12 +242,15 @@ class PatBot:
         if is_harvest_day and self.pat_w3.is_harvest_day():
             did_harvest = self._harvest()
 
-        last_replant = self.pat_w3.get_seconds_since_last_replant()
-        min_time_replant = 60.0 * 60.0
-        if not did_harvest and last_replant > max(
-            min_time_replant, self.config_mgr.config["game_specific_configs"]["time_between_plants"]
-        ):
-            self._replant()
+        if not did_harvest:
+            last_replant = self.pat_w3.get_seconds_since_last_replant()
+            logger.print_ok_blue(f"Last replant: {get_pretty_seconds(last_replant)} ago")
+            min_time_replant = 60.0 * 60.0
+            if last_replant > max(
+                min_time_replant,
+                self.config_mgr.config["game_specific_configs"]["time_between_plants"],
+            ):
+                self._replant()
 
         self._send_email_update()
         self._update_stats()
