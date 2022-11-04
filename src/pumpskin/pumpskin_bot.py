@@ -63,6 +63,7 @@ class PumpskinBot:
         encrypt_password: str,
         log_dir: str,
         dry_run: bool,
+        update_config: bool,
     ):
         self.user: str = user
         self.alias: str = get_alias_from_user(user)
@@ -84,6 +85,7 @@ class PumpskinBot:
             log_dir,
             dry_run=dry_run,
             verbose=True,
+            update_from_src=update_config,
         )
 
         self.pumpskin_w2: PumpskinWeb2Client = PumpskinWeb2Client()

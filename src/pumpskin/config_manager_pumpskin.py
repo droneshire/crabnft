@@ -18,11 +18,14 @@ class PumpskinConfigManager(ConfigManager):
         log_dir: str,
         dry_run: bool = False,
         verbose: bool = False,
+        update_from_src: bool = False,
     ):
         super().__init__(user, config, send_email_accounts, encrypt_password, log_dir, dry_run)
+        self.update_from_src = update_from_src
 
     def init(self):
-        self.config = self._load_config()
+        if not self.update_from_src:
+            self.config = self._load_config()
         self._send_email_config_if_needed()
         self._print_out_config()
         self._save_config()
