@@ -73,6 +73,7 @@ class PumpskinBot:
         self.address: Address = Web3.toChecksumAddress(config["address"])
 
         self.last_gas_notification = 0
+        self.ppie_available_to_stake = 0.0
 
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
         self.txns: T.List[str] = []
@@ -459,7 +460,8 @@ class PumpskinBot:
             )
 
     def _check_and_stake_ppie(self, pumpskins: T.Dict[int, T.Dict[int, T.Any]]) -> None:
-        ppie_balance = float(self.ppie_w3.get_balance())
+        # we want to only stake the percent of PPIE we've claimed
+        ppie_balance = min(float(self.ppie_w3.get_balance()), self.ppie_available_to_stake)
 
         ppie_available_to_stake = ppie_balance * (
             self.config_mgr.config["game_specific_configs"]["percent_ppie_stake"] / 100.0
@@ -484,6 +486,7 @@ class PumpskinBot:
             if tx_receipt.get("status", 0) != 1:
                 logger.print_fail(f"Failed to stake {ppie_available_to_stake:.2f} $PPIE!")
             else:
+                self.ppie_available_to_stake = 0.0
                 logger.print_ok(f"Successfully staked {ppie_available_to_stake:.2f} $PPIE")
                 self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
                 logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
@@ -661,6 +664,7 @@ class PumpskinBot:
             self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
             logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
             self.current_stats["ppie"] += ppie_to_claim
+            self.ppie_available_to_stake += ppie_to_claim
 
     def _claim_potn(self, potn_to_claim: float) -> None:
         logger.print_normal(f"Attempting to claim {potn_to_claim:.2f} $POTN for {self.user}...")
