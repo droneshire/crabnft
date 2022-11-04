@@ -130,8 +130,6 @@ def snipe() -> None:
     try:
         while True:
             try:
-                check_mint_status(w3, mint_targets, target_id)
-
                 minted = w3.get_total_pumpskins_minted()
 
                 if minted > target_id:
