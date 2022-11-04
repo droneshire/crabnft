@@ -518,9 +518,14 @@ class PumpskinBot:
 
         return True
 
-    def _level_pumpskins(self, token_id: int, next_level: int) -> None:
+    def _level_pumpskins(self, token_id: int, next_level: int, is_special: bool) -> None:
         # Level Pumpskin who can be leveled up
-        logger.print_normal(f"Attempting to Level up pumpskin {token_id} to {next_level}...")
+        if is_special:
+            logger.print_ok(
+                f"Attempting to Level up special pumpskin {token_id} to {next_level}..."
+            )
+        else:
+            logger.print_normal(f"Attempting to Level up pumpskin {token_id} to {next_level}...")
         tx_hash = self.collection_w3.level_up_pumpkin(token_id)
         tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
         gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
@@ -564,7 +569,15 @@ class PumpskinBot:
             )
             potn_to_level = level_potn - pumpskin.get("eaten_amount", 100000)
 
-            if next_level > self.config_mgr.config["game_specific_configs"]["max_level"]:
+            special_pumps = self.config_mgr.config["game_specific_configs"]["special_pumps"]
+            is_special = token_id in special_pumps
+            if is_special:
+                if next_level > special_pumps[token_id]:
+                    logger.print_ok_blue(
+                        f"Skipping level up for special pump {token_id} since at max level: {level}"
+                    )
+                    continue
+            elif next_level > self.config_mgr.config["game_specific_configs"]["max_level"]:
                 logger.print_ok_blue(
                     f"Skipping level up for {token_id} since at max user level: {level}"
                 )
@@ -573,14 +586,14 @@ class PumpskinBot:
             potn_balance = self.potn_w3.get_balance()
             if potn_balance < potn_to_level:
                 logger.print_warn(
-                    f"Not enough $POTN to level up {token_id}. Have: {potn_balance:.2f} Need: {potn_to_level:.2f}. Skipping..."
+                    f"Not enough $POTN to level up {token_id} to {next_level}.\n\tHave: {potn_balance:.2f} Need: {potn_to_level:.2f}. Skipping..."
                 )
                 continue
 
             if not self._drink_potion(token_id, potn_to_level):
                 continue
 
-            self._level_pumpskins(token_id, next_level)
+            self._level_pumpskins(token_id, next_level, is_special)
 
     def _check_and_claim_potn(
         self, pumpskins: T.Dict[int, T.Dict[int, T.Any]], force: bool = False
@@ -749,22 +762,30 @@ class PumpskinBot:
             )
         )
 
+        # insert special pumpkins to the front of the leveling group
+        final_pumpskins = {}
+        for token_id in self.config_mgr.config["game_specific_configs"]["special_pumps"].keys():
+            final_pumpskins[token_id] = ordered_pumpskins[token_id]
+            del ordered_pumpskins[token_id]
+
+        final_pumpskins.update(ordered_pumpskins)
+
         potn_balance = self.potn_w3.get_balance()
         ppie_balance = self.ppie_w3.get_balance()
+        num_pumpskins = len(final_pumpskins.keys())
 
         logger.print_bold(f"{self.user} Balances:")
         logger.print_ok_arrow(f"PPIE: {ppie_balance:.2f}")
         logger.print_ok_arrow(f"POTN: {potn_balance:.2f}")
-        logger.print_ok_arrow(f"\U0001F383: {len(pumpskin_ids)}")
+        logger.print_ok_arrow(f"\U0001F383: {num_pumpskins}")
 
-        self._check_and_claim_ppie(ordered_pumpskins)
-        self._try_to_level_pumpskins(ordered_pumpskins)
-        self._check_and_stake_ppie(ordered_pumpskins)
+        self._check_and_claim_ppie(final_pumpskins)
+        self._try_to_level_pumpskins(final_pumpskins)
+        self._check_and_stake_ppie(final_pumpskins)
         # staking PPIE should claim all outstanding POTN in one transaction
         # so we should really not trigger this often
-        self._check_and_claim_potn(ordered_pumpskins)
+        self._check_and_claim_potn(final_pumpskins)
 
-        num_pumpskins = len(ordered_pumpskins.keys())
         self._send_email_update(num_pumpskins)
         self._check_for_low_gas(num_pumpskins)
         self._update_stats()
