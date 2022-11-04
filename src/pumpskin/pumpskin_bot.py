@@ -145,6 +145,14 @@ class PumpskinBot:
             verbose=False,
         )
 
+        # convert json to actual IDs
+        copy_config = {}
+        for k, v in self.config_mgr.config["game_specific_configs"]["special_pumps"].items():
+            copy_config[int(k)] = v
+        self.config_mgr.config["game_specific_configs"]["special_pumps"] = copy.deepcopy(
+            copy_config
+        )
+
     @staticmethod
     def get_json_path(file_name: str) -> str:
         this_dir = os.path.dirname(os.path.realpath(__file__))
