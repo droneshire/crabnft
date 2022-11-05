@@ -99,7 +99,7 @@ class PatBot:
         embed.add_embed_field(name=f"Today's Tax", value=f"{self.todays_tax:.1f}%", inline=False)
 
         contract_balance = self.pat_w3.get_contract_balance()
-        rewards_avax = self.pat_w3.calculate_harvest_reward(self.get_my_total_trees())
+        rewards_avax = self.pat_w3.calculate_harvest_reward(self.pat_w3.get_my_total_trees())
         embed.add_embed_field(
             name=f"Contract Balance", value=f"{contract_balance:.2f}%", inline=True
         )
