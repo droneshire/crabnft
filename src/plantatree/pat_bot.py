@@ -225,7 +225,7 @@ class PatBot:
             logger.print_fail(f"Failed to replant!")
             return False
         else:
-            logger.print_ok(f"Successfully completed harvest!")
+            logger.print_ok(f"Successfully completed replant!")
             self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
             logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
             self.current_stats["replants"] += 1
