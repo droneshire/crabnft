@@ -111,3 +111,24 @@ class PlantATreeWeb3Client(AvalancheCWeb3Client):
         except Exception as e:
             logger.print_fail(f"{e}")
             return -1.0
+
+    def get_contract_balance() -> float:
+        avax_w3: AvaxCWeb3Client = T.cast(
+            AvaxCWeb3Client,
+            (
+                AvaxCWeb3Client()
+                .set_credentials(self.contract_address, "")
+                .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+                .set_dry_run(self.dry_run)
+            ),
+        )
+        avax_balance = avax_w3.get_balance()
+
+    def did_48_hour_replant(self) -> bool:
+        try:
+            return self.contract.functions.hasNoCompoundLast48Hours().call(
+                {"from": self.user_address}
+            )
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return False
