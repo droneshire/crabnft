@@ -84,7 +84,9 @@ class PatBot:
             verbose=False,
         )
 
-    def _send_discord_activity_update(self, action: Action, gas: float) -> None:
+    def _send_discord_activity_update(
+        self, action: Action, gas: float, rewards_avax: float
+    ) -> None:
         webhook = DiscordWebhook(
             url=discord.DISCORD_WEBHOOK_URL["PAT_ACTIVITY"], rate_limit_retry=True
         )
@@ -99,11 +101,10 @@ class PatBot:
         embed.add_embed_field(name=f"Today's Tax", value=f"{self.todays_tax:.1f}%", inline=False)
 
         contract_balance = self.pat_w3.get_contract_balance()
-        rewards_avax = self.pat_w3.calculate_harvest_reward(self.pat_w3.get_my_total_trees())
         embed.add_embed_field(
-            name=f"Contract Balance", value=f"{contract_balance:.2f}%", inline=True
+            name=f"Contract Balance", value=f"{contract_balance:.2f} $AVAX", inline=True
         )
-        embed.add_embed_field(name=f"Rewards Earned", value=f"{rewards_avax:.2f}%", inline=True)
+        embed.add_embed_field(name=f"Rewards Earned", value=f"{rewards_avax:.2f} $AVAX", inline=True)
         embed.set_thumbnail(
             url="https://plantatree.finance/images/logo/Plant_A_Tree_Logo_1.png",
             height=100,
@@ -190,7 +191,7 @@ class PatBot:
             f"Lifetime Stats for {self.user.upper()}\n{json.dumps(self.stats_logger.lifetime_stats, indent=4)}"
         )
 
-    def _harvest(self) -> bool:
+    def _harvest(self, rewards_avax: float) -> bool:
         logger.print_bold(f"It's HARVEST DAY! Attempting to reap \U0001F332 \U0001F332...")
         tx_hash = self.pat_w3.harvest()
         tx_receipt = self.pat_w3.get_transaction_receipt(tx_hash)
@@ -208,10 +209,10 @@ class PatBot:
             self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
             logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
             self.current_stats["harvests"] += 1
-            self._send_discord_activity_update(Action.HARVEST, gas)
+            self._send_discord_activity_update(Action.HARVEST, gas, rewards_avax)
         return True
 
-    def _replant(self) -> bool:
+    def _replant(self, rewards_avax: float) -> bool:
         logger.print_bold(f"Attempting to replant \U0001F332 \U0001F332...")
         tx_hash = self.pat_w3.re_plant(self.referral_address)
         tx_receipt = self.pat_w3.get_transaction_receipt(tx_hash)
@@ -229,7 +230,7 @@ class PatBot:
             self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
             logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
             self.current_stats["replants"] += 1
-            self._send_discord_activity_update(Action.REPLANT, gas)
+            self._send_discord_activity_update(Action.REPLANT, gas, rewards_avax)
         return True
 
     def _should_replant(self) -> bool:
@@ -273,14 +274,15 @@ class PatBot:
             f"Contract balance: {self.pat_w3.get_contract_balance():.2f} $AVAX"
         )
         my_trees = self.pat_w3.get_my_total_trees()
-        logger.print_ok(f"Rewards: {self.pat_w3.calculate_harvest_reward(my_trees)}")
+        rewards_avax = self.pat_w3.calculate_harvest_reward(my_trees)
+        logger.print_ok(f"Rewards: {rewards_avax}")
         logger.print_ok(f"My Trees: {my_trees}")
 
         if is_harvest_day and self.pat_w3.is_harvest_day() and self.pat_w3.did_48_hour_replant():
-            self._harvest()
+            self._harvest(rewards_avax)
 
         if self.todays_tax > 30.0 and self._should_replant():
-            self._replant()
+            self._replant(rewards_avax)
 
         self._send_email_update()
         self._update_stats()
