@@ -153,13 +153,10 @@ class PlantATreeWeb3Client(AvalancheCWeb3Client):
             logger.print_fail(f"{e}")
             return 0
 
-    def calculate_harvest_reward(self) -> float:
-        my_trees = self.get_my_total_trees()
+    def calculate_harvest_reward(self, trees: int) -> float:
         try:
             return wei_to_token_raw(
-                self.contract.functions.calculateTreeSell(my_trees).call(
-                    {"from": self.user_address}
-                )
+                self.contract.functions.calculateTreeSell(trees).call({"from": self.user_address})
             )
         except Exception as e:
             logger.print_fail(f"{e}")

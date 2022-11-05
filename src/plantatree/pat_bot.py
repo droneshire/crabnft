@@ -99,7 +99,7 @@ class PatBot:
         embed.add_embed_field(name=f"Today's Tax", value=f"{self.todays_tax:.1f}%", inline=False)
 
         contract_balance = self.pat_w3.get_contract_balance()
-        rewards_avax = self.pat_w3.calculate_harvest_reward()
+        rewards_avax = self.pat_w3.calculate_harvest_reward(self.get_my_total_trees())
         embed.add_embed_field(
             name=f"Contract Balance", value=f"{contract_balance:.2f}%", inline=True
         )
@@ -232,6 +232,31 @@ class PatBot:
             self._send_discord_activity_update(Action.REPLANT, gas)
         return True
 
+    def _should_replant(self) -> bool:
+        last_replant = self.pat_w3.get_seconds_since_last_replant()
+        logger.print_ok_blue(f"Last replant: {get_pretty_seconds(last_replant)} ago")
+        min_time_replant = 60.0 * 60.0 * 1.0
+
+        if last_replant < max(
+            min_time_replant,
+            self.config_mgr.config["game_specific_configs"]["time_between_plants"],
+        ):
+            return False
+
+        return True
+
+    def _calc_total_trees(self) -> int:
+        TSN = 10000.0
+        TSNH = 5000.0
+        trees = self.pat_w3.get_my_total_trees()
+        rewards = float(self.pat_w3.calculate_harvest_reward(trees))
+        contract_balance = float(self.pat_w3.get_contract_balance())
+        trees = float(trees)
+        trees_total = (
+            (TSN * contract_balance - rewards * TSNH) * trees / rewards - TSNH * trees
+        ) / TSN
+        return int(trees_total)
+
     def run(self, avax_usd: float) -> None:
         gas_price_gwei = self.pat_w3.get_gas_price()
         if gas_price_gwei is None:
@@ -247,22 +272,15 @@ class PatBot:
         logger.print_ok_blue_arrow(
             f"Contract balance: {self.pat_w3.get_contract_balance():.2f} $AVAX"
         )
-        logger.print_ok_blue(f"Trees: {self.pat_w3.get_total_contract_trees()}")
-        logger.print_ok(f"Rewards: {self.pat_w3.calculate_harvest_reward()}")
-        logger.print_ok(f"My Trees: {self.pat_w3.get_my_total_trees()}")
+        my_trees = self.pat_w3.get_my_total_trees()
+        logger.print_ok(f"Rewards: {self.pat_w3.calculate_harvest_reward(my_trees)}")
+        logger.print_ok(f"My Trees: {my_trees}")
 
         if is_harvest_day and self.pat_w3.is_harvest_day() and self.pat_w3.did_48_hour_replant():
             self._harvest()
 
-        if self.todays_tax > 30.0:
-            last_replant = self.pat_w3.get_seconds_since_last_replant()
-            logger.print_ok_blue(f"Last replant: {get_pretty_seconds(last_replant)} ago")
-            min_time_replant = 60.0 * 60.0 * 1.0
-            if last_replant > max(
-                min_time_replant,
-                self.config_mgr.config["game_specific_configs"]["time_between_plants"],
-            ):
-                self._replant()
+        if self.todays_tax > 30.0 and self._should_replant():
+            self._replant()
 
         self._send_email_update()
         self._update_stats()
