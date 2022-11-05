@@ -11,6 +11,7 @@ from utils import logger
 from utils.price import Token, token_to_wei, wei_to_token_raw
 from web3_utils.web3_client import Web3Client
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
+from web3_utils.avax_web3_client import AvaxCWeb3Client
 
 
 class PlantATreeWeb3Client(AvalancheCWeb3Client):
@@ -112,7 +113,7 @@ class PlantATreeWeb3Client(AvalancheCWeb3Client):
             logger.print_fail(f"{e}")
             return -1.0
 
-    def get_contract_balance() -> float:
+    def get_contract_balance(self) -> float:
         avax_w3: AvaxCWeb3Client = T.cast(
             AvaxCWeb3Client,
             (
@@ -122,7 +123,12 @@ class PlantATreeWeb3Client(AvalancheCWeb3Client):
                 .set_dry_run(self.dry_run)
             ),
         )
-        avax_balance = avax_w3.get_balance()
+        try:
+            avax_balance = avax_w3.get_balance()
+            return avax_balance
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return False
 
     def did_48_hour_replant(self) -> bool:
         try:
@@ -132,3 +138,29 @@ class PlantATreeWeb3Client(AvalancheCWeb3Client):
         except Exception as e:
             logger.print_fail(f"{e}")
             return False
+
+    def get_total_contract_trees(self) -> int:
+        try:
+            return self.contract.functions.totalPlantedBalance().call()
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return 0
+
+    def get_my_total_trees(self) -> int:
+        try:
+            return self.contract.functions.getMyTrees().call({"from": self.user_address})
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return 0
+
+    def calculate_harvest_reward(self) -> float:
+        my_trees = self.get_my_total_trees()
+        try:
+            return wei_to_token_raw(
+                self.contract.functions.calculateTreeSell(my_trees).call(
+                    {"from": self.user_address}
+                )
+            )
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return 0.0

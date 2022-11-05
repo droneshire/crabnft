@@ -97,6 +97,13 @@ class PatBot:
         embed.add_embed_field(name=f"Action", value=f"{action.upper()}", inline=False)
         embed.add_embed_field(name=f"Gas", value=f"{gas}", inline=False)
         embed.add_embed_field(name=f"Today's Tax", value=f"{self.todays_tax:.1f}%", inline=False)
+
+        contract_balance = self.pat_w3.get_contract_balance()
+        rewards_avax = self.pat_w3.calculate_harvest_reward()
+        embed.add_embed_field(
+            name=f"Contract Balance", value=f"{contract_balance:.2f}%", inline=True
+        )
+        embed.add_embed_field(name=f"Rewards Earned", value=f"{rewards_avax:.2f}%", inline=True)
         embed.set_thumbnail(
             url="https://plantatree.finance/images/logo/Plant_A_Tree_Logo_1.png",
             height=100,
@@ -225,14 +232,6 @@ class PatBot:
             self._send_discord_activity_update(Action.REPLANT, gas)
         return True
 
-    def _calculate_harvest_reward(self) -> float:
-        TSN = 10000.0
-        TSNH = 5000.0
-        trees
-        trees_total
-        contract_balance = self.pat_w3.get_contract_balance()
-        return (TSN * contract_balance) / (((TSN * trees_total + TSNH * trees) / trees) + TSNH)
-
     def run(self, avax_usd: float) -> None:
         gas_price_gwei = self.pat_w3.get_gas_price()
         if gas_price_gwei is None:
@@ -245,6 +244,12 @@ class PatBot:
         logger.print_bold(f"{self.user.upper()} \U0001F332 Stats:")
         logger.print_ok_arrow(f"Referral Awards: {self.pat_w3.get_my_referral_rewards()} trees")
         logger.print_ok_blue_arrow(f"Today's tax: {self.todays_tax:.2f}%")
+        logger.print_ok_blue_arrow(
+            f"Contract balance: {self.pat_w3.get_contract_balance():.2f} $AVAX"
+        )
+        logger.print_ok_blue(f"Trees: {self.pat_w3.get_total_contract_trees()}")
+        logger.print_ok(f"Rewards: {self.pat_w3.calculate_harvest_reward()}")
+        logger.print_ok(f"My Trees: {self.pat_w3.get_my_total_trees()}")
 
         if is_harvest_day and self.pat_w3.is_harvest_day() and self.pat_w3.did_48_hour_replant():
             self._harvest()
