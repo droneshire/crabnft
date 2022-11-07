@@ -123,7 +123,7 @@ def run_bot() -> None:
                 message += f"**Total Users:** `{len(bots)}`\n"
                 message += f"**Total Pumpskins:** `{total_pumps}`\n"
                 message += f"**Total Levels Upgraded:** `{total_levels}`\n"
-                message += f"**Total $PPIE Claimed:** {total_ppie:.2f}`\n"
+                message += f"**Total $PPIE Claimed:** `{total_ppie:.2f}`\n"
                 message += f"**Total $POTN Claimed:** `{total_potn:.2f}`\n"
                 message += f"**Total Gas Spent:** `{total_gas:.2f}`\n"
                 logger.print_bold(f"{message}")
