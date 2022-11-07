@@ -76,7 +76,7 @@ class JoePegsSalesBot:
         collection_floor_avax = self.client.get_floor_avax(collection_address)
         percent_of_floor = price_avax / collection_floor_avax
         above_below_str = "above" if percent_of_floor > 1.0 else "below"
-        percent_str = percent_of_floor - 1.0 if percent_of_floor > 1.0 else percent_of_floor
+        percent_str = percent_of_floor - 1.0 if percent_of_floor > 1.0 else 1.0 - percent_of_floor
         percent_str = percent_str * 100.0
 
         embed.add_field(
