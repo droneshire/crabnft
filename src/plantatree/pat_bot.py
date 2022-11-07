@@ -296,7 +296,7 @@ class PatBot:
 
         if self.todays_tax > 30.0 and self._should_replant():
             self._replant(rewards_avax)
-        else:
+        elif self.todays_tax <= 30.0:
             logger.print_warn(f"Skipping replant b/c we are in the harvest window!")
 
         self._send_email_update()
