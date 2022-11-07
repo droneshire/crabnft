@@ -483,7 +483,15 @@ class PumpskinBot:
         if ppie_available_to_stake > min_ppie_to_stake:
             # Try to stake PPIE
             logger.print_bold(f"Attempting to stake {ppie_available_to_stake:.2f} $PPIE...")
-            tx_hash = self.game_w3.staking_ppie(token_to_wei(ppie_available_to_stake))
+            for i in range(5):
+                tx_hash = self.game_w3.staking_ppie(token_to_wei(ppie_available_to_stake))
+                if tx_hash:
+                    break
+                else:
+                    logger.print_bold(
+                        f"Failed to stake, trying again with {ppie_available_to_stake:.2f} $PPIE..."
+                    )
+                    ppie_available_to_stake = ppie_available_to_stake / 2
             tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
             gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
 

@@ -91,10 +91,15 @@ class PatBot:
             url=discord.DISCORD_WEBHOOK_URL["PAT_ACTIVITY"], rate_limit_retry=True
         )
         discord_username = self.config_mgr.config["discord_handle"].split("#")[0].upper()
+        EMBED_COLOR = {
+            Action.HARVEST: Color.gold().value,
+            Action.REPLANT: Color.green().value,
+            Action.PLANT: Color.blue().value,
+        }[action]
         embed = DiscordEmbed(
             title=f"\U0001F332 PAT Activity",
             description=f"Bot action for {discord_username}\n",
-            color=Color.green().value,
+            color=EMBED_COLOR,
         )
         embed.add_embed_field(name=f"Action", value=f"{action.upper()}", inline=False)
         embed.add_embed_field(name=f"Gas", value=f"{gas}", inline=False)
@@ -107,8 +112,14 @@ class PatBot:
         embed.add_embed_field(
             name=f"Rewards Earned", value=f"{rewards_avax:.2f} $AVAX", inline=True
         )
+        IMAGE_URL = {
+            Action.HARVEST: "https://plantatree.finance/images/logo/logo_.png",
+            Action.REPLANT: "https://plantatree.finance/images/logo/Plant_A_Tree_Logo_1.png",
+            Action.PLANT: "https://plantatree.finance/images/logo/Plant_A_Tree_Logo_1.png",
+        }[action]
+
         embed.set_thumbnail(
-            url="https://plantatree.finance/images/logo/Plant_A_Tree_Logo_1.png",
+            url=IMAGE_URL,
             height=100,
             width=100,
         )
@@ -285,6 +296,8 @@ class PatBot:
 
         if self.todays_tax > 30.0 and self._should_replant():
             self._replant(rewards_avax)
+        else:
+            logger.print_warn(f"Skipping replant b/c we are in the harvest window!")
 
         self._send_email_update()
         self._update_stats()
