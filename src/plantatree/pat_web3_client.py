@@ -132,7 +132,7 @@ class PlantATreeWeb3Client(AvalancheCWeb3Client):
 
     def did_48_hour_replant(self) -> bool:
         try:
-            return self.contract.functions.hasNoCompoundLast48Hours().call(
+            return not self.contract.functions.hasNoCompoundLast48Hours().call(
                 {"from": self.user_address}
             )
         except Exception as e:
