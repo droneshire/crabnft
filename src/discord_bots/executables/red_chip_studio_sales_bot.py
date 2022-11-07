@@ -21,7 +21,7 @@ COLLECTIONS = [
     "0x7ba0bc939a74402f479a3d53408dd4b3ccf48563",  # WARRIORS OF FREYA
     "0xba7e1d73e2ea297c473f3d16f428da7a9a7dc516",  # BIFROST - WARRIORS OF FREYA
 ]
-SALES_CHANNEL_ID = 1032890276420800582
+SALES_CHANNEL_ID = 1032890276420800582  # P2E Test Channel
 
 discord_bot_dir = logger.get_logging_dir("discord_bots")
 log_dir = os.path.join(discord_bot_dir, "red_chip_studio")

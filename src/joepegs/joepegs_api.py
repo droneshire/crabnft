@@ -111,7 +111,7 @@ class JoePegsClient:
     def get_sales(
         self, address: Address, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
     ) -> T.List[Activity]:
-        activities = self.get_activities(address)
+        activities = self.get_activities(address, headers=headers, params=params)
         return [a for a in activities if a["activityType"] == "sale"]
 
     def get_floor_avax(
