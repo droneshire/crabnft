@@ -123,6 +123,7 @@ def run_bot() -> None:
                 message += f"Total $PPIE Claimed: {total_ppie}\n"
                 message += f"Total $POTN Claimed: {total_potn}\n"
                 message += f"Total Gas Spent: {total_gas}\n"
+                logger.print_bold(f"{message}")
                 discord.get_discord_hook("PUMPSKIN_ACTIVITY").send(message)
     except KeyboardInterrupt:
         pass
