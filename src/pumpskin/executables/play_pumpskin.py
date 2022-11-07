@@ -117,12 +117,12 @@ def run_bot() -> None:
                     total_potn += bot.stats_logger.lifetime_stats["potn"]
                     total_gas += bot.stats_logger.lifetime_stats["avax_gas"]
 
-                message = "\U0001F383 **Totals**\n"
-                message += f"Total Users: {len(bots)}\n"
-                message += f"Total Levels Upgraded: {total_levels}\n"
-                message += f"Total $PPIE Claimed: {total_ppie}\n"
-                message += f"Total $POTN Claimed: {total_potn}\n"
-                message += f"Total Gas Spent: {total_gas}\n"
+                message = "\U0001F383\U0001F383 **Totals** \U0001F383\U0001F383\n"
+                message += f"**Total Users: {len(bots)}**\n"
+                message += f"**Total Levels Upgraded: {total_levels}**\n"
+                message += f"**Total $PPIE Claimed: {total_ppie:.2f}**\n"
+                message += f"**Total $POTN Claimed: {total_potn:.2f}**\n"
+                message += f"**Total Gas Spent: {total_gas:.2f}**\n"
                 logger.print_bold(f"{message}")
                 discord.get_discord_hook("PUMPSKIN_ACTIVITY").send(message)
     except KeyboardInterrupt:
