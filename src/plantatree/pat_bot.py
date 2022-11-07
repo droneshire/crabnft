@@ -222,6 +222,7 @@ class PatBot:
             self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
             logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
             self.current_stats["harvests"] += 1
+            self.current_stats["avax_harvested"] += rewards_avax
             self._send_discord_activity_update(Action.HARVEST, gas, rewards_avax)
         return True
 
