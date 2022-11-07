@@ -2,7 +2,7 @@ import asyncio
 import discord
 import os
 
-from config_admin import DISCORD_BOT_SERVER, DISORD_P2E_BOT_TOKEN
+from config_admin import DISCORD_BOT_SERVER, DISCORD_P2E_BOT_TOKEN
 from utils import logger
 from discord_bots import behavior, p2e_pumpskin
 
@@ -43,4 +43,4 @@ async def on_message(message: discord.message.Message) -> None:
                 await message.channel.send(response)
 
 
-client.run(DISORD_P2E_BOT_TOKEN)
+client.run(DISCORD_P2E_BOT_TOKEN)

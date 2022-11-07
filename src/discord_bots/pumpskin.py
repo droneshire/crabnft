@@ -43,7 +43,7 @@ class GetPumpkinLevel(OnMessage):
     @staticmethod
     def _get_pumpskin_info_embed(
         token_id: int, level: int, image_uri: str, cooldown_time: str
-    ) -> None:
+    ) -> discord.Embed:
         embed = discord.Embed(
             title=f"PUMPʂKIN {token_id}",
             description=f"Level {level}",
@@ -160,7 +160,7 @@ class GetPumpkinRoi(OnMessage):
     @staticmethod
     def _get_pumpskin_roi_embed(
         pumpskin_price_avax: float, ppie_price_usd: float, roi_days: float
-    ) -> None:
+    ) -> discord.Embed:
         embed = discord.Embed(
             title=f"PUMPʂKIN ROI",
             description=f"Return on investment for a new mint\n",

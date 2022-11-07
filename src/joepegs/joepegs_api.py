@@ -4,11 +4,14 @@ import json
 import requests
 import time
 import typing as T
+
 from eth_typing import Address
 from web3 import Web3
 
 from config_admin import JOEPEGS_API_KEY
 from utils import logger
+from utils.price import wei_to_token_raw
+from joepegs.types import Activity, ListFilters
 
 TIMESTAMP_FORMAT = "%Y-%m-%d"
 
@@ -18,14 +21,7 @@ HEADERS = {
 }
 
 
-class ListFilters:
-    BUY_NOW = "buy_now"
-    HAS_OFFERS = "has_offers"
-    ON_AUCTION = "on_auction"
-    UNLISTED = "unlisted"
-
-
-JOEPEGS_URL = "https://joepegs.com/item/0x0a27e02fdaf3456bd8843848b728ecbd882510d1/"
+JOEPEGS_URL = "https://joepegs.com/item/{}/"
 JOEPEGS_ICON_URL = "https://drive.google.com/uc?export=view&id=1mLBMY7-XPtLbSZrWRpCujFCc6cIJ_VIE"
 
 
@@ -94,3 +90,35 @@ class JoePegsClient:
         except:
             logger.print_fail(f"Failed to get list items:\n{res if res else ''}")
             return {}
+
+    def get_activities(
+        self, address: Address, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+    ) -> T.List[Activity]:
+        actual_params = {
+            "pageSize": 100,
+            "pageNum": 1,
+        }
+        actual_params.update(params)
+        extension = f"activities/{address}"
+        try:
+            return self._joepegs_api(extension, params=actual_params)
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to get activities:\n{res if res else ''}")
+            return []
+
+    def get_sales(
+        self, address: Address, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+    ) -> T.List[Activity]:
+        activities = self.get_activities(address)
+        return [a for a in activities if a["activityType"] == "sale"]
+
+    def get_floor_avax(
+        self, address: Address, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+    ) -> str:
+        collection = self.get_collection(address, headers=headers, params=params)
+        if not collection:
+            logger.print_fail(f"Failed to get floor info")
+            return -1.0
+        return wei_to_token_raw(int(collection["floor"]))
