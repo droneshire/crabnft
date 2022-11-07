@@ -17,6 +17,7 @@ from pumpskin.pumpskin_bot import PumpskinBot
 
 TIME_BETWEEN_PLAYERS = 10.0
 TIME_BETWEEN_RUNS = 60.0
+TOTALS_UPDATE_TIME = 60.0 * 60.0 * 12
 
 
 def parse_args() -> argparse.Namespace:
@@ -92,6 +93,8 @@ def run_bot() -> None:
         bot.init()
         bots.append(bot)
 
+    last_totals_update = 0.0
+
     try:
         while True:
             for bot in bots:
@@ -100,6 +103,27 @@ def run_bot() -> None:
                 wait(TIME_BETWEEN_PLAYERS)
             logger.print_normal(f"Waiting for next round of botting...")
             wait(TIME_BETWEEN_RUNS)
+
+            now = time.time()
+            if now - last_totals_update > TOTALS_UPDATE_TIME:
+                last_totals_update = now
+                total_levels = 0
+                total_ppie = 0.0
+                total_potn = 0.0
+                total_gas = 0.0
+                for bot in bots:
+                    total_levels += bot.stats_logger.lifetime_stats["levels"]
+                    total_ppie += bot.stats_logger.lifetime_stats["ppie"]
+                    total_potn += bot.stats_logger.lifetime_stats["potn"]
+                    total_gas += bot.stats_logger.lifetime_stats["avax_gas"]
+
+                message = "\U0001F383 **Totals**\n"
+                message += f"Total Users: {len(bots)}\n"
+                message += f"Total Levels Upgraded: {total_levels}\n"
+                message += f"Total $PPIE Claimed: {total_ppie}\n"
+                message += f"Total $POTN Claimed: {total_potn}\n"
+                message += f"Total Gas Spent: {total_gas}\n"
+                discord.get_discord_hook("PUMPSKIN_ACTIVITY").send(message)
     except KeyboardInterrupt:
         pass
     except Exception as e:
