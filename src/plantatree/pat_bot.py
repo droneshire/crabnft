@@ -104,7 +104,9 @@ class PatBot:
         embed.add_embed_field(
             name=f"Contract Balance", value=f"{contract_balance:.2f} $AVAX", inline=True
         )
-        embed.add_embed_field(name=f"Rewards Earned", value=f"{rewards_avax:.2f} $AVAX", inline=True)
+        embed.add_embed_field(
+            name=f"Rewards Earned", value=f"{rewards_avax:.2f} $AVAX", inline=True
+        )
         embed.set_thumbnail(
             url="https://plantatree.finance/images/logo/Plant_A_Tree_Logo_1.png",
             height=100,

@@ -591,6 +591,13 @@ class PumpskinBot:
                 )
                 continue
 
+            if (
+                self.config_mgr.config["game_specific_configs"]["only_special_pumps"]
+                and not is_special
+            ):
+                logger.print_normal(f"Skipping {token_id} b/c only leveling special pumpskins...")
+                continue
+
             potn_balance = self.potn_w3.get_balance()
             if potn_balance < potn_to_level:
                 logger.print_warn(
