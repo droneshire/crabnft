@@ -64,7 +64,7 @@ class JoePegsClient:
         self, address: Address, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
     ) -> T.Any:
         try:
-            return self._joepegs_api(f"collections/{address}")
+            return self._joepegs_api(f"collections/{address}", params=params)
         except KeyboardInterrupt:
             raise
         except:
@@ -111,14 +111,39 @@ class JoePegsClient:
     def get_sales(
         self, address: Address, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
     ) -> T.List[Activity]:
-        activities = self.get_activities(address, headers=headers, params=params)
-        return [a for a in activities if a["activityType"] == "sale"]
+        activities = self.get_activities(address, params=params)
+        return [a for a in activities if type(a) == dict and a["activityType"] == "sale"]
 
     def get_floor_avax(
         self, address: Address, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
     ) -> str:
-        collection = self.get_collection(address, headers=headers, params=params)
+        collection = self.get_collection(address, params=params)
         if not collection:
             logger.print_fail(f"Failed to get floor info")
             return -1.0
         return wei_to_token_raw(int(collection["floor"]))
+
+    def purchase_item(
+        self,
+        address: Address,
+        token_id: int,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
+    ) -> str:
+        actual_params = {
+            "pageSize": 100,
+            "pageNum": 1,
+            "collection": address,
+            "tokenId": token_id,
+            "orderBy": "price_desc",
+            "includeCollectionBids": False,
+        }
+        actual_params.update(params)
+        extension = f"maker-orders"
+        try:
+            return self._joepegs_api(extension, params=actual_params)
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to get maker orders:\n{res if res else ''}")
+            return []
