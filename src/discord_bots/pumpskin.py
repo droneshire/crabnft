@@ -8,7 +8,7 @@ from discord_bots.behavior import OnMessage
 from joepegs.joepegs_api import JOEPEGS_ICON_URL, JOEPEGS_URL
 from pumpskin.listings import post_rarist_listings
 from pumpskin.pumpskin_bot import PumpskinBot, ATTRIBUTES_FILE
-from pumpskin.pumpskin_web3_client import PumpskinCollectionWeb3Client
+from pumpskin.pumpskin_web3_client import PumpskinCollectionWeb3Client, PumpskinNftWeb3Client
 from pumpskin.pumpskin_web2_client import PumpskinWeb2Client
 from pumpskin.types import StakedPumpskin
 from utils import logger
@@ -84,8 +84,9 @@ class GetPumpkinLevel(OnMessage):
             name=f"{ATTRIBUTE_TO_EMOJI[trait]} Overall", value=f"{overall_rarity:.2f}%", inline=True
         )
         embed.set_thumbnail(url=image_uri)
+        url = JOEPEGS_URL.format(PumpskinNftWeb3Client.contract_address) + str(token_id)
         embed.set_author(
-            name="JoePeg Link", url=f"{JOEPEGS_URL}{token_id}", icon_url=f"{JOEPEGS_ICON_URL}"
+            name="JoePeg Link", url=f"{url}", icon_url=f"{JOEPEGS_ICON_URL}"
         )
         return embed
 
