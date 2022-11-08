@@ -92,8 +92,15 @@ class JoePegsSalesBot:
         return embed
 
     def get_sales_embeds(self) -> T.List[discord.Embed]:
+        sales = self._get_recent_sales()
+        timestamp_sales = {}
+        for sale in sales:
+            timestamp_sales[sale["timestamp"]] = sale
+
+        sorted_sales = sorted(timestamp_sales.keys())
         embeds = []
-        for sale in self._get_recent_sales():
+        for timestamp in sorted_sales:
+            sale = timestamp_sales[timestamp]
             self.posted_sales.append(sale["tokenId"])
             embeds.append(self._get_sales_embed(sale))
 
