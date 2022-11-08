@@ -85,9 +85,7 @@ class GetPumpkinLevel(OnMessage):
         )
         embed.set_thumbnail(url=image_uri)
         url = JOEPEGS_URL.format(PumpskinNftWeb3Client.contract_address) + str(token_id)
-        embed.set_author(
-            name="JoePeg Link", url=f"{url}", icon_url=f"{JOEPEGS_ICON_URL}"
-        )
+        embed.set_author(name="JoePeg Link", url=f"{url}", icon_url=f"{JOEPEGS_ICON_URL}")
         return embed
 
     @classmethod
