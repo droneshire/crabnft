@@ -12,7 +12,9 @@ from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 
 def post_rarist_listings(max_rarity: float, max_price: float, quiet: bool = True) -> None:
     joepegs = JoePegsClient()
-    listings = joepegs.list_items_for_sale(PumpskinNftWeb3Client.contract_address)
+    listings = joepegs.get_listings(
+        PumpskinNftWeb3Client.contract_address, params={"orderBy": "rarity_desc"}
+    )
 
     rarity_file = PumpskinBot.get_json_path(RARITY_FILE)
     with open(rarity_file, "r") as infile:
@@ -37,6 +39,8 @@ def post_rarist_listings(max_rarity: float, max_price: float, quiet: bool = True
         list_pricing.append((price, rarity, token_id, level))
 
     sorted_listings = sorted(list_pricing, key=lambda p: (-p[3], p[1], p[0]))
+
+    discord.get_discord_hook("PUMPSKIN_MARKET").send("**LISTINGS:**")
 
     text = ""
     for listing in sorted_listings:

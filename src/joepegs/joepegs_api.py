@@ -71,7 +71,7 @@ class JoePegsClient:
             logger.print_fail(f"Failed to get collection\n{res if res else ''}")
             return {}
 
-    def list_items_for_sale(
+    def get_listings(
         self, address: Address, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
     ) -> T.Any:
         actual_params = {
@@ -79,7 +79,6 @@ class JoePegsClient:
             "pageSize": 100,
             "pageNum": 1,
             "collectionAddress": address,
-            "orderBy": "rarity_desc",
         }
         actual_params.update(params)
         try:

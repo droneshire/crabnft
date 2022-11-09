@@ -31,11 +31,15 @@ class JoePegsSalesBot:
         self.log_dir = log_dir
         self.database_file = os.path.join(self.log_dir, "joepegs_sales.json")
         if not os.path.isfile(self.database_file):
-            self.posted_sales = []
+            self.posted_items = {"sold": [], "listed": []}
         else:
             with open(self.database_file) as infile:
-                database = json.load(infile)
-            self.posted_sales = database["database"]
+                self.posted_items = json.load(infile)
+
+    def _custom_filter_for_item(self) -> bool:
+        # Override this in any derived class to provide a custom filter for
+        # a collection and associated floor
+        pass
 
     def _get_recent_sales(self) -> T.List[Activity]:
         all_sales = []
@@ -46,7 +50,7 @@ class JoePegsSalesBot:
         now = time.time()
         recent_sales = []
         for sale in all_sales:
-            if sale["tokenId"] in self.posted_sales:
+            if sale["tokenId"] in self.posted_items["sold"]:
                 logger.print_normal(f"Skipping {sale['tokenId']} since already posted...")
                 continue
             if now - sale["timestamp"] > self.MAX_TIME_SINCE_SALE:
@@ -56,7 +60,48 @@ class JoePegsSalesBot:
             recent_sales.append(sale)
         return recent_sales
 
-    def _get_sales_embed(self, sale: Activity) -> None:
+    def _get_recent_discount_listings(self) -> T.List[T.Dict[T.Any, T.Any]]:
+        new_listings = {}
+        floors = {}
+        for collection in self.collections:
+            new_listings[collection] = self.client.get_listings(
+                collection, params={"orderBy": "recent_listing"}
+            )
+            floors[collection] = self.client.get_floor_avax(collection)
+
+        snipe_listings = []
+        for collection, listings in new_listings.items():
+            for listing in listings:
+                if listing["tokenId"] in self.posted_items["listed"]:
+                    logger.print_normal(f"Skipping {listing['tokenId']} since already posted...")
+                    continue
+                list_price_wei = int(listing["currentAsk"]["price"])
+                price = wei_to_token_raw(list_price_wei)
+                if price > floors[collection]:
+                    continue
+                logger.print_normal(f"Found new listing of {listing['tokenId']}")
+                snipe_listings.append(listing)
+        return snipe_listings
+
+    def _get_listing_embed(self, listing: T.Dict[T.Any, T.Any]) -> discord.Embed:
+        collection_name = listing["collectionName"]
+        token_id = listing["tokenId"]
+        name = listing["metadata"]["name"] if listing["metadata"]["name"] else token_id
+        sale_name_url = f"[{name}]({JOEPEGS_URL.format(listing['collection']) + token_id})"
+        embed = discord.Embed(
+            title=f"{collection_name} Listing",
+            description=f"New listing on JOEPEGS - {sale_name_url} below floor\n",
+            color=self.collection_color.value,
+        )
+        price_wei = int(listing["currentAsk"]["price"])
+        price_avax = wei_to_token_raw(price_wei)
+
+        embed.add_field(name=f"\U0001F4B0 Price", value=f"{price_avax:.2f} AVAX", inline=True)
+        embed.set_image(url=listing["metadata"]["image"])
+
+        return embed
+
+    def _get_sales_embed(self, sale: Activity) -> discord.Embed:
         collection_name = sale["collectionName"]
         token_id = sale["tokenId"]
         name = sale["name"] if sale["name"] else token_id
@@ -102,11 +147,21 @@ class JoePegsSalesBot:
         embeds = []
         for timestamp in sorted_sales:
             sale = timestamp_sales[timestamp]
-            self.posted_sales.append(sale["tokenId"])
+            self.posted_items["sold"].append(sale["tokenId"])
             embeds.append(self._get_sales_embed(sale))
 
-        database = {"database": self.posted_sales}
         with open(self.database_file, "w") as outfile:
-            json.dump(database, outfile, indent=4)
+            json.dump(self.posted_items, outfile, indent=4)
+
+        return embeds
+
+    def get_listing_embeds(self) -> T.List[discord.Embed]:
+        embeds = []
+        for listing in self._get_recent_discount_listings():
+            self.posted_items["listed"].append(listing["tokenId"])
+            embeds.append(self._get_listing_embed(listing))
+
+        with open(self.database_file, "w") as outfile:
+            json.dump(self.posted_items, outfile, indent=4)
 
         return embeds
