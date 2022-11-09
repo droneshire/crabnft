@@ -1,6 +1,7 @@
 import discord
 import datetime
 import json
+import math
 import os
 import time
 import typing as T
@@ -125,16 +126,27 @@ class JoePegsSalesBot:
 
         collection_address = sale["collection"]
         collection_floor_avax = self.client.get_floor_avax(collection_address)
-        percent_of_floor = price_avax / collection_floor_avax
-        above_below_str = "above" if percent_of_floor > 1.0 else "below"
-        percent_str = percent_of_floor - 1.0 if percent_of_floor > 1.0 else 1.0 - percent_of_floor
-        percent_str = percent_str * 100.0
 
-        embed.add_field(
-            name=f"Price Floor",
-            value=f"{collection_floor_avax:.2f} AVAX. Sold {percent_str:.0f}% {above_below_str} floor",
-            inline=False,
-        )
+        if math.isclose(collection_floor_avax, 0.0):
+            embed.add_field(
+                name=f"Price Floor",
+                value=f"N/A",
+                inline=False,
+            )
+        else:
+            percent_of_floor = price_avax / collection_floor_avax
+            above_below_str = "above" if percent_of_floor > 1.0 else "below"
+            percent_str = (
+                percent_of_floor - 1.0 if percent_of_floor > 1.0 else 1.0 - percent_of_floor
+            )
+            percent_str = percent_str * 100.0
+
+            embed.add_field(
+                name=f"Price Floor",
+                value=f"{collection_floor_avax:.2f} AVAX. Sold {percent_str:.0f}% {above_below_str} floor",
+                inline=False,
+            )
+
         embed.set_image(url=sale["image"])
         timestamp = sale["timestamp"]
         purchase_date = datetime.datetime.fromtimestamp(timestamp)
