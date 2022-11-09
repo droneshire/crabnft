@@ -110,6 +110,7 @@ def send_patch_stats() -> None:
             encrypt_password,
             "",
             dry_run=args.dry_run,
+            update_config=True,
         )
 
         with tempfile.NamedTemporaryFile(

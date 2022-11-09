@@ -19,6 +19,8 @@ BOT_NAME = "Pumpskin Sales Bot"
 ACTIVITY_STATUS = "Pumpskin Sales"
 COLLECTIONS = [
     PumpskinNftWeb3Client.contract_address,
+    "0xCF735808a42c06EA06533CE2bC4a4A3a78565326",
+    "0xDBcd3d15F4dC4e59DA79008f5997f262C06f1F3A",
 ]
 SALES_CHANNEL_ID = 1039452204257521684  # Sales bot channel P2E
 
