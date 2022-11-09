@@ -4,7 +4,7 @@ import os
 
 from config_admin import DISCORD_BOT_SERVER, DISCORD_P2E_BOT_TOKEN
 from utils import logger
-from discord_bots.command_bots import behavior, p2e_pumpskin
+from discord_bots.command_bots import default, p2e_pumpskin
 
 
 intents: discord.Intents = discord.Intents.default()
@@ -12,7 +12,7 @@ intents.typing = False
 intents.presences = False
 client = discord.Client(intents=intents)
 
-BOT_RESPONSES: behavior.OnMessage = [
+BOT_RESPONSES: default.OnMessage = [
     p2e_pumpskin.ManageAccounts,
 ]
 

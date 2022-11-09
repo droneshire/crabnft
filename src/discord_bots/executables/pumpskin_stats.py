@@ -4,7 +4,7 @@ import os
 
 from config_admin import DISCORD_BOT_SERVER, DISCORD_BOT_TOKEN
 from utils import logger
-from discord_bots.command_bots import behavior, pumpskin
+from discord_bots.command_bots import default, pumpskin
 from pumpskin.pumpskin_bot import PumpskinBot
 
 intents: discord.Intents = discord.Intents.default()
@@ -12,7 +12,7 @@ intents.typing = False
 intents.presences = False
 client = discord.Client(intents=intents)
 
-BOT_RESPONSES: behavior.OnMessage = [
+BOT_RESPONSES: default.OnMessage = [
     pumpskin.GetPumpkinLevel,
     pumpskin.GetPumpkinRoi,
     pumpskin.SnoopChannel,

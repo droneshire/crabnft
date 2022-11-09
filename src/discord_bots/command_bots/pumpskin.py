@@ -4,7 +4,7 @@ import typing as T
 
 from config_admin import ADMIN_ADDRESS
 from crabada.crabada_web2_client import CrabadaWeb2Client
-from discord_bots.command_bots.behavior import OnMessage
+from discord_bots.command_bots.default import OnMessage
 from joepegs.joepegs_api import JOEPEGS_ICON_URL, JOEPEGS_URL
 from pumpskin.listings import post_rarist_listings
 from pumpskin.pumpskin_bot import PumpskinBot, ATTRIBUTES_FILE
