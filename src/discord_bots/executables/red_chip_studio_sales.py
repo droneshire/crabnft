@@ -4,7 +4,7 @@ import os
 
 from config_admin import DISCORD_RED_CHIP_STUDIO_BOT_TOKEN
 from utils import logger
-from discord_bots.joepegs_sales_bot import JoePegsSalesBot
+from discord_bots.sales_bots.joepegs_sales_bot import JoePegsSalesBot
 
 intents: discord.Intents = discord.Intents.default()
 intents.typing = False

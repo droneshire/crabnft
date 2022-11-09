@@ -2,7 +2,7 @@ import discord
 import typing as T
 
 from config_pumpskin import USERS
-from discord_bots.behavior import OnMessage
+from discord_bots.command_bots.behavior import OnMessage
 from pumpskin.pumpskin_bot import PumpskinBot
 from pumpskin.pumpskin_web3_client import PumpskinCollectionWeb3Client, PumpskinContractWeb3Client
 from utils import logger

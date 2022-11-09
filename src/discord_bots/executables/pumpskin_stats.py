@@ -4,7 +4,7 @@ import os
 
 from config_admin import DISCORD_BOT_SERVER, DISCORD_BOT_TOKEN
 from utils import logger
-from discord_bots import behavior, pumpskin
+from discord_bots.command_bots import behavior, pumpskin
 from pumpskin.pumpskin_bot import PumpskinBot
 
 intents: discord.Intents = discord.Intents.default()
