@@ -37,6 +37,15 @@ class JoePegsSalesBot:
             with open(self.database_file) as infile:
                 self.posted_items = json.load(infile)
 
+        self._migrate_db()
+
+    def _migrate_db(self) -> None:
+        if "database" in self.posted_items:
+            sold_items = self.posted_items["database"]
+            del self.posted_items["database"]
+            self.posted_items["listed"] = []
+            self.posted_items["sold"] = sold_items
+
     def custom_filter_for_item(self) -> bool:
         # Override this in any derived class to provide a custom filter for
         # a collection and associated floor
