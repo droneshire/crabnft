@@ -77,6 +77,7 @@ class JoePegsSalesBot:
                     continue
                 list_price_wei = int(listing["currentAsk"]["price"])
                 price = wei_to_token_raw(list_price_wei)
+                # TODO: filter based on previous floors
                 if price > floors[collection]:
                     continue
                 logger.print_normal(f"Found new listing of {listing['tokenId']}")
