@@ -65,7 +65,9 @@ class JoePegsSalesBot:
         recent_sales = []
         for sale in all_sales:
             if sale["tokenId"] in self.posted_items["sold"]:
-                logger.print_normal(f"Skipping {sale['tokenId']} since already posted...")
+                logger.print_normal(
+                    f"Skipping {sale['tokenId']} collection {sale['collectionName']} since already posted..."
+                )
                 continue
             if now - sale["timestamp"] > self.MAX_TIME_SINCE_SALE:
                 logger.print_normal(f"Skipping {sale['tokenId']} since too old...")
