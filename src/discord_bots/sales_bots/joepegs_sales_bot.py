@@ -24,7 +24,7 @@ class JoePegsSalesBot:
         collections: T.List[Address],
         log_dir: str,
     ):
-        self.collections = collections
+        self.collections = [c.lower() for c in collections]
         self.bot_name = bot_name
         self.client = JoePegsClient()
         self.collection_color = collection_color
@@ -47,6 +47,7 @@ class JoePegsSalesBot:
             self.posted_items["listed"] = []
             self.posted_items["sold"] = sold_items
         elif "sold" in self.posted_items.keys():
+            self.posted_items = {}
             for collection in self.collections:
                 self.posted_items[collection] = {"sold": [], "listed": []}
 
@@ -72,7 +73,7 @@ class JoePegsSalesBot:
         now = time.time()
         recent_sales = []
         for sale in all_sales:
-            if sale["tokenId"] in self.posted_items["sold"]:
+            if sale["tokenId"] in self.posted_items[sale["collection"]]["sold"]:
                 logger.print_normal(
                     f"Skipping {sale['tokenId']} collection {sale['collectionSymbol']} since already posted..."
                 )
@@ -96,7 +97,7 @@ class JoePegsSalesBot:
         snipe_listings = []
         for collection, listings in new_listings.items():
             for listing in listings:
-                if listing["tokenId"] in self.posted_items["listed"]:
+                if listing["tokenId"] in self.posted_items[listing["collection"]]["listed"]:
                     logger.print_normal(f"Skipping {listing['tokenId']} since already posted...")
                     continue
                 list_price_wei = int(listing["currentAsk"]["price"])
@@ -183,7 +184,7 @@ class JoePegsSalesBot:
         embeds = []
         for timestamp in sorted_sales:
             sale = timestamp_sales[timestamp]
-            self.posted_items["sold"].append(sale["tokenId"])
+            self.posted_items[sale["collection"]]["sold"].append(sale["tokenId"])
             embeds.append(self._get_sales_embed(sale))
 
         with open(self.database_file, "w") as outfile:
@@ -194,7 +195,7 @@ class JoePegsSalesBot:
     def get_listing_embeds(self) -> T.List[discord.Embed]:
         embeds = []
         for listing in self._get_recent_discount_listings():
-            self.posted_items["listed"].append(listing["tokenId"])
+            self.posted_items[listing["collection"]]["listed"].append(listing["tokenId"])
             embeds.append(self._get_listing_embed(listing))
 
         with open(self.database_file, "w") as outfile:
