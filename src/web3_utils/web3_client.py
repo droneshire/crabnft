@@ -213,7 +213,10 @@ class Web3Client:
     ####################
 
     def get_nonce(self) -> Nonce:
-        return self.w3.eth.get_transaction_count(self.user_address)
+        try:
+            return self.w3.eth.get_transaction_count(self.user_address)
+        except:
+            return 0
 
     def get_gas_price(self, unit: str = "gwei") -> T.Optional[int]:
         try:
