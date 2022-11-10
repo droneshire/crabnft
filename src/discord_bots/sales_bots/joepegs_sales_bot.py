@@ -28,6 +28,7 @@ class JoePegsSalesBot:
         self.bot_name = bot_name
         self.client = JoePegsClient()
         self.collection_color = collection_color
+        self.posted_items = {}
 
         self.log_dir = log_dir
         self.database_file = os.path.join(self.log_dir, "joepegs_sales.json")
