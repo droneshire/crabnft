@@ -58,8 +58,12 @@ class JoePegsSalesBot:
     def _get_recent_sales(self) -> T.List[Activity]:
         all_sales = []
         for collection in self.collections:
+            logger.print_normal(f"Collection: {collection}")
             for page in range(1, 5):
-                all_sales.extend(self.client.get_sales(collection, params={"pageNum": page}))
+                sales = self.client.get_sales(collection, params={"pageNum": page})
+                if not sales:
+                    break
+                all_sales.extend(sales)
 
         now = time.time()
         recent_sales = []
