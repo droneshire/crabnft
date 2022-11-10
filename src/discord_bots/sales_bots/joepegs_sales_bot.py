@@ -32,7 +32,8 @@ class JoePegsSalesBot:
         self.log_dir = log_dir
         self.database_file = os.path.join(self.log_dir, "joepegs_sales.json")
         if not os.path.isfile(self.database_file):
-            self.posted_items = {"sold": [], "listed": []}
+            for collection in self.collections:
+                self.posted_items[collection] = {"sold": [], "listed": []}
         else:
             with open(self.database_file) as infile:
                 self.posted_items = json.load(infile)
@@ -45,6 +46,9 @@ class JoePegsSalesBot:
             del self.posted_items["database"]
             self.posted_items["listed"] = []
             self.posted_items["sold"] = sold_items
+        elif "sold" in self.posted_items.keys():
+            for collection in self.collections:
+                self.posted_items[collection] = {"sold": [], "listed": []}
 
     def custom_filter_for_item(self) -> bool:
         # Override this in any derived class to provide a custom filter for
