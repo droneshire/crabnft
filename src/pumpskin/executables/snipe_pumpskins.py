@@ -16,11 +16,7 @@ from utils import logger
 from utils.email import Email, get_email_accounts_from_password
 from utils.security import decrypt_secret
 from pumpskin.pumpskin_bot import PumpskinBot, ATTRIBUTES_FILE
-from pumpskin.pumpskin_web3_client import (
-    PumpskinNftWeb3Client,
-    PumpskinCollectionWeb3Client,
-    PumpskinContractWeb3Client,
-)
+from pumpskin.pumpskin_web3_client import PumpskinNftWeb3Client
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 
 MINT_MARGIN = 100

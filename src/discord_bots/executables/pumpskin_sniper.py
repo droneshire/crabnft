@@ -2,33 +2,31 @@ import asyncio
 import discord
 import os
 
-from config_admin import DISCORD_PUMPSKIN_SALES_BOT_TOKEN
+from config_admin import DISCORD_PUMPSKIN_MINT_BOT_TOKEN
 from utils import logger
-from discord_bots.sales_bots.joepegs_sales_bot import JoePegsSalesBot
-from pumpskin.pumpskin_web3_client import PumpskinNftWeb3Client
+from pumpskin.sniper import PumpskinSniper
 
 intents: discord.Intents = discord.Intents.default()
 intents.typing = False
 intents.presences = False
 client = discord.Client(intents=intents)
 
-TIME_BETWEEN_CHECKS = 1.0
+TIME_BETWEEN_CHECKS = 5.0
 BOT_NAME = "Pumpskin Sniper"
-ACTIVITY_STATUS = "Pumpskin Market"
-COLLECTIONS = [
-    PumpskinNftWeb3Client.contract_address,
-    "0xCF735808a42c06EA06533CE2bC4a4A3a78565326",
-    "0xDBcd3d15F4dC4e59DA79008f5997f262C06f1F3A",
-]
-SALES_CHANNEL_ID = 1032881170838462474  # Deals channel P2E
+ACTIVITY_STATUS = "Mint"
+CHANNEL_ID = 1032890276420800582  # test channel
+NEXT_MINTS = 1
 
 
-async def sales_loop():
-    sales_channel = client.get_channel(SALES_CHANNEL_ID)
+async def sales_loop() -> None:
+    channel = client.get_channel(CHANNEL_ID)
+    discord_bot_dir = logger.get_logging_dir("discord_bots")
+    log_dir = os.path.join(discord_bot_dir, "pumpskin_mint")
+    sniper = PumpskinSniper(log_dir)
     while True:
-        embeds = sales_bot.get_sales_embeds()
+        embeds = sniper.get_next_mints_embeds(NEXT_MINTS)
         for embed in embeds:
-            await sales_channel.send(embed=embed)
+            await channel.send(embed=embed)
         await asyncio.sleep(TIME_BETWEEN_CHECKS)
 
 
@@ -46,4 +44,4 @@ async def on_ready() -> None:
     client.loop.create_task(sales_loop())
 
 
-client.run(DISCORD_PUMPSKIN_SALES_BOT_TOKEN)
+client.run(DISCORD_PUMPSKIN_MINT_BOT_TOKEN)

@@ -10,23 +10,10 @@ from pumpskin.listings import post_rarist_listings
 from pumpskin.pumpskin_bot import PumpskinBot, ATTRIBUTES_FILE
 from pumpskin.pumpskin_web3_client import PumpskinCollectionWeb3Client, PumpskinNftWeb3Client
 from pumpskin.pumpskin_web2_client import PumpskinWeb2Client
-from pumpskin.types import StakedPumpskin
+from pumpskin.types import ATTRIBUTE_TO_EMOJI, StakedPumpskin
 from utils import logger
 from utils.general import get_pretty_seconds
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
-
-
-ATTRIBUTE_TO_EMOJI = {
-    "Facial": "\U0001F604",
-    "Background": "\U0001F5BC",
-    "Body": "\U0001F9CD",
-    "Eyes": "\U0001F440",
-    "Frame": "\U0001FA9F",
-    "Head": "\U0001F383",
-    "Item": "\U0001F45C",
-    "Neck": "\U0001F454",
-    "Overall": "\U0001F4C8",
-}
 
 
 class GetPumpkinLevel(OnMessage):
