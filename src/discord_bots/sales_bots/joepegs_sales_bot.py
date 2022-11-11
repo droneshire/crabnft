@@ -51,6 +51,11 @@ class JoePegsSalesBot:
             self.posted_items = {}
             for collection in self.collections:
                 self.posted_items[collection] = {"sold": [], "listed": []}
+        else:
+            for collection in self.collections:
+                if collection not in self.posted_items.keys():
+                    logger.print_ok(f"Found new collection {collection}")
+                    self.posted_items[collection] = {"sold": [], "listed": []}
 
     def custom_filter_for_item(self) -> bool:
         # Override this in any derived class to provide a custom filter for
