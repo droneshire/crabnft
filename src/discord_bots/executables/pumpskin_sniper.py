@@ -14,8 +14,8 @@ client = discord.Client(intents=intents)
 TIME_BETWEEN_CHECKS = 5.0
 BOT_NAME = "Pumpskin Sniper"
 ACTIVITY_STATUS = "Mint"
-CHANNEL_ID = 1032890276420800582  # test channel
-NEXT_MINTS = 1
+CHANNEL_ID = 1039611842525405204  # test channel
+NEXT_MINTS = 15
 
 
 async def sales_loop() -> None:
