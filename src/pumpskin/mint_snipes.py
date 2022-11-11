@@ -49,7 +49,7 @@ class PumpskinMintSniper:
 
     def _get_mint_embed(self, pumpskin_info: Pumpskin) -> discord.Embed:
         token_id = int(
-            pumpskin_info.get("edition", pumpskin_info.get["name", [-1, -1]].split("#")[1].strip())
+            pumpskin_info.get("edition", pumpskin_info.get("name", [-1, -1])).split("#")[1].strip()
         )
         pumpskin_image_uri = self.w2.get_pumpskin_image(token_id)
 
@@ -97,7 +97,7 @@ class PumpskinMintSniper:
         embeds = []
         for pumpskin_info in self._get_next_mints(num_mints):
             token_id = pumpskin_info.get(
-                "edition", pumpskin_info.get["name", [-1, -1]].split("#")[1].strip()
+                "edition", pumpskin_info.get("name", [-1, -1]).split("#")[1].strip()
             )
             if token_id in self.posted_items["database"]:
                 continue
