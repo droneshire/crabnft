@@ -13,7 +13,7 @@ from pumpskin.types import ATTRIBUTE_TO_EMOJI, Pumpskin
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 
 
-class PumpskinSniper:
+class PumpskinMintSniper:
     def __init__(self, log_dir: str):
         self.w3: PumpskinNftWeb3Client = (
             PumpskinNftWeb3Client()

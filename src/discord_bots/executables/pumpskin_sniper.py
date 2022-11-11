@@ -4,7 +4,7 @@ import os
 
 from config_admin import DISCORD_PUMPSKIN_MINT_BOT_TOKEN
 from utils import logger
-from pumpskin.sniper import PumpskinSniper
+from pumpskin.mint_snipes import PumpskinMintSniper
 
 intents: discord.Intents = discord.Intents.default()
 intents.typing = False
@@ -22,7 +22,7 @@ async def sales_loop() -> None:
     channel = client.get_channel(CHANNEL_ID)
     discord_bot_dir = logger.get_logging_dir("discord_bots")
     log_dir = os.path.join(discord_bot_dir, "pumpskin_mint")
-    sniper = PumpskinSniper(log_dir)
+    sniper = PumpskinMintSniper(log_dir)
     while True:
         embeds = sniper.get_next_mints_embeds(NEXT_MINTS)
         for embed in embeds:
