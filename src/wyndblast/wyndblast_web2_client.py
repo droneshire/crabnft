@@ -518,7 +518,7 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         url = self.PVE_BASE_URL + f"/rewards/wynd/claim/{dna_string}"
         return self._post_request(url, json_data={}, headers=headers, params=params)
 
-    def _get_wynd_dna_str(self, product_id: str) -> str:
+    def get_wynd_dna_str(self, product_id: str) -> str:
         nft: PveNfts = self.get_nft_data()
         if not nft:
             logger.print_fail(f"No NFT stats!")
@@ -536,9 +536,8 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
 
         return ""
 
-    def level_up_wynd(self, product_id: str) -> bool:
+    def level_up_wynd(self, dna_string: str) -> bool:
         try:
-            dna_string = self._get_wynd_dna_str(product_id)
             res = self._level_up_wynd_raw(dna_string, headers=self._get_pve_headers())
             return res["result"]["is_level_up"]
         except KeyboardInterrupt:

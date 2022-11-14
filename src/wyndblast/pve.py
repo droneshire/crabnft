@@ -212,12 +212,13 @@ class PveGame:
             return False
 
         for player in battle_setup["player"]:
-            dna_split = player.get("wynd_dna", "").split(":")
-            if not dna_split:
+            dna = player.get("wynd_dna", "")
+            if not dna:
                 continue
+            dna_split = dna.split(":")
             product_id = ":".join(dna_split[-2:])
             logger.print_normal(f"Attempting to level up wynd {product_id}...")
-            if self.wynd_w2.level_up_wynd(product_id):
+            if self.wynd_w2.level_up_wynd(dna):
                 logger.print_ok_arrow(f"Leveled up wynd {product_id}!")
 
         return True

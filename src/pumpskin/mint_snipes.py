@@ -13,7 +13,7 @@ from pumpskin.types import ATTRIBUTE_TO_EMOJI, Pumpskin
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 
 
-class PumpskinMintSniper:
+class PumpskinListingSniper:
     def __init__(self, log_dir: str):
         self.w3: PumpskinNftWeb3Client = (
             PumpskinNftWeb3Client()
@@ -47,15 +47,56 @@ class PumpskinMintSniper:
             next_mints.append(self.w2.get_pumpskin_info(token_id))
         return next_mints
 
-    def _get_mint_embed(self, pumpskin_info: Pumpskin) -> discord.Embed:
-        token_id = int(
-            pumpskin_info.get("edition", "")
+    def _get_listing_embed(self, sale: Activity) -> discord.Embed:
+        collection_name = sale["collectionName"]
+        token_id = sale["tokenId"]
+        name = sale["name"] if sale["name"] else token_id
+        sale_name_url = f"[{name}]({JOEPEGS_URL.format(sale['collection']) + token_id})"
+        embed = discord.Embed(
+            title=f"{collection_name} Listing",
+            description=f"New listing on JOEPEGS - {sale_name_url}\n",
+            color=self.collection_color.value,
         )
+        price_wei = int(sale["price"])
+        price_avax = wei_to_token_raw(price_wei)
+
+        embed.add_field(name=f"\U0001F4B0 List Price", value=f"{price_avax:.2f} AVAX", inline=True)
+
+        collection_address = sale["collection"]
+        collection_floor_avax = self.client.get_floor_avax(collection_address)
+
+        if math.isclose(collection_floor_avax, 0.0):
+            embed.add_field(
+                name=f"Price Floor",
+                value=f"N/A",
+                inline=False,
+            )
+        else:
+            percent_of_floor = price_avax / collection_floor_avax
+            above_below_str = "above" if percent_of_floor > 1.0 else "below"
+            percent_str = (
+                percent_of_floor - 1.0 if percent_of_floor > 1.0 else 1.0 - percent_of_floor
+            )
+            percent_str = percent_str * 100.0
+
+            embed.add_field(
+                name=f"Price Floor",
+                value=f"{collection_floor_avax:.2f} AVAX. Sold {percent_str:.0f}% {above_below_str} floor",
+                inline=False,
+            )
+
+        embed.set_image(url=sale["image"])
+        timestamp = sale["timestamp"]
+        purchase_date = datetime.datetime.fromtimestamp(timestamp)
+        purchase_date_string = purchase_date.strftime("%d/%b/%Y %H:%M:%S")
+        embed.set_footer(text=f"Sold on {purchase_date_string} UTC")
+
+        token_id = int(pumpskin_info.get("edition", ""))
         pumpskin_image_uri = self.w2.get_pumpskin_image(token_id)
 
         embed = discord.Embed(
             title=f"PUMPʂKIN {token_id}",
-            description=f"Unminted Phase 6",
+            description=f"Listing on JoePegs",
             color=discord.Color.orange().value,
         )
         logger.print_ok(f"Found pump mint #{token_id}")
@@ -93,15 +134,13 @@ class PumpskinMintSniper:
         )
         return embed
 
-    def get_next_mints_embeds(self, num_mints: int) -> T.List[discord.Embed]:
+    def get_listings_embeds(self, num_mints: int) -> T.List[discord.Embed]:
         embeds = []
         for pumpskin_info in self._get_next_mints(num_mints):
-            token_id = pumpskin_info.get(
-                "edition", ""
-            )
+            token_id = pumpskin_info.get("edition", "")
             if token_id in self.posted_items["database"]:
                 continue
-            embeds.append(self._get_mint_embed(pumpskin_info))
+            embeds.append(self._get_listing_embed(pumpskin_info))
             self.posted_items["database"].append(token_id)
 
         with open(self.database_file, "w") as outfile:
