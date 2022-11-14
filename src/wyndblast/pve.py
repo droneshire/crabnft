@@ -17,7 +17,7 @@ from utils.email import Email
 
 MISSION_PREFIX = "M1S"
 
-TIME_BETWEEN_BATTLES = 5.0
+TIME_BETWEEN_BATTLES = 60.0
 
 LEVEL_TO_NUM_ENEMIES = {
     f"{MISSION_PREFIX}1:1": 2,
@@ -70,6 +70,7 @@ class PveGame:
     MAX_WYNDS_PER_BATTLE = 2
     MIN_GAME_DURATION = 10
     MAX_GAME_DURATION = 29
+    TIME_BETWEEN_LEVEL_UP = 60.0 * 10.0
 
     def __init__(
         self,
@@ -88,6 +89,8 @@ class PveGame:
         self.stats_logger = stats_logger
 
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
+
+        self.last_level_up = 0
 
         logger.print_ok_blue(f"\nStarting PVE game for user {user}...")
 
@@ -211,15 +214,19 @@ class PveGame:
             logger.print_warn(f"Failed to submit battle")
             return False
 
-        for player in battle_setup["player"]:
-            dna = player.get("wynd_dna", "")
-            if not dna:
-                continue
-            dna_split = dna.split(":")
-            product_id = ":".join(dna_split[-2:])
-            logger.print_normal(f"Attempting to level up wynd {product_id}...")
-            if self.wynd_w2.level_up_wynd(dna):
-                logger.print_ok_arrow(f"Leveled up wynd {product_id}!")
+        now = time.time()
+        if now - self.last_level_up > self.TIME_BETWEEN_LEVEL_UP:
+            for player in battle_setup["player"]:
+                dna = player.get("wynd_dna", "")
+                if not dna:
+                    continue
+
+                dna_split = dna.split(":")
+                product_id = ":".join(dna_split[-2:])
+                logger.print_normal(f"Attempting to level up wynd {product_id}...")
+                if self.wynd_w2.level_up_wynd(dna):
+                    logger.print_ok_arrow(f"Leveled up wynd {product_id}!")
+            self.last_level_up = now
 
         return True
 
