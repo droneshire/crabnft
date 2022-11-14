@@ -1,0 +1,51 @@
+"""
+import requests
+
+headers = {
+    'authority': 'wyndblast-pve-api-26nte4kk3a-ey.a.run.app',
+    'accept': '*/*',
+    'accept-language': 'en-US,en;q=0.9',
+    'authorization': 'Bearer r:da6a491180e71d247f9636655248564f',
+    'content-type': 'application/json; charset: utf-8',
+    'dnt': '1',
+    'origin': 'https://wyndblast-pve-mainnet.netlify.app',
+    'referer': 'https://wyndblast-pve-mainnet.netlify.app/',
+    'sec-ch-ua': '"Google Chrome";v="107", "Chromium";v="107", "Not=A?Brand";v="24"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"Linux"',
+    'sec-fetch-dest': 'empty',
+    'sec-fetch-mode': 'cors',
+    'sec-fetch-site': 'cross-site',
+    'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36',
+    'x-api-key': 'wyndblast-pve-6860d846-8466-4faf-a29d-c6638bf3f9fa',
+}
+
+json_data = {}
+
+response = requests.post('https://wyndblast-pve-api-26nte4kk3a-ey.a.run.app/rewards/wynd/claim/W0000000000DSW000025W000047:W0000000000DSW000047W000047:W0000000000WSW000042W000153:W0000000000DSW000041W000020:W0000000000DSW000033W000047:W0000000000WSW000038W000101:W0000000000WSW000029W000020:W0000000000WSW000043W000020:0x4B3903952A25961B9E66216186Efd9B21903AEd3:14884', headers=headers, json=json_data)
+"""
+
+{
+    "status": true,
+    "result": {
+      "is_level_up": true,
+      "stats": {
+        "health": 1344,
+        "mana": 728,
+        "health_regen": 13.44,
+        "mana_regen": 11.2,
+        "armor": 67.2,
+        "magic_resist": 44.4,
+        "attack_damage": 112,
+        "magic_damage": 112,
+        "move_speed": 340,
+        "attack_range": 170,
+        "attack_speed": 0.6,
+        "critical_damage": 1.7,
+        "critical_chance": 0.15,
+        "level": 3,
+        "exp": 150,
+        "level_up_exp": 300
+      }
+    }
+  }

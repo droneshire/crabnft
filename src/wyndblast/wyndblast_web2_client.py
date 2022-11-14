@@ -11,17 +11,28 @@ from web3 import Web3
 
 from utils import logger
 from wyndblast.api_headers import (
-    MORALIS_SERVER_TIME_HEADERS,
-    MORALIS_USER_AUTH_HEADERS,
+    API_KEYS,
+    MORALIS_HEADERS,
     WYNDBLAST_AUTHORIZATION_HEADER_KEY_FORMAT,
-    WYNDBLAST_HEADERS,
+    WYNDBLAST_DAILY_ACTIVITIES_HEADERS,
+    WYNDBLAST_PVE_HEADERS,
 )
 from wyndblast.types import (
     AccountOverview,
     ActivityResult,
     ActivitySelection,
+    BattlePayload,
+    BattleSetup,
+    ClaimQuests,
+    Countdown,
     DailyActivitySelection,
+    LevelQuests,
+    PveNfts,
+    PveRewards,
+    PveUser,
     Rewards,
+    PveStages,
+    WyndLevelUpResponse,
     WyndNft,
     WyndStatus,
 )
@@ -33,6 +44,7 @@ class WyndblastWeb2Client:
     """Access api endpoints of Wyndblast Game"""
 
     DAILY_ACTIVITY_BASE_URL = "https://api.wyndblast.com/daily-activity"
+    PVE_BASE_URL = "https://wyndblast-pve-api-26nte4kk3a-ey.a.run.app"
     MORALIS_BASE_URL = "https://qheky5jm92sj.usemoralis.com:2053/server/"
 
     TO_SIGN = "WyndBlast Authentication\n\nId: lQBcMbRFdVKdFM2ToB0LZEjzhGEbXFilLikZY759:{}"
@@ -55,13 +67,19 @@ class WyndblastWeb2Client:
 
     WYNDBLAST_NFT_CONTRACT_ADDRESS = "0x4B3903952A25961B9E66216186Efd9B21903AEd3"
 
-    def __init__(self, private_key: str, user_address: Address) -> None:
+    def __init__(
+        self, private_key: str, user_address: Address, base_url: str, dry_run: bool = False
+    ) -> None:
         self.private_key = private_key
         self.user_address = Web3.toChecksumAddress(user_address)
 
         self.session_token = None
         self.object_id = None
         self.username = None
+        self.dry_run = dry_run
+        self.base_url = base_url
+        if dry_run:
+            logger.print_warn("Web2 Client in dry run mode...")
 
     def _get_request(
         self, url: str, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
@@ -80,6 +98,8 @@ class WyndblastWeb2Client:
         headers: T.Dict[str, T.Any] = {},
         params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
+        if self.dry_run:
+            return {}
         try:
             return requests.request(
                 "POST", url, json=json_data, params=params, headers=headers, timeout=5.0
@@ -91,13 +111,6 @@ class WyndblastWeb2Client:
 
     def _get_product_id(self, nft_id: int) -> str:
         return ":".join([self.WYNDBLAST_NFT_CONTRACT_ADDRESS, str(nft_id)])
-
-    def _get_daily_activity_headers(self) -> T.Dict[str, str]:
-        headers = copy.deepcopy(WYNDBLAST_HEADERS)
-        headers["authorization"] = WYNDBLAST_AUTHORIZATION_HEADER_KEY_FORMAT.format(
-            self.session_token
-        )
-        return headers
 
     def _get_moralis_base_payload(self) -> T.Dict[str, T.Any]:
         payload = copy.deepcopy(self.MORALIS_BASE_PAYLOAD)
@@ -111,6 +124,10 @@ class WyndblastWeb2Client:
         payload["authData"]["moralisEth"]["id"] = self.user_address.lower()
         payload["authData"]["moralisEth"]["signature"] = signature
         payload["authData"]["moralisEth"]["data"] = self.TO_SIGN.format(timestamp)
+        return json.loads(json.dumps(payload))
+
+    def _get_moralis_logout_payload(self) -> T.Dict[str, T.Any]:
+        payload = self._get_moralis_base_payload()
         return json.loads(json.dumps(payload))
 
     def _get_moralis_login_payload(self) -> T.Dict[str, T.Any]:
@@ -137,7 +154,7 @@ class WyndblastWeb2Client:
 
     def _get_server_time(self, params: T.Dict[str, T.Any] = {}) -> int:
         try:
-            res = self._get_server_time_raw(headers=MORALIS_SERVER_TIME_HEADERS, params=params)
+            res = self._get_server_time_raw(headers=self._get_moralis_headers(), params=params)
             return int(res["result"]["dateTime"])
         except KeyboardInterrupt:
             raise
@@ -153,9 +170,32 @@ class WyndblastWeb2Client:
         payload = self._get_moralis_auth_payload()
         return self._post_request(url, json_data=payload, headers=headers, params=params)
 
+    def _logout_user_raw(
+        self, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+    ) -> T.Any:
+        url = self.MORALIS_BASE_URL + "/logout"
+
+        payload = self._get_moralis_logout_payload()
+        return self._post_request(url, json_data=payload, headers=headers, params=params)
+
+    def logout_user(self) -> None:
+        try:
+            res = self._logout_user_raw(headers=self._get_moralis_headers())
+            logger.print_bold(f"Successfully logged out user {self.user_address}")
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to logout user {self.user_address}:\n{res if res else ''}")
+
+    def _get_moralis_headers(self) -> T.Dict[str, T.Any]:
+        headers = copy.deepcopy(MORALIS_HEADERS)
+        headers["origin"] = self.base_url
+        headers["referer"] = self.base_url
+        return headers
+
     def authorize_user(self) -> None:
         try:
-            res = self._authorize_user_raw(headers=MORALIS_USER_AUTH_HEADERS)
+            res = self._authorize_user_raw(headers=self._get_moralis_headers())
             self.session_token = res["sessionToken"]
             self.object_id = res["objectId"]
             self.username = res["username"]
@@ -179,12 +219,26 @@ class WyndblastWeb2Client:
 
     def update_account(self) -> None:
         try:
-            res = self._update_account_raw(headers=MORALIS_USER_AUTH_HEADERS)
+            res = self._update_account_raw(headers=self._get_moralis_headers())
             logger.print_normal(f"Successful update for {self.user_address} at {res['updatedAt']}")
         except KeyboardInterrupt:
             raise
         except:
             logger.print_fail(f"Failed to update {self.object_id}:\n{res if res else ''}")
+
+
+class DailyActivitiesWyndblastWeb2Client(WyndblastWeb2Client):
+    def __init__(
+        self, private_key: str, user_address: Address, base_url: str, dry_run: bool = False
+    ) -> None:
+        super().__init__(private_key, user_address, base_url, dry_run=dry_run)
+
+    def _get_daily_activity_headers(self) -> T.Dict[str, str]:
+        headers = copy.deepcopy(WYNDBLAST_DAILY_ACTIVITIES_HEADERS)
+        headers["authorization"] = WYNDBLAST_AUTHORIZATION_HEADER_KEY_FORMAT.format(
+            self.session_token
+        )
+        return headers
 
     def _get_account_overview_raw(
         self, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
@@ -337,3 +391,219 @@ class WyndblastWeb2Client:
         except:
             logger.print_fail(f"Failed to read last claim time!\n{res}")
             return None
+
+
+class PveWyndblastWeb2Client(WyndblastWeb2Client):
+    PVE_LOBBY_ID = "TESTING"
+
+    def __init__(
+        self, private_key: str, user_address: Address, base_url: str, dry_run: bool = False
+    ) -> None:
+        super().__init__(private_key, user_address, base_url, dry_run=dry_run)
+
+    def _get_pve_headers(self, api_key: str = API_KEYS["pve"]) -> T.Dict[str, str]:
+        headers = copy.deepcopy(WYNDBLAST_PVE_HEADERS)
+        headers["authorization"] = WYNDBLAST_AUTHORIZATION_HEADER_KEY_FORMAT.format(
+            self.session_token
+        )
+        headers["x-api-key"] = api_key
+        return headers
+
+    def _get_countdown_raw(
+        self, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+    ) -> T.Any:
+        url = self.PVE_BASE_URL + "/cooldown"
+        return self._get_request(url, headers=headers, params=params)
+
+    def get_countdown(self) -> Countdown:
+        try:
+            res = self._get_countdown_raw(headers=self._get_pve_headers())
+            return res["result"]
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to get pve countdown!\n{res}")
+            return {}
+
+    def _get_level_quests_raw(
+        self, level: str, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+    ) -> T.Any:
+        url = self.PVE_BASE_URL + f"/quest/{level}"
+        return self._get_request(url, headers=headers, params=params)
+
+    def get_level_quests(self, level: str) -> T.List[LevelQuests]:
+        try:
+            res = self._get_level_quests_raw(level, headers=self._get_pve_headers())
+            return res["result"]
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to get pve level quests!\n{res}")
+            return {}
+
+    def _get_stages_raw(
+        self, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+    ) -> T.Any:
+        url = self.PVE_BASE_URL + f"/stage"
+        return self._get_request(url, headers=headers, params=params)
+
+    def get_stages(self) -> PveStages:
+        try:
+            res = self._get_stages_raw(headers=self._get_pve_headers())
+            return res["result"]
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to get pve stages!\n{res}")
+            return {}
+
+    def _get_chro_rewards_raw(
+        self, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+    ) -> T.Any:
+        url = self.PVE_BASE_URL + f"/rewards/chro/"
+        return self._get_request(url, headers=headers, params=params)
+
+    def get_chro_rewards(self) -> PveRewards:
+        try:
+            res = self._get_chro_rewards_raw(headers=self._get_pve_headers())
+            return res["result"]
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to get pve chro rewards!\n{res}")
+            return {}
+
+    def _get_user_profile_raw(
+        self, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+    ) -> T.Any:
+        url = self.PVE_BASE_URL + f"/user"
+        return self._get_request(url, headers=headers, params=params)
+
+    def get_user_profile(self) -> PveUser:
+        try:
+            res = self._get_user_profile_raw(headers=self._get_pve_headers())
+            return res["result"]
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to get pve user profile!\n{res}")
+            return {}
+
+    def _get_nft_data_raw(
+        self, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+    ) -> T.Any:
+        url = self.PVE_BASE_URL + f"/nft"
+        return self._get_request(url, headers=headers, params=params)
+
+    def get_nft_data(self) -> PveNfts:
+        try:
+            res = self._get_nft_data_raw(headers=self._get_pve_headers())
+            return res["result"]
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to get pve nft data!\n{res}")
+            return {}
+
+    def _level_up_wynd_raw(
+        self, dna_string: str, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+    ) -> T.Any:
+        url = self.PVE_BASE_URL + f"/rewards/wynd/claim/{dna_string}"
+        return self._post_request(url, json_data={}, headers=headers, params=params)
+
+    def _get_wynd_dna_str(self, product_id: str) -> str:
+        nft: PveNfts = self.get_nft_data()
+        if not nft:
+            logger.print_fail(f"No NFT stats!")
+            return ""
+
+        wynds = nft.get("wynd", [])
+
+        if not wynds:
+            logger.print_fail(f"No wynds in NFT stats!")
+            return ""
+
+        for wynd in wynds:
+            if wynd["product_id"] == product_id:
+                return wynd.get("metadata", {}).get("dna", {}).get("all", "")
+
+        return ""
+
+    def level_up_wynd(self, product_id: str) -> bool:
+        try:
+            dna_string = _get_wynd_dna_str(product_id)
+            res = self._level_up_wynd_raw(dna_string, headers=self._get_pve_headers())
+            return res["result"]["is_level_up"]
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to level up wynd!\n{res}")
+            return False
+
+    def _battle_raw(
+        self,
+        payload: T.Dict[T.Any, T.Any],
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
+    ) -> T.Any:
+        url = self.PVE_BASE_URL + f"/internal/battle"
+        return self._post_request(url, json_data=payload, headers=headers, params=params)
+
+    def battle(self, stage_id: str, battle_setup: BattleSetup, duration: int = 28) -> bool:
+        payload: BattlePayload = BattlePayload()
+        payload["duration"] = duration
+        payload["setup"] = battle_setup
+        payload["stage_id"] = stage_id
+        payload["lobby_id"] = self.PVE_LOBBY_ID
+        payload["result"] = "win"
+        payload["survived"] = {
+            "player": battle_setup["player"],
+            "enemy": [],
+        }
+        try:
+            res = self._battle_raw(
+                payload=json.loads(json.dumps(payload)),
+                headers=self._get_pve_headers(api_key=API_KEYS["internal"]),
+            )
+            return res["result"]["won"]
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to battle!\n{res}")
+            return False
+
+    def _claim_daily_raw(
+        self,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
+    ) -> T.Any:
+        url = self.PVE_BASE_URL + "rewards/quest/daily/claim"
+        return self._post_request(url, json_data={}, headers=headers, params=params)
+
+    def claim_daily(self) -> ClaimQuests:
+        try:
+            res = self._claim_daily_raw(headers=self._get_pve_headers())
+            return res["result"]
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to claim dailies!\n{res}")
+            return {}
+
+    def _claim_weekly_raw(
+        self,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
+    ) -> T.Any:
+        url = self.PVE_BASE_URL + "rewards/quest/weekly/claim"
+        return self._post_request(url, json_data={}, headers=headers, params=params)
+
+    def claim_weekly(self) -> ClaimQuests:
+        try:
+            res = self._claim_weekly_raw(headers=self._get_pve_headers())
+            return res["result"]
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to claim weeklies!\n{res}")
+            return {}

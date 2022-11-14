@@ -8,6 +8,12 @@ from utils.game_stats import LifetimeGameStatsLogger
 from wyndblast import types
 
 
+class PveStats(T.TypedDict):
+    levels_completed: T.List[str]
+    quests_completed: T.List[str]
+    account_exp: int
+
+
 class LifetimeStats(T.TypedDict):
     chro: float
     wams: float
@@ -17,6 +23,7 @@ class LifetimeStats(T.TypedDict):
     stage_3: T.Dict[str, float]
     commission_chro: T.Dict[str, float]
     avax_gas: float
+    pve_game: PveStats
 
 
 NULL_GAME_STATS = {
@@ -45,6 +52,11 @@ NULL_GAME_STATS = {
     },
     "commission_chro": {},
     "avax_gas": 0.0,
+    "pve_game": {
+        "levels_completed": [],
+        "quests_completed": [],
+        "account_exp": 0,
+    },
 }
 
 
@@ -88,6 +100,21 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
             for k, v in user_b_stats[item].items():
                 diffed_stats[item][k] = diffed_stats[item].get(k, 0.0) - v
 
+        for item in ["pve_game"]:
+            for k, v in user_a_stats[item].items():
+                if k == "pve_game":
+                    diffed_stats[item][k] = v
+
+            for k, v in user_b_stats[item].items():
+                if k == "pve_game":
+                    diffed_stats[item][k] = diffed_stats[item].get(k, 0.0) - v
+
+            for k in ["levels_completed", "quests_completed"]:
+                new_set = set(user_a_stats[item].get(k, []))
+                for b in user_b_stats[item].get(k, []):
+                    new_set.add(b)
+                diffed_stats[item][k] = new_set
+
         if verbose:
             logger.print_bold("Subtracting game stats:")
             logger.print_normal(json.dumps(diffed_stats, indent=4))
@@ -113,7 +140,14 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
             merged_stats[item] = merged_stats.get(item, 0.0) + user_a_stats.get(item, 0.0)
             merged_stats[item] = merged_stats.get(item, 0.0) + user_b_stats.get(item, 0.0)
 
-        for item in ["commission_chro", "elemental_stones", "stage_1", "stage_2", "stage_3"]:
+        for item in [
+            "commission_chro",
+            "elemental_stones",
+            "stage_1",
+            "stage_2",
+            "stage_3",
+            "pve_game",
+        ]:
             for k, v in user_a_stats.get(item, {}).items():
                 merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
 

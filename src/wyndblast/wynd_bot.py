@@ -3,6 +3,7 @@ import time
 import typing as T
 
 
+from config_wyndblast import BETA_TEST_LIST
 from utils import logger
 from utils.config_types import UserConfig
 from utils.email import Email
@@ -12,9 +13,14 @@ from utils.security import decrypt_secret
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from wyndblast.config_manager_wyndblast import WyndblastConfigManager
 from wyndblast.daily_activities import DailyActivitiesGame
+from wyndblast.pve import PveGame
 from wyndblast.game_stats import NULL_GAME_STATS, WyndblastLifetimeGameStatsLogger
 from wyndblast.types import WyndNft
-from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
+from wyndblast.wyndblast_web2_client import (
+    WyndblastWeb2Client,
+    PveWyndblastWeb2Client,
+    DailyActivitiesWyndblastWeb2Client,
+)
 from wyndblast.wyndblast_web3_client import WyndblastGameWeb3Client
 
 
@@ -49,8 +55,17 @@ class WyndBot:
             verbose=True,
         )
 
-        self.wynd_w2: WyndblastWeb2Client = WyndblastWeb2Client(
-            self.config["private_key"], self.address
+        self.wynd_w2: DailyActivitiesWyndblastWeb2Client = DailyActivitiesWyndblastWeb2Client(
+            self.config["private_key"],
+            self.address,
+            WyndblastWeb2Client.DAILY_ACTIVITY_BASE_URL,
+            dry_run=dry_run,
+        )
+        self.pve_w2: PveWyndblastWeb2Client = PveWyndblastWeb2Client(
+            self.config["private_key"],
+            self.address,
+            WyndblastWeb2Client.PVE_BASE_URL,
+            dry_run=dry_run,
         )
 
         self.wynd_w3: WyndblastGameWeb3Client = (
@@ -71,6 +86,10 @@ class WyndBot:
 
         self.daily_activities: DailyActivitiesGame = DailyActivitiesGame(
             user, config, email_accounts, self.wynd_w2, self.wynd_w3, self.stats_logger
+        )
+
+        self.pve: PveGame = PveGame(
+            user, config, email_accounts, self.pve_w2, self.wynd_w3, self.stats_logger
         )
 
     def _check_and_submit_available_inventory(self) -> None:
@@ -117,6 +136,16 @@ class WyndBot:
 
         self.wynd_w2.update_account()
         self.daily_activities.check_and_claim_if_needed()
+
+        logger.print_bold(f"\n\nAttempting PVE game for {self.user}")
+        if self.user in BETA_TEST_LIST:
+            self.pve_w2.logout_user()
+            time.sleep(5.0)
+            self.pve_w2.authorize_user()
+            self.last_auth_time = now
+
+            self.pve.play_game()
+
         self.stats_logger.write()
 
     def end(self) -> None:

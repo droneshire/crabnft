@@ -90,6 +90,8 @@ def run_bot() -> None:
         bot.init()
         bots.append(bot)
 
+    alerts_enabled = not args.quiet and not args.dry_run
+
     try:
         while True:
             for bot in bots:
