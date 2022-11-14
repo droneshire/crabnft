@@ -227,6 +227,7 @@ class PveGame:
         nft_data: types.PveNfts = self.wynd_w2.get_nft_data()
         while self._check_and_play_story(nft_data):
             wait(TIME_BETWEEN_BATTLES)
+            self.wynd_w2.update_account()
             logger.print_normal(f"Playing next stage...")
 
         # self._check_and_do_standard_quest_list()
