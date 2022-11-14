@@ -82,10 +82,16 @@ class WyndblastWeb2Client:
             logger.print_warn("Web2 Client in dry run mode...")
 
     def _get_request(
-        self, url: str, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+        self,
+        url: str,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
+        timeout: float = 5.0,
     ) -> T.Any:
         try:
-            return requests.request("GET", url, params=params, headers=headers, timeout=5.0).json()
+            return requests.request(
+                "GET", url, params=params, headers=headers, timeout=timeout
+            ).json()
         except KeyboardInterrupt:
             raise
         except:
@@ -97,12 +103,13 @@ class WyndblastWeb2Client:
         json_data: T.Dict[str, T.Any] = {},
         headers: T.Dict[str, T.Any] = {},
         params: T.Dict[str, T.Any] = {},
+        timeout: float = 5.0,
     ) -> T.Any:
         if self.dry_run:
             return {}
         try:
             return requests.request(
-                "POST", url, json=json_data, params=params, headers=headers, timeout=5.0
+                "POST", url, json=json_data, params=params, headers=headers, timeout=timeout
             ).json()
         except KeyboardInterrupt:
             raise
@@ -493,7 +500,7 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         self, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
     ) -> T.Any:
         url = self.PVE_BASE_URL + f"/nft"
-        return self._get_request(url, headers=headers, params=params)
+        return self._get_request(url, headers=headers, params=params, timeout=20.0)
 
     def get_nft_data(self) -> PveNfts:
         try:
@@ -531,7 +538,7 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
 
     def level_up_wynd(self, product_id: str) -> bool:
         try:
-            dna_string = _get_wynd_dna_str(product_id)
+            dna_string = self._get_wynd_dna_str(product_id)
             res = self._level_up_wynd_raw(dna_string, headers=self._get_pve_headers())
             return res["result"]["is_level_up"]
         except KeyboardInterrupt:
@@ -547,7 +554,9 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
         url = self.PVE_BASE_URL + f"/internal/battle"
-        return self._post_request(url, json_data=payload, headers=headers, params=params)
+        return self._post_request(
+            url, json_data=payload, headers=headers, params=params, timeout=10.0
+        )
 
     def battle(self, stage_id: str, battle_setup: BattleSetup, duration: int = 28) -> bool:
         payload: BattlePayload = BattlePayload()

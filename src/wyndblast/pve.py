@@ -1,7 +1,10 @@
 import copy
 import json
 import random
+import time
 import typing as T
+
+from yaspin import yaspin
 
 from wyndblast.game_stats import WyndblastLifetimeGameStatsLogger
 from wyndblast.game_stats import NULL_GAME_STATS
@@ -13,6 +16,8 @@ from utils.config_types import UserConfig
 from utils.email import Email
 
 MISSION_PREFIX = "M1S"
+
+TIME_BETWEEN_BATTLES = 5.0
 
 LEVEL_TO_NUM_ENEMIES = {
     f"{MISSION_PREFIX}1:1": 2,
@@ -54,6 +59,11 @@ BATTLE_ENEMY_DNAS = [
     "W0000000000WSW000001WE00002:W0000000000WSW000008WE00002:W0000000000WSW000013WE00002:W0000000000WSW000020WE00002:W0000000000D00000000WE00002:W0000000000D00000000WE00002:W0000000000D00000000WE00002:W0000000000D00000000WE00002:0xA000000B000000000C0002092022D00000080002:80002",
     "W0000000000WSW000002WE00004:W0000000000WSW000009WE00004:W0000000000WSW000015WE00004:W0000000000WSW000021WE00004:W0000000000D00000000WE00004:W0000000000D00000000WE00004:W0000000000D00000000WE00004:W0000000000D00000000WE00004:0xA000000B000000000C0002092022D00000080005:80005",
 ]
+
+
+@yaspin(text="Resting between battles...")
+def wait(wait_time) -> None:
+    time.sleep(wait_time)
 
 
 class PveGame:
@@ -101,9 +111,10 @@ class PveGame:
 
         return enemies
 
-    def _get_player_lineup(self, num_players: int) -> T.List[types.BattleUnit]:
+    def _get_player_lineup(
+        self, num_players: int, our_units: types.PveNfts
+    ) -> T.List[types.BattleUnit]:
         units: T.List[types.BattleUnit] = []
-        our_units: types.PveNfts = self.wynd_w2.get_nft_data()
         if not our_units:
             logger.print_warn(f"Could not get nft data for player lineup creation")
             return []
@@ -114,7 +125,8 @@ class PveGame:
             logger.print_warn(
                 f"Not enough ({len(wynds)}) wynds for requested num of players. Wanted: {num_players}"
             )
-            return []
+
+        num_players = min(len(wynds), num_players)
 
         for i in range(num_players):
             dna_string = wynds[i].get("metadata", {}).get("dna", {}).get("all", "")
@@ -165,8 +177,11 @@ class PveGame:
         Do the Quest List for non-story related items
         """
 
-    def _check_and_play_story(self) -> None:
+    def _check_and_play_story(self, nft_data: types.PveNfts) -> bool:
         stages: types.PveStages = self.wynd_w2.get_stages()
+        if not stages:
+            logger.print_warn(f"No level data obtained")
+            return False
         completed = stages["completed"]
         unlocked = stages["unlocked"]
         next_stages = sorted([s for s in unlocked if s not in completed])
@@ -178,17 +193,14 @@ class PveGame:
 
         num_enemies = self._get_num_enemies_for_mission(stage_id)
 
-        logger.print_bold(f"We will be battling {num_enemies} enemies in stage {stage_id}...")
+        logger.print_ok_blue(f"We will be battling {num_enemies} enemies in stage {stage_id}...")
         battle_setup: types.BattleSetup = types.BattleSetup()
         battle_setup["enemy"] = self._get_enemy_lineup(num_enemies)
+        battle_setup["player"] = self._get_player_lineup(self.MAX_WYNDS_PER_BATTLE, nft_data)
 
-        # use max if we can so we can level up as much as possible
-        setup = []
-        for i in reversed(range(1, self.MAX_WYNDS_PER_BATTLE + 1)):
-            setup = self._get_player_lineup(i)
-            if setup:
-                break
-        battle_setup["player"] = setup
+        if not battle_setup["player"]:
+            logger.print_fail(f"No players available to battle!")
+            return False
 
         logger.print_normal(f"Using following lineup:\n{json.dumps(battle_setup, indent=4)}")
 
@@ -197,9 +209,25 @@ class PveGame:
             logger.print_ok(f"We WON")
         else:
             logger.print_warn(f"Failed to submit battle")
+            return False
+
+        for player in battle_setup["player"]:
+            dna_split = player.get("wynd_dna", "").split(":")
+            if not dna_split:
+                continue
+            product_id = ":".join(dna_split[-2:])
+            logger.print_normal(f"Attempting to level up wynd {product_id}...")
+            if self.wynd_w2.level_up_wynd(product_id):
+                logger.print_ok_arrow(f"Leveled up wynd {product_id}!")
+
+        return True
 
     def play_game(self) -> None:
-        self._check_and_play_story()
+        nft_data: types.PveNfts = self.wynd_w2.get_nft_data()
+        while self._check_and_play_story(nft_data):
+            wait(TIME_BETWEEN_BATTLES)
+            logger.print_normal(f"Playing next stage...")
+
         # self._check_and_do_standard_quest_list()
         # self._check_and_claim_quest_list()
         # self._check_and_claim_rewards()
