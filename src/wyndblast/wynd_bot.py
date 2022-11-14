@@ -44,6 +44,7 @@ class WyndBot:
         self.address: Address = config["address"]
 
         self.last_auth_time = 0
+        self.last_pve_auth_time = 0
 
         self.config_mgr = WyndblastConfigManager(
             user,
