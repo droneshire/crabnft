@@ -129,7 +129,7 @@ class PveGame:
         index = 0
         for _ in range(num_enemies):
 
-            while index not in used_dnas_inx:
+            while index in used_dnas_inx:
                 index = random.randrange(num_enemies)
 
             used_dnas.append(index)
