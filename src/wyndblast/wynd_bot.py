@@ -13,14 +13,12 @@ from utils.security import decrypt_secret
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from wyndblast.config_manager_wyndblast import WyndblastConfigManager
 from wyndblast.daily_activities import DailyActivitiesGame
-from wyndblast.pve import PveGame
+from wyndblast.daily_activities_web2_client import DailyActivitiesWyndblastWeb2Client
 from wyndblast.game_stats import NULL_GAME_STATS, WyndblastLifetimeGameStatsLogger
+from wyndblast.pve import PveGame
+from wyndblast.pve_web2_client import PveWyndblastWeb2Client
 from wyndblast.types import WyndNft
-from wyndblast.wyndblast_web2_client import (
-    WyndblastWeb2Client,
-    PveWyndblastWeb2Client,
-    DailyActivitiesWyndblastWeb2Client,
-)
+from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
 from wyndblast.wyndblast_web3_client import WyndblastGameWeb3Client
 
 
