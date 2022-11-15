@@ -586,7 +586,7 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
         url = self.PVE_BASE_URL + "rewards/quest/daily/claim"
-        return self._post_request(url, json_data={}, headers=headers, params=params)
+        return self._post_request(url, json_data={}, headers=headers, params=params, timeout=15.0)
 
     def claim_daily(self) -> ClaimQuests:
         try:
@@ -604,7 +604,7 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
         url = self.PVE_BASE_URL + "rewards/quest/weekly/claim"
-        return self._post_request(url, json_data={}, headers=headers, params=params)
+        return self._post_request(url, json_data={}, headers=headers, params=params, timeout=15.0)
 
     def claim_weekly(self) -> ClaimQuests:
         try:

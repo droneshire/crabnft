@@ -110,7 +110,7 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
                     diffed_stats[item][k] = diffed_stats[item].get(k, 0.0) - v
 
             for k in ["levels_completed", "quests_completed"]:
-                new_set = set(user_a_stats[item].get(k, []))
+                new_set = list(set(user_a_stats[item].get(k, [])))
                 for b in user_b_stats[item].get(k, []):
                     new_set.add(b)
                 diffed_stats[item][k] = new_set
@@ -146,7 +146,6 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
             "stage_1",
             "stage_2",
             "stage_3",
-            "pve_game",
         ]:
             for k, v in user_a_stats.get(item, {}).items():
                 merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
@@ -154,6 +153,18 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
             for k, v in user_b_stats.get(item, {}).items():
                 merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
 
+        for item in ["pve_game"]:
+            for k, v in user_a_stats.get(item, {}).items():
+                if isinstance(v, list):
+                    merged_stats[item][k] = merged_stats[item].get(k, []) + v
+                else:
+                    merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
+
+            for k, v in user_b_stats.get(item, {}).items():
+                if isinstance(v, list):
+                    merged_stats[item][k] = merged_stats[item].get(k, []) + v
+                else:
+                    merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
         if verbose:
             logger.print_bold("Merging game stats:")
             logger.print_normal(json.dumps(merged_stats, indent=4))
