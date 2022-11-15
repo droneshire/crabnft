@@ -145,6 +145,7 @@ class WyndBot:
                 self.last_pve_auth_time = now
 
             self.pve.play_game()
+            self.pve.check_and_claim_if_needed()
 
         self.stats_logger.write()
 
