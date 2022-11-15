@@ -383,12 +383,12 @@ class PveGame:
             logger.print_warn(f"No players available to battle, using dummies...")
             nft_data: types.PveNfts = {
                 "wynd": [
-                    {"metadata": {"dna": {"all": STOCK_PLAYER_WYNDS[0]}}},
-                    {"metadata": {"dna": {"all": STOCK_PLAYER_WYNDS[1]}}},
+                    {"metadata": {"dna": {"all": STOCK_PLAYER_WYNDS[0]}}, "product_id": "dummy1"},
+                    {"metadata": {"dna": {"all": STOCK_PLAYER_WYNDS[1]}}, "product_id": "dummy2"},
                 ]
             }
             # hack to see if we can submit battle wins without owning any wynds :)
-            battle_setup["player"] = self._get_enemy_lineup(self.MAX_WYNDS_PER_BATTLE)
+            battle_setup["player"] = self._get_player_lineup(len(nft_data["wynd"]), nft_data)
 
         duration = random.randint(self.MIN_GAME_DURATION, self.MAX_GAME_DURATION)
         if self.wynd_w2.battle(stage_id, battle_setup, duration=duration):
