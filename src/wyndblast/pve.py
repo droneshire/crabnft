@@ -77,6 +77,7 @@ class PveGame:
     MIN_GAME_DURATION = 10
     MAX_GAME_DURATION = 29
     LEVEL_FIVE_EXP = 500
+    MAX_REPLAYS_PER_CYCLE = 3  # based on a daily reward that is 20x battles per week
 
     TIME_BETWEEN_CLAIM_QUEST = 60.0 * 60.0 * 6
     TIME_BETWEEN_LEVEL_UP = 60.0 * 5.0
@@ -102,6 +103,7 @@ class PveGame:
 
         self.last_level_up = 0.0
         self.last_quest_claim = 0.0
+        self.num_replays = 0
 
         self.last_mission = None
 
@@ -301,10 +303,15 @@ class PveGame:
 
         if not stage_id:
             user_data: types.PveUser = self.wynd_w2.get_user_profile()
-            if user_data["exp"] < self.LEVEL_FIVE_EXP:
+            if (
+                user_data["exp"] < self.LEVEL_FIVE_EXP
+                and self.num_replays < self.MAX_REPLAYS_PER_CYCLE
+            ):
                 logger.print_bold(f"We've beat the full map, but still need more exp, replaying...")
                 stage_id = self.sorted_levels[-1]
+                self.num_replays += 1
             else:
+                self.num_replays = 0
                 logger.print_bold(f"No more levels to play!")
                 return
 
