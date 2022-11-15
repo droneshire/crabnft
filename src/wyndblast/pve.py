@@ -132,7 +132,7 @@ class PveGame:
             while index in used_dnas_inx:
                 index = random.randrange(num_enemies)
 
-            used_dnas.append(index)
+            used_dnas_inx.append(index)
 
             unit = types.BattleUnit = {
                 "equipment_dna": "",
