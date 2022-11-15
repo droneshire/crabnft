@@ -418,12 +418,13 @@ class PveGame:
         user_data: types.PveUser = self.wynd_w2.get_user_profile()
         time.sleep(2.0)
         chro_rewards: types.PveRewards = self.wynd_w2.get_chro_rewards()
-        chro_before = chro_rewards["claimable"]
+        chro_before = chro_rewards.get("claimable", 0)
         time.sleep(2.0)
 
-        self.current_stats["pve_game"]["account_exp"] = user_data["exp"]
-
-        if user_data["exp"] > self.LEVEL_FIVE_EXP and chro_before < self.MIN_CHRO_TO_PLAY:
+        if (
+            user_data.get("exp", self.LEVEL_FIVE_EXP) >= self.LEVEL_FIVE_EXP
+            and chro_before < self.MIN_CHRO_TO_PLAY
+        ):
             logger.print_normal(f"Skipping PVE game since we've already tapped out this account...")
             return
 
@@ -433,7 +434,7 @@ class PveGame:
             logger.print_normal(f"Playing next stage...")
 
         chro_rewards: types.PveRewards = self.wynd_w2.get_chro_rewards()
-        chro_after = chro_rewards["claimable"]
+        chro_after = chro_rewards.get("claimable", 0)
         self.current_stats["chro"] += chro_after - chro_before
 
         self._check_and_do_standard_quest_list()
