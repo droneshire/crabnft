@@ -217,7 +217,11 @@ class PveGame:
             if res["is_level_up"]:
                 logger.print_ok_arrow(f"Leveled up our Profile!")
 
-        wait(5.0)
+        @yaspin(text="Waiting before claiming weekly...")
+        def _wait():
+            time.sleep(5.0)
+
+        _wait()
 
         logger.print_ok_blue(f"Attempting to claim weekly quests")
         res: types.ClaimQuests = self.wynd_w2.claim_weekly()
