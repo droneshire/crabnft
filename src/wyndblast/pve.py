@@ -15,28 +15,30 @@ from utils import logger
 from utils.config_types import UserConfig
 from utils.email import Email
 
-MISSION_PREFIX = "M1S"
+MAP_1 = "M1S"
+MAP_2 = "M2S"
 
+ALLOWED_MAPS = [MAP_1]
 
 LEVEL_TO_NUM_ENEMIES = {
-    f"{MISSION_PREFIX}1:1": 2,
-    f"{MISSION_PREFIX}1:2": 3,
-    f"{MISSION_PREFIX}1:3": 4,
-    f"{MISSION_PREFIX}2:1": 3,
-    f"{MISSION_PREFIX}2:2": 3,
-    f"{MISSION_PREFIX}2:3": 4,
-    f"{MISSION_PREFIX}3:1": 3,
-    f"{MISSION_PREFIX}3:2": 5,
-    f"{MISSION_PREFIX}3:3": 6,
-    f"{MISSION_PREFIX}4:1": 4,
-    f"{MISSION_PREFIX}4:2": 6,
-    f"{MISSION_PREFIX}4:3": 6,
-    f"{MISSION_PREFIX}5:1": 4,
-    f"{MISSION_PREFIX}5:2": 6,
-    f"{MISSION_PREFIX}5:3": 9,
-    f"{MISSION_PREFIX}6:1": 6,
-    f"{MISSION_PREFIX}6:2": 9,
-    f"{MISSION_PREFIX}6:3": 9,
+    f"{MAP_1}1:1": 2,
+    f"{MAP_1}1:2": 3,
+    f"{MAP_1}1:3": 4,
+    f"{MAP_1}2:1": 3,
+    f"{MAP_1}2:2": 3,
+    f"{MAP_1}2:3": 4,
+    f"{MAP_1}3:1": 3,
+    f"{MAP_1}3:2": 5,
+    f"{MAP_1}3:3": 6,
+    f"{MAP_1}4:1": 4,
+    f"{MAP_1}4:2": 6,
+    f"{MAP_1}4:3": 6,
+    f"{MAP_1}5:1": 4,
+    f"{MAP_1}5:2": 6,
+    f"{MAP_1}5:3": 9,
+    f"{MAP_1}6:1": 6,
+    f"{MAP_1}6:2": 9,
+    f"{MAP_1}6:3": 9,
 }
 
 LEVEL_HIERARCHY = {
@@ -69,6 +71,8 @@ class PveGame:
     MAX_WYNDS_PER_BATTLE = 2
     MIN_GAME_DURATION = 10
     MAX_GAME_DURATION = 29
+
+    TIME_BETWEEN_CLAIM_QUEST = 60.0 * 60.0 * 6
     TIME_BETWEEN_LEVEL_UP = 60.0 * 5.0
     TIME_BETWEEN_BATTLES = 60.0
 
@@ -90,12 +94,21 @@ class PveGame:
 
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
 
-        self.last_level_up = 0
+        self.last_level_up = 0.0
+        self.last_quest_claim = 0.0
+
+        self.last_mission = None
+
+        self.sorted_levels = []
+        for difficulty in LEVEL_HIERARCHY.keys():
+            levels = sorted(LEVEL_TO_NUM_ENEMIES.keys())
+            self.sorted_levels.extend([l + difficulty for l in levels])
+        self.completed = set()
 
         logger.print_ok_blue(f"\nStarting PVE game for user {user}...")
 
     def _get_num_enemies_for_mission(self, mission: str) -> int:
-        if not mission.startswith(MISSION_PREFIX):
+        if mission[:3] not in ALLOWED_MAPS:
             return 0
 
         # strip off the difficulty part since all difficulties are same num enemies
@@ -147,10 +160,31 @@ class PveGame:
 
         return units
 
+    def _get_next_stage(self) -> str:
+        index = self.sorted_levels.index(self.last_mission)
+        if index + 1 >= len(LEVEL_TO_NUM_ENEMIES.keys()):
+            return ""
+        proposed_stage = self.sorted_levels[index + 1]
+        if proposed_stage not in self.completed:
+            for i in range(len(self.sorted_levels)):
+                if self.sorted_levels[i] not in self.completed:
+                    return self.sorted_levels[i]
+            return ""
+
+        return self.sorted_levels[index + 1]
+
     def _check_and_claim_quest_list(self) -> None:
         """
         Claim any quest achievements that have occurred (daily/weekly/level/story)
         """
+        now = time.time()
+
+        if now - self.last_quest_claim < self.TIME_BETWEEN_CLAIM_QUEST:
+            logger.print_normal(f"Skipping quest claim, not time yet...")
+            return
+
+        self.last_quest_claim = now
+
         logger.print_ok_blue(f"Attempting to claim daily quests")
         res: types.ClaimQuests = self.wynd_w2.claim_daily()
 
@@ -179,20 +213,35 @@ class PveGame:
         """
         Do the Quest List for non-story related items
         """
+        pass
 
-    def _check_and_play_story(self, nft_data: types.PveNfts) -> bool:
+    def _get_next_stage_from_api(self) -> str:
         stages: types.PveStages = self.wynd_w2.get_stages()
         if not stages:
             logger.print_warn(f"No level data obtained")
-            return False
-        completed = stages["completed"]
+            return ""
+        for s in stages["completed"]:
+            self.completed.add(s)
         unlocked = stages["unlocked"]
-        next_stages = sorted([s for s in unlocked if s not in completed])
+        next_stages = sorted([s for s in unlocked if s not in list(self.completed)])
         if len(next_stages) == 0:
             logger.print_normal(f"Not playing b/c no stages left to play!")
-            return
+            return ""
 
         stage_id = next_stages[0]
+        return stage_id if any([s for s in ALLOWED_MAPS if stage_id.startswith(s)]) else ""
+
+    def _check_and_play_story(self, nft_data: types.PveNfts) -> bool:
+        if self.last_mission is None:
+            stage_id = self._get_next_stage_from_api()
+        else:
+            stage_id = self._get_next_stage()
+            if not stage_id:
+                stage_id = self._get_next_stage_from_api()
+
+        if not stage_id:
+            logger.print_bold(f"No more levels to play!")
+            return
 
         num_enemies = self._get_num_enemies_for_mission(stage_id)
 
@@ -205,10 +254,10 @@ class PveGame:
             logger.print_fail(f"No players available to battle!")
             return False
 
-        logger.print_normal(f"Using following lineup:\n{json.dumps(battle_setup, indent=4)}")
-
         duration = random.randint(self.MIN_GAME_DURATION, self.MAX_GAME_DURATION)
         if self.wynd_w2.battle(stage_id, battle_setup, duration=duration):
+            self.completed.add(stage_id)
+            self.last_mission = stage_id
             logger.print_ok(f"We WON")
         else:
             logger.print_warn(f"Failed to submit battle")
@@ -237,6 +286,6 @@ class PveGame:
             self.wynd_w2.update_account()
             logger.print_normal(f"Playing next stage...")
 
-        # self._check_and_do_standard_quest_list()
-        # self._check_and_claim_quest_list()
-        # self._check_and_claim_rewards()
+        self._check_and_do_standard_quest_list()
+        self._check_and_claim_quest_list()
+        self._check_and_claim_rewards()
