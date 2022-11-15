@@ -389,7 +389,7 @@ class PveGame:
 
     def check_and_claim_if_needed(self) -> bool:
         chro_rewards: types.PveRewards = self.wynd_w2.get_chro_rewards()
-        unclaimed_chro = chro_rewards["claimable"]
+        unclaimed_chro = chro_rewards.get("claimable", 0)
         logger.print_ok(f"Unclaimed CHRO Rewards: {unclaimed_chro} CHRO")
 
         if unclaimed_chro < self.MIN_CLAIM_CHRO:
