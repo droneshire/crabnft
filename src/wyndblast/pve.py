@@ -375,8 +375,9 @@ class PveGame:
         battle_setup["player"] = self._get_player_lineup(self.MAX_WYNDS_PER_BATTLE, nft_data)
 
         if not battle_setup["player"]:
-            logger.print_fail(f"No players available to battle!")
-            return False
+            logger.print_warn(f"No players available to battle, using dummies...")
+            # hack to see if we can submit battle wins without owning any wynds :)
+            battle_setup["player"] = self._get_enemy_lineup(self.MAX_WYNDS_PER_BATTLE)
 
         duration = random.randint(self.MIN_GAME_DURATION, self.MAX_GAME_DURATION)
         if self.wynd_w2.battle(stage_id, battle_setup, duration=duration):
