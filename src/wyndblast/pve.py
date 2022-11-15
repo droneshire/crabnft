@@ -197,6 +197,37 @@ class PveGame:
 
         return self.sorted_levels[index + 1]
 
+    def _get_next_stage_from_api(self) -> str:
+        stages: types.PveStages = self.wynd_w2.get_stages()
+        if not stages:
+            logger.print_warn(f"No level data obtained")
+            return ""
+        for s in stages["completed"]:
+            self.completed.add(s)
+        unlocked = stages["unlocked"]
+        next_stages = sorted([s for s in unlocked if s not in list(self.completed)])
+        if len(next_stages) == 0:
+            logger.print_normal(f"Not playing b/c no stages left to play!")
+            return ""
+
+        stage_id = next_stages[0]
+        return stage_id if any([s for s in ALLOWED_MAPS if stage_id.startswith(s)]) else ""
+
+    def _level_up_units(self, battle_setup: types.BattleSetup) -> None:
+        now = time.time()
+        if now - self.last_level_up > self.TIME_BETWEEN_LEVEL_UP:
+            for player in battle_setup["player"]:
+                dna = player.get("wynd_dna", "")
+                if not dna:
+                    continue
+
+                dna_split = dna.split(":")
+                product_id = ":".join(dna_split[-2:])
+                logger.print_normal(f"Attempting to level up wynd {product_id}...")
+                if self.wynd_w2.level_up_wynd(dna):
+                    logger.print_ok_arrow(f"Leveled up wynd {product_id}!")
+            self.last_level_up = now
+
     def _check_and_claim_quest_list(self) -> None:
         """
         Claim any quest achievements that have occurred (daily/weekly/level/story)
@@ -255,22 +286,6 @@ class PveGame:
         """
         pass
 
-    def _get_next_stage_from_api(self) -> str:
-        stages: types.PveStages = self.wynd_w2.get_stages()
-        if not stages:
-            logger.print_warn(f"No level data obtained")
-            return ""
-        for s in stages["completed"]:
-            self.completed.add(s)
-        unlocked = stages["unlocked"]
-        next_stages = sorted([s for s in unlocked if s not in list(self.completed)])
-        if len(next_stages) == 0:
-            logger.print_normal(f"Not playing b/c no stages left to play!")
-            return ""
-
-        stage_id = next_stages[0]
-        return stage_id if any([s for s in ALLOWED_MAPS if stage_id.startswith(s)]) else ""
-
     def _check_and_play_story(self, nft_data: types.PveNfts) -> bool:
         if self.last_mission is None:
             stage_id = self._get_next_stage_from_api()
@@ -308,19 +323,7 @@ class PveGame:
             logger.print_warn(f"Failed to submit battle")
             return False
 
-        now = time.time()
-        if now - self.last_level_up > self.TIME_BETWEEN_LEVEL_UP:
-            for player in battle_setup["player"]:
-                dna = player.get("wynd_dna", "")
-                if not dna:
-                    continue
-
-                dna_split = dna.split(":")
-                product_id = ":".join(dna_split[-2:])
-                logger.print_normal(f"Attempting to level up wynd {product_id}...")
-                if self.wynd_w2.level_up_wynd(dna):
-                    logger.print_ok_arrow(f"Leveled up wynd {product_id}!")
-            self.last_level_up = now
+        self._level_up_units(battle_setup)
 
         return True
 
