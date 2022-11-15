@@ -28,7 +28,7 @@ from wyndblast.types import (
     ProductMetadata,
     WyndStatus,
 )
-from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
+from wyndblast.daily_activities_web2_client import DailyActivitiesWyndblastWeb2Client
 from wyndblast.wyndblast_web3_client import WyndblastGameWeb3Client
 
 
@@ -42,7 +42,7 @@ class DailyActivitiesGame:
         user: str,
         config: UserConfig,
         email_accounts: T.List[Email],
-        wynd_w2: WyndblastWeb2Client,
+        wynd_w2: DailyActivitiesWyndblastWeb2Client,
         wynd_w3: WyndblastGameWeb3Client,
         stats_logger: WyndblastLifetimeGameStatsLogger,
     ):

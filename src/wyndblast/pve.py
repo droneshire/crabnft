@@ -6,15 +6,17 @@ import typing as T
 
 from yaspin import yaspin
 
+from config_wyndblast import COMMISSION_WALLET_ADDRESS
+from utils import logger
+from utils.config_types import UserConfig
+from utils.email import Email
+from utils.general import get_pretty_seconds
+from utils.price import wei_to_token_raw
 from wyndblast.game_stats import WyndblastLifetimeGameStatsLogger
 from wyndblast.game_stats import NULL_GAME_STATS
 from wyndblast import types
 from wyndblast.pve_web2_client import PveWyndblastWeb2Client
 from wyndblast.wyndblast_web3_client import WyndblastGameWeb3Client
-from utils import logger
-from utils.config_types import UserConfig
-from utils.email import Email
-from utils.general import get_pretty_seconds
 
 MAP_1 = "M1S"
 MAP_2 = "M2S"
@@ -78,6 +80,8 @@ class PveGame:
     MAX_GAME_DURATION = 29
     LEVEL_FIVE_EXP = 500
     MAX_REPLAYS_PER_CYCLE = 3  # based on a daily reward that is 20x battles per week
+    MIN_CLAIM_CHRO = 5000
+    MIN_CHRO_TO_PLAY = 100
 
     TIME_BETWEEN_CLAIM_QUEST = 60.0 * 60.0 * 6
     TIME_BETWEEN_LEVEL_UP = 60.0 * 5.0
@@ -215,6 +219,58 @@ class PveGame:
         stage_id = next_stages[0]
         return stage_id if any([s for s in ALLOWED_MAPS if stage_id.startswith(s)]) else ""
 
+    def _send_pve_update(self) -> None:
+        # TODO: discord bot notification?
+        pass
+
+    def _send_summary_email(self) -> None:
+        # TODO: do we want email updates?
+        pass
+
+    def _update_stats(self) -> None:
+        for k, v in self.current_stats.items():
+            if type(v) != type(self.stats_logger.lifetime_stats.get(k)):
+                logger.print_warn(
+                    f"Mismatched stats:\n{self.current_stats}\n{self.stats_logger.lifetime_stats}"
+                )
+                continue
+
+            if k in ["commission_chro"]:
+                continue
+
+            if isinstance(v, list):
+                self.stats_logger.lifetime_stats[k].extend(v)
+            elif isinstance(v, dict):
+                for i, j in self.stats_logger.lifetime_stats[k].items():
+                    self.stats_logger.lifetime_stats[k][i] += self.current_stats[k][i]
+            else:
+                self.stats_logger.lifetime_stats[k] += v
+
+        self.stats_logger.lifetime_stats["commission_chro"] = self.stats_logger.lifetime_stats.get(
+            "commission_chro", {COMMISSION_WALLET_ADDRESS: 0.0}
+        )
+
+        chro_rewards = self.current_stats["chro"]
+        for address, commission_percent in self.config["commission_percent_per_mine"].items():
+            commission_chro = chro_rewards * (commission_percent / 100.0)
+
+            self.stats_logger.lifetime_stats["commission_chro"][address] = (
+                self.stats_logger.lifetime_stats["commission_chro"].get(address, 0.0)
+                + commission_chro
+            )
+
+            logger.print_ok(
+                f"Added {commission_chro} CHRO for {address} in commission ({commission_percent}%)!"
+            )
+
+        self._send_pve_update()
+
+        self.current_stats = copy.deepcopy(NULL_GAME_STATS)
+
+        logger.print_ok_blue(
+            f"Lifetime Stats for {self.user.upper()}\n{json.dumps(self.stats_logger.lifetime_stats, indent=4)}"
+        )
+
     def _check_and_level_units(self, our_units: types.PveNfts) -> None:
         """
         Try to level up all of our units!
@@ -279,14 +335,6 @@ class PveGame:
             if res["is_level_up"]:
                 logger.print_ok_arrow(f"Leveled up our Profile!")
 
-    def _check_and_claim_rewards(self) -> None:
-        """
-        Claim CHRO rewards from the game
-        """
-        chro_rewards: types.PveReward = self.wynd_w2.get_chro_rewards()
-        chro = chro_rewards["amount"]
-        logger.print_ok(f"Unclaimed CHRO Rewards: {chro} CHRO")
-
     def _check_and_do_standard_quest_list(self) -> None:
         """
         Do the Quest List for non-story related items
@@ -330,6 +378,7 @@ class PveGame:
         if self.wynd_w2.battle(stage_id, battle_setup, duration=duration):
             self.completed.add(stage_id)
             self.last_mission = stage_id
+            self.current_stats["pve_game"]["levels_completed"].append(stage_id)
             logger.print_ok(f"We WON")
         else:
             logger.print_warn(f"Failed to submit battle")
@@ -337,14 +386,58 @@ class PveGame:
 
         return True
 
+    def check_and_claim_if_needed(self) -> bool:
+        chro_rewards: types.PveRewards = self.wynd_w2.get_chro_rewards()
+        unclaimed_chro = chro_rewards["claimable"]
+        logger.print_ok(f"Unclaimed CHRO Rewards: {unclaimed_chro} CHRO")
+
+        if unclaimed_chro < self.MIN_CLAIM_CHRO:
+            logger.print_normal(f"Not enough CHRO to claim rewards ({unclaimed_chro} CHRO)")
+            return False
+
+        logger.print_ok(f"Claiming rewards! {unclaimed_chro} CHRO")
+        tx_hash = self.wynd_w3.claim_rewards()
+        tx_receipt = self.wynd_w3.get_transaction_receipt(tx_hash)
+        gas = wei_to_token_raw(self.wynd_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        logger.print_bold(f"Paid {gas} AVAX in gas")
+
+        self.stats_logger.lifetime_stats["avax_gas"] += gas
+
+        if tx_receipt.get("status", 0) != 1:
+            logger.print_fail(f"Failed to claim CHRO!")
+        else:
+            logger.print_ok(f"Successfully transferred CHRO")
+            logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+
+        return True
+
     def play_game(self) -> None:
         nft_data: types.PveNfts = self.wynd_w2.get_nft_data()
+        time.sleep(2.0)
+        user_data: types.PveUser = self.wynd_w2.get_user_profile()
+        time.sleep(2.0)
+        chro_rewards: types.PveRewards = self.wynd_w2.get_chro_rewards()
+        chro_before = chro_rewards["claimable"]
+        time.sleep(2.0)
+
+        self.current_stats["pve_game"]["account_exp"] = user_data["exp"]
+
+        if user_data["exp"] > self.LEVEL_FIVE_EXP and chro_before < self.MIN_CHRO_TO_PLAY:
+            logger.print_normal(f"Skipping PVE game since we've already tapped out this account...")
+            return
+
         while self._check_and_play_story(nft_data):
             wait(random.randint(30, 90))
             self.wynd_w2.update_account()
             logger.print_normal(f"Playing next stage...")
 
+        chro_rewards: types.PveRewards = self.wynd_w2.get_chro_rewards()
+        chro_after = chro_rewards["claimable"]
+        self.current_stats["chro"] += chro_after - chro_before
+
         self._check_and_do_standard_quest_list()
         self._check_and_claim_quest_list()
-        self._check_and_claim_rewards()
         self._check_and_level_units(nft_data)
+
+        self._send_summary_email()
+        self._update_stats()
