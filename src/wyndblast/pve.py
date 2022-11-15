@@ -195,7 +195,7 @@ class PveGame:
         if index + 1 >= len(LEVEL_TO_NUM_ENEMIES.keys()):
             return ""
         proposed_stage = self.sorted_levels[index + 1]
-        if proposed_stage not in self.completed:
+        if proposed_stage in self.completed:
             for i in range(len(self.sorted_levels)):
                 if self.sorted_levels[i] not in self.completed:
                     return self.sorted_levels[i]
