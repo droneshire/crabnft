@@ -23,7 +23,7 @@ from wyndblast.wyndblast_web3_client import WyndblastGameWeb3Client
 
 
 class WyndBot:
-    TIME_BETWEEN_AUTH = 60.0 * 60.0 * 6.0
+    TIME_BETWEEN_AUTH = 60.0 * 60.0 * 2.0
 
     def __init__(
         self,
