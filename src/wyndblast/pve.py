@@ -279,8 +279,8 @@ class PveGame:
         if now - self.last_level_up > self.TIME_BETWEEN_LEVEL_UP:
             wynds: T.List[types.PveWynd] = our_units["wynd"]
 
-            for player in battle_setup["player"]:
-                dna = wynds[index].get("metadata", {}).get("dna", {}).get("all", "")
+            for player in wynds:
+                dna = player.get("metadata", {}).get("dna", {}).get("all", "")
                 if not dna:
                     continue
 
@@ -315,7 +315,8 @@ class PveGame:
         res: types.ClaimQuests = self.wynd_w2.claim_daily()
 
         if res:
-            logger.print_ok(f"Successfully claimed daily rewards! EXP[{res['exp']}]")
+            logger.print_ok(f"Successfully claimed daily rewards! +{res['exp']} exp")
+            self.current_stats["pve_game"]["account_exp"] += res["exp"]
 
             if res["is_level_up"]:
                 logger.print_ok_arrow(f"Leveled up our Profile!")
