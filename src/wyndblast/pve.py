@@ -160,9 +160,17 @@ class PveGame:
 
         num_players = min(len(wynds), num_players)
 
-        for i in range(num_players):
-            dna_string = wynds[i].get("metadata", {}).get("dna", {}).get("all", "")
-            product_id = wynds[i].get("product_id", "")
+        used_dnas_inx = []
+        index = 0
+        for _ in range(num_players):
+
+            while index in used_dnas_inx:
+                index = random.randrange(num_players)
+
+            used_dnas_inx.append(index)
+
+            dna_string = wynds[index].get("metadata", {}).get("dna", {}).get("all", "")
+            product_id = wynds[index].get("product_id", "")
             if not dna_string:
                 logger.print_warn(f"Could not get DNA string for ID: {product_id}")
                 return []
