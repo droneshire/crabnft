@@ -194,6 +194,8 @@ class PveGame:
             if res["is_level_up"]:
                 logger.print_ok_arrow(f"Leveled up our Profile!")
 
+        wait(5.0)
+
         logger.print_ok_blue(f"Attempting to claim weekly quests")
         res: types.ClaimQuests = self.wynd_w2.claim_weekly()
 
@@ -240,8 +242,13 @@ class PveGame:
                 stage_id = self._get_next_stage_from_api()
 
         if not stage_id:
-            logger.print_bold(f"No more levels to play!")
-            return
+            user_data: types.PveUser = self.wynd_w2.get_user_profile()
+            if user_data["exp"] < self.LEVEL_FIVE_EXP:
+                logger.print_bold(f"We've beat the full map, but still need more exp, replaying...")
+                stage_id = self.sorted_levels[-1]
+            else:
+                logger.print_bold(f"No more levels to play!")
+                return
 
         num_enemies = self._get_num_enemies_for_mission(stage_id)
 
@@ -282,7 +289,7 @@ class PveGame:
     def play_game(self) -> None:
         nft_data: types.PveNfts = self.wynd_w2.get_nft_data()
         while self._check_and_play_story(nft_data):
-            wait(self.TIME_BETWEEN_BATTLES)
+            wait(random.randint(30, 90))
             self.wynd_w2.update_account()
             logger.print_normal(f"Playing next stage...")
 
