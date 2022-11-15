@@ -213,11 +213,16 @@ class PveGame:
         stage_id = next_stages[0]
         return stage_id if any([s for s in ALLOWED_MAPS if stage_id.startswith(s)]) else ""
 
-    def _level_up_units(self, battle_setup: types.BattleSetup) -> None:
+    def _check_and_level_units(self, our_units: types.PveNfts) -> None:
+        """
+        Try to level up all of our units!
+        """
         now = time.time()
         if now - self.last_level_up > self.TIME_BETWEEN_LEVEL_UP:
+            wynds: T.List[types.PveWynd] = our_units["wynd"]
+
             for player in battle_setup["player"]:
-                dna = player.get("wynd_dna", "")
+                dna = wynds[index].get("metadata", {}).get("dna", {}).get("all", "")
                 if not dna:
                     continue
 
@@ -337,3 +342,4 @@ class PveGame:
         self._check_and_do_standard_quest_list()
         self._check_and_claim_quest_list()
         self._check_and_claim_rewards()
+        self._check_and_level_units(nft_data)
