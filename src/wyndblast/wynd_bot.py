@@ -35,6 +35,7 @@ class WyndBot:
         dry_run: bool,
     ):
         self.config = config
+        self.alias = get_alias_from_user(user)
         self.user: str = user
         self.emails: T.List[Email] = email_accounts
         self.log_dir: str = log_dir
@@ -76,7 +77,7 @@ class WyndBot:
         )
 
         self.stats_logger = WyndblastLifetimeGameStatsLogger(
-            get_alias_from_user(self.user),
+            self.alias,
             self.log_dir,
             self.config_mgr.get_lifetime_stats(),
             self.dry_run,
@@ -136,7 +137,7 @@ class WyndBot:
         self.wynd_w2.update_account()
         self.daily_activities.check_and_claim_if_needed()
 
-        if self.user in BETA_TEST_LIST:
+        if self.alias in BETA_TEST_LIST:
             logger.print_bold(f"\n\nAttempting PVE game for {self.user}")
             if now - self.last_pve_auth_time > self.TIME_BETWEEN_AUTH:
                 self.pve_w2.logout_user()
