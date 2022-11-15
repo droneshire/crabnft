@@ -352,8 +352,11 @@ class PveGame:
 
         if not stage_id:
             user_data: types.PveUser = self.wynd_w2.get_user_profile()
+            if not user_data:
+                return False
+
             if (
-                user_data["exp"] < self.LEVEL_FIVE_EXP
+                user_data.get("exp", self.LEVEL_FIVE_EXP) < self.LEVEL_FIVE_EXP
                 and self.num_replays < self.MAX_REPLAYS_PER_CYCLE
             ):
                 logger.print_bold(f"We've beat the full map, but still need more exp, replaying...")
@@ -362,7 +365,7 @@ class PveGame:
             else:
                 self.num_replays = 0
                 logger.print_bold(f"No more levels to play!")
-                return
+                return False
 
         num_enemies = self._get_num_enemies_for_mission(stage_id)
 
