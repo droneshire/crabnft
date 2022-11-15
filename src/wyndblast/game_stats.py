@@ -110,10 +110,10 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
                     diffed_stats[item][k] = diffed_stats[item].get(k, 0.0) - v
 
             for k in ["levels_completed", "quests_completed"]:
-                new_set = list(set(user_a_stats[item].get(k, [])))
+                new_set = set(user_a_stats[item].get(k, []))
                 for b in user_b_stats[item].get(k, []):
                     new_set.add(b)
-                diffed_stats[item][k] = new_set
+                diffed_stats[item][k] = list(new_set)
 
         if verbose:
             logger.print_bold("Subtracting game stats:")
