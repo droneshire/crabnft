@@ -37,8 +37,6 @@ from wyndblast.types import (
     WyndStatus,
 )
 
-TIMESTAMP_FORMAT = "%Y-%m-%d"
-
 
 class WyndblastWeb2Client:
     """Access api endpoints of Wyndblast Game"""

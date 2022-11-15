@@ -21,6 +21,8 @@ from wyndblast.types import (
 )
 from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
 
+TIMESTAMP_FORMAT = "%Y-%m-%d"
+
 
 class DailyActivitiesWyndblastWeb2Client(WyndblastWeb2Client):
     def __init__(
