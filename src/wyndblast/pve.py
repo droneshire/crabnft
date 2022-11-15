@@ -328,8 +328,6 @@ class PveGame:
             logger.print_warn(f"Failed to submit battle")
             return False
 
-        self._level_up_units(battle_setup)
-
         return True
 
     def play_game(self) -> None:
