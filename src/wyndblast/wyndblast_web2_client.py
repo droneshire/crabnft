@@ -419,7 +419,7 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
     def _get_countdown_raw(
         self, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
     ) -> T.Any:
-        url = self.PVE_BASE_URL + "/cooldown"
+        url = self.PVE_BASE_URL + "/countdown"
         return self._get_request(url, headers=headers, params=params)
 
     def get_countdown(self) -> Countdown:

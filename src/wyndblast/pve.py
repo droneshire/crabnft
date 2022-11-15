@@ -308,7 +308,7 @@ class PveGame:
                 and self.num_replays < self.MAX_REPLAYS_PER_CYCLE
             ):
                 logger.print_bold(f"We've beat the full map, but still need more exp, replaying...")
-                stage_id = self.sorted_levels[-1]
+                stage_id = self.sorted_levels[random.randrange(len(self.sorted_levels))]
                 self.num_replays += 1
             else:
                 self.num_replays = 0
