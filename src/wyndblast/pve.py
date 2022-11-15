@@ -14,6 +14,7 @@ from wyndblast.wyndblast_web3_client import WyndblastGameWeb3Client
 from utils import logger
 from utils.config_types import UserConfig
 from utils.email import Email
+from utils.general import get_pretty_seconds
 
 MAP_1 = "M1S"
 MAP_2 = "M2S"
@@ -59,6 +60,10 @@ BATTLE_ENEMY_DNAS = [
     "W0000000000WSW000003WE00007:W0000000000WSW000010WE00007:W0000000000WSW000016WE00007:W0000000000WSW000022WE00007:W0000000000D00000000WE00007:W0000000000D00000000WE00007:W0000000000D00000000WE00007:W0000000000D00000000WE00007:0xA000000B000000000C0002092022D00000080008:80008",
     "W0000000000WSW000001WE00002:W0000000000WSW000008WE00002:W0000000000WSW000013WE00002:W0000000000WSW000020WE00002:W0000000000D00000000WE00002:W0000000000D00000000WE00002:W0000000000D00000000WE00002:W0000000000D00000000WE00002:0xA000000B000000000C0002092022D00000080002:80002",
     "W0000000000WSW000002WE00004:W0000000000WSW000009WE00004:W0000000000WSW000015WE00004:W0000000000WSW000021WE00004:W0000000000D00000000WE00004:W0000000000D00000000WE00004:W0000000000D00000000WE00004:W0000000000D00000000WE00004:0xA000000B000000000C0002092022D00000080005:80005",
+    "W0000000000WSW000002WE00004:W0000000000WSW000009WE00004:W0000000000WSW000015WE00004:W0000000000WSW000021WE00004:W0000000000D00000000WE00004:W0000000000D00000000WE00004:W0000000000D00000000WE00004:W0000000000D00000000WE00004:0xA000000B000000000C0002092022D00000080004:80004",
+    "W0000000000WSW000002WE00004:W0000000000WSW000009WE00004:W0000000000WSW000015WE00004:W0000000000WSW000021WE00004:W0000000000D00000000WE00004:W0000000000D00000000WE00004:W0000000000D00000000WE00004:W0000000000D00000000WE00004:0xA000000B000000000C0002092022D00000080004:80004",
+    "W0000000000WSW000003WE00017:W0000000000WSW000010WE00017:W0000000000WSW000016WE00017:W0000000000WSW000022WE00017:W0000000000D00000000WE00017:W0000000000D00000000WE00017:W0000000000D00000000WE00017:W0000000000D00000000WE00017:0xA000000B000000000C0002092022D00000080040:80040",
+    "W0000000000WSW000004WE00019:W0000000000WSW000007WE00019:W0000000000WSW000014WE00019:W0000000000WSW000019WE00019:W0000000000D00000000WE00019:W0000000000D00000000WE00019:W0000000000D00000000WE00019:W0000000000D00000000WE00019:0xA000000B000000000C0002092022D00000080041:80041",
 ]
 
 
@@ -117,11 +122,21 @@ class PveGame:
 
     def _get_enemy_lineup(self, num_enemies: int) -> T.List[types.BattleUnit]:
         enemies: T.List[types.BattleUnit] = []
-        for i in range(num_enemies):
+        num_enemies = min(len(BATTLE_ENEMY_DNAS), num_enemies)
+
+        used_dnas_inx = []
+        index = 0
+        for _ in range(num_enemies):
+
+            while index not in used_dnas_inx:
+                index = random.randrange(num_enemies)
+
+            used_dnas.append(index)
+
             unit = types.BattleUnit = {
                 "equipment_dna": "",
                 "rider_dna": "",
-                "wynd_dna": BATTLE_ENEMY_DNAS[i],
+                "wynd_dna": BATTLE_ENEMY_DNAS[index],
             }
             enemies.append(unit)
 
@@ -183,6 +198,14 @@ class PveGame:
             logger.print_normal(f"Skipping quest claim, not time yet...")
             return
 
+        countdown: types.Countdown = self.wynd_w2.get_countdown()
+
+        daily_reset_left = get_pretty_seconds(countdown["daily_countdown_second"])
+        logger.print_ok_blue(f"Daily quests reset in {daily_reset_left}")
+
+        weekly_reset_left = get_pretty_seconds(countdown["weekly_countdown_second"])
+        logger.print_ok_blue(f"Weekly quests reset in {weekly_reset_left}")
+
         self.last_quest_claim = now
 
         logger.print_ok_blue(f"Attempting to claim daily quests")
@@ -209,7 +232,9 @@ class PveGame:
         """
         Claim CHRO rewards from the game
         """
-        pass
+        chro_rewards: types.PveReward = self.wynd_w2.get_chro_rewards()
+        chro = chro_rewards["amount"]
+        logger.print_ok(f"Unclaimed CHRO Rewards: {chro} CHRO")
 
     def _check_and_do_standard_quest_list(self) -> None:
         """
