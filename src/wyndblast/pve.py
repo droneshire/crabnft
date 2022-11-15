@@ -9,7 +9,7 @@ from yaspin import yaspin
 from wyndblast.game_stats import WyndblastLifetimeGameStatsLogger
 from wyndblast.game_stats import NULL_GAME_STATS
 from wyndblast import types
-from wyndblast.wyndblast_web2_client import PveWyndblastWeb2Client
+from wyndblast.pve_web2_client import PveWyndblastWeb2Client
 from wyndblast.wyndblast_web3_client import WyndblastGameWeb3Client
 from utils import logger
 from utils.config_types import UserConfig
