@@ -161,7 +161,7 @@ class PumpskinBot:
 
     @staticmethod
     def calc_potn_from_level(level: int) -> int:
-        return 25 * level**2
+        return 50 * level**2
 
     @staticmethod
     def calc_cooldown_from_level(level: int) -> int:
