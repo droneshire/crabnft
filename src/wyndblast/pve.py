@@ -388,7 +388,9 @@ class PveGame:
         if self.wynd_w2.battle(stage_id, battle_setup, duration=duration):
             self.completed.add(stage_id)
             self.last_mission = stage_id
-            self.current_stats["pve_game"]["levels_completed"].append(stage_id)
+            levels_completed = set(self.current_stats["pve_game"]["levels_completed"])
+            levels_completed.add(stage_id)
+            self.current_stats["pve_game"]["levels_completed"] = list(levels_completed)
             logger.print_ok(f"We WON")
         else:
             logger.print_warn(f"Failed to submit battle")
