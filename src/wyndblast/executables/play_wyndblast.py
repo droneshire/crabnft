@@ -7,7 +7,7 @@ import traceback
 from twilio.rest import Client
 from yaspin import yaspin
 
-from config_admin import GMAIL
+from config_admin import GMAIL, TWILIO_CONFIG
 from config_wyndblast import USERS, USER_GROUPS
 from utils import discord
 from utils import logger
@@ -17,8 +17,8 @@ from wyndblast.daily_activities import DailyActivitiesGame
 from wyndblast.wynd_bot import WyndBot
 from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
 
-TIME_BETWEEN_PLAYERS = 60.0
-TIME_BETWEEN_RUNS = 60.0 * 30.0
+TIME_BETWEEN_PLAYERS = 30.0
+TIME_BETWEEN_RUNS = 60.0 * 5.0
 
 
 def parse_args() -> argparse.Namespace:

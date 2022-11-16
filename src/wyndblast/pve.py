@@ -308,11 +308,12 @@ class PveGame:
 
         countdown: types.Countdown = self.wynd_w2.get_countdown()
 
-        daily_reset_left = get_pretty_seconds(countdown["daily_countdown_second"])
-        logger.print_ok_blue(f"Daily quests reset in {daily_reset_left}")
+        if countdown:
+            daily_reset_left = get_pretty_seconds(countdown["daily_countdown_second"])
+            logger.print_ok_blue(f"Daily quests reset in {daily_reset_left}")
 
-        weekly_reset_left = get_pretty_seconds(countdown["weekly_countdown_second"])
-        logger.print_ok_blue(f"Weekly quests reset in {weekly_reset_left}")
+            weekly_reset_left = get_pretty_seconds(countdown["weekly_countdown_second"])
+            logger.print_ok_blue(f"Weekly quests reset in {weekly_reset_left}")
 
         self.last_quest_claim = now
 
@@ -328,7 +329,7 @@ class PveGame:
 
         @yaspin(text="Waiting before claiming weekly...")
         def _wait():
-            time.sleep(5.0)
+            time.sleep(10.0)
 
         _wait()
 
@@ -421,13 +422,14 @@ class PveGame:
         return True
 
     def play_game(self) -> None:
+        time.sleep(5.0)
         nft_data: types.PveNfts = self.wynd_w2.get_nft_data()
-        time.sleep(2.0)
+        time.sleep(5.0)
         user_data: types.PveUser = self.wynd_w2.get_user_profile()
-        time.sleep(2.0)
+        time.sleep(5.0)
         chro_rewards: types.PveRewards = self.wynd_w2.get_chro_rewards()
         chro_before = chro_rewards.get("claimable", 0)
-        time.sleep(2.0)
+        time.sleep(5.0)
 
         if (
             user_data.get("exp", self.LEVEL_FIVE_EXP) >= self.LEVEL_FIVE_EXP
@@ -437,7 +439,7 @@ class PveGame:
             return
 
         while self._check_and_play_story(nft_data):
-            wait(random.randint(30, 90))
+            wait(random.randint(50, 70))
             self.wynd_w2.update_account()
             logger.print_normal(f"Playing next stage...")
 
