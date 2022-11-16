@@ -405,6 +405,14 @@ class PveGame:
             logger.print_normal(f"Not enough CHRO to claim rewards ({unclaimed_chro} CHRO)")
             return False
 
+        logger.print_ok(f"Sending rewards to the contract: {unclaimed_chro} CHRO...")
+        time.sleep(5.0)
+        ret = self.wynd_w2.claim_chro()
+
+        if not ret:
+            logger.print_fail(f"Failed to set rewards...")
+            return False
+
         logger.print_ok(f"Claiming rewards! {unclaimed_chro} CHRO")
         tx_hash = self.wynd_w3.claim_rewards()
         tx_receipt = self.wynd_w3.get_transaction_receipt(tx_hash)
