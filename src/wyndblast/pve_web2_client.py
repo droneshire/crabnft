@@ -241,7 +241,11 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
             logger.print_fail(f"Failed to claim weeklies!\n{res}")
             return {}
 
-    def _claim_chro_raw(self) -> T.Any:
+    def _claim_chro_raw(
+        self,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
+    ) -> T.Any:
         url = self.PVE_BASE_URL + "/rewards/chro/claim"
         return self._post_request(url, json_data={}, headers=headers, params=params, timeout=15.0)
 
