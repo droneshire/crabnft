@@ -137,16 +137,15 @@ class WyndBot:
         self.wynd_w2.update_account()
         self.daily_activities.check_and_claim_if_needed()
 
-        if self.alias in BETA_TEST_LIST:
-            logger.print_bold(f"\n\nAttempting PVE game for {self.user}")
-            if now - self.last_pve_auth_time > self.TIME_BETWEEN_AUTH:
-                self.pve_w2.logout_user()
-                time.sleep(5.0)
-                self.pve_w2.authorize_user()
-                self.last_pve_auth_time = now
+        logger.print_bold(f"\n\nAttempting PVE game for {self.user}")
+        if now - self.last_pve_auth_time > self.TIME_BETWEEN_AUTH:
+            self.pve_w2.logout_user()
+            time.sleep(5.0)
+            self.pve_w2.authorize_user()
+            self.last_pve_auth_time = now
 
-            self.pve.play_game()
-            self.pve.check_and_claim_if_needed()
+        self.pve.play_game()
+        self.pve.check_and_claim_if_needed()
 
         self.stats_logger.write()
 
