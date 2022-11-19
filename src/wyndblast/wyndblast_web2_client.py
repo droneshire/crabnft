@@ -238,6 +238,8 @@ class WyndblastWeb2Client:
         return self._post_request(url, json_data=payload, headers=headers, params=params)
 
     def update_account(self) -> bool:
+        if self.session_token is None:
+            return False
         try:
             res = self._update_account_raw(headers=self._get_moralis_headers())
             logger.print_normal(f"Successful update for {self.user_address} at {res['updatedAt']}")
