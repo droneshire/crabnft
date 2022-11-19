@@ -309,15 +309,6 @@ class PveGame:
             logger.print_normal(f"Skipping quest claim, not time yet...")
             return
 
-        countdown: types.Countdown = self.wynd_w2.get_countdown()
-
-        if countdown:
-            daily_reset_left = get_pretty_seconds(countdown["daily_countdown_second"])
-            logger.print_ok_blue(f"Daily quests reset in {daily_reset_left}")
-
-            weekly_reset_left = get_pretty_seconds(countdown["weekly_countdown_second"])
-            logger.print_ok_blue(f"Weekly quests reset in {weekly_reset_left}")
-
         self.last_quest_claim = now
 
         logger.print_ok_blue(f"Attempting to claim daily quests")
@@ -345,7 +336,7 @@ class PveGame:
         """
         pass
 
-    def _check_and_play_story(self, nft_data: types.PveNfts) -> bool:
+    def _check_and_play_story(self, nft_data: types.PveNfts, countdown: types.Countdown) -> bool:
         if self.last_mission is None:
             stage_id = self._get_next_stage_from_api()
         else:
@@ -358,16 +349,30 @@ class PveGame:
             if not user_data:
                 return False
 
+            if countdown:
+                daily_countdown_seconds = countdown.get("daily_countdown_second", 0)
+            else:
+                daily_countdown_seconds = 0
+
             if (
                 user_data.get("exp", self.LEVEL_FIVE_EXP) < self.LEVEL_FIVE_EXP
                 and self.num_replays < self.MAX_REPLAYS_PER_CYCLE
+                and daily_countdown_seconds < 60 * 60 * 3
             ):
+                # only play "extra" rounds if we are within 3 hours of the end of dailies
+                # so that we can get the daily exp towards our level up and weekly level up
+                # otherwise no need to play since it only helps with wynd leveling which we don't
+                # care about
                 logger.print_bold(f"We've beat the full map, but still need more exp, replaying...")
                 stage_id = self.sorted_levels[random.randrange(len(self.sorted_levels))]
                 self.num_replays += 1
+            elif user_data.get("exp", self.LEVEL_FIVE_EXP) < self.LEVEL_FIVE_EXP:
+                self.num_replays = 0
+                logger.print_bold(f"Beat game, no need to play anymore!")
+                return False
             else:
                 self.num_replays = 0
-                logger.print_bold(f"No more levels to play!")
+                logger.print_bold(f"Waiting for EXP boosts, no way to do that now so not playing")
                 return False
 
         num_enemies = self._get_num_enemies_for_mission(stage_id)
@@ -441,7 +446,16 @@ class PveGame:
 
         self._check_and_do_standard_quest_list()
 
-        while self._check_and_play_story(nft_data):
+        countdown: types.Countdown = self.wynd_w2.get_countdown()
+
+        if countdown:
+            daily_reset_left = get_pretty_seconds(countdown.get("daily_countdown_second", -1))
+            logger.print_ok_blue(f"Daily quests reset in {daily_reset_left}")
+
+            weekly_reset_left = get_pretty_seconds(countdown.get("weekly_countdown_second", -1))
+            logger.print_ok_blue(f"Weekly quests reset in {weekly_reset_left}")
+
+        while self._check_and_play_story(nft_data, countdown):
             wait(random.randint(40, 60))
             if not self.wynd_w2.update_account():
                 self.wynd_w2.authorize_user()
