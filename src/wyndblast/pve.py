@@ -164,11 +164,6 @@ class PveGame:
 
         wynds: T.List[types.PveWynd] = our_units["wynd"]
 
-        if len(wynds) < num_players:
-            logger.print_warn(
-                f"Not enough ({len(wynds)}) wynds for requested num of players. Wanted: {num_players}"
-            )
-
         num_players = min(len(wynds), num_players)
 
         used_dnas_inx = []
@@ -192,6 +187,8 @@ class PveGame:
                 "wynd_dna": dna_string,
             }
             units.append(unit)
+
+        logger.print_normal(f"Using {num_players} wynds in battle")
 
         return units
 
