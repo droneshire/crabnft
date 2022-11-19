@@ -366,7 +366,7 @@ class PveGame:
                 logger.print_bold(f"We've beat the full map, but still need more exp, replaying...")
                 stage_id = self.sorted_levels[random.randrange(len(self.sorted_levels))]
                 self.num_replays += 1
-            elif user_data.get("exp", self.LEVEL_FIVE_EXP) < self.LEVEL_FIVE_EXP:
+            elif user_data.get("exp", self.LEVEL_FIVE_EXP) >= self.LEVEL_FIVE_EXP:
                 self.num_replays = 0
                 logger.print_bold(f"Beat game, no need to play anymore!")
                 return False

@@ -302,6 +302,8 @@ class PatBot:
 
         self._send_email_update()
         self._update_stats()
+        self.stats_logger.write()
 
     def end(self) -> None:
+        self.stats_logger.write()
         logger.print_normal(f"Shutting down bot for {self.user}...")
