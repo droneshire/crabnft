@@ -450,8 +450,10 @@ class PveGame:
 
         while self._check_and_play_story(nft_data):
             wait(random.randint(50, 70))
-            self.wynd_w2.authorize_user()
-            self.wynd_w2.update_account()
+            if not self.wynd_w2.update_account():
+                self.wynd_w2.authorize_user()
+                time.sleep(5.0)
+                self.wynd_w2.update_account()
             logger.print_normal(f"Playing next stage...")
 
         chro_rewards: types.PveRewards = self.wynd_w2.get_chro_rewards()

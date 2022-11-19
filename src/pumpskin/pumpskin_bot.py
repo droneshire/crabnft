@@ -802,8 +802,8 @@ class PumpskinBot:
         logger.print_ok_arrow(f"POTN: {potn_balance:.2f}")
         logger.print_ok_arrow(f"\U0001F383: {num_pumpskins}")
 
-        self._check_and_claim_ppie(final_pumpskins)
         self._try_to_level_pumpskins(final_pumpskins)
+        self._check_and_claim_ppie(final_pumpskins)
         self._check_and_stake_ppie(final_pumpskins)
         # staking PPIE should claim all outstanding POTN in one transaction
         # so we should really not trigger this often

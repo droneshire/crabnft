@@ -93,6 +93,7 @@ class DailyActivitiesGame:
 
         if not account_overview:
             self.wynd_w2.authorize_user()
+            time.sleep(5.0)
             self.wynd_w2.update_account()
             return
 
@@ -124,6 +125,7 @@ class DailyActivitiesGame:
 
         if not wynds:
             self.wynd_w2.authorize_user()
+            time.sleep(5.0)
             self.wynd_w2.update_account()
             return
 
@@ -285,6 +287,7 @@ class DailyActivitiesGame:
 
         if not options:
             self.wynd_w2.authorize_user()
+            time.sleep(5.0)
             self.wynd_w2.update_account()
             return False
 
@@ -308,6 +311,7 @@ class DailyActivitiesGame:
 
         if not result:
             self.wynd_w2.authorize_user()
+            time.sleep(5.0)
             self.wynd_w2.update_account()
             return False
 
