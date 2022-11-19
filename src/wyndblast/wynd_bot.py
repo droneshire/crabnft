@@ -137,7 +137,7 @@ class WyndBot:
 
             self.pve.play_game()
 
-        self.stats_logger.write(verbose=True)
+        self.stats_logger.write()
 
     def end(self) -> None:
         self.config_mgr.close()
