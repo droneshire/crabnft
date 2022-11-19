@@ -244,7 +244,10 @@ class PveGame:
                 continue
 
             if isinstance(v, list):
-                self.stats_logger.lifetime_stats[k].extend(v)
+                new_set = set(self.stats_logger.lifetime_stats[k])
+                for i in v:
+                    new_set.add(i)
+                self.stats_logger.lifetime_stats[k] = new_set
             elif isinstance(v, dict):
                 for i, j in self.stats_logger.lifetime_stats[k].items():
                     self.stats_logger.lifetime_stats[k][i] += self.current_stats[k][i]
