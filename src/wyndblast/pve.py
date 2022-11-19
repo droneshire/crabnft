@@ -395,6 +395,10 @@ class PveGame:
             logger.print_warn(f"Failed to submit battle")
             return False
 
+        if self.num_replays >= self.MAX_REPLAYS_PER_CYCLE:
+            self.num_replays = 0
+            return False
+
         return True
 
     def check_and_claim_if_needed(self, exp: int) -> bool:
