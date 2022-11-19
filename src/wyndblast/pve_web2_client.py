@@ -256,5 +256,5 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed to claim weeklies!\n{res}")
+            logger.print_fail(f"Failed to claim chro!\n{res}")
             return {}

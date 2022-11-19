@@ -448,6 +448,10 @@ class PveGame:
             logger.print_normal(f"Skipping PVE game since we've already tapped out this account...")
             return
 
+        self._check_and_do_standard_quest_list()
+
+        wait(random.randint(4, 10))
+
         while self._check_and_play_story(nft_data):
             wait(random.randint(50, 70))
             if not self.wynd_w2.update_account():
@@ -460,7 +464,6 @@ class PveGame:
         chro_after = chro_rewards.get("claimable", 0)
         self.current_stats["chro"] += chro_after - chro_before
 
-        self._check_and_do_standard_quest_list()
         self._check_and_claim_quest_list()
         self._check_and_level_units(nft_data)
 

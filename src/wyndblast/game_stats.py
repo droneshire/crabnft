@@ -102,11 +102,11 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
 
         for item in ["pve_game"]:
             for k, v in user_a_stats[item].items():
-                if k == "pve_game":
+                if k == "account_exp":
                     diffed_stats[item][k] = v
 
             for k, v in user_b_stats[item].items():
-                if k == "pve_game":
+                if k == "account_exp":
                     diffed_stats[item][k] = diffed_stats[item].get(k, 0.0) - v
 
             for k in ["levels_completed", "quests_completed"]:
@@ -159,7 +159,7 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
                     merged_set = set(merged_stats[item].get(k, []))
                     for i in v:
                         merged_set.add(i)
-                    merged_stats[item][k] =  list(merged_set)
+                    merged_stats[item][k] = list(merged_set)
                 else:
                     merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
 
@@ -168,7 +168,7 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
                     merged_set = set(merged_stats[item].get(k, []))
                     for i in v:
                         merged_set.add(i)
-                    merged_stats[item][k] =  list(merged_set)
+                    merged_stats[item][k] = list(merged_set)
                 else:
                     merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
         if verbose:
