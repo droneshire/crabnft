@@ -282,7 +282,7 @@ class PveGame:
         """
         now = time.time()
         if now - self.last_level_up > self.TIME_BETWEEN_LEVEL_UP:
-            wynds: T.List[types.PveWynd] = our_units["wynd"]
+            wynds: T.List[types.PveWynd] = our_units.get("wynd", [])
 
             for player in wynds:
                 dna = player.get("metadata", {}).get("dna", {}).get("all", "")
@@ -450,6 +450,7 @@ class PveGame:
 
         while self._check_and_play_story(nft_data):
             wait(random.randint(50, 70))
+            self.wynd_w2.authorize_user()
             self.wynd_w2.update_account()
             logger.print_normal(f"Playing next stage...")
 

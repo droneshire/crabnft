@@ -222,11 +222,13 @@ class WyndblastWeb2Client:
         payload = self._get_moralis_login_payload()
         return self._post_request(url, json_data=payload, headers=headers, params=params)
 
-    def update_account(self) -> None:
+    def update_account(self) -> bool:
         try:
             res = self._update_account_raw(headers=self._get_moralis_headers())
             logger.print_normal(f"Successful update for {self.user_address} at {res['updatedAt']}")
+            return True
         except KeyboardInterrupt:
             raise
         except:
             logger.print_fail(f"Failed to update {self.object_id}:\n{res if res else ''}")
+            return False
