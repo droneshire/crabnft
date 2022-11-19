@@ -330,12 +330,6 @@ class PveGame:
             if res["is_level_up"]:
                 logger.print_ok_arrow(f"Leveled up our Profile!")
 
-        @yaspin(text="Waiting before claiming weekly...")
-        def _wait():
-            time.sleep(10.0)
-
-        _wait()
-
         logger.print_ok_blue(f"Attempting to claim weekly quests")
         res: types.ClaimQuests = self.wynd_w2.claim_weekly()
 
@@ -401,22 +395,20 @@ class PveGame:
 
         return True
 
-    def check_and_claim_if_needed(self) -> bool:
+    def check_and_claim_if_needed(self, exp: int) -> bool:
         chro_rewards: types.PveRewards = self.wynd_w2.get_chro_rewards()
         unclaimed_chro = chro_rewards.get("claimable", 0)
         logger.print_ok(f"Unclaimed CHRO Rewards: {unclaimed_chro} CHRO")
 
-        if unclaimed_chro < self.MIN_CLAIM_CHRO:
-            logger.print_normal(f"Not enough CHRO to claim rewards ({unclaimed_chro} CHRO)")
+        if exp < self.LEVEL_FIVE_EXP:
+            logger.print_normal(f"Waiting till level 5 to claim rewards ({unclaimed_chro} CHRO)")
             return False
 
         logger.print_ok(f"Sending rewards to the contract: {unclaimed_chro} CHRO...")
-        time.sleep(5.0)
         ret = self.wynd_w2.claim_chro()
 
         if not ret:
-            logger.print_fail(f"Failed to set rewards...")
-            return False
+            logger.print_warn(f"Failed to set rewards. Trying to claim anyways...")
 
         logger.print_ok(f"Claiming rewards! {unclaimed_chro} CHRO")
         tx_hash = self.wynd_w3.claim_rewards()
@@ -427,7 +419,7 @@ class PveGame:
         self.stats_logger.lifetime_stats["avax_gas"] += gas
 
         if tx_receipt.get("status", 0) != 1:
-            logger.print_fail(f"Failed to claim CHRO!")
+            logger.print_warn(f"Failed to claim CHRO!")
         else:
             logger.print_ok(f"Successfully transferred CHRO")
             logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
@@ -435,14 +427,10 @@ class PveGame:
         return True
 
     def play_game(self) -> None:
-        time.sleep(5.0)
         nft_data: types.PveNfts = self.wynd_w2.get_nft_data()
-        time.sleep(5.0)
         user_data: types.PveUser = self.wynd_w2.get_user_profile()
-        time.sleep(5.0)
         chro_rewards: types.PveRewards = self.wynd_w2.get_chro_rewards()
         chro_before = chro_rewards.get("claimable", 0)
-        time.sleep(5.0)
 
         if (
             user_data.get("exp", self.LEVEL_FIVE_EXP) >= self.LEVEL_FIVE_EXP
@@ -453,22 +441,28 @@ class PveGame:
 
         self._check_and_do_standard_quest_list()
 
-        wait(random.randint(4, 10))
-
         while self._check_and_play_story(nft_data):
-            wait(random.randint(50, 70))
+            wait(random.randint(40, 60))
             if not self.wynd_w2.update_account():
                 self.wynd_w2.authorize_user()
-                time.sleep(5.0)
                 self.wynd_w2.update_account()
             logger.print_normal(f"Playing next stage...")
 
         chro_rewards: types.PveRewards = self.wynd_w2.get_chro_rewards()
         chro_after = chro_rewards.get("claimable", 0)
-        self.current_stats["chro"] += chro_after - chro_before
+        if chro_after > chro_before:
+            self.current_stats["chro"] += chro_after - chro_before
+            if chro_after - chro_before > 0.0:
+                logger.print_ok_arrow(f"Adding {chro_after - chro_before} CHRO to stats...")
 
         self._check_and_claim_quest_list()
         self._check_and_level_units(nft_data)
+
+        if not self.wynd_w2.update_account():
+            self.wynd_w2.authorize_user()
+            self.wynd_w2.update_account()
+
+        self.check_and_claim_if_needed(user_data.get("exp", self.LEVEL_FIVE_EXP))
 
         self._send_summary_email()
         self._update_stats()

@@ -120,36 +120,22 @@ class WyndBot:
     def init(self) -> None:
         self.config_mgr.init()
 
-    @yaspin(text="Waiting...")
-    def _wait(self, duration):
-        time.sleep(duration)
-
     def run(self) -> None:
         logger.print_bold(f"\n\nAttempting daily activities for {self.user}")
 
         if not self.wynd_w2.update_account():
             self.wynd_w2.authorize_user()
-            self._wait(10.0)
             self.wynd_w2.update_account()
 
         self._check_and_submit_available_inventory()
         self.daily_activities.run_activity()
 
-        if not self.wynd_w2.update_account():
-            self.wynd_w2.authorize_user()
-            self._wait(10.0)
-            self.wynd_w2.update_account()
-
-        self.daily_activities.check_and_claim_if_needed()
-
         if self.alias in BETA_TEST_LIST:
             logger.print_bold(f"\n\nAttempting PVE game for {self.user}")
             self.pve_w2.logout_user()
-            self._wait(10.0)
             self.pve_w2.authorize_user()
 
             self.pve.play_game()
-            self.pve.check_and_claim_if_needed()
 
         self.stats_logger.write(verbose=True)
 

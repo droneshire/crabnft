@@ -93,7 +93,6 @@ class DailyActivitiesGame:
 
         if not account_overview:
             self.wynd_w2.authorize_user()
-            time.sleep(5.0)
             self.wynd_w2.update_account()
             return
 
@@ -121,11 +120,9 @@ class DailyActivitiesGame:
             if not new_wynds:
                 logger.print_warn(f"Didn't find any new winds on page {page}")
             wynds.extend(new_wynds)
-            time.sleep(5.0)
 
         if not wynds:
             self.wynd_w2.authorize_user()
-            time.sleep(5.0)
             self.wynd_w2.update_account()
             return
 
@@ -172,10 +169,15 @@ class DailyActivitiesGame:
                 ):
                     logger.print_warn(f"We lost, unable to proceed to next round")
                     break
-                time.sleep(1.0)
 
         if rounds_completed <= 0:
             return
+
+        if not self.wynd_w2.update_account():
+            self.wynd_w2.authorize_user()
+            self.wynd_w2.update_account()
+
+        self.check_and_claim_if_needed()
 
         self._send_summary_email(len(wynds))
         self._update_stats()
@@ -290,7 +292,6 @@ class DailyActivitiesGame:
 
         if not options:
             self.wynd_w2.authorize_user()
-            time.sleep(5.0)
             self.wynd_w2.update_account()
             return False
 
@@ -314,7 +315,6 @@ class DailyActivitiesGame:
 
         if not result:
             self.wynd_w2.authorize_user()
-            time.sleep(5.0)
             self.wynd_w2.update_account()
             return False
 

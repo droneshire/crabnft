@@ -5,9 +5,11 @@ import requests
 import time
 import typing as T
 
+
 from eth_account import Account, messages
 from eth_typing import Address
 from web3 import Web3
+from yaspin import yaspin
 
 from utils import logger
 from wyndblast.api_headers import (
@@ -36,6 +38,11 @@ from wyndblast.types import (
     WyndNft,
     WyndStatus,
 )
+
+
+@yaspin(text="Waiting...")
+def wait(wait_time) -> None:
+    time.sleep(wait_time)
 
 
 class WyndblastWeb2Client:
@@ -85,7 +92,10 @@ class WyndblastWeb2Client:
         headers: T.Dict[str, T.Any] = {},
         params: T.Dict[str, T.Any] = {},
         timeout: float = 5.0,
+        delay: float = 5.0,
     ) -> T.Any:
+        if delay > 0.0:
+            wait(delay)
         try:
             return requests.request(
                 "GET", url, params=params, headers=headers, timeout=timeout
@@ -102,9 +112,14 @@ class WyndblastWeb2Client:
         headers: T.Dict[str, T.Any] = {},
         params: T.Dict[str, T.Any] = {},
         timeout: float = 5.0,
+        delay: float = 5.0,
     ) -> T.Any:
         if self.dry_run:
             return {}
+
+        if delay > 0.0:
+            wait(delay)
+
         try:
             return requests.request(
                 "POST", url, json=json_data, params=params, headers=headers, timeout=timeout
