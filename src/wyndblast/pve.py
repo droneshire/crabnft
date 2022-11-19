@@ -436,11 +436,9 @@ class PveGame:
         user_data: types.PveUser = self.wynd_w2.get_user_profile()
         chro_rewards: types.PveRewards = self.wynd_w2.get_chro_rewards()
         chro_before = chro_rewards.get("claimable", 0)
+        user_exp = user_data.get("exp", 1000)
 
-        if (
-            user_data.get("exp", self.LEVEL_FIVE_EXP) >= self.LEVEL_FIVE_EXP
-            and chro_before < self.MIN_CHRO_TO_PLAY
-        ):
+        if user_exp >= self.LEVEL_FIVE_EXP and chro_before < self.MIN_CHRO_TO_PLAY:
             logger.print_normal(f"Skipping PVE game since we've already tapped out this account...")
             return
 
@@ -454,6 +452,8 @@ class PveGame:
 
             weekly_reset_left = get_pretty_seconds(countdown.get("weekly_countdown_second", -1))
             logger.print_ok_blue(f"Weekly quests reset in {weekly_reset_left}")
+
+        logger.print_ok_blue_arrow(f"User EXP: {user_exp}")
 
         while self._check_and_play_story(nft_data, countdown):
             wait(random.randint(40, 60))
@@ -476,7 +476,7 @@ class PveGame:
             self.wynd_w2.authorize_user()
             self.wynd_w2.update_account()
 
-        self.check_and_claim_if_needed(user_data.get("exp", self.LEVEL_FIVE_EXP))
+        self.check_and_claim_if_needed(user_exp)
 
         self._send_summary_email()
         self._update_stats()
