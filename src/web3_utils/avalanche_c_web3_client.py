@@ -56,7 +56,7 @@ class AvalancheCWeb3Client(Web3Client):
         except:
             return False
 
-    def get_balance(self) -> TokenWei:
+    def get_balance(self) -> float:
         try:
             balance = self.contract.functions.balanceOf(self.user_address).call()
         except KeyboardInterrupt:

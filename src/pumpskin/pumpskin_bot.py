@@ -24,13 +24,12 @@ from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.avax_web3_client import AvaxCWeb3Client
 from web3_utils.potn_web3_client import PotnWeb3Client
 from web3_utils.ppie_web3_client import PpieWeb3Client
-from web3_utils.traderjoe_web3_client import TraderJoeWeb3Client
 from pumpskin.config_manager_pumpskin import PumpskinConfigManager
 from pumpskin.game_stats import NULL_GAME_STATS, PumpskinLifetimeGameStatsLogger
+from pumpskin.token_profit_lp import PumpskinTokenProfitManager
 from pumpskin.types import Rarity, StakedPumpskin
+from pumpskin.lp_token_web3_client import PotnLpWeb3Client, PpieLpWeb3Client
 from pumpskin.pumpskin_web2_client import PumpskinWeb2Client
-from pumpskin.potn_lp_token_web3_client import PotnLpWeb3Client
-from pumpskin.ppie_lp_token_web3_client import PpieLpWeb3Client
 from pumpskin.pumpskin_web3_client import (
     PumpskinCollectionWeb3Client,
     PumpskinContractWeb3Client,
@@ -97,46 +96,6 @@ class PumpskinBot:
 
         self.pumpskin_w2: PumpskinWeb2Client = PumpskinWeb2Client()
 
-        self.tj_w3: TraderJoeWeb3Client = (
-            TraderJoeWeb3Client()
-            .set_credentials(config["address"], config["private_key"])
-            .set_node_uri(AvalancheCWeb3Client.NODE_URL)
-            .set_contract()
-            .set_dry_run(dry_run)
-        )
-
-        self.ppie_lp_w3: PpieLpWeb3Client = (
-            PpieLpWeb3Client()
-            .set_credentials(config["address"], config["private_key"])
-            .set_node_uri(AvalancheCWeb3Client.NODE_URL)
-            .set_contract()
-            .set_dry_run(dry_run)
-        )
-
-        self.potn_lp_w3: PotnLpWeb3Client = (
-            PotnLpWeb3Client()
-            .set_credentials(config["address"], config["private_key"])
-            .set_node_uri(AvalancheCWeb3Client.NODE_URL)
-            .set_contract()
-            .set_dry_run(dry_run)
-        )
-
-        self.ppie_stake_w3: PpieLpStakingContractWeb3Client = (
-            PpieLpStakingContractWeb3Client()
-            .set_credentials(config["address"], config["private_key"])
-            .set_node_uri(PpieLpStakingContractWeb3Client.NODE_URL)
-            .set_contract()
-            .set_dry_run(dry_run)
-        )
-
-        self.potn_stake_w3: PotnLpStakingContractWeb3Client = (
-            PotnLpStakingContractWeb3Client()
-            .set_credentials(config["address"], config["private_key"])
-            .set_node_uri(PotnLpStakingContractWeb3Client.NODE_URL)
-            .set_contract()
-            .set_dry_run(dry_run)
-        )
-
         self.collection_w3: PumpskinCollectionWeb3Client = (
             PumpskinCollectionWeb3Client()
             .set_credentials(config["address"], config["private_key"])
@@ -183,12 +142,34 @@ class PumpskinBot:
             ),
         )
 
-        self.stats_logger = PumpskinLifetimeGameStatsLogger(
+        self.stats_logger: PumpskinLifetimeGameStatsLogger = PumpskinLifetimeGameStatsLogger(
             get_alias_from_user(self.user),
             self.log_dir,
             self.config_mgr.get_lifetime_stats(),
             self.dry_run,
             verbose=False,
+        )
+
+        self.token_manager = {}
+        self.token_manager[
+            "potn"
+        ]: PumpskinTokenProfitManager = PumpskinTokenProfitManager.create_token_profit_lp_class(
+            "POTN",
+            config,
+            PotnLpWeb3Client,
+            PotnLpStakingContractWeb3Client,
+            self.potn_w3,
+            self.stats_logger,
+        )
+        self.token_manager[
+            "ppie"
+        ]: PumpskinTokenProfitManager = PumpskinTokenProfitManager.create_token_profit_lp_class(
+            "PPIE",
+            config,
+            PpieLpWeb3Client,
+            PpieLpStakingContractWeb3Client,
+            self.ppie_w3,
+            self.stats_logger,
         )
 
         # convert json to actual IDs
@@ -770,98 +751,15 @@ class PumpskinBot:
     def _check_for_token_approvals(self) -> None:
         logger.print_normal(f"\n\nChecking PPIE and POTN approvals for {self.user}")
 
-        if not self.potn_w3.is_allowed():
-            action_str = f"Approving POTN contract for use"
-            self._process_w3_results(action_str, self.potn_w3.approve())
-        else:
-            logger.print_ok_arrow(f"POTN contract already approved")
-
-        if not self.ppie_w3.is_allowed():
-            action_str = f"Approving PPIE contract for use"
-            self._process_w3_results(action_str, self.ppie_w3.approve())
-        else:
-            logger.print_ok_arrow(f"PPIE contract already approved")
-
-        if not self.potn_lp_w3.is_allowed():
-            self._process_w3_results("Approving POTN/LP", self.potn_lp_w3.approve())
-        else:
-            logger.print_ok_arrow(f"POTN/LP contract already approved")
-
-        if not self.ppie_lp_w3.is_allowed():
-            self._process_w3_results("Approving PPIE/LP", self.ppie_lp_w3.approve())
-        else:
-            logger.print_ok_arrow(f"PPIE/LP contract already approved")
+        for _, v in self.token_manager.items():
+            self.txns.extend(v.check_and_approve_contracts())
 
     def _check_and_take_profits_and_stake_lp(self) -> None:
-        if not self.config_mgr.config["game_specific_configs"]["lp_contributions"]["enabled"]:
-            logger.print_warn(f"Skipping profit/LP creation since user not opted in")
-            return False
+        for _, v in self.token_manager.items():
+            self.txns.extend(v.check_and_claim_rewards_from_lp_stake())
 
-        # TODO: calculate POTN rewards available from PPIE/LP staking contract
-        # TODO: claim rewards from PPIE/LP staking contract if above threshold
-        # TODO: calculate POTN rewards available from POTN/LP staking contract
-        # TODO: claim rewards from POTN/LP staking contract if above threshold
-
-        # TODO: calculate amount of PPIE to swap to Avax
-        # TODO: swap PPIE to Avax
-        # TODO: calculate amount of PPIE to pool
-        # TODO: calculate amount of AVAX to pool
-
-        amount_ppie = 0.0
-        amount_ppie_min = int(token_to_wei(amount_ppie) / 100 * 99.5)
-        amount_avax = 0.0
-        amount_avax_min = int(token_to_wei(amount_avax) / 100 * 99.5)
-
-        action_str = f"Buying PPIE/AVAX LP Token"
-        self.tj_w3.buy_lp_token(
-            self.potn_w3.contract_checksum_address, amount_ppie, amount_ppie_min, amount_avax_min
-        )
-
-        action_str = f"Staking PPIE/AVAX LP Token"
-        self._process_w3_results(action_str, self.ppie_stake_w3.stake(ppie_lp_amount))
-
-    def _calc_and_swap_potn_to_avax(self) -> float:
-        percent_potn_profit = self.config_mgr.config["game_specific_configs"]["lp_contributions"][
-            "percent_potn_profit"
-        ]
-        potn_profit = self.potn_available_to_stake * percent_potn_profit
-        potn_lp = (self.potn_available_to_stake - potn_profit) / 2
-        potn_to_avax = potn_profit + potn_lp
-        path = [self.potn_w3.contract_address, AvaxCWeb3Client.WAVAX_ADDRESS]
-        avax_out = wei_to_token_raw(self.tj_w3.get_amounts_out(token_to_wei(potn_to_avax), path))
-
-        logger.print_normal(
-            f"POTN for profit: {potn_profit}, POTN for LP: {potn_lp}, AVAX for LP: {avax_out}"
-        )
-        action_str = f"Converting {potn_to_avax} POTN to AVAX"
-        amount_out_min = int(token_to_wei(potn_to_avax) / 100 * 99.5)
-        self._process_w3_results(
-            action_str,
-            self.tj_w3.swap_exact_tokens_for_avax(token_to_wei(potn_to_avax), amount_out_min, path),
-        )
-
-        # TODO: swap POTN to Avax
-        # TODO: calculate amount of POTN to pool
-        # TODO: calculate amount of AVAX to pool
-
-    def _buy_and_stake_potn_lp(self, amount_avax: float, amount_potn: float) -> None:
-        amount_potn_min = int(token_to_wei(amount_potn) / 100 * 99.5)
-        amount_avax_min = int(token_to_wei(amount_avax) / 100 * 99.5)
-
-        action_str = f"Buying POTN/AVAX LP Token"
-        actual_amount_potn, actual_amount_avax, liquidity = self._process_w3_results(
-            action_str,
-            self.tj_w3.buy_lp_token(
-                self.ppie_w3.contract_checksum_address,
-                token_to_wei(amount_potn),
-                amount_potn_min,
-                amount_avax_min,
-            ),
-        )
-
-        amount_potn_lp = 0.0
-        action_str = f"Staking POTN/AVAX LP Token"
-        self._process_w3_results(action_str, self.potn_stake_w3.stake(token_to_wei(amount_potn_lp)))
+        for _, v in self.token_manager.items():
+            self.txns.extend(v.check_swap_and_lp_and_stake())
 
     def _run_game_loop(self) -> None:
         pumpskin_ids: T.List[int] = self.get_pumpskin_ids()
@@ -910,7 +808,7 @@ class PumpskinBot:
         self.config_mgr.init()
 
     def run(self) -> None:
-        self._check_for_approvals()
+        self._check_for_token_approvals()
 
         logger.print_bold(f"\n\nAttempting leveling activities for {self.user}")
 

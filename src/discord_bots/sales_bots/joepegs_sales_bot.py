@@ -13,9 +13,11 @@ from joepegs.types import Activity
 from utils import logger
 from utils.price import wei_to_token_raw
 
+
 class EmbedType:
     Listing = 0
     Sales = 1
+
 
 class JoePegsSalesBot:
     MAX_TIME_SINCE_SALE = 60.0 * 60.0 * 24

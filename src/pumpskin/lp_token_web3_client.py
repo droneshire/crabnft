@@ -15,6 +15,22 @@ class PotnLpWeb3Client(AvalancheCWeb3Client):
 
     contract_address = T.cast(Address, "0x06Ca569b7C3053Fa885B37006bFA0eE24a38aECA")
     this_dir = os.path.dirname(os.path.realpath(__file__))
+    src_dir = os.path.dirname(this_dir)
+    web3_utils_dir = os.path.join(src_dir, "web3_utils")
     # standard erc20 token abi so reusing tus
-    abi_dir = os.path.join(this_dir, "abi", "abi-tus.json")
+    abi_dir = os.path.join(web3_utils_dir, "abi", "abi-tus.json")
+    abi = Web3Client._get_contract_abi_from_file(abi_dir)
+
+
+class PpieLpWeb3Client(AvalancheCWeb3Client):
+    """
+    Interact with the PPIE/LP token
+    """
+
+    contract_address = T.cast(Address, "0x48daf7da11146a81d717682009ce6ee6e6770e58")
+    this_dir = os.path.dirname(os.path.realpath(__file__))
+    src_dir = os.path.dirname(this_dir)
+    web3_utils_dir = os.path.join(src_dir, "web3_utils")
+    # standard erc20 token abi so reusing tus
+    abi_dir = os.path.join(web3_utils_dir, "abi", "abi-tus.json")
     abi = Web3Client._get_contract_abi_from_file(abi_dir)
