@@ -87,14 +87,7 @@ def token_to_wei(token: TokenWei) -> Wei:
     return T.cast(Wei, Web3.toWei(token, "ether"))
 
 
-def wei_to_token(wei: Wei) -> TokenWei:
-    """
-    Convert Wei to token
-    """
-    return T.cast(TokenWei, Web3.fromWei(wei, "ether"))
-
-
-def wei_to_token_raw(wei: Wei) -> float:
+def wei_to_token(wei: Wei) -> float:
     """
     Convert Wei to token in float
     """

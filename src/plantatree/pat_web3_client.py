@@ -8,7 +8,7 @@ from web3 import Web3
 from web3.types import TxParams, Wei
 
 from utils import logger
-from utils.price import TokenWei, token_to_wei, wei_to_token_raw
+from utils.price import TokenWei, token_to_wei, wei_to_token
 from web3_utils.web3_client import Web3Client
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.avax_web3_client import AvaxCWeb3Client
@@ -155,7 +155,7 @@ class PlantATreeWeb3Client(AvalancheCWeb3Client):
 
     def calculate_harvest_reward(self, trees: int) -> float:
         try:
-            return wei_to_token_raw(
+            return wei_to_token(
                 self.contract.functions.calculateTreeSell(trees).call({"from": self.user_address})
             )
         except Exception as e:

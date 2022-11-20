@@ -18,7 +18,7 @@ from utils.config_types import UserConfig
 from utils.email import Email, send_email
 from utils.general import get_pretty_seconds
 from utils.math import Average
-from utils.price import wei_to_token_raw
+from utils.price import wei_to_token
 from utils.user import get_alias_from_user
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 
@@ -209,7 +209,7 @@ class PatBot:
         tx_hash = self.pat_w3.harvest()
         tx_receipt = self.pat_w3.get_transaction_receipt(tx_hash)
 
-        gas = wei_to_token_raw(self.pat_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        gas = wei_to_token(self.pat_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         self.avg_gas_used.update(gas)
         self.stats_logger.lifetime_stats["avax_gas"] += gas
         logger.print_bold(f"Paid {gas} AVAX in gas")
@@ -231,7 +231,7 @@ class PatBot:
         tx_hash = self.pat_w3.re_plant(self.referral_address)
         tx_receipt = self.pat_w3.get_transaction_receipt(tx_hash)
 
-        gas = wei_to_token_raw(self.pat_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        gas = wei_to_token(self.pat_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         self.avg_gas_used.update(gas)
         self.stats_logger.lifetime_stats["avax_gas"] += gas
         logger.print_bold(f"Paid {gas} AVAX in gas")

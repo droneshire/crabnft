@@ -27,7 +27,7 @@ class PpieLpWeb3Client(AvalancheCWeb3Client):
     Interact with the PPIE/LP token
     """
 
-    contract_address = T.cast(Address, "0x48daf7da11146a81d717682009ce6ee6e6770e58")
+    contract_address = T.cast(Address, "0x48dAf7dA11146a81D717682009ce6Ee6e6770e58")
     this_dir = os.path.dirname(os.path.realpath(__file__))
     src_dir = os.path.dirname(this_dir)
     web3_utils_dir = os.path.join(src_dir, "web3_utils")

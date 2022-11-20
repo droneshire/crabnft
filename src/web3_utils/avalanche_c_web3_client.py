@@ -62,7 +62,7 @@ class AvalancheCWeb3Client(Web3Client):
         except KeyboardInterrupt:
             raise
         except:
-            return 0
+            return 0.0
         return wei_to_token(balance)
 
     def transfer_token(self, to_address: Address, token: TokenWei) -> HexStr:

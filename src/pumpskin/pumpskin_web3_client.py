@@ -8,7 +8,7 @@ from web3 import Web3
 from web3.types import TxParams, Wei
 
 from utils import logger
-from utils.price import wei_to_token_raw, TokenWei
+from utils.price import wei_to_token, TokenWei
 from web3_utils.web3_client import Web3Client
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from pumpskin.types import StakedPumpskin
@@ -262,7 +262,7 @@ class LpStakingContractWeb3Client(AvalancheCWeb3Client):
             logger.print_fail(f"{e}")
             return ""
 
-    def claim_rewards(self, amount: TokenWei) -> HexStr:
+    def claim_rewards(self) -> HexStr:
         """
         Claim staking POTN rewards (gets POTN)
         """
@@ -275,22 +275,24 @@ class LpStakingContractWeb3Client(AvalancheCWeb3Client):
 
     def get_rewards(self) -> float:
         try:
-            return self.contract.functions.earned(self.user_address).call()
+            value = self.contract.functions.earned(self.user_address).call()
         except Exception as e:
             logger.print_fail(f"{e}")
             return 0.0
+        return wei_to_token(value)
 
     def get_total_claimed_rewards(self) -> float:
         try:
-            return self.contract.functions.rewards(self.user_address).call()
+            value = self.contract.functions.rewards(self.user_address).call()
         except Exception as e:
             logger.print_fail(f"{e}")
             return 0.0
+        return wei_to_token(value)
 
     def get_my_percent_of_lp(self) -> float:
         try:
-            total = self.contract.functions.totalSupply().call()
-            mine = self.contract.functions.balanceOf(self.user_address).call()
+            total = float(self.contract.functions.totalSupply().call())
+            mine = float(self.contract.functions.balanceOf(self.user_address).call())
             return mine / float(total) * 100.0
         except Exception as e:
             logger.print_fail(f"{e}")

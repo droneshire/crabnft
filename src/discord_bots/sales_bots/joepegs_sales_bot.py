@@ -11,7 +11,7 @@ from web3.types import Address
 from joepegs.joepegs_api import JOEPEGS_URL, JoePegsClient
 from joepegs.types import Activity
 from utils import logger
-from utils.price import wei_to_token_raw
+from utils.price import wei_to_token
 
 
 class EmbedType:
@@ -112,7 +112,7 @@ class JoePegsSalesBot:
                     logger.print_normal(f"Skipping {listing['tokenId']} since already posted...")
                     continue
                 list_price_wei = int(listing["currentAsk"]["price"])
-                price = wei_to_token_raw(list_price_wei)
+                price = wei_to_token(list_price_wei)
                 # TODO: filter based on previous floors
                 if price > floors[collection]:
                     continue
@@ -131,7 +131,7 @@ class JoePegsSalesBot:
             color=self.collection_color.value,
         )
         price_wei = int(listing["currentAsk"]["price"])
-        price_avax = wei_to_token_raw(price_wei)
+        price_avax = wei_to_token(price_wei)
 
         embed.add_field(name=f"\U0001F4B0 Price", value=f"{price_avax:.2f} AVAX", inline=True)
         embed.set_image(url=listing["metadata"]["image"])
@@ -149,7 +149,7 @@ class JoePegsSalesBot:
             color=self.collection_color.value,
         )
         price_wei = int(sale["price"])
-        price_avax = wei_to_token_raw(price_wei)
+        price_avax = wei_to_token(price_wei)
 
         embed.add_field(name=f"\U0001F4B0 Sold for", value=f"{price_avax:.2f} AVAX", inline=True)
         # TODO(ross): implement last sold

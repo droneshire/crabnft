@@ -2,7 +2,7 @@ import typing as T
 
 from utils import logger
 from utils.config_types import UserConfig
-from utils.price import token_to_wei, wei_to_token_raw
+from utils.price import token_to_wei, wei_to_token
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.avax_web3_client import AvaxCWeb3Client
 from web3_utils.traderjoe_web3_client import TraderJoeWeb3Client
@@ -15,6 +15,8 @@ ClassType = T.TypeVar("ClassType", bound="PumpskinTokenProfitManager")
 
 
 class PumpskinTokenProfitManager:
+    MIN_POTN_REWARDS_CLAIM = 200.0
+
     def __init__(
         self,
         staking_w3: AvalancheCWeb3Client,
@@ -32,9 +34,13 @@ class PumpskinTokenProfitManager:
         self.staking_w3 = staking_w3
         self.lp_w3 = lp_w3
         self.config = config
-        self.enabled = configs["enabled"]
+        self.enabled = config["enabled"]
         self.stats_logger = stats_logger
         self.txns = []
+        self.rewards_rate = {
+            "PPIE": 0.869 / 4.046,
+            "POTN": 0.092 / 3.797,
+        }
 
     @classmethod
     def create_token_profit_lp_class(
@@ -90,15 +96,15 @@ class PumpskinTokenProfitManager:
 
         multiplier = max(0.1, self.config["rewards_claim_multiplier"])
         # TODO: min_rewards_amount_claimable = self.staking_w3.get_rewards_rate_per_day() * multiplier
-        rate_per_hour = 0.024 * lps_staked
+        rate_per_hour = self.rewards_rate[self.token_name] * lps_staked
         rate_per_day = rate_per_hour * 24
-        min_rewards_amount_claimable = rate_per_day * multiplier
+        min_rewards_amount_claimable = max(self.MIN_POTN_REWARDS_CLAIM, rate_per_day * multiplier)
 
         if amount_claimable < min_rewards_amount_claimable:
             logger.print_normal(
-                f"Skipping rewards claim of {amount_claimable} POTN b/c under threshold of {min_rewards_amount_claimable}"
+                f"Skipping rewards claim of {amount_claimable:.2f} POTN b/c under threshold of {min_rewards_amount_claimable:.2f}"
             )
-            return
+            return []
 
         action_str = f"Claiming {self.token_name} LP staking rewards"
         self._process_w3_results(action_str, self.staking_w3.claim_rewards())
@@ -126,8 +132,9 @@ class PumpskinTokenProfitManager:
     def check_swap_and_lp_and_stake(self, amount_available: float) -> T.List[str]:
         if not self.enabled:
             logger.print_warn(f"Skipping {self.token_name} swap since user not opted in")
+            return []
 
-        percent_profit = self.config[f"percent_{self.token_name.lower()}_profit"]
+        percent_profit = self.config[f"percent_{self.token_name.lower()}_profit_convert"]
         token_profit = amount_available * percent_profit
         lp_token = (amount_available - token_profit) / 2
         token_to_avax = token_profit + lp_token
@@ -136,8 +143,8 @@ class PumpskinTokenProfitManager:
         avax_out_wei = self.tj_w3.get_amounts_out(token_to_wei(token_to_avax), path)[-1]
         amount_out_min_wei = int(avax_out_wei / 100 * 99.5)
 
-        profit_avax = wei_to_token_raw(amount_out_min_wei) * token_profit / token_to_avax
-        lp_avax = wei_to_token_raw(amount_out_min_wei) * lp_token / token_to_avax
+        profit_avax = wei_to_token(amount_out_min_wei) * token_profit / token_to_avax
+        lp_avax = wei_to_token(amount_out_min_wei) * lp_token / token_to_avax
 
         logger.print_normal(
             f"{self.token_name} for profit: {profit_avax:.2f}, {self.token_name} for LP: {lp_token:.2f}, AVAX for LP: {lp_avax:.2f}"
@@ -164,7 +171,7 @@ class PumpskinTokenProfitManager:
         logger.print_bold(f"{action_str}")
 
         tx_receipt = self.token_w3.get_transaction_receipt(tx_hash)
-        gas = wei_to_token_raw(self.token_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        gas = wei_to_token(self.token_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         logger.print_bold(f"Paid {gas} AVAX in gas")
 
         self.stats_logger.lifetime_stats["avax_gas"] += gas
@@ -179,9 +186,6 @@ class PumpskinTokenProfitManager:
             return True
 
     def _buy_and_stake_token_lp(self, amount_avax: float, amount_token: float) -> None:
-        if not self.enabled:
-            logger.print_warn(f"Skipping LP cycle since user not opted in")
-
         amount_token_min = int(token_to_wei(amount_token) / 100 * 99.5)
         amount_avax_min = int(token_to_wei(amount_avax) / 100 * 99.5)
 

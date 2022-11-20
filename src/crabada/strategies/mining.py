@@ -10,7 +10,7 @@ from crabada.strategies.strategy import Strategy
 from crabada.types import CrabForLending, IdleGame, MineOption, Team, TeamMember
 from utils import logger
 from utils.config_manager import ConfigManager
-from utils.price import wei_to_token_raw
+from utils.price import wei_to_token
 
 
 class MiningStrategy(Strategy):
@@ -39,7 +39,7 @@ class MiningStrategy(Strategy):
         tx_hash = self.crabada_w3.start_game(team_id)
         tx_receipt = self._check_for_tx_receipt(tx_hash)
 
-        gas = wei_to_token_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        gas = wei_to_token(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         return CrabadaTransaction(
             tx_hash,
             MineOption.MINE,
@@ -56,7 +56,7 @@ class MiningStrategy(Strategy):
         tx_hash = self.crabada_w3.close_game(game_id)
         tx_receipt = self._check_for_tx_receipt(tx_hash)
 
-        gas = wei_to_token_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        gas = wei_to_token(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         tus, cra = get_rewards_from_tx_receipt(tx_receipt)
         if tus is not None:
             result = self._get_game_result(tus)
@@ -78,7 +78,7 @@ class MiningStrategy(Strategy):
         tx_hash = self.crabada_w3.reinforce_defense(game_id, crabada_id, borrow_price)
         tx_receipt = self._check_for_tx_receipt(tx_hash)
 
-        gas = wei_to_token_raw(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        gas = wei_to_token(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
 
         return CrabadaTransaction(
             tx_hash,

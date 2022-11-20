@@ -58,7 +58,7 @@ class PumpskinListingSniper:
             color=self.collection_color.value,
         )
         price_wei = int(sale["price"])
-        price_avax = wei_to_token_raw(price_wei)
+        price_avax = wei_to_token(price_wei)
 
         embed.add_field(name=f"\U0001F4B0 List Price", value=f"{price_avax:.2f} AVAX", inline=True)
 

@@ -7,7 +7,7 @@ from pumpskin.pumpskin_bot import PumpskinBot
 from pumpskin.pumpskin_web3_client import PumpskinCollectionWeb3Client, PumpskinContractWeb3Client
 from utils import logger
 from utils.config_types import UserConfig
-from utils.price import wei_to_token_raw
+from utils.price import wei_to_token
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 
 
@@ -106,7 +106,7 @@ class ManageAccounts(OnMessage):
             pumpskin: StakedPumpskin = collection_w3.get_staked_pumpskin_info(token_id)
             pumpskins[token_id] = pumpskin
 
-        ppie_staked = wei_to_token_raw(contract_w3.get_ppie_staked(user_config["address"]))
+        ppie_staked = wei_to_token(contract_w3.get_ppie_staked(user_config["address"]))
         potn_per_day = ppie_staked * 3.0
         ppie_per_day = PumpskinBot.calc_ppie_earned_per_day(pumpskins)
         logger.print_normal(f"{user} -> PPIE/Day: {ppie_per_day} POTN/Day: {potn_per_day}")

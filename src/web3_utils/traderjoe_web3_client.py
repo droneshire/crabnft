@@ -3,8 +3,10 @@ import typing as T
 
 from eth_typing import Address
 from eth_typing.encoding import HexStr
+from web3 import Web3
 from web3.types import TxParams
 
+from utils import logger
 from utils.price import TokenWei
 from web3_utils.web3_client import Web3Client
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
@@ -23,6 +25,10 @@ class TraderJoeWeb3Client(AvalancheCWeb3Client):
 
     def get_amounts_out(self, amount_in: TokenWei, path: T.List[str]) -> T.List[TokenWei]:
         try:
+            checksum_paths = []
+            for p in path:
+                address = Web3.toChecksumAddress(p)
+                checksum_paths.append(address)
             return self.contract.functions.getAmountsOut(amount_in, path).call()
         except Exception as e:
             logger.print_fail(f"{e}")
@@ -32,7 +38,8 @@ class TraderJoeWeb3Client(AvalancheCWeb3Client):
         self, amount_in: TokenWei, amount_out_min: TokenWei, path: T.List[str]
     ) -> HexStr:
         # ensure outgoing address matches current private key
-        if self.user_address != Account.from_key(self.private_key).address:
+        address = Web3.toChecksumAddress(self.user_address)
+        if address != Account.from_key(self.private_key).address:
             return ""
         if len(path) < 2:
             return ""
@@ -60,7 +67,7 @@ class TraderJoeWeb3Client(AvalancheCWeb3Client):
         # deadline is 2 min
         deadline = int(time.time() + (2 * 60))
         func = self.contract.functions.addLiquidityAVAX(
-            non_avax_token_address,
+            Web3.toChecksumAddress(non_avax_token_address),
             amount_token,
             amount_token_min,
             amount_avax_min,
