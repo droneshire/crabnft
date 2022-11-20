@@ -8,7 +8,7 @@ from web3 import Web3
 from web3.types import TxParams, Wei
 
 from utils import logger
-from utils.price import wei_to_token_raw, Token
+from utils.price import wei_to_token_raw, TokenWei
 from web3_utils.web3_client import Web3Client
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from pumpskin.types import StakedPumpskin
@@ -65,12 +65,12 @@ class PumpskinCollectionWeb3Client(AvalancheCWeb3Client):
             logger.print_fail(f"{e}")
             return ""
 
-    def get_claimable_ppie(self, token_id: int) -> Token:
+    def get_claimable_ppie(self, token_id: int) -> TokenWei:
         """
         Get claimable PPIE per token
         """
         try:
-            ppie_wei: Token = self.contract.functions.claimableView(token_id).call()
+            ppie_wei: TokenWei = self.contract.functions.claimableView(token_id).call()
             return ppie_wei
         except Exception as e:
             logger.print_fail(f"{e}")
@@ -155,19 +155,19 @@ class PumpskinContractWeb3Client(AvalancheCWeb3Client):
             logger.print_fail(f"{e}")
             return ""
 
-    def get_claimable_potn(self, user_address: Address) -> Token:
+    def get_claimable_potn(self, user_address: Address) -> TokenWei:
         """
         Get claimable POTN per token
         """
         try:
             address = Web3.toChecksumAddress(user_address)
-            ppie_wei: Token = self.contract.functions.claimableView(address).call()
+            ppie_wei: TokenWei = self.contract.functions.claimableView(address).call()
             return ppie_wei
         except Exception as e:
             logger.print_fail(f"{e}")
             return 0
 
-    def get_ppie_staked(self, user_address: Address) -> Token:
+    def get_ppie_staked(self, user_address: Address) -> TokenWei:
         """
         Get staked PPIE
         """

@@ -25,6 +25,35 @@ class AvaxCWeb3Client(Web3Client):
             return 0
         return wei_to_token(balance)
 
-    def transfer_token(self, to_address: Address, avax: Avax) -> HexStr:
-        tx: TxParams = self.build_transaction_with_value_in_wei(to_address, token_to_wei(avax))
-        return self.sign_and_send_transaction(tx)
+    def approve(self, max_amount: int = MAX_UINT256) -> HexStr:
+        try:
+            tx: TxParams = self.build_contract_transaction(
+                self.contract.functions.approve(self.contract_checksum_address, max_amount)
+            )
+            return self.sign_and_send_transaction(tx)
+        except KeyboardInterrupt:
+            raise
+        except:
+            return ""
+
+    def is_allowed(self) -> bool:
+        try:
+            return (
+                self.contract.functions.allowance(
+                    self.user_address, self.contract_checksum_address
+                ).call()
+                > 0
+            )
+        except KeyboardInterrupt:
+            raise
+        except:
+            return False
+
+    def transfer_token(self, to_address: Address, token: TokenWei) -> HexStr:
+        try:
+            tx: TxParams = self.build_transaction_with_value_in_wei(to_address, token_to_wei(avax))
+            return self.sign_and_send_transaction(tx)
+        except KeyboardInterrupt:
+            raise
+        except:
+            return ""

@@ -12,9 +12,6 @@ class SwimmerNetworkClient(Web3Client):
     its smart contracts.
     """
 
-    TUS_CONTRACT_ADDRESS = Address("0x9c765eee6eff9cf1337a1846c0d93370785f6c92")
-    CRA_CONTRACT_ADDRESS = Address("0xc1a1f40d558a3e82c3981189f61ef21e17d6eb48")
-
     chain_id: int = 73772
     tx_type: int = 0x01
     max_priority_fee_per_gas_in_gwei: int = 1

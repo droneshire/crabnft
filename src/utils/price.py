@@ -14,7 +14,7 @@ Cra = T.NewType("Cra", int)
 Chro = T.NewType("Chro", int)
 Avax = T.NewType("Avax", int)
 
-Token = T.NewType("Token", int)
+TokenWei = T.NewType("TokenWei", int)
 
 DEFAULT_GAS_USED = 0.001259
 
@@ -80,18 +80,18 @@ def get_token_price_usd(api_token: str, symbol: str, dry_run: bool = False) -> T
     return None
 
 
-def token_to_wei(token: Token) -> Wei:
+def token_to_wei(token: TokenWei) -> Wei:
     """
     The conversion is 1 token = 10^18 Wei.
     """
     return T.cast(Wei, Web3.toWei(token, "ether"))
 
 
-def wei_to_token(wei: Wei) -> Token:
+def wei_to_token(wei: Wei) -> TokenWei:
     """
     Convert Wei to token
     """
-    return T.cast(Token, Web3.fromWei(wei, "ether"))
+    return T.cast(TokenWei, Web3.fromWei(wei, "ether"))
 
 
 def wei_to_token_raw(wei: Wei) -> float:
