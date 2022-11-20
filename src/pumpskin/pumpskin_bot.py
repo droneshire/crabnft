@@ -788,6 +788,8 @@ class PumpskinBot:
                 logger.print_ok(f"Successfully approved $POTN")
                 self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
                 logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+        else:
+            logger.print_ok_arrow(f"POTN contract already approved")
 
         if not self.ppie_w3.is_allowed():
             logger.print_bold(f"Approving PPIE contract for use...")
@@ -805,6 +807,8 @@ class PumpskinBot:
                 logger.print_ok(f"Successfully approved $PPIE")
                 self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
                 logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+        else:
+            logger.print_ok_arrow(f"PPIE contract already approved")
 
     def _run_game_loop(self) -> None:
         pumpskin_ids: T.List[int] = self.get_pumpskin_ids()
