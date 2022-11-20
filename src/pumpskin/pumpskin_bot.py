@@ -813,6 +813,9 @@ class PumpskinBot:
         logger.print_bold(f"\n\nAttempting leveling activities for {self.user}")
 
         self._run_game_loop()
+
+        self._check_and_take_profits_and_stake_lp()
+
         self.stats_logger.write()
 
     def end(self) -> None:
