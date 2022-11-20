@@ -771,6 +771,41 @@ class PumpskinBot:
                 email_message,
             )
 
+    def _check_for_approvals(self) -> None:
+        if not self.potn_w3.is_allowed():
+            logger.print_bold(f"Approving POTN contract for use...")
+
+            tx_hash = self.potn_w3.approve()
+            tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
+            gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+            logger.print_bold(f"Paid {gas} AVAX in gas")
+
+            self.stats_logger.lifetime_stats["avax_gas"] += gas
+
+            if tx_receipt.get("status", 0) != 1:
+                logger.print_fail(f"Failed to approve $POTN!")
+            else:
+                logger.print_ok(f"Successfully approved $POTN")
+                self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
+                logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+
+        if not self.ppie_w3.is_allowed():
+            logger.print_bold(f"Approving PPIE contract for use...")
+
+            tx_hash = self.ppie_w3.approve()
+            tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
+            gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+            logger.print_bold(f"Paid {gas} AVAX in gas")
+
+            self.stats_logger.lifetime_stats["avax_gas"] += gas
+
+            if tx_receipt.get("status", 0) != 1:
+                logger.print_fail(f"Failed to approve $PPIE!")
+            else:
+                logger.print_ok(f"Successfully approved $PPIE")
+                self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
+                logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+
     def _run_game_loop(self) -> None:
         pumpskin_ids: T.List[int] = self.get_pumpskin_ids()
         pumpskins = {}
@@ -787,7 +822,8 @@ class PumpskinBot:
 
         # insert special pumpkins to the front of the leveling group
         final_pumpskins = {}
-        for token_id in self.config_mgr.config["game_specific_configs"]["special_pumps"].keys():
+        for token_id_str in self.config_mgr.config["game_specific_configs"]["special_pumps"].keys():
+            token_id = int(token_id_str)
             final_pumpskins[token_id] = ordered_pumpskins[token_id]
             del ordered_pumpskins[token_id]
 
@@ -817,6 +853,9 @@ class PumpskinBot:
         self.config_mgr.init()
 
     def run(self) -> None:
+        logger.print_normal(f"\n\nChecking PPIE and POTN approvals for {self.user}")
+        self._check_for_approvals()
+
         logger.print_bold(f"\n\nAttempting leveling activities for {self.user}")
 
         self._run_game_loop()
