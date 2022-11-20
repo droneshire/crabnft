@@ -13,6 +13,9 @@ from joepegs.types import Activity
 from utils import logger
 from utils.price import wei_to_token_raw
 
+class EmbedType:
+    Listing = 0
+    Sales = 1
 
 class JoePegsSalesBot:
     MAX_TIME_SINCE_SALE = 60.0 * 60.0 * 24
@@ -62,7 +65,7 @@ class JoePegsSalesBot:
         # a collection and associated floor
         pass
 
-    def add_custom_embed_fields(self, embed: discord.Embed) -> discord.Embed:
+    def add_custom_embed_fields(self, embed: discord.Embed, embed_type: int) -> discord.Embed:
         # Override this in any derived class to add more custom info to the default embed
         pass
 
@@ -191,7 +194,8 @@ class JoePegsSalesBot:
         for timestamp in sorted_sales:
             sale = timestamp_sales[timestamp]
             self.posted_items[sale["collection"]]["sold"].append(sale["tokenId"])
-            embeds.append(self._get_sales_embed(sale))
+            embed = self._get_sales_embed(sale)
+            embeds.append(self.add_custom_embed_fields(embed, EmbedType.Sales))
 
         with open(self.database_file, "w") as outfile:
             json.dump(self.posted_items, outfile, indent=4)
@@ -202,7 +206,8 @@ class JoePegsSalesBot:
         embeds = []
         for listing in self._get_recent_discount_listings():
             self.posted_items[listing["collection"]]["listed"].append(listing["tokenId"])
-            embeds.append(self._get_listing_embed(listing))
+            embed = self._get_sales_embed(listing)
+            embeds.append(self.add_custom_embed_fields(embed, EmbedType.Listing))
 
         with open(self.database_file, "w") as outfile:
             json.dump(self.posted_items, outfile, indent=4)

@@ -20,5 +20,5 @@ class PumpskinSalesBot(JoePegsSalesBot):
     def custom_filter_for_item(self) -> bool:
         pass
 
-    def add_custom_embed_fields(self, embed: discord.Embed) -> discord.Embed:
+    def add_custom_embed_fields(self, embed: discord.Embed, embed_type: int) -> discord.Embed:
         pass
