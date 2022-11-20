@@ -24,14 +24,19 @@ from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.avax_web3_client import AvaxCWeb3Client
 from web3_utils.potn_web3_client import PotnWeb3Client
 from web3_utils.ppie_web3_client import PpieWeb3Client
+from web3_utils.traderjoe_web3_client import TraderJoeWeb3Client
 from pumpskin.config_manager_pumpskin import PumpskinConfigManager
 from pumpskin.game_stats import NULL_GAME_STATS, PumpskinLifetimeGameStatsLogger
 from pumpskin.types import Rarity, StakedPumpskin
 from pumpskin.pumpskin_web2_client import PumpskinWeb2Client
+from pumpskin.potn_lp_token_web3_client import PotnLpWeb3Client
+from pumpskin.ppie_lp_token_web3_client import PpieLpWeb3Client
 from pumpskin.pumpskin_web3_client import (
     PumpskinCollectionWeb3Client,
     PumpskinContractWeb3Client,
     PumpskinNftWeb3Client,
+    PotnLpStakingContractWeb3Client,
+    PpieLpStakingContractWeb3Client,
 )
 
 ATTRIBUTES_FILE = "attributes.json"
@@ -74,6 +79,7 @@ class PumpskinBot:
 
         self.last_gas_notification = 0
         self.ppie_available_to_stake = 0.0
+        self.potn_available_to_stake = 0.0
 
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
         self.txns: T.List[str] = []
@@ -91,6 +97,46 @@ class PumpskinBot:
 
         self.pumpskin_w2: PumpskinWeb2Client = PumpskinWeb2Client()
 
+        self.tj_w3: TraderJoeWeb3Client = (
+            TraderJoeWeb3Client()
+            .set_credentials(config["address"], config["private_key"])
+            .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+            .set_contract()
+            .set_dry_run(dry_run)
+        )
+
+        self.ppie_lp_w3: PpieLpWeb3Client = (
+            PpieLpWeb3Client()
+            .set_credentials(config["address"], config["private_key"])
+            .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+            .set_contract()
+            .set_dry_run(dry_run)
+        )
+
+        self.potn_lp_w3: PotnLpWeb3Client = (
+            PotnLpWeb3Client()
+            .set_credentials(config["address"], config["private_key"])
+            .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+            .set_contract()
+            .set_dry_run(dry_run)
+        )
+
+        self.ppie_stake_w3: PpieLpStakingContractWeb3Client = (
+            PpieLpStakingContractWeb3Client()
+            .set_credentials(config["address"], config["private_key"])
+            .set_node_uri(PpieLpStakingContractWeb3Client.NODE_URL)
+            .set_contract()
+            .set_dry_run(dry_run)
+        )
+
+        self.potn_stake_w3: PotnLpStakingContractWeb3Client = (
+            PotnLpStakingContractWeb3Client()
+            .set_credentials(config["address"], config["private_key"])
+            .set_node_uri(PotnLpStakingContractWeb3Client.NODE_URL)
+            .set_contract()
+            .set_dry_run(dry_run)
+        )
+
         self.collection_w3: PumpskinCollectionWeb3Client = (
             PumpskinCollectionWeb3Client()
             .set_credentials(config["address"], config["private_key"])
@@ -102,7 +148,7 @@ class PumpskinBot:
         self.game_w3: PumpskinContractWeb3Client = (
             PumpskinContractWeb3Client()
             .set_credentials(config["address"], config["private_key"])
-            .set_node_uri(PumpskinCollectionWeb3Client.NODE_URL)
+            .set_node_uri(PumpskinContractWeb3Client.NODE_URL)
             .set_contract()
             .set_dry_run(dry_run)
         )
@@ -110,7 +156,7 @@ class PumpskinBot:
         self.nft_w3: PumpskinNftWeb3Client = (
             PumpskinNftWeb3Client()
             .set_credentials(config["address"], config["private_key"])
-            .set_node_uri(PumpskinCollectionWeb3Client.NODE_URL)
+            .set_node_uri(PumpskinNftWeb3Client.NODE_URL)
             .set_contract()
             .set_dry_run(dry_run)
         )
@@ -352,6 +398,24 @@ class PumpskinBot:
 
         return pumpskin_ids
 
+    def _process_w3_results(self, action_str: str, tx_hash: str) -> bool:
+        logger.print_bold(f"{action_str}")
+
+        tx_receipt = self.potn_lp_w3.get_transaction_receipt(tx_hash)
+        gas = wei_to_token_raw(self.potn_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        logger.print_bold(f"Paid {gas} AVAX in gas")
+
+        self.stats_logger.lifetime_stats["avax_gas"] += gas
+
+        if tx_receipt.get("status", 0) != 1:
+            logger.print_fail(f"Failed to: {action_str}!")
+            return False
+        else:
+            logger.print_ok(f"Successfully: {action_str}")
+            self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
+            logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+            return True
+
     def _send_leveling_discord_activity_update(self, token_id: int, level: int) -> None:
         webhook = DiscordWebhook(
             url=discord.DISCORD_WEBHOOK_URL["PUMPSKIN_ACTIVITY"], rate_limit_retry=True
@@ -482,30 +546,13 @@ class PumpskinBot:
 
         if ppie_available_to_stake > min_ppie_to_stake:
             # Try to stake PPIE
-            logger.print_bold(f"Attempting to stake {ppie_available_to_stake:.2f} $PPIE...")
-            for i in range(5):
-                tx_hash = self.game_w3.staking_ppie(token_to_wei(ppie_available_to_stake))
-                if tx_hash:
-                    break
-                else:
-                    logger.print_bold(
-                        f"Failed to stake, trying again with {ppie_available_to_stake:.2f} $PPIE..."
-                    )
-                    ppie_available_to_stake = ppie_available_to_stake / 2
-            tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
-            gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
-
-            self.stats_logger.lifetime_stats["avax_gas"] += gas
-
-            logger.print_bold(f"Paid {gas} AVAX in gas")
-
-            if tx_receipt.get("status", 0) != 1:
-                logger.print_fail(f"Failed to stake {ppie_available_to_stake:.2f} $PPIE!")
-            else:
-                self.ppie_available_to_stake = 0.0
-                logger.print_ok(f"Successfully staked {ppie_available_to_stake:.2f} $PPIE")
-                self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
-                logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+            total_claimable_potn = wei_to_token_raw(self.game_w3.get_claimable_potn(self.address))
+            action_str = f"Attempting to stake {ppie_available_to_stake:.2f} $PPIE"
+            if self._process_w3_results(
+                action_str, self.game_w3.staking_ppie(token_to_wei(ppie_available_to_stake))
+            ):
+                # staking PPIE also claims POTN, so track that as POTN we've claimed
+                self.potn_available_to_stake += total_claimable_potn
         else:
             logger.print_warn(
                 f"Not going to stake $PPIE since it is below our threshold ({ppie_available_to_stake:.2f} < {min_ppie_to_stake:.2f})"
@@ -513,48 +560,22 @@ class PumpskinBot:
 
     def _drink_potion(self, token_id: int, potn_to_level: int) -> bool:
         num_potn_wei = token_to_wei(potn_to_level)
-        if num_potn_wei > 0.0:
-            logger.print_normal(
-                f"Attempting to have pumpskin {token_id} drink {potn_to_level} $POTN"
-            )
-            tx_hash = self.game_w3.drink_potion(token_id, num_potn_wei)
-            tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
-            gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
-            logger.print_bold(f"Paid {gas} AVAX in gas")
+        if num_potn_wei <= 0.0:
+            return True
 
-            self.stats_logger.lifetime_stats["avax_gas"] += gas
-
-            if tx_receipt.get("status", 0) != 1:
-                logger.print_fail(f"Failed to drink potion for {token_id}!")
-                return False
-            else:
-                logger.print_ok(f"Successfully drank potion for {token_id}")
-                self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
-                logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
-
-        return True
+        action_str = f"Attempting to have pumpskin {token_id} drink {potn_to_level} $POTN"
+        return self._process_w3_results(
+            action_str, self.game_w3.drink_potion(token_id, num_potn_wei)
+        )
 
     def _level_pumpskins(self, token_id: int, next_level: int, is_special: bool) -> None:
         # Level Pumpskin who can be leveled up
         if is_special:
-            logger.print_ok(
-                f"Attempting to Level up special pumpskin {token_id} to {next_level}..."
-            )
+            action_str = f"Attempting to Level up special pumpskin {token_id} to {next_level}..."
         else:
-            logger.print_normal(f"Attempting to Level up pumpskin {token_id} to {next_level}...")
-        tx_hash = self.collection_w3.level_up_pumpkin(token_id)
-        tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
-        gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
-        logger.print_bold(f"Paid {gas} AVAX in gas")
+            action_str = f"Attempting to Level up pumpskin {token_id} to {next_level}..."
 
-        self.stats_logger.lifetime_stats["avax_gas"] += gas
-
-        if tx_receipt.get("status", 0) != 1:
-            logger.print_fail(f"Failed to level up pumpskin {token_id}!")
-        else:
-            logger.print_ok(f"Successfully leveled up pumpskin {token_id} to {next_level}")
-            self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
-            logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+        if self._process_w3_results(action_str, self.collection_w3.level_up_pumpkin(token_id)):
             self.current_stats["levels"] += 1
             self._send_leveling_discord_activity_update(token_id, next_level)
 
@@ -684,41 +705,16 @@ class PumpskinBot:
             )
 
     def _claim_ppie(self, ppie_tokens: T.List[int], ppie_to_claim: float) -> None:
-        logger.print_normal(f"Attempting to claim {ppie_to_claim:.2f} $PPIE for {self.user}...")
-
-        tx_hash = self.collection_w3.claim_pies(ppie_tokens)
-        tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
-        gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
-        logger.print_bold(f"Paid {gas} AVAX in gas")
-
-        self.stats_logger.lifetime_stats["avax_gas"] += gas
-
-        if tx_receipt.get("status", 0) != 1:
-            logger.print_fail(f"Failed to claim $PPIE!")
-        else:
-            logger.print_ok(f"Successfully claimed $PPIE")
-            self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
-            logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+        action_str = f"Attempting to claim {ppie_to_claim:.2f} $PPIE for {self.user}..."
+        if self._process_w3_results(action_str, self.collection_w3.claim_pies(ppie_tokens)):
             self.current_stats["ppie"] += ppie_to_claim
             self.ppie_available_to_stake += ppie_to_claim
 
     def _claim_potn(self, potn_to_claim: float) -> None:
-        logger.print_normal(f"Attempting to claim {potn_to_claim:.2f} $POTN for {self.user}...")
-
-        tx_hash = self.game_w3.claim_potn()
-        tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
-        gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
-        logger.print_bold(f"Paid {gas} AVAX in gas")
-
-        self.stats_logger.lifetime_stats["avax_gas"] += gas
-
-        if tx_receipt.get("status", 0) != 1:
-            logger.print_fail(f"Failed to claim $POTN!")
-        else:
-            logger.print_ok(f"Successfully claimed {potn_to_claim:.2f} $POTN")
-            self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
-            logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+        action_str = f"Attempting to claim {potn_to_claim:.2f} $POTN for {self.user}..."
+        if self._process_w3_results(action_str, self.game_w3.claim_potn()):
             self.current_stats["potn"] += potn_to_claim
+            self.potn_available_to_stake += potn_to_claim
 
     def _check_for_low_gas(self, num_pumpskins: int) -> None:
         avax_w3: AvaxCWeb3Client = T.cast(
@@ -771,44 +767,101 @@ class PumpskinBot:
                 email_message,
             )
 
-    def _check_for_approvals(self) -> None:
+    def _check_for_token_approvals(self) -> None:
+        logger.print_normal(f"\n\nChecking PPIE and POTN approvals for {self.user}")
+
         if not self.potn_w3.is_allowed():
-            logger.print_bold(f"Approving POTN contract for use...")
-
-            tx_hash = self.potn_w3.approve()
-            tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
-            gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
-            logger.print_bold(f"Paid {gas} AVAX in gas")
-
-            self.stats_logger.lifetime_stats["avax_gas"] += gas
-
-            if tx_receipt.get("status", 0) != 1:
-                logger.print_fail(f"Failed to approve $POTN!")
-            else:
-                logger.print_ok(f"Successfully approved $POTN")
-                self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
-                logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+            action_str = f"Approving POTN contract for use"
+            self._process_w3_results(action_str, self.potn_w3.approve())
         else:
             logger.print_ok_arrow(f"POTN contract already approved")
 
         if not self.ppie_w3.is_allowed():
-            logger.print_bold(f"Approving PPIE contract for use...")
-
-            tx_hash = self.ppie_w3.approve()
-            tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
-            gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
-            logger.print_bold(f"Paid {gas} AVAX in gas")
-
-            self.stats_logger.lifetime_stats["avax_gas"] += gas
-
-            if tx_receipt.get("status", 0) != 1:
-                logger.print_fail(f"Failed to approve $PPIE!")
-            else:
-                logger.print_ok(f"Successfully approved $PPIE")
-                self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
-                logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+            action_str = f"Approving PPIE contract for use"
+            self._process_w3_results(action_str, self.ppie_w3.approve())
         else:
             logger.print_ok_arrow(f"PPIE contract already approved")
+
+        if not self.potn_lp_w3.is_allowed():
+            self._process_w3_results("Approving POTN/LP", self.potn_lp_w3.approve())
+        else:
+            logger.print_ok_arrow(f"POTN/LP contract already approved")
+
+        if not self.ppie_lp_w3.is_allowed():
+            self._process_w3_results("Approving PPIE/LP", self.ppie_lp_w3.approve())
+        else:
+            logger.print_ok_arrow(f"PPIE/LP contract already approved")
+
+    def _check_and_take_profits_and_stake_lp(self) -> None:
+        if not self.config_mgr.config["game_specific_configs"]["lp_contributions"]["enabled"]:
+            logger.print_warn(f"Skipping profit/LP creation since user not opted in")
+            return False
+
+        # TODO: calculate POTN rewards available from PPIE/LP staking contract
+        # TODO: claim rewards from PPIE/LP staking contract if above threshold
+        # TODO: calculate POTN rewards available from POTN/LP staking contract
+        # TODO: claim rewards from POTN/LP staking contract if above threshold
+
+        # TODO: calculate amount of PPIE to swap to Avax
+        # TODO: swap PPIE to Avax
+        # TODO: calculate amount of PPIE to pool
+        # TODO: calculate amount of AVAX to pool
+
+        amount_ppie = 0.0
+        amount_ppie_min = int(token_to_wei(amount_ppie) / 100 * 99.5)
+        amount_avax = 0.0
+        amount_avax_min = int(token_to_wei(amount_avax) / 100 * 99.5)
+
+        action_str = f"Buying PPIE/AVAX LP Token"
+        self.tj_w3.buy_lp_token(
+            self.potn_w3.contract_checksum_address, amount_ppie, amount_ppie_min, amount_avax_min
+        )
+
+        action_str = f"Staking PPIE/AVAX LP Token"
+        self._process_w3_results(action_str, self.ppie_stake_w3.stake(ppie_lp_amount))
+
+    def _calc_and_swap_potn_to_avax(self) -> float:
+        percent_potn_profit = self.config_mgr.config["game_specific_configs"]["lp_contributions"][
+            "percent_potn_profit"
+        ]
+        potn_profit = self.potn_available_to_stake * percent_potn_profit
+        potn_lp = (self.potn_available_to_stake - potn_profit) / 2
+        potn_to_avax = potn_profit + potn_lp
+        path = [self.potn_w3.contract_address, AvaxCWeb3Client.WAVAX_ADDRESS]
+        avax_out = wei_to_token_raw(self.tj_w3.get_amounts_out(token_to_wei(potn_to_avax), path))
+
+        logger.print_normal(
+            f"POTN for profit: {potn_profit}, POTN for LP: {potn_lp}, AVAX for LP: {avax_out}"
+        )
+        action_str = f"Converting {potn_to_avax} POTN to AVAX"
+        amount_out_min = int(token_to_wei(potn_to_avax) / 100 * 99.5)
+        self._process_w3_results(
+            action_str,
+            self.tj_w3.swap_exact_tokens_for_avax(token_to_wei(potn_to_avax), amount_out_min, path),
+        )
+
+        # TODO: swap POTN to Avax
+        # TODO: calculate amount of POTN to pool
+        # TODO: calculate amount of AVAX to pool
+
+    def _buy_and_stake_potn_lp(self, amount_avax: float, amount_potn: float) -> None:
+        amount_potn_min = int(token_to_wei(amount_potn) / 100 * 99.5)
+        amount_avax_min = int(token_to_wei(amount_avax) / 100 * 99.5)
+
+        action_str = f"Buying POTN/AVAX LP Token"
+        actual_amount_potn, actual_amount_avax, liquidity = self._process_w3_results(
+            action_str,
+            self.tj_w3.buy_lp_token(
+                self.ppie_w3.contract_checksum_address,
+                token_to_wei(amount_potn),
+                amount_potn_min,
+                amount_avax_min,
+            ),
+        )
+
+        amount_potn_lp = 0.0
+        action_str = f"Staking POTN/AVAX LP Token"
+        self._process_w3_results(action_str, self.potn_stake_w3.stake(token_to_wei(amount_potn_lp)))
 
     def _run_game_loop(self) -> None:
         pumpskin_ids: T.List[int] = self.get_pumpskin_ids()
@@ -857,7 +910,6 @@ class PumpskinBot:
         self.config_mgr.init()
 
     def run(self) -> None:
-        logger.print_normal(f"\n\nChecking PPIE and POTN approvals for {self.user}")
         self._check_for_approvals()
 
         logger.print_bold(f"\n\nAttempting leveling activities for {self.user}")

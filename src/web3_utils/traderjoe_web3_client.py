@@ -53,9 +53,9 @@ class TraderJoeWeb3Client(AvalancheCWeb3Client):
     def buy_lp_token(
         self,
         non_avax_token_address: Address,
-        amount_token: int,
-        amount_token_min: int,
-        amount_avax_min: int,
+        amount_token: TokenWei,
+        amount_token_min: TokenWei,
+        amount_avax_min: TokenWei,
     ) -> HexStr:
         # deadline is 2 min
         deadline = int(time.time() + (2 * 60))
