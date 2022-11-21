@@ -112,6 +112,9 @@ def run_bot() -> None:
                 total_potn = 0.0
                 total_gas = 0.0
                 total_pumps = 0
+                total_avax_profits = 0.0
+                total_lp_potn = 0.0
+                total_lp_ppie = 0.0
                 for bot in bots:
                     total_levels += bot.stats_logger.lifetime_stats["levels"]
                     total_ppie += bot.stats_logger.lifetime_stats["ppie"]
