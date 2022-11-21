@@ -122,7 +122,7 @@ def run_bot() -> None:
                     total_gas += bot.stats_logger.lifetime_stats["avax_gas"]
                     total_avax_profits += bot.stats_logger.lifetime_stats["avax_profits"]
                     total_lp_potn += bot.stats_logger.lifetime_stats["potn_lp_tokens"]
-                    total_lp_ppie += bot.stats_logger.lifetime_stats["pppie_lp_tokens"]
+                    total_lp_ppie += bot.stats_logger.lifetime_stats["ppie_lp_tokens"]
                     total_pumps += len(bot.get_pumpskin_ids())
 
                 message = "\U0001F383\U0001F383 **Totals** \U0001F383\U0001F383\n"

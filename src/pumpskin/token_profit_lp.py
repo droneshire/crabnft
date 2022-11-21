@@ -288,7 +288,7 @@ class PumpskinTokenProfitManager:
                 continue
 
             # wait to let transaction settle
-            wait(5.0)
+            wait(15.0)
             amount_token_lp = self.lp_w3.get_balance()
             action_str = f"Staking {amount_token_lp} {self.token_name}/AVAX LP Token"
             if self._process_w3_results(
