@@ -13,6 +13,10 @@ class LifetimeStats(T.TypedDict):
     levels: int
     commission_ppie: T.Dict[str, float]
     avax_gas: float
+    avax_profits: float
+    ppie_lp_tokens: float
+    potn_lp_tokens: float
+    amounts_available: T.Dict[str, float]
 
 
 NULL_GAME_STATS = {
@@ -24,6 +28,10 @@ NULL_GAME_STATS = {
     "avax_profits": 0.0,
     "ppie_lp_tokens": 0.0,
     "potn_lp_tokens": 0.0,
+    "amounts_available": {
+        "ppie": 0.0,
+        "potn": 0.0,
+    },
 }
 
 
@@ -68,7 +76,7 @@ class PumpskinLifetimeGameStatsLogger(LifetimeGameStatsLogger):
             else:
                 diffed_stats[item] = user_a_stats[item] - user_b_stats[item]
 
-        for item in ["commission_ppie"]:
+        for item in ["commission_ppie", "amounts_available"]:
             for k, v in user_a_stats[item].items():
                 diffed_stats[item][k] = v
 
@@ -108,7 +116,7 @@ class PumpskinLifetimeGameStatsLogger(LifetimeGameStatsLogger):
             merged_stats[item] = merged_stats.get(item, 0.0) + user_a_stats.get(item, 0.0)
             merged_stats[item] = merged_stats.get(item, 0.0) + user_b_stats.get(item, 0.0)
 
-        for item in ["commission_ppie"]:
+        for item in ["commission_ppie", "amounts_available"]:
             for k, v in user_a_stats.get(item, {}).items():
                 merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
 

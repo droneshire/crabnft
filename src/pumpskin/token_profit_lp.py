@@ -44,7 +44,7 @@ class PumpskinTokenProfitManager:
         self.tj_w3 = tj_w3
         self.staking_w3 = staking_w3
         self.lp_w3 = lp_w3
-        self.config = config["game_specific_configs"]["lp_contributions"]
+        self.config = config["game_specific_configs"]["lp_and_profit_strategy"]
         self.discord_handle = config["discord_handle"]
         self.enabled = self.config["enabled"]
         self.stats_logger = stats_logger
