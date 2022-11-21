@@ -21,7 +21,7 @@ from wyndblast.wyndblast_web3_client import WyndblastGameWeb3Client
 MAP_1 = "M1S"
 MAP_2 = "M2S"
 
-ALLOWED_MAPS = [MAP_1]
+ALLOWED_MAPS = [MAP_1, MAP_2]
 
 LEVEL_TO_NUM_ENEMIES = {
     f"{MAP_1}1:1": 2,
@@ -42,6 +42,24 @@ LEVEL_TO_NUM_ENEMIES = {
     f"{MAP_1}6:1": 6,
     f"{MAP_1}6:2": 9,
     f"{MAP_1}6:3": 9,
+    f"{MAP_2}1:1": 2,
+    f"{MAP_2}1:2": 3,
+    f"{MAP_2}1:3": 4,
+    f"{MAP_2}2:1": 3,
+    f"{MAP_2}2:2": 3,
+    f"{MAP_2}2:3": 4,
+    f"{MAP_2}3:1": 3,
+    f"{MAP_2}3:2": 5,
+    f"{MAP_2}3:3": 6,
+    f"{MAP_2}4:1": 4,
+    f"{MAP_2}4:2": 6,
+    f"{MAP_2}4:3": 6,
+    f"{MAP_2}5:1": 4,
+    f"{MAP_2}5:2": 6,
+    f"{MAP_2}5:3": 9,
+    f"{MAP_2}6:1": 6,
+    f"{MAP_2}6:2": 9,
+    f"{MAP_2}6:3": 9,
 }
 
 LEVEL_HIERARCHY = {
