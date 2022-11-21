@@ -182,7 +182,16 @@ class PumpskinTokenProfitManager:
             (amount_available - profit_token - hold_token) * (1.0 - percent_token_leveling) / 2.0,
         )
         avax_token = profit_token + lp_token
+
+        if avax_token <= 0.0:
+            logger.print_warn(f"Skipping swap since nothing to swap!")
+            return []
+
         path = [self.token_w3.contract_checksum_address, AvaxCWeb3Client.WAVAX_ADDRESS]
+
+        logger.print_normal(
+            f"From {amount_available:.2f} {self.token_name} available, Testing {avax_token:.4f} {self.token_name} in..."
+        )
 
         avax_out_wei = self.tj_w3.get_amounts_out(token_to_wei(avax_token), path)[-1]
         amount_out_min_wei = int(avax_out_wei / 100 * 99.5)
@@ -195,12 +204,7 @@ class PumpskinTokenProfitManager:
         )
         logger.print_normal(f"{self.token_name} for LP: {lp_token:.2f}, AVAX for LP: {lp_avax:.4f}")
 
-        if (
-            avax_out_wei <= 0
-            or lp_avax <= 0
-            or lp_token <= 0
-            or profit_avax < self.config["min_avax_to_profit"]
-        ):
+        if avax_out_wei <= 0.0 or lp_avax <= 0.0 or profit_avax < self.config["min_avax_to_profit"]:
             logger.print_warn(f"Skipping swap due to too low of levels...")
             return []
 
