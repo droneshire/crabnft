@@ -1,6 +1,8 @@
 import typing as T
 import time
 
+from discord import Color
+from discord_webhook import DiscordEmbed, DiscordWebhook
 from yaspin import yaspin
 
 from utils import logger
@@ -32,7 +34,7 @@ class PumpskinTokenProfitManager:
         tj_w3: TraderJoeWeb3Client,
         token_w3: AvalancheCWeb3Client,
         token_name: str,
-        config: T.Dict[T.Any, T.Any],
+        config: UserConfig,
         stats_logger: PumpskinLifetimeGameStatsLogger,
         min_token_amount_to_swap: float,
         dry_run: bool = False,
@@ -42,8 +44,9 @@ class PumpskinTokenProfitManager:
         self.tj_w3 = tj_w3
         self.staking_w3 = staking_w3
         self.lp_w3 = lp_w3
-        self.config = config
-        self.enabled = config["enabled"]
+        self.config = config["game_specific_configs"]["lp_contributions"]
+        self.discord_handle = config["discord_handle"]
+        self.enabled = self.config["enabled"]
         self.stats_logger = stats_logger
         self.txns = []
         # TODO: remove and make this dynamic below
@@ -97,7 +100,7 @@ class PumpskinTokenProfitManager:
             tj_w3,
             token_w3,
             token_name,
-            config["game_specific_configs"]["lp_contributions"],
+            config,
             stats_logger,
             min_token_amount_to_swap,
             dry_run,
@@ -200,11 +203,36 @@ class PumpskinTokenProfitManager:
         self.stats_logger.lifetime_stats[f"avax_profits"] += profit_avax
 
         wait(10.0)
-        self._buy_and_stake_token_lp(lp_avax, lp_token)
+        lp_amount = self._buy_and_stake_token_lp(lp_avax, lp_token)
+
+        if lp_amount > 0.0 or profit_avax > 0.0:
+            self._send_discord_profit_lp_purchase(profit_avax, lp_avax, lp_token, lp_amount)
 
         total_txns = self.txns
         self.txns = []
         return total_txns
+
+    def _send_discord_profit_lp_purchase(
+        self, profit_avax: float, lp_avax: float, lp_token: float, lp_amount: float
+    ) -> None:
+        webhook = DiscordWebhook(
+            url=discord.DISCORD_WEBHOOK_URL["PUMPSKIN_ACTIVITY"], rate_limit_retry=True
+        )
+        discord_username = self.discord_handle.split("#")[0].upper()
+        embed = DiscordEmbed(
+            title=f"Profit + LP Bolster",
+            description=f"Update on profits and LP purchase for {discord_username}\n",
+            color=Color.blue().value,
+        )
+        embed.add_embed_field(name=f"Profit AVAX", value=f"{profit_avax:.3f}", inline=False)
+        embed.add_embed_field(name=f"LP AVAX", value=f"{lp_avax:.3f}", inline=False)
+        embed.add_embed_field(name=f"LP {self.token_name}", value=f"{lp_token:.3f}", inline=True)
+        embed.add_embed_field(name=f"JLP Purchased/Staked", value=f"{lp_amount:.3f}", inline=False)
+        embed.set_image(
+            url=f"https://pumpskin.xyz/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Flogo-full.c1b1f2e3.png&w=1920&q=75"
+        )
+        webhook.add_embed(embed)
+        webhook.execute()
 
     def _process_w3_results(self, action_str: str, tx_hash: str) -> bool:
         logger.print_bold(f"{action_str}")
@@ -224,7 +252,7 @@ class PumpskinTokenProfitManager:
             logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
             return True
 
-    def _buy_and_stake_token_lp(self, amount_avax: float, amount_token: float) -> None:
+    def _buy_and_stake_token_lp(self, amount_avax: float, amount_token: float) -> float:
         logger.print_ok_blue(
             f"Putting together {self.token_name}/AVAX pool: {amount_token:.2f} {self.token_name} | {amount_avax:.4f} AVAX"
         )
@@ -257,4 +285,7 @@ class PumpskinTokenProfitManager:
                     self.stats_logger.lifetime_stats[
                         f"{self.token_name.lower()}_lp_tokens"
                     ] += amount_token_lp
-                return
+
+                return amount_token_lp
+
+        return 0.0
