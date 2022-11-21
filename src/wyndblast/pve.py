@@ -459,6 +459,7 @@ class PveGame:
 
         if user_exp >= self.LEVEL_FIVE_EXP and chro_before < self.MIN_CHRO_TO_PLAY:
             logger.print_normal(f"Skipping PVE game since we've already tapped out this account...")
+            self.check_and_claim_if_needed(user_exp)
             return
 
         self._check_and_do_standard_quest_list()
