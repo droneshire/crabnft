@@ -147,7 +147,7 @@ class PumpskinTokenProfitManager:
             logger.print_warn(f"Skipping {self.token_name} swap since user not opted in")
             return []
 
-        if config["use_full_available_balances"]:
+        if self.config["use_full_available_balances"]:
             amount_available = self.token_w3.get_balance()
         else:
             amount_available = min(amount_available, self.token_w3.get_balance() * 0.95)
