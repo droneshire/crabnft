@@ -583,7 +583,7 @@ class PumpskinBot:
             # check to see how much POTN needed to level up
             level = pumpskin.get("kg", 10000) / 100
             next_level = level + 1
-            level_potn = self.calc_potn_from_level(level)
+            level_potn = self.calc_potn_from_level(next_level)
 
             potn_to_level = level_potn - pumpskin.get("eaten_amount", 100000)
 
@@ -770,10 +770,10 @@ class PumpskinBot:
 
     def _check_and_take_profits_and_stake_lp(self) -> None:
         logger.print_bold(f"\n\nAttempting profit and LP activities for {self.user}")
-        for k, v in self.token_manager.items():
+        for _, v in self.token_manager.items():
             self.txns.extend(v.check_and_claim_rewards_from_lp_stake())
 
-        for _, v in self.token_manager.items():
+        for k, v in self.token_manager.items():
             self.txns.extend(v.check_swap_and_lp_and_stake(self.amounts_available[k]))
 
     def _run_game_loop(self) -> None:

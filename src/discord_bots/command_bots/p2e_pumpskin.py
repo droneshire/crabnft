@@ -1,4 +1,5 @@
 import discord
+import json
 import typing as T
 
 from config_pumpskin import USERS
@@ -39,8 +40,10 @@ class ManageAccounts(OnMessage):
 
         for config, setting in config.items():
             text = " ".join([c[0].upper() + c[1:] for c in config.split("_")])
-            if type(setting) == float:
+            if isinstance(setting, float):
                 value = f"{setting:.2f}"
+            elif isinstance(setting, dict):
+                value = f"{json.dumps(setting, indent=4)}"
             else:
                 value = f"{setting}"
 
@@ -48,6 +51,7 @@ class ManageAccounts(OnMessage):
                 value += f" -> {ppie_per_day * setting:.2f} $PPIE"
             elif "multiplier" in text.lower() and "potn" in text.lower():
                 value += f" -> {potn_per_day * setting:.2f} $POTN"
+
             embed.add_field(name=text, value=value, inline=False)
 
         embed.set_thumbnail(url=pfp)

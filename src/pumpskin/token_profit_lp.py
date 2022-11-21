@@ -147,6 +147,9 @@ class PumpskinTokenProfitManager:
         token_to_avax = profit_token + lp_token
         path = [self.token_w3.contract_checksum_address, AvaxCWeb3Client.WAVAX_ADDRESS]
 
+        profit_avax = wei_to_token(amount_out_min_wei) * profit_token / token_to_avax
+        lp_avax = wei_to_token(amount_out_min_wei) * lp_token / token_to_avax
+
         logger.print_normal(
             f"{self.token_name} for profit: {profit_avax:.2f}, Total AVAX: {token_to_avax}"
         )
@@ -155,8 +158,9 @@ class PumpskinTokenProfitManager:
         avax_out_wei = self.tj_w3.get_amounts_out(token_to_wei(token_to_avax), path)[-1]
         amount_out_min_wei = int(avax_out_wei / 100 * 99.5)
 
-        profit_avax = wei_to_token(amount_out_min_wei) * profit_token / token_to_avax
-        lp_avax = wei_to_token(amount_out_min_wei) * lp_token / token_to_avax
+        if avax_out_wei <= 0:
+            logger.print_warn(f"Skipping swap since contract indicates 0 AVAX out")
+            return []
 
         action_str = f"Converting {token_to_avax:.2f} {self.token_name} to AVAX"
         if not self._process_w3_results(
@@ -166,6 +170,7 @@ class PumpskinTokenProfitManager:
             ),
         ):
             logger.print_warn(f"Unable to swap {self.token_name} to AVAX...")
+
             total_txns = self.txns
             self.txns = []
             return total_txns
