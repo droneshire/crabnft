@@ -113,9 +113,9 @@ class WyndBot:
             return
 
         logger.print_bold(f"Attempting to move wynds from inventory to game...")
-        if not self.nft_w3.is_allowed():
+        if not self.nft_w3.is_approved_for_all(self.wynd_w3.contract_checksum_address):
             logger.print_bold(f"Allowing access to wynds...")
-            self.nft_w3.set_approval_for_all()
+            self.nft_w3.set_approval_for_all(self.wynd_w3.contract_checksum_address, True)
         tx_hash = self.wynd_w3.move_out_of_inventory(token_ids=wynds_to_move_to_game)
         tx_receipt = self.wynd_w3.get_transaction_receipt(tx_hash)
         gas = wei_to_token(self.wynd_w3.get_gas_cost_of_transaction_wei(tx_receipt))
