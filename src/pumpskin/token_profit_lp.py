@@ -5,7 +5,7 @@ from discord import Color
 from discord_webhook import DiscordEmbed, DiscordWebhook
 from yaspin import yaspin
 
-from utils import logger
+from utils import discord, logger
 from utils.config_types import UserConfig
 from utils.general import get_pretty_seconds
 from utils.price import token_to_wei, wei_to_token
@@ -203,6 +203,7 @@ class PumpskinTokenProfitManager:
         self.stats_logger.lifetime_stats[f"avax_profits"] += profit_avax
 
         wait(10.0)
+
         lp_amount = self._buy_and_stake_token_lp(lp_avax, lp_token)
 
         if lp_amount > 0.0 or profit_avax > 0.0:
