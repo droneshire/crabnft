@@ -815,9 +815,19 @@ class PumpskinBot:
             self.txns.extend(v.check_and_claim_rewards_from_lp_stake())
 
         for k, v in self.token_manager.items():
+            if self.are_all_pumpskins_level_as_desired:
+                percent_token_leveling = 0.0
+            else:
+                percent_token_leveling = (
+                    self.config_mgr.config["game_specific_configs"]["lp_and_profit_strategy"][
+                        f"percent_{k.lower()}_after_profits_for_leveling"
+                    ]
+                    / 100.0
+                )
+
             self.txns.extend(
                 v.check_swap_and_lp_and_stake(
-                    self.stats_logger.lifetime_stats["amounts_available"][k]
+                    self.stats_logger.lifetime_stats["amounts_available"][k], percent_token_leveling
                 )
             )
 

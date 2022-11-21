@@ -145,7 +145,9 @@ class PumpskinTokenProfitManager:
         self.txns = []
         return total_txns
 
-    def check_swap_and_lp_and_stake(self, amount_available: float) -> T.List[str]:
+    def check_swap_and_lp_and_stake(
+        self, amount_available: float, percent_token_leveling: float
+    ) -> T.List[str]:
         if not self.enabled:
             logger.print_warn(f"Skipping {self.token_name} swap since user not opted in")
             return []
@@ -163,10 +165,6 @@ class PumpskinTokenProfitManager:
 
         percent_profit = self.config[f"percent_{self.token_name.lower()}_profit_convert"] / 100.0
         profit_token = amount_available * percent_profit
-
-        percent_token_leveling = (
-            self.config[f"percent_{self.token_name.lower()}_after_profits_for_leveling"] / 100.0
-        )
 
         lp_token = (amount_available - profit_token) * (1.0 - percent_token_leveling)
         avax_token = profit_token + lp_token
