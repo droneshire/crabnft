@@ -21,6 +21,9 @@ NULL_GAME_STATS = {
     "levels": 0,
     "commission_ppie": {},
     "avax_gas": 0.0,
+    "avax_profits": 0.0,
+    "ppie_lp_tokens": 0.0,
+    "potn_lp_tokens": 0.0,
 }
 
 
@@ -47,7 +50,15 @@ class PumpskinLifetimeGameStatsLogger(LifetimeGameStatsLogger):
 
         diffed_stats = copy.deepcopy(NULL_GAME_STATS)
 
-        for item in ["avax_gas", "ppie", "potn", "levels"]:
+        for item in [
+            "avax_gas",
+            "ppie",
+            "potn",
+            "levels",
+            "avax_profits",
+            "potn_lp_tokens",
+            "ppie_lp_tokens",
+        ]:
             if item not in user_a_stats and item not in user_b_stats:
                 diffed_stats[item] = 0.0
             elif item not in user_a_stats:
@@ -85,7 +96,15 @@ class PumpskinLifetimeGameStatsLogger(LifetimeGameStatsLogger):
             logger.print_ok_blue_arrow("B:")
             logger.print_normal(json.dumps(user_b_stats, indent=4))
 
-        for item in ["avax_gas", "ppie", "potn", "levels"]:
+        for item in [
+            "avax_gas",
+            "ppie",
+            "potn",
+            "levels",
+            "avax_profits",
+            "potn_lp_tokens",
+            "ppie_lp_tokens",
+        ]:
             merged_stats[item] = merged_stats.get(item, 0.0) + user_a_stats.get(item, 0.0)
             merged_stats[item] = merged_stats.get(item, 0.0) + user_b_stats.get(item, 0.0)
 

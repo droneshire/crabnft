@@ -147,7 +147,10 @@ class PumpskinTokenProfitManager:
             logger.print_warn(f"Skipping {self.token_name} swap since user not opted in")
             return []
 
-        amount_available = min(amount_available, self.token_w3.get_balance() * 0.9)
+        if config["use_full_available_balances"]:
+            amount_available = self.token_w3.get_balance()
+        else:
+            amount_available = min(amount_available, self.token_w3.get_balance() * 0.95)
 
         if amount_available < self.min_token_amount_to_swap:
             logger.print_warn(
@@ -193,6 +196,8 @@ class PumpskinTokenProfitManager:
             total_txns = self.txns
             self.txns = []
             return total_txns
+
+        self.stats_logger.lifetime_stats[f"avax_profits"] += profit_avax
 
         wait(10.0)
         self._buy_and_stake_token_lp(lp_avax, lp_token)
@@ -246,7 +251,10 @@ class PumpskinTokenProfitManager:
                 wait(10.0)
                 amount_token_lp = self.lp_w3.get_balance()
                 action_str = f"Staking {amount_token_lp} {self.token_name}/AVAX LP Token"
-                self._process_w3_results(
+                if self._process_w3_results(
                     action_str, self.staking_w3.stake(token_to_wei(amount_token_lp))
-                )
+                ):
+                    self.stats_logger.lifetime_stats[
+                        f"{self.token_name.lower()}_lp_tokens"
+                    ] += amount_token_lp
                 return
