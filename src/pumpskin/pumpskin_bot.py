@@ -604,7 +604,7 @@ class PumpskinBot:
                     continue
             elif next_level >= max_level:
                 logger.print_ok_blue(
-                    f"Skipping level up for {token_id} since {level} >= max level {max_level}: "
+                    f"Skipping level up for {token_id} since {level} >= max level {max_level}"
                 )
                 continue
 
