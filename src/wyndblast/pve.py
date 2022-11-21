@@ -461,11 +461,6 @@ class PveGame:
         chro_before = chro_rewards.get("claimable", 0)
         user_exp = user_data.get("exp", 1000)
 
-        if user_exp >= self.LEVEL_FIVE_EXP and chro_before < self.MIN_CHRO_TO_PLAY:
-            logger.print_normal(f"Skipping PVE game since we've already tapped out this account...")
-            self.check_and_claim_if_needed(user_exp)
-            return
-
         self._check_and_do_standard_quest_list()
 
         countdown: types.Countdown = self.wynd_w2.get_countdown()
