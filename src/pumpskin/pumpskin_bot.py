@@ -597,14 +597,14 @@ class PumpskinBot:
             max_level = self.config_mgr.config["game_specific_configs"]["max_level"]
             if is_special:
                 max_level = special_pumps[token_id]
-                if next_level >= max_level:
+                if next_level > max_level:
                     logger.print_ok_blue(
-                        f"Skipping level up for special pump {token_id} since {level} >= max level {max_level}"
+                        f"Skipping level up for special pump {token_id} since {next_level} >= max level {max_level}"
                     )
                     continue
-            elif next_level >= max_level:
+            elif next_level > max_level:
                 logger.print_ok_blue(
-                    f"Skipping level up for {token_id} since {level} >= max level {max_level}"
+                    f"Skipping level up for {token_id} since {next_level} >= max level {max_level}"
                 )
                 continue
 
