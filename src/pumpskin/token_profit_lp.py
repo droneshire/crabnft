@@ -163,7 +163,12 @@ class PumpskinTokenProfitManager:
 
         percent_profit = self.config[f"percent_{self.token_name.lower()}_profit_convert"] / 100.0
         profit_token = amount_available * percent_profit
-        lp_token = (amount_available - profit_token) / 2
+
+        percent_token_leveling = (
+            self.config[f"percent_{self.token_name.lower()}_after_profits_for_leveling"] / 100.0
+        )
+
+        lp_token = (amount_available - profit_token) * (1.0 - percent_token_leveling)
         avax_token = profit_token + lp_token
         path = [self.token_w3.contract_checksum_address, AvaxCWeb3Client.WAVAX_ADDRESS]
 

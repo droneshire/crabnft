@@ -865,7 +865,7 @@ class PumpskinBot:
         # so we should really not trigger this often
         self._check_and_claim_potn(final_pumpskins)
 
-        if self.are_all_pumpskins_level_as_desired and self.is_profits_and_lp_enabled:
+        if self.is_profits_and_lp_enabled:
             self._check_and_take_profits_and_stake_lp()
 
         self._send_email_update(num_pumpskins)
