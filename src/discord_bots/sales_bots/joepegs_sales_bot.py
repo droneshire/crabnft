@@ -197,7 +197,7 @@ class JoePegsSalesBot:
             sale = timestamp_sales[timestamp]
             self.posted_items[sale["collection"]]["sold"].append(sale["tokenId"])
             embed = self._get_sales_embed(sale)
-            embeds.append(self.add_custom_embed_fields(embed, EmbedType.Sales))
+            embeds.append(embed)
 
         with open(self.database_file, "w") as outfile:
             json.dump(self.posted_items, outfile, indent=4)
@@ -209,7 +209,7 @@ class JoePegsSalesBot:
         for listing in self._get_recent_discount_listings():
             self.posted_items[listing["collection"]]["listed"].append(listing["tokenId"])
             embed = self._get_sales_embed(listing)
-            embeds.append(self.add_custom_embed_fields(embed, EmbedType.Listing))
+            embeds.append(embed)
 
         with open(self.database_file, "w") as outfile:
             json.dump(self.posted_items, outfile, indent=4)
