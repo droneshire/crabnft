@@ -557,6 +557,10 @@ class PumpskinBot:
             if self._process_w3_results(
                 action_str, self.game_w3.staking_ppie(token_to_wei(ppie_available_to_stake))
             ):
+                ppie_available = self.stats_logger.lifetime_stats["amounts_available"]["ppie"]
+                self.stats_logger.lifetime_stats["amounts_available"]["ppie"] = max(
+                    0.0, ppie_available - ppie_available_to_stake
+                )
                 # staking PPIE also claims POTN, so track that as POTN we've claimed
                 self.stats_logger.lifetime_stats["amounts_available"][
                     "potn"
@@ -572,9 +576,14 @@ class PumpskinBot:
             return True
 
         action_str = f"Attempting to have pumpskin {token_id} drink {potn_to_level} $POTN"
-        return self._process_w3_results(
-            action_str, self.game_w3.drink_potion(token_id, num_potn_wei)
-        )
+        if self._process_w3_results(action_str, self.game_w3.drink_potion(token_id, num_potn_wei)):
+            potn_available = self.stats_logger.lifetime_stats["amounts_available"]["potn"]
+            self.stats_logger.lifetime_stats["amounts_available"]["potn"] = max(
+                0.0, potn_available - potn_to_level
+            )
+            return True
+        else:
+            return False
 
     def _level_pumpskins(self, token_id: int, next_level: int, is_special: bool) -> None:
         # Level Pumpskin who can be leveled up
@@ -639,7 +648,10 @@ class PumpskinBot:
 
             self.are_all_pumpskins_level_as_desired = False
 
-            potn_balance = self.potn_w3.get_balance()
+            potn_balance = min(
+                self.stats_logger.lifetime_stats["amounts_available"]["potn"],
+                self.potn_w3.get_balance(),
+            )
 
             percent_potn_profit = (
                 self.config_mgr.config["game_specific_configs"]["lp_and_profit_strategy"][
