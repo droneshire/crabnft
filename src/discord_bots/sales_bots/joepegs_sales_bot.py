@@ -65,11 +65,11 @@ class JoePegsSalesBot:
     def custom_filter_for_item(self) -> bool:
         # Override this in any derived class to provide a custom filter for
         # a collection and associated floor
-        pass
+        return False
 
     def add_custom_embed_fields(self, embed: discord.Embed, embed_type: int) -> discord.Embed:
         # Override this in any derived class to add more custom info to the default embed
-        pass
+        return embed
 
     def _get_recent_sales(self) -> T.List[Activity]:
         all_sales = []
