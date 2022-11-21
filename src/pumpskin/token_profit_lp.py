@@ -141,6 +141,12 @@ class PumpskinTokenProfitManager:
         else:
             logger.print_ok_arrow(f"{self.token_name}/LP contract already approved")
 
+        if not self.staking_w3.is_allowed():
+            action_str = f"Approving {self.token_name} JLP staking contract"
+            self._process_w3_results(action_str, self.staking_w3.approve())
+        else:
+            logger.print_ok_arrow(f"{self.token_name} JLP staking contract already approved")
+
         total_txns = self.txns
         self.txns = []
         return total_txns
@@ -185,7 +191,7 @@ class PumpskinTokenProfitManager:
             avax_out_wei <= 0
             or lp_avax <= 0
             or lp_token <= 0
-            or profit_avax + lp_avax < self.config["min_avax_to_profit"]
+            or profit_avax < self.config["min_avax_to_profit"]
         ):
             logger.print_warn(f"Skipping swap due to too low of levels...")
             return []
