@@ -424,6 +424,10 @@ class PveGame:
         unclaimed_chro = chro_rewards.get("claimable", 0)
         logger.print_ok(f"Unclaimed CHRO Rewards: {unclaimed_chro} CHRO")
 
+        if unclaimed_chro <= 0.0:
+            logger.print_normal(f"Nothing to claim!")
+            return False
+
         if exp < self.LEVEL_FIVE_EXP:
             logger.print_normal(f"Waiting till level 5 to claim rewards ({unclaimed_chro} CHRO)")
             return False
