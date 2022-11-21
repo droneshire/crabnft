@@ -56,6 +56,15 @@ class PumpskinTokenProfitManager:
         }
         self.min_token_amount_to_swap = min_token_amount_to_swap
 
+        assert (
+            config["game_specific_configs"]["lp_and_profit_strategy"][
+                f"percent_{self.token_name.lower()}_profit_convert"
+            ]
+            + config["game_specific_configs"]["lp_and_profit_strategy"][
+                f"percent_{self.token_name.lower()}_hold"
+            ]
+        ) <= 100.0, "Invalid percentages for percent profit/hold"
+
     @classmethod
     def create_token_profit_lp_class(
         cls: T.Type[ClassType],
@@ -164,9 +173,14 @@ class PumpskinTokenProfitManager:
             return []
 
         percent_profit = self.config[f"percent_{self.token_name.lower()}_profit_convert"] / 100.0
+        percent_hold = self.config[f"percent_{self.token_name.lower()}_hold"] / 100.0
         profit_token = amount_available * percent_profit
+        hold_token = amount_available * percent_hold
 
-        lp_token = (amount_available - profit_token) * (1.0 - percent_token_leveling) / 2.0
+        lp_token = max(
+            0.0,
+            (amount_available - profit_token - hold_token) * (1.0 - percent_token_leveling) / 2.0,
+        )
         avax_token = profit_token + lp_token
         path = [self.token_w3.contract_checksum_address, AvaxCWeb3Client.WAVAX_ADDRESS]
 

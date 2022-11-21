@@ -523,10 +523,16 @@ class PumpskinBot:
             self.stats_logger.lifetime_stats["amounts_available"]["ppie"],
         )
 
-        percent_ppie_profit = (
-            self.config_mgr.config["game_specific_configs"]["lp_and_profit_strategy"][
-                "percent_ppie_profit_convert"
-            ]
+        percent_ppie_withheld = (
+            min(
+                100.0,
+                self.config_mgr.config["game_specific_configs"]["lp_and_profit_strategy"][
+                    "percent_ppie_profit_convert"
+                ]
+                + self.config_mgr.config["game_specific_configs"]["lp_and_profit_strategy"][
+                    "percent_ppie_hold"
+                ],
+            )
             / 100.0
         )
         percent_ppie_leveling = (
@@ -538,7 +544,7 @@ class PumpskinBot:
 
         if self.config_mgr.config["game_specific_configs"]["lp_and_profit_strategy"]["enabled"]:
             ppie_available_to_stake = (
-                ppie_balance * percent_ppie_leveling * (1.0 - percent_ppie_profit)
+                ppie_balance * percent_ppie_leveling * (1.0 - percent_ppie_withheld)
             )
         else:
             ppie_available_to_stake = ppie_balance * (
@@ -653,10 +659,16 @@ class PumpskinBot:
                 self.potn_w3.get_balance(),
             )
 
-            percent_potn_profit = (
-                self.config_mgr.config["game_specific_configs"]["lp_and_profit_strategy"][
-                    "percent_potn_profit_convert"
-                ]
+            percent_potn_withheld = (
+                min(
+                    100.0,
+                    self.config_mgr.config["game_specific_configs"]["lp_and_profit_strategy"][
+                        "percent_potn_profit_convert"
+                    ]
+                    + self.config_mgr.config["game_specific_configs"]["lp_and_profit_strategy"][
+                        "percent_potn_hold"
+                    ],
+                )
                 / 100.0
             )
             percent_potn_leveling = (
@@ -668,7 +680,7 @@ class PumpskinBot:
 
             if self.config_mgr.config["game_specific_configs"]["lp_and_profit_strategy"]["enabled"]:
                 pton_available_to_level = (
-                    potn_balance * percent_potn_leveling * (1.0 - percent_potn_profit)
+                    potn_balance * percent_potn_leveling * (1.0 - percent_potn_withheld)
                 )
             else:
                 pton_available_to_level = potn_balance
