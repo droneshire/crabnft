@@ -648,7 +648,7 @@ class PumpskinBot:
                 / 100.0
             )
             percent_potn_leveling = (
-                self.config_mgr.config["game_specific_configs"]["lp_aotnprofit_strategy"][
+                self.config_mgr.config["game_specific_configs"]["lp_and_profit_strategy"][
                     "percent_potn_after_profits_for_leveling"
                 ]
                 / 100.0
