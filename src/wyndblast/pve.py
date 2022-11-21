@@ -437,6 +437,8 @@ class PveGame:
 
         if not ret:
             logger.print_warn(f"Failed to set rewards. Trying to claim anyways...")
+        else:
+            logger.print_ok_arrow(f"Success!")
 
         logger.print_ok(f"Claiming rewards! {unclaimed_chro} CHRO")
         tx_hash = self.wynd_w3.claim_rewards()
