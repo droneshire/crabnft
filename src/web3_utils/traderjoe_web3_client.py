@@ -29,7 +29,7 @@ class TraderJoeWeb3Client(AvalancheCWeb3Client):
             for p in path:
                 address = Web3.toChecksumAddress(p)
                 checksum_paths.append(address)
-            return self.contract.functions.getAmountsOut(amount_in, path).call()
+            return self.contract.functions.getAmountsOut(amount_in, checksum_paths).call()
         except Exception as e:
             logger.print_fail(f"{e}")
             return []

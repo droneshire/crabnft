@@ -16,6 +16,7 @@ ClassType = T.TypeVar("ClassType", bound="PumpskinTokenProfitManager")
 
 class PumpskinTokenProfitManager:
     MIN_POTN_REWARDS_CLAIM = 200.0
+    MINIMUM_TOKEN_TO_SWAP = 500.0
 
     def __init__(
         self,
@@ -134,21 +135,29 @@ class PumpskinTokenProfitManager:
             logger.print_warn(f"Skipping {self.token_name} swap since user not opted in")
             return []
 
+        if amount_available < self.MINIMUM_TOKEN_TO_SWAP:
+            logger.print_warn(
+                f"Skipping {self.token_name} swap since we only have {amount_available:.2f} available to swap"
+            )
+            return []
+
         percent_profit = self.config[f"percent_{self.token_name.lower()}_profit_convert"]
-        token_profit = amount_available * percent_profit
-        lp_token = (amount_available - token_profit) / 2
-        token_to_avax = token_profit + lp_token
-        path = [self.token_w3.contract_address, AvaxCWeb3Client.WAVAX_ADDRESS]
+        profit_token = amount_available * percent_profit
+        lp_token = (amount_available - profit_token) / 2
+        token_to_avax = profit_token + lp_token
+        path = [self.token_w3.contract_checksum_address, AvaxCWeb3Client.WAVAX_ADDRESS]
+
+        logger.print_normal(
+            f"{self.token_name} for profit: {profit_avax:.2f}, Total AVAX: {token_to_avax}"
+        )
+        logger.print_normal(f"{self.token_name} for LP: {lp_token:.2f}, AVAX for LP: {lp_avax:.2f}")
 
         avax_out_wei = self.tj_w3.get_amounts_out(token_to_wei(token_to_avax), path)[-1]
         amount_out_min_wei = int(avax_out_wei / 100 * 99.5)
 
-        profit_avax = wei_to_token(amount_out_min_wei) * token_profit / token_to_avax
+        profit_avax = wei_to_token(amount_out_min_wei) * profit_token / token_to_avax
         lp_avax = wei_to_token(amount_out_min_wei) * lp_token / token_to_avax
 
-        logger.print_normal(
-            f"{self.token_name} for profit: {profit_avax:.2f}, {self.token_name} for LP: {lp_token:.2f}, AVAX for LP: {lp_avax:.2f}"
-        )
         action_str = f"Converting {token_to_avax:.2f} {self.token_name} to AVAX"
         if not self._process_w3_results(
             action_str,

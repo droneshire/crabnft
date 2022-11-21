@@ -387,7 +387,7 @@ class PumpskinBot:
     def _process_w3_results(self, action_str: str, tx_hash: str) -> bool:
         logger.print_bold(f"{action_str}")
 
-        tx_receipt = self.potn_lp_w3.get_transaction_receipt(tx_hash)
+        tx_receipt = self.potn_w3.get_transaction_receipt(tx_hash)
         gas = wei_to_token(self.potn_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         logger.print_bold(f"Paid {gas} AVAX in gas")
 
@@ -647,7 +647,7 @@ class PumpskinBot:
         ppie_staked = wei_to_token(self.game_w3.get_ppie_staked(self.address))
         min_potn_to_claim = ppie_staked * 3 * multiplier
 
-        if total_claimable_potn >= min_potn_to_claim or force:
+        if (total_claimable_potn > 0.0 and total_claimable_potn >= min_potn_to_claim) or force:
             self._claim_potn(total_claimable_potn)
         else:
             logger.print_warn(
@@ -810,7 +810,9 @@ class PumpskinBot:
         logger.print_ok_arrow(f"POTN: {potn_balance:.2f}")
         logger.print_ok_arrow(f"\U0001F383: {num_pumpskins}")
 
-        are_pumps_fully_levelled = self._try_to_level_pumpskins(final_pumpskins)
+        are_pumps_fully_levelled = (
+            self._try_to_level_pumpskins(final_pumpskins) or self.user == "ROSS"
+        )
         self._check_and_claim_ppie(final_pumpskins)
         if not are_pumps_fully_levelled or not self.is_profits_and_lp_enabled:
             self._check_and_stake_ppie(final_pumpskins)
