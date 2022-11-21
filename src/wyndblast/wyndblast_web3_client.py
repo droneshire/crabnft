@@ -64,3 +64,16 @@ class WyndblastGameWeb3Client(AvalancheCWeb3Client):
         except Exception as e:
             logger.print_fail(f"{e}")
             return ""
+
+class WyndblastNftGameWeb3Client(AvalancheCWeb3Client):
+    """
+    Interact with a smart contract of the Wyndblast nfts
+    https://snowtrace.io/address/0x4b3903952a25961b9e66216186efd9b21903aed3
+    """
+
+    contract_address = T.cast(Address, "0x4b3903952a25961b9e66216186efd9b21903aed3")
+    this_dir = os.path.dirname(os.path.realpath(__file__))
+    abi_dir = os.path.join(
+        os.path.dirname(this_dir), "web3_utils", "abi", "abi-wyndblast-nft.json"
+    )
+    abi = Web3Client._get_contract_abi_from_file(abi_dir)

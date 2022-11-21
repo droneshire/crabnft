@@ -19,7 +19,7 @@ from wyndblast.pve import PveGame
 from wyndblast.pve_web2_client import PveWyndblastWeb2Client
 from wyndblast.types import WyndNft
 from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
-from wyndblast.wyndblast_web3_client import WyndblastGameWeb3Client
+from wyndblast.wyndblast_web3_client import WyndblastGameWeb3Client, WyndblastNftGameWeb3Client
 
 
 class WyndBot:
@@ -75,6 +75,14 @@ class WyndBot:
             .set_dry_run(dry_run)
         )
 
+        self.nft_w3: WyndblastNftGameWeb3Client = (
+            WyndblastNftGameWeb3Client()
+            .set_credentials(config["address"], config["private_key"])
+            .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+            .set_contract()
+            .set_dry_run(dry_run)
+        )
+
         self.stats_logger = WyndblastLifetimeGameStatsLogger(
             self.alias,
             self.log_dir,
@@ -105,6 +113,9 @@ class WyndBot:
             return
 
         logger.print_bold(f"Attempting to move wynds from inventory to game...")
+        if not self.nft_w3.is_allowed():
+            logger.print_bold(f"Allowing access to wynds...")
+            self.nft_w3.approve()
         tx_hash = self.wynd_w3.move_out_of_inventory(token_ids=wynds_to_move_to_game)
         tx_receipt = self.wynd_w3.get_transaction_receipt(tx_hash)
         gas = wei_to_token(self.wynd_w3.get_gas_cost_of_transaction_wei(tx_receipt))
