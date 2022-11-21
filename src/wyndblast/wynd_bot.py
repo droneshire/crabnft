@@ -115,7 +115,18 @@ class WyndBot:
         logger.print_bold(f"Attempting to move wynds from inventory to game...")
         if not self.nft_w3.is_approved_for_all(self.wynd_w3.contract_checksum_address):
             logger.print_bold(f"Allowing access to wynds...")
-            self.nft_w3.set_approval_for_all(self.wynd_w3.contract_checksum_address, True)
+            tx_hash = self.nft_w3.set_approval_for_all(self.wynd_w3.contract_checksum_address, True)
+            tx_receipt = self.nft_w3.get_transaction_receipt(tx_hash)
+            gas = wei_to_token(self.nft_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+            logger.print_bold(f"Paid {gas} AVAX in gas")
+
+            self.stats_logger.lifetime_stats["avax_gas"] += gas
+
+            if tx_receipt.get("status", 0) != 1:
+                logger.print_warn(f"Failed to claim CHRO!")
+            else:
+                logger.print_ok(f"Successfully transferred CHRO")
+                logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
 
         time.sleep(5.0)
 
