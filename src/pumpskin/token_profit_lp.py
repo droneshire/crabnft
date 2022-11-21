@@ -266,7 +266,7 @@ class PumpskinTokenProfitManager:
             amount_token_min = int(token_to_wei(amount_token) / 100.0 * slippage)
             amount_avax_min = int(token_to_wei(amount_avax) / 100.0 * 99.5)
             logger.print_normal(f"Attempting to buy LP with {slippage:.2f}% slippage...")
-            if self._process_w3_results(
+            if not self._process_w3_results(
                 action_str,
                 self.tj_w3.buy_lp_token(
                     self.token_w3.contract_checksum_address,
@@ -276,17 +276,19 @@ class PumpskinTokenProfitManager:
                     amount_avax_min,
                 ),
             ):
-                # wait to let transaction settle
-                wait(10.0)
-                amount_token_lp = self.lp_w3.get_balance()
-                action_str = f"Staking {amount_token_lp} {self.token_name}/AVAX LP Token"
-                if self._process_w3_results(
-                    action_str, self.staking_w3.stake(token_to_wei(amount_token_lp))
-                ):
-                    self.stats_logger.lifetime_stats[
-                        f"{self.token_name.lower()}_lp_tokens"
-                    ] += amount_token_lp
+                continue
 
-                return amount_token_lp
+            # wait to let transaction settle
+            wait(10.0)
+            amount_token_lp = self.lp_w3.get_balance()
+            action_str = f"Staking {amount_token_lp} {self.token_name}/AVAX LP Token"
+            if self._process_w3_results(
+                action_str, self.staking_w3.stake(token_to_wei(amount_token_lp))
+            ):
+                self.stats_logger.lifetime_stats[
+                    f"{self.token_name.lower()}_lp_tokens"
+                ] += amount_token_lp
+
+            return amount_token_lp
 
         return 0.0
