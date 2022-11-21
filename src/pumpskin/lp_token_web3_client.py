@@ -13,7 +13,7 @@ class PotnLpWeb3Client(AvalancheCWeb3Client):
     Interact with the POTN/LP token
     """
 
-    contract_address = T.cast(Address, "0x06Ca569b7C3053Fa885B37006bFA0eE24a38aECA")
+    contract_address = T.cast(Address, "0xf45719FA196B37027d31A5509F84F7BD7096ea72")
     this_dir = os.path.dirname(os.path.realpath(__file__))
     src_dir = os.path.dirname(this_dir)
     web3_utils_dir = os.path.join(src_dir, "web3_utils")
@@ -27,7 +27,7 @@ class PpieLpWeb3Client(AvalancheCWeb3Client):
     Interact with the PPIE/LP token
     """
 
-    contract_address = T.cast(Address, "0xf45719FA196B37027d31A5509F84F7BD7096ea72")
+    contract_address = T.cast(Address, "0x06Ca569b7C3053Fa885B37006bFA0eE24a38aECA")
     this_dir = os.path.dirname(os.path.realpath(__file__))
     src_dir = os.path.dirname(this_dir)
     web3_utils_dir = os.path.join(src_dir, "web3_utils")

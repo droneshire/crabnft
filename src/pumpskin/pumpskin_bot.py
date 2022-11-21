@@ -80,6 +80,8 @@ class PumpskinBot:
         self.is_profits_and_lp_enabled = config["game_specific_configs"]["lp_contributions"][
             "enabled"
         ]
+        self.are_all_pumpskins_level_as_desired = False
+
         self.amounts_available = {
             "ppie": 0.0,
             "potn": 0.0,
@@ -165,6 +167,7 @@ class PumpskinBot:
             PotnLpStakingContractWeb3Client,
             self.potn_w3,
             self.stats_logger,
+            1000,
         )
         self.token_manager[
             "ppie"
@@ -175,6 +178,7 @@ class PumpskinBot:
             PpieLpStakingContractWeb3Client,
             self.ppie_w3,
             self.stats_logger,
+            100,
         )
 
         # convert json to actual IDs
@@ -577,8 +581,8 @@ class PumpskinBot:
         )
         return False
 
-    def _try_to_level_pumpskins(self, pumpskins: T.Dict[int, T.Dict[int, T.Any]]) -> bool:
-        are_all_pumpskins_level_as_desired = True
+    def _try_to_level_pumpskins(self, pumpskins: T.Dict[int, T.Dict[int, T.Any]]) -> None:
+        self.are_all_pumpskins_level_as_desired = True
         for token_id, pumpskin in pumpskins.items():
             # check to see how much POTN needed to level up
             level = pumpskin.get("kg", 10000) / 100
@@ -615,7 +619,7 @@ class PumpskinBot:
                 f"Pumpskin {token_id}, Level {level} POTN needed for {next_level}: {level_potn}"
             )
 
-            are_all_pumpskins_level_as_desired = False
+            self.are_all_pumpskins_level_as_desired = False
 
             potn_balance = self.potn_w3.get_balance()
             if potn_balance < potn_to_level:
@@ -631,8 +635,6 @@ class PumpskinBot:
                 continue
 
             self._level_pumpskins(token_id, next_level, is_special)
-
-        return are_all_pumpskins_level_as_desired
 
     def _check_and_claim_potn(
         self, pumpskins: T.Dict[int, T.Dict[int, T.Any]], force: bool = False
@@ -810,17 +812,17 @@ class PumpskinBot:
         logger.print_ok_arrow(f"POTN: {potn_balance:.2f}")
         logger.print_ok_arrow(f"\U0001F383: {num_pumpskins}")
 
-        are_pumps_fully_levelled = (
-            self._try_to_level_pumpskins(final_pumpskins) or self.user == "ROSS"
-        )
+        if not self.are_all_pumpskins_level_as_desired:
+            self._try_to_level_pumpskins(final_pumpskins)
+
         self._check_and_claim_ppie(final_pumpskins)
-        if not are_pumps_fully_levelled or not self.is_profits_and_lp_enabled:
+        if not self.are_all_pumpskins_level_as_desired or not self.is_profits_and_lp_enabled:
             self._check_and_stake_ppie(final_pumpskins)
         # staking PPIE should claim all outstanding POTN in one transaction
         # so we should really not trigger this often
         self._check_and_claim_potn(final_pumpskins)
 
-        if are_pumps_fully_levelled and self.is_profits_and_lp_enabled:
+        if self.are_all_pumpskins_level_as_desired and self.is_profits_and_lp_enabled:
             self._check_and_take_profits_and_stake_lp()
 
         self._send_email_update(num_pumpskins)

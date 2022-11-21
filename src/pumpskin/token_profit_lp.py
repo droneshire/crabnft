@@ -1,7 +1,11 @@
 import typing as T
+import time
+
+from yaspin import yaspin
 
 from utils import logger
 from utils.config_types import UserConfig
+from utils.general import get_pretty_seconds
 from utils.price import token_to_wei, wei_to_token
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.avax_web3_client import AvaxCWeb3Client
@@ -10,13 +14,16 @@ from web3_utils.web3_client import Web3Client
 from pumpskin.game_stats import PumpskinLifetimeGameStatsLogger
 from pumpskin.lp_token_web3_client import PotnLpWeb3Client, PpieLpWeb3Client
 
-
 ClassType = T.TypeVar("ClassType", bound="PumpskinTokenProfitManager")
+
+
+@yaspin(text="Waiting...")
+def wait(wait_time) -> None:
+    time.sleep(wait_time)
 
 
 class PumpskinTokenProfitManager:
     MIN_POTN_REWARDS_CLAIM = 200.0
-    MINIMUM_TOKEN_TO_SWAP = 500.0
 
     def __init__(
         self,
@@ -27,6 +34,7 @@ class PumpskinTokenProfitManager:
         token_name: str,
         config: T.Dict[T.Any, T.Any],
         stats_logger: PumpskinLifetimeGameStatsLogger,
+        min_token_amount_to_swap: float,
         dry_run: bool = False,
     ):
         self.token_name = token_name.upper()
@@ -38,10 +46,12 @@ class PumpskinTokenProfitManager:
         self.enabled = config["enabled"]
         self.stats_logger = stats_logger
         self.txns = []
+        # TODO: remove and make this dynamic below
         self.rewards_rate = {
             "PPIE": 0.869 / 4.046,
             "POTN": 0.092 / 3.797,
         }
+        self.min_token_amount_to_swap = min_token_amount_to_swap
 
     @classmethod
     def create_token_profit_lp_class(
@@ -52,6 +62,7 @@ class PumpskinTokenProfitManager:
         stake_contract_class: T.Any,
         token_w3: AvalancheCWeb3Client,
         stats_logger: PumpskinLifetimeGameStatsLogger,
+        min_token_amount_to_swap: float,
         dry_run: bool = False,
     ) -> ClassType:
         address = config["address"]
@@ -88,6 +99,7 @@ class PumpskinTokenProfitManager:
             token_name,
             config["game_specific_configs"]["lp_contributions"],
             stats_logger,
+            min_token_amount_to_swap,
             dry_run,
         )
 
@@ -135,38 +147,45 @@ class PumpskinTokenProfitManager:
             logger.print_warn(f"Skipping {self.token_name} swap since user not opted in")
             return []
 
-        if amount_available < self.MINIMUM_TOKEN_TO_SWAP:
+        amount_available = min(amount_available, self.token_w3.get_balance() * 0.9)
+
+        if amount_available < self.min_token_amount_to_swap:
             logger.print_warn(
                 f"Skipping {self.token_name} swap since we only have {amount_available:.2f} available to swap"
             )
             return []
 
-        percent_profit = self.config[f"percent_{self.token_name.lower()}_profit_convert"]
+        percent_profit = self.config[f"percent_{self.token_name.lower()}_profit_convert"] / 100.0
         profit_token = amount_available * percent_profit
         lp_token = (amount_available - profit_token) / 2
-        token_to_avax = profit_token + lp_token
+        avax_token = profit_token + lp_token
         path = [self.token_w3.contract_checksum_address, AvaxCWeb3Client.WAVAX_ADDRESS]
 
-        profit_avax = wei_to_token(amount_out_min_wei) * profit_token / token_to_avax
-        lp_avax = wei_to_token(amount_out_min_wei) * lp_token / token_to_avax
-
-        logger.print_normal(
-            f"{self.token_name} for profit: {profit_avax:.2f}, Total AVAX: {token_to_avax}"
-        )
-        logger.print_normal(f"{self.token_name} for LP: {lp_token:.2f}, AVAX for LP: {lp_avax:.2f}")
-
-        avax_out_wei = self.tj_w3.get_amounts_out(token_to_wei(token_to_avax), path)[-1]
+        avax_out_wei = self.tj_w3.get_amounts_out(token_to_wei(avax_token), path)[-1]
         amount_out_min_wei = int(avax_out_wei / 100 * 99.5)
 
-        if avax_out_wei <= 0:
-            logger.print_warn(f"Skipping swap since contract indicates 0 AVAX out")
+        profit_avax = wei_to_token(amount_out_min_wei) * profit_token / avax_token
+        lp_avax = wei_to_token(amount_out_min_wei) * lp_token / avax_token
+
+        logger.print_normal(
+            f"AVAX for profit: {profit_avax:.4f}, Total AVAX: {profit_avax + lp_avax:.4f}"
+        )
+        logger.print_normal(f"{self.token_name} for LP: {lp_token:.2f}, AVAX for LP: {lp_avax:.4f}")
+
+        if (
+            avax_out_wei <= 0
+            or lp_avax <= 0
+            or lp_token <= 0
+            or profit_avax + lp_avax < self.config["min_avax_to_profit"]
+        ):
+            logger.print_warn(f"Skipping swap due to too low of levels...")
             return []
 
-        action_str = f"Converting {token_to_avax:.2f} {self.token_name} to AVAX"
+        action_str = f"Converting {avax_token:.2f} {self.token_name} to AVAX"
         if not self._process_w3_results(
             action_str,
             self.tj_w3.swap_exact_tokens_for_avax(
-                token_to_wei(token_to_avax), amount_out_min_wei, path
+                token_to_wei(avax_token), amount_out_min_wei, path
             ),
         ):
             logger.print_warn(f"Unable to swap {self.token_name} to AVAX...")
@@ -175,7 +194,8 @@ class PumpskinTokenProfitManager:
             self.txns = []
             return total_txns
 
-        self._buy_and_stake_token_lp(amount_out_min, token_lp)
+        wait(10.0)
+        self._buy_and_stake_token_lp(lp_avax, lp_token)
 
         total_txns = self.txns
         self.txns = []
@@ -200,25 +220,33 @@ class PumpskinTokenProfitManager:
             return True
 
     def _buy_and_stake_token_lp(self, amount_avax: float, amount_token: float) -> None:
-        amount_token_min = int(token_to_wei(amount_token) / 100 * 99.5)
-        amount_avax_min = int(token_to_wei(amount_avax) / 100 * 99.5)
-
         logger.print_ok_blue(
-            f"Putting together {self.token_name}/AVAX pool: {amount_token} {self.token_name} | {amount_avax} AVAX"
+            f"Putting together {self.token_name}/AVAX pool: {amount_token:.2f} {self.token_name} | {amount_avax:.4f} AVAX"
         )
 
+        max_slippage_percent = 95.0
         action_str = f"Buying {self.token_name}/AVAX LP Token"
-        if not self._process_w3_results(
-            action_str,
-            self.tj_w3.buy_lp_token(
-                self.token_w3.contract_checksum_address,
-                token_to_wei(amount_token),
-                amount_token_min,
-                amount_avax_min,
-            ),
-        ):
-            return
 
-        amount_token_lp = self.lp_w3.get_balance()
-        action_str = f"Staking {amount_token_lp} {self.token_name}/AVAX LP Token"
-        self._process_w3_results(action_str, self.staking_w3.stake(token_to_wei(amount_token_lp)))
+        for i in range(20):
+            slippage = 100.0 - 0.25 * i
+            amount_token_min = int(token_to_wei(amount_token) / 100.0 * slippage)
+            amount_avax_min = int(token_to_wei(amount_avax) / 100.0 * 99.5)
+            logger.print_normal(f"Attempting to buy LP with {slippage:.2f}% slippage...")
+            if self._process_w3_results(
+                action_str,
+                self.tj_w3.buy_lp_token(
+                    self.token_w3.contract_checksum_address,
+                    token_to_wei(amount_token),
+                    token_to_wei(amount_avax),
+                    amount_token_min,
+                    amount_avax_min,
+                ),
+            ):
+                # wait to let transaction settle
+                wait(10.0)
+                amount_token_lp = self.lp_w3.get_balance()
+                action_str = f"Staking {amount_token_lp} {self.token_name}/AVAX LP Token"
+                self._process_w3_results(
+                    action_str, self.staking_w3.stake(token_to_wei(amount_token_lp))
+                )
+                return
