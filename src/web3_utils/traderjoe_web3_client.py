@@ -1,6 +1,8 @@
 import os
+import time
 import typing as T
 
+from eth_account import Account
 from eth_typing import Address
 from eth_typing.encoding import HexStr
 from web3 import Web3
@@ -61,22 +63,23 @@ class TraderJoeWeb3Client(AvalancheCWeb3Client):
         self,
         non_avax_token_address: Address,
         amount_token: TokenWei,
+        amount_avax: TokenWei,
         amount_token_min: TokenWei,
         amount_avax_min: TokenWei,
     ) -> HexStr:
-        # deadline is 2 min
         deadline = int(time.time() + (2 * 60))
-        func = self.contract.functions.addLiquidityAVAX(
-            Web3.toChecksumAddress(non_avax_token_address),
-            amount_token,
-            amount_token_min,
-            amount_avax_min,
-            self.user_address,
-            deadline,
-        )
-        func.call()
         try:
-            tx: TxParams = self.build_contract_transaction(func)
+            tx: TxParams = self.build_contract_transaction(
+                self.contract.functions.addLiquidityAVAX(
+                    Web3.toChecksumAddress(non_avax_token_address),
+                    amount_token,
+                    amount_token_min,
+                    amount_avax_min,
+                    self.user_address,
+                    deadline,
+                ),
+                amount_avax,
+            )
             return self.sign_and_send_transaction(tx)
         except Exception as e:
             logger.print_fail(f"{e}")

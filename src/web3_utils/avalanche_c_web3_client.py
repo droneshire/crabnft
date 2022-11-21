@@ -7,6 +7,7 @@ from web3.middleware import geth_poa_middleware
 from web3.types import TxParams, Wei
 from web3_utils.web3_client import Web3Client
 
+from utils import logger
 from utils.price import token_to_wei, wei_to_token, TokenWei
 
 MAX_UINT256 = 2**256 - 1
@@ -41,6 +42,7 @@ class AvalancheCWeb3Client(Web3Client):
         except KeyboardInterrupt:
             raise
         except:
+            logger.print_fail(f"Failed to approve contract")
             return ""
 
     def is_allowed(self) -> bool:
@@ -54,6 +56,7 @@ class AvalancheCWeb3Client(Web3Client):
         except KeyboardInterrupt:
             raise
         except:
+            logger.print_fail(f"Failed query for allowance")
             return False
 
     def get_balance(self) -> float:
@@ -62,6 +65,7 @@ class AvalancheCWeb3Client(Web3Client):
         except KeyboardInterrupt:
             raise
         except:
+            logger.print_fail(f"Failed to get balance")
             return 0.0
         return wei_to_token(balance)
 
@@ -74,4 +78,5 @@ class AvalancheCWeb3Client(Web3Client):
         except KeyboardInterrupt:
             raise
         except:
+            logger.print_fail(f"Failed to transfer token")
             return ""

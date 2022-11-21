@@ -61,3 +61,12 @@ class AvaxCWeb3Client(Web3Client):
             raise
         except:
             return ""
+
+    def unwrap(self, amount: float) -> HexStr:
+        try:
+            tx: TxParams = self.build_contract_transaction(self.contract.functions.withdraw(amount))
+            return self.sign_and_send_transaction(tx)
+        except KeyboardInterrupt:
+            raise
+        except:
+            return ""
