@@ -141,12 +141,6 @@ class PumpskinTokenProfitManager:
         else:
             logger.print_ok_arrow(f"{self.token_name}/LP contract already approved")
 
-        if not self.staking_w3.is_allowed():
-            action_str = f"Approving {self.token_name} JLP staking contract"
-            self._process_w3_results(action_str, self.staking_w3.approve())
-        else:
-            logger.print_ok_arrow(f"{self.token_name} JLP staking contract already approved")
-
         total_txns = self.txns
         self.txns = []
         return total_txns
@@ -172,7 +166,7 @@ class PumpskinTokenProfitManager:
         percent_profit = self.config[f"percent_{self.token_name.lower()}_profit_convert"] / 100.0
         profit_token = amount_available * percent_profit
 
-        lp_token = (amount_available - profit_token) * (1.0 - percent_token_leveling)
+        lp_token = (amount_available - profit_token) * (1.0 - percent_token_leveling) / 2.0
         avax_token = profit_token + lp_token
         path = [self.token_w3.contract_checksum_address, AvaxCWeb3Client.WAVAX_ADDRESS]
 
