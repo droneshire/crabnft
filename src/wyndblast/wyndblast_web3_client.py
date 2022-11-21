@@ -57,7 +57,6 @@ class WyndblastGameWeb3Client(AvalancheCWeb3Client):
         Move nft out of inventory into daily activities
         """
         try:
-            self.contract.functions.batchSubmit(self.holder_place, token_ids).call()
             tx: TxParams = self.build_contract_transaction(
                 self.contract.functions.batchSubmit(self.holder_place, token_ids)
             )
