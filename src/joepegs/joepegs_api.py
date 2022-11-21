@@ -10,7 +10,7 @@ from web3 import Web3
 
 from config_admin import JOEPEGS_API_KEY
 from utils import logger
-from utils.price import wei_to_token_raw
+from utils.price import wei_to_token
 from joepegs.types import Activity, ListFilters
 
 TIMESTAMP_FORMAT = "%Y-%m-%d"
@@ -120,7 +120,7 @@ class JoePegsClient:
         if not collection:
             logger.print_fail(f"Failed to get floor info")
             return -1.0
-        return wei_to_token_raw(int(collection["floor"]))
+        return wei_to_token(int(collection["floor"]))
 
     def purchase_item(
         self,

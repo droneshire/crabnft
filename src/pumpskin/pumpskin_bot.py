@@ -18,7 +18,7 @@ from utils import logger
 from utils.config_types import UserConfig
 from utils.email import Email, send_email
 from utils.general import get_pretty_seconds
-from utils.price import token_to_wei, wei_to_token_raw
+from utils.price import token_to_wei, wei_to_token
 from utils.user import get_alias_from_user
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.avax_web3_client import AvaxCWeb3Client
@@ -26,12 +26,16 @@ from web3_utils.potn_web3_client import PotnWeb3Client
 from web3_utils.ppie_web3_client import PpieWeb3Client
 from pumpskin.config_manager_pumpskin import PumpskinConfigManager
 from pumpskin.game_stats import NULL_GAME_STATS, PumpskinLifetimeGameStatsLogger
+from pumpskin.token_profit_lp import PumpskinTokenProfitManager
 from pumpskin.types import Rarity, StakedPumpskin
+from pumpskin.lp_token_web3_client import PotnLpWeb3Client, PpieLpWeb3Client
 from pumpskin.pumpskin_web2_client import PumpskinWeb2Client
 from pumpskin.pumpskin_web3_client import (
     PumpskinCollectionWeb3Client,
     PumpskinContractWeb3Client,
     PumpskinNftWeb3Client,
+    PotnLpStakingContractWeb3Client,
+    PpieLpStakingContractWeb3Client,
 )
 
 ATTRIBUTES_FILE = "attributes.json"
@@ -73,7 +77,15 @@ class PumpskinBot:
         self.address: Address = Web3.toChecksumAddress(config["address"])
 
         self.last_gas_notification = 0
-        self.ppie_available_to_stake = 0.0
+        self.is_profits_and_lp_enabled = config["game_specific_configs"]["lp_contributions"][
+            "enabled"
+        ]
+        self.are_all_pumpskins_level_as_desired = False
+
+        self.amounts_available = {
+            "ppie": 0.0,
+            "potn": 0.0,
+        }
 
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
         self.txns: T.List[str] = []
@@ -102,7 +114,7 @@ class PumpskinBot:
         self.game_w3: PumpskinContractWeb3Client = (
             PumpskinContractWeb3Client()
             .set_credentials(config["address"], config["private_key"])
-            .set_node_uri(PumpskinCollectionWeb3Client.NODE_URL)
+            .set_node_uri(PumpskinContractWeb3Client.NODE_URL)
             .set_contract()
             .set_dry_run(dry_run)
         )
@@ -110,7 +122,7 @@ class PumpskinBot:
         self.nft_w3: PumpskinNftWeb3Client = (
             PumpskinNftWeb3Client()
             .set_credentials(config["address"], config["private_key"])
-            .set_node_uri(PumpskinCollectionWeb3Client.NODE_URL)
+            .set_node_uri(PumpskinNftWeb3Client.NODE_URL)
             .set_contract()
             .set_dry_run(dry_run)
         )
@@ -137,12 +149,36 @@ class PumpskinBot:
             ),
         )
 
-        self.stats_logger = PumpskinLifetimeGameStatsLogger(
+        self.stats_logger: PumpskinLifetimeGameStatsLogger = PumpskinLifetimeGameStatsLogger(
             get_alias_from_user(self.user),
             self.log_dir,
             self.config_mgr.get_lifetime_stats(),
             self.dry_run,
             verbose=False,
+        )
+
+        self.token_manager = {}
+        self.token_manager[
+            "potn"
+        ]: PumpskinTokenProfitManager = PumpskinTokenProfitManager.create_token_profit_lp_class(
+            "potn",
+            config,
+            PotnLpWeb3Client,
+            PotnLpStakingContractWeb3Client,
+            self.potn_w3,
+            self.stats_logger,
+            1000,
+        )
+        self.token_manager[
+            "ppie"
+        ]: PumpskinTokenProfitManager = PumpskinTokenProfitManager.create_token_profit_lp_class(
+            "ppie",
+            config,
+            PpieLpWeb3Client,
+            PpieLpStakingContractWeb3Client,
+            self.ppie_w3,
+            self.stats_logger,
+            100,
         )
 
         # convert json to actual IDs
@@ -352,6 +388,24 @@ class PumpskinBot:
 
         return pumpskin_ids
 
+    def _process_w3_results(self, action_str: str, tx_hash: str) -> bool:
+        logger.print_bold(f"{action_str}")
+
+        tx_receipt = self.potn_w3.get_transaction_receipt(tx_hash)
+        gas = wei_to_token(self.potn_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        logger.print_bold(f"Paid {gas} AVAX in gas")
+
+        self.stats_logger.lifetime_stats["avax_gas"] += gas
+
+        if tx_receipt.get("status", 0) != 1:
+            logger.print_fail(f"Failed to: {action_str}!")
+            return False
+        else:
+            logger.print_ok(f"Successfully: {action_str}")
+            self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
+            logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+            return True
+
     def _send_leveling_discord_activity_update(self, token_id: int, level: int) -> None:
         webhook = DiscordWebhook(
             url=discord.DISCORD_WEBHOOK_URL["PUMPSKIN_ACTIVITY"], rate_limit_retry=True
@@ -469,7 +523,7 @@ class PumpskinBot:
 
     def _check_and_stake_ppie(self, pumpskins: T.Dict[int, T.Dict[int, T.Any]]) -> None:
         # we want to only stake the percent of PPIE we've claimed
-        ppie_balance = min(float(self.ppie_w3.get_balance()), self.ppie_available_to_stake)
+        ppie_balance = min(float(self.ppie_w3.get_balance()), self.amounts_available["ppie"])
 
         ppie_available_to_stake = ppie_balance * (
             self.config_mgr.config["game_specific_configs"]["percent_ppie_stake"] / 100.0
@@ -482,30 +536,13 @@ class PumpskinBot:
 
         if ppie_available_to_stake > min_ppie_to_stake:
             # Try to stake PPIE
-            logger.print_bold(f"Attempting to stake {ppie_available_to_stake:.2f} $PPIE...")
-            for i in range(5):
-                tx_hash = self.game_w3.staking_ppie(token_to_wei(ppie_available_to_stake))
-                if tx_hash:
-                    break
-                else:
-                    logger.print_bold(
-                        f"Failed to stake, trying again with {ppie_available_to_stake:.2f} $PPIE..."
-                    )
-                    ppie_available_to_stake = ppie_available_to_stake / 2
-            tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
-            gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
-
-            self.stats_logger.lifetime_stats["avax_gas"] += gas
-
-            logger.print_bold(f"Paid {gas} AVAX in gas")
-
-            if tx_receipt.get("status", 0) != 1:
-                logger.print_fail(f"Failed to stake {ppie_available_to_stake:.2f} $PPIE!")
-            else:
-                self.ppie_available_to_stake = 0.0
-                logger.print_ok(f"Successfully staked {ppie_available_to_stake:.2f} $PPIE")
-                self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
-                logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+            total_claimable_potn = wei_to_token(self.game_w3.get_claimable_potn(self.address))
+            action_str = f"Attempting to stake {ppie_available_to_stake:.2f} $PPIE"
+            if self._process_w3_results(
+                action_str, self.game_w3.staking_ppie(token_to_wei(ppie_available_to_stake))
+            ):
+                # staking PPIE also claims POTN, so track that as POTN we've claimed
+                self.amounts_available["potn"] += total_claimable_potn
         else:
             logger.print_warn(
                 f"Not going to stake $PPIE since it is below our threshold ({ppie_available_to_stake:.2f} < {min_ppie_to_stake:.2f})"
@@ -513,48 +550,22 @@ class PumpskinBot:
 
     def _drink_potion(self, token_id: int, potn_to_level: int) -> bool:
         num_potn_wei = token_to_wei(potn_to_level)
-        if num_potn_wei > 0.0:
-            logger.print_normal(
-                f"Attempting to have pumpskin {token_id} drink {potn_to_level} $POTN"
-            )
-            tx_hash = self.game_w3.drink_potion(token_id, num_potn_wei)
-            tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
-            gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
-            logger.print_bold(f"Paid {gas} AVAX in gas")
+        if num_potn_wei <= 0.0:
+            return True
 
-            self.stats_logger.lifetime_stats["avax_gas"] += gas
-
-            if tx_receipt.get("status", 0) != 1:
-                logger.print_fail(f"Failed to drink potion for {token_id}!")
-                return False
-            else:
-                logger.print_ok(f"Successfully drank potion for {token_id}")
-                self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
-                logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
-
-        return True
+        action_str = f"Attempting to have pumpskin {token_id} drink {potn_to_level} $POTN"
+        return self._process_w3_results(
+            action_str, self.game_w3.drink_potion(token_id, num_potn_wei)
+        )
 
     def _level_pumpskins(self, token_id: int, next_level: int, is_special: bool) -> None:
         # Level Pumpskin who can be leveled up
         if is_special:
-            logger.print_ok(
-                f"Attempting to Level up special pumpskin {token_id} to {next_level}..."
-            )
+            action_str = f"Attempting to Level up special pumpskin {token_id} to {next_level}..."
         else:
-            logger.print_normal(f"Attempting to Level up pumpskin {token_id} to {next_level}...")
-        tx_hash = self.collection_w3.level_up_pumpkin(token_id)
-        tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
-        gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
-        logger.print_bold(f"Paid {gas} AVAX in gas")
+            action_str = f"Attempting to Level up pumpskin {token_id} to {next_level}..."
 
-        self.stats_logger.lifetime_stats["avax_gas"] += gas
-
-        if tx_receipt.get("status", 0) != 1:
-            logger.print_fail(f"Failed to level up pumpskin {token_id}!")
-        else:
-            logger.print_ok(f"Successfully leveled up pumpskin {token_id} to {next_level}")
-            self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
-            logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+        if self._process_w3_results(action_str, self.collection_w3.level_up_pumpkin(token_id)):
             self.current_stats["levels"] += 1
             self._send_leveling_discord_activity_update(token_id, next_level)
 
@@ -571,31 +582,29 @@ class PumpskinBot:
         return False
 
     def _try_to_level_pumpskins(self, pumpskins: T.Dict[int, T.Dict[int, T.Any]]) -> None:
-        # Now try to level pumpskins...
+        self.are_all_pumpskins_level_as_desired = True
         for token_id, pumpskin in pumpskins.items():
-            if not self._is_cooled_down(token_id, pumpskin):
-                continue
-
             # check to see how much POTN needed to level up
             level = pumpskin.get("kg", 10000) / 100
             next_level = level + 1
-            level_potn = self.calc_potn_from_level(level)
-            logger.print_ok_blue(
-                f"Pumpskin {token_id}, Level {level} POTN needed for {next_level}: {level_potn}"
-            )
+            level_potn = self.calc_potn_from_level(next_level)
+
             potn_to_level = level_potn - pumpskin.get("eaten_amount", 100000)
 
             special_pumps = self.config_mgr.config["game_specific_configs"]["special_pumps"]
             is_special = token_id in special_pumps
+
+            max_level = self.config_mgr.config["game_specific_configs"]["max_level"]
             if is_special:
-                if next_level > special_pumps[token_id]:
+                max_level = special_pumps[token_id]
+                if next_level >= max_level:
                     logger.print_ok_blue(
-                        f"Skipping level up for special pump {token_id} since at max level: {level}"
+                        f"Skipping level up for special pump {token_id} since {level} >= max level {max_level}"
                     )
                     continue
-            elif next_level > self.config_mgr.config["game_specific_configs"]["max_level"]:
+            elif next_level >= max_level:
                 logger.print_ok_blue(
-                    f"Skipping level up for {token_id} since at max user level: {level}"
+                    f"Skipping level up for {token_id} since {level} >= max level {max_level}: "
                 )
                 continue
 
@@ -606,11 +615,20 @@ class PumpskinBot:
                 logger.print_normal(f"Skipping {token_id} b/c only leveling special pumpskins...")
                 continue
 
+            logger.print_ok_blue(
+                f"Pumpskin {token_id}, Level {level} POTN needed for {next_level}: {level_potn}"
+            )
+
+            self.are_all_pumpskins_level_as_desired = False
+
             potn_balance = self.potn_w3.get_balance()
             if potn_balance < potn_to_level:
                 logger.print_warn(
                     f"Not enough $POTN to level up {token_id} to {next_level}.\n\tHave: {potn_balance:.2f} Need: {potn_to_level:.2f}. Skipping..."
                 )
+                continue
+
+            if not self._is_cooled_down(token_id, pumpskin):
                 continue
 
             if not self._drink_potion(token_id, potn_to_level):
@@ -622,16 +640,16 @@ class PumpskinBot:
         self, pumpskins: T.Dict[int, T.Dict[int, T.Any]], force: bool = False
     ) -> None:
         logger.print_ok_blue(f"Checking $POTN for claims...")
-        total_claimable_potn = wei_to_token_raw(self.game_w3.get_claimable_potn(self.address))
+        total_claimable_potn = wei_to_token(self.game_w3.get_claimable_potn(self.address))
 
         multiplier = max(
             0.1, self.config_mgr.config["game_specific_configs"]["potn_claim_multiplier"]
         )
 
-        ppie_staked = wei_to_token_raw(self.game_w3.get_ppie_staked(self.address))
+        ppie_staked = wei_to_token(self.game_w3.get_ppie_staked(self.address))
         min_potn_to_claim = ppie_staked * 3 * multiplier
 
-        if total_claimable_potn >= min_potn_to_claim or force:
+        if (total_claimable_potn > 0.0 and total_claimable_potn >= min_potn_to_claim) or force:
             self._claim_potn(total_claimable_potn)
         else:
             logger.print_warn(
@@ -649,7 +667,7 @@ class PumpskinBot:
 
         ppie_tokens = []
         for token_id in pumpskins.keys():
-            claimable_tokens = wei_to_token_raw(self.collection_w3.get_claimable_ppie(token_id))
+            claimable_tokens = wei_to_token(self.collection_w3.get_claimable_ppie(token_id))
             if verbose:
                 logger.print_normal(
                     f"Pumpskin {token_id} has {claimable_tokens:.2f} $PPIE to claim"
@@ -659,7 +677,7 @@ class PumpskinBot:
             if claimable_tokens > 0.0:
                 ppie_tokens.append(token_id)
 
-        ppie_staked = wei_to_token_raw(self.game_w3.get_ppie_staked(self.address))
+        ppie_staked = wei_to_token(self.game_w3.get_ppie_staked(self.address))
         potn_per_day = ppie_staked * 3.0
         ppie_per_day = self.calc_ppie_earned_per_day(pumpskins)
 
@@ -684,41 +702,16 @@ class PumpskinBot:
             )
 
     def _claim_ppie(self, ppie_tokens: T.List[int], ppie_to_claim: float) -> None:
-        logger.print_normal(f"Attempting to claim {ppie_to_claim:.2f} $PPIE for {self.user}...")
-
-        tx_hash = self.collection_w3.claim_pies(ppie_tokens)
-        tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
-        gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
-        logger.print_bold(f"Paid {gas} AVAX in gas")
-
-        self.stats_logger.lifetime_stats["avax_gas"] += gas
-
-        if tx_receipt.get("status", 0) != 1:
-            logger.print_fail(f"Failed to claim $PPIE!")
-        else:
-            logger.print_ok(f"Successfully claimed $PPIE")
-            self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
-            logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+        action_str = f"Attempting to claim {ppie_to_claim:.2f} $PPIE for {self.user}..."
+        if self._process_w3_results(action_str, self.collection_w3.claim_pies(ppie_tokens)):
             self.current_stats["ppie"] += ppie_to_claim
-            self.ppie_available_to_stake += ppie_to_claim
+            self.amounts_available["ppie"] += ppie_to_claim
 
     def _claim_potn(self, potn_to_claim: float) -> None:
-        logger.print_normal(f"Attempting to claim {potn_to_claim:.2f} $POTN for {self.user}...")
-
-        tx_hash = self.game_w3.claim_potn()
-        tx_receipt = self.game_w3.get_transaction_receipt(tx_hash)
-        gas = wei_to_token_raw(self.game_w3.get_gas_cost_of_transaction_wei(tx_receipt))
-        logger.print_bold(f"Paid {gas} AVAX in gas")
-
-        self.stats_logger.lifetime_stats["avax_gas"] += gas
-
-        if tx_receipt.get("status", 0) != 1:
-            logger.print_fail(f"Failed to claim $POTN!")
-        else:
-            logger.print_ok(f"Successfully claimed {potn_to_claim:.2f} $POTN")
-            self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
-            logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+        action_str = f"Attempting to claim {potn_to_claim:.2f} $POTN for {self.user}..."
+        if self._process_w3_results(action_str, self.game_w3.claim_potn()):
             self.current_stats["potn"] += potn_to_claim
+            self.amounts_available["potn"] += potn_to_claim
 
     def _check_for_low_gas(self, num_pumpskins: int) -> None:
         avax_w3: AvaxCWeb3Client = T.cast(
@@ -771,7 +764,23 @@ class PumpskinBot:
                 email_message,
             )
 
+    def _check_for_token_approvals(self) -> None:
+        logger.print_bold(f"\n\nChecking PPIE and POTN approvals for {self.user}")
+
+        for _, v in self.token_manager.items():
+            self.txns.extend(v.check_and_approve_contracts())
+
+    def _check_and_take_profits_and_stake_lp(self) -> None:
+        logger.print_bold(f"\n\nAttempting profit and LP activities for {self.user}")
+        for _, v in self.token_manager.items():
+            self.txns.extend(v.check_and_claim_rewards_from_lp_stake())
+
+        for k, v in self.token_manager.items():
+            self.txns.extend(v.check_swap_and_lp_and_stake(self.amounts_available[k]))
+
     def _run_game_loop(self) -> None:
+        logger.print_bold(f"\n\nAttempting leveling activities for {self.user}")
+
         pumpskin_ids: T.List[int] = self.get_pumpskin_ids()
         pumpskins = {}
         for token_id in pumpskin_ids:
@@ -787,7 +796,8 @@ class PumpskinBot:
 
         # insert special pumpkins to the front of the leveling group
         final_pumpskins = {}
-        for token_id in self.config_mgr.config["game_specific_configs"]["special_pumps"].keys():
+        for token_id_str in self.config_mgr.config["game_specific_configs"]["special_pumps"].keys():
+            token_id = int(token_id_str)
             final_pumpskins[token_id] = ordered_pumpskins[token_id]
             del ordered_pumpskins[token_id]
 
@@ -802,12 +812,18 @@ class PumpskinBot:
         logger.print_ok_arrow(f"POTN: {potn_balance:.2f}")
         logger.print_ok_arrow(f"\U0001F383: {num_pumpskins}")
 
-        self._try_to_level_pumpskins(final_pumpskins)
+        if not self.are_all_pumpskins_level_as_desired:
+            self._try_to_level_pumpskins(final_pumpskins)
+
         self._check_and_claim_ppie(final_pumpskins)
-        self._check_and_stake_ppie(final_pumpskins)
+        if not self.are_all_pumpskins_level_as_desired or not self.is_profits_and_lp_enabled:
+            self._check_and_stake_ppie(final_pumpskins)
         # staking PPIE should claim all outstanding POTN in one transaction
         # so we should really not trigger this often
         self._check_and_claim_potn(final_pumpskins)
+
+        if self.are_all_pumpskins_level_as_desired and self.is_profits_and_lp_enabled:
+            self._check_and_take_profits_and_stake_lp()
 
         self._send_email_update(num_pumpskins)
         self._check_for_low_gas(num_pumpskins)
@@ -817,9 +833,10 @@ class PumpskinBot:
         self.config_mgr.init()
 
     def run(self) -> None:
-        logger.print_bold(f"\n\nAttempting leveling activities for {self.user}")
+        self._check_for_token_approvals()
 
         self._run_game_loop()
+
         self.stats_logger.write()
 
     def end(self) -> None:

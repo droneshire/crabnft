@@ -8,7 +8,7 @@ from web3 import Web3
 from web3.types import TxParams, Wei
 
 from utils import logger
-from utils.price import wei_to_token_raw, Token
+from utils.price import wei_to_token, TokenWei
 from web3_utils.web3_client import Web3Client
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from pumpskin.types import StakedPumpskin
@@ -65,12 +65,12 @@ class PumpskinCollectionWeb3Client(AvalancheCWeb3Client):
             logger.print_fail(f"{e}")
             return ""
 
-    def get_claimable_ppie(self, token_id: int) -> Token:
+    def get_claimable_ppie(self, token_id: int) -> TokenWei:
         """
         Get claimable PPIE per token
         """
         try:
-            ppie_wei: Token = self.contract.functions.claimableView(token_id).call()
+            ppie_wei: TokenWei = self.contract.functions.claimableView(token_id).call()
             return ppie_wei
         except Exception as e:
             logger.print_fail(f"{e}")
@@ -155,19 +155,19 @@ class PumpskinContractWeb3Client(AvalancheCWeb3Client):
             logger.print_fail(f"{e}")
             return ""
 
-    def get_claimable_potn(self, user_address: Address) -> Token:
+    def get_claimable_potn(self, user_address: Address) -> TokenWei:
         """
         Get claimable POTN per token
         """
         try:
             address = Web3.toChecksumAddress(user_address)
-            ppie_wei: Token = self.contract.functions.claimableView(address).call()
+            ppie_wei: TokenWei = self.contract.functions.claimableView(address).call()
             return ppie_wei
         except Exception as e:
             logger.print_fail(f"{e}")
             return 0
 
-    def get_ppie_staked(self, user_address: Address) -> Token:
+    def get_ppie_staked(self, user_address: Address) -> TokenWei:
         """
         Get staked PPIE
         """
@@ -237,3 +237,96 @@ class PumpskinNftWeb3Client(AvalancheCWeb3Client):
         except Exception as e:
             logger.print_fail(f"{e}")
             return ""
+
+
+class LpStakingContractWeb3Client(AvalancheCWeb3Client):
+    def stake(self, amount: TokenWei) -> HexStr:
+        """
+        Stake LP tokens
+        """
+        try:
+            tx: TxParams = self.build_contract_transaction(self.contract.functions.stake(amount))
+            return self.sign_and_send_transaction(tx)
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return ""
+
+    def withdraw(self, amount: TokenWei) -> HexStr:
+        """
+        Unstake LP tokens
+        """
+        try:
+            tx: TxParams = self.build_contract_transaction(self.contract.functions.withdraw(amount))
+            return self.sign_and_send_transaction(tx)
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return ""
+
+    def claim_rewards(self) -> HexStr:
+        """
+        Claim staking POTN rewards (gets POTN)
+        """
+        try:
+            tx: TxParams = self.build_contract_transaction(self.contract.functions.getReward())
+            return self.sign_and_send_transaction(tx)
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return ""
+
+    def get_rewards(self) -> float:
+        try:
+            value = self.contract.functions.earned(self.user_address).call()
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return 0.0
+        return wei_to_token(value)
+
+    def get_total_claimed_rewards(self) -> float:
+        try:
+            value = self.contract.functions.rewards(self.user_address).call()
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return 0.0
+        return wei_to_token(value)
+
+    def get_my_percent_of_lp(self) -> float:
+        try:
+            total = float(self.contract.functions.totalSupply().call())
+            mine = float(self.contract.functions.balanceOf(self.user_address).call())
+            return mine / float(total) * 100.0
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return 0.0
+
+    def get_rewards_rate_per_day(self) -> float:
+        raise NotImplementedError
+
+
+class PpieLpStakingContractWeb3Client(LpStakingContractWeb3Client):
+    """
+    Interact with a smart contract of pumpskin PPIE/AVAX LP interaction
+    https://snowtrace.io/address/0xbbBc80230E50E26cD448f38D8f2aEC977AD8Fa78
+    """
+
+    contract_address = T.cast(Address, "0xbbBc80230E50E26cD448f38D8f2aEC977AD8Fa78")
+    this_dir = os.path.dirname(os.path.realpath(__file__))
+    abi_dir = os.path.join(
+        os.path.dirname(this_dir), "web3_utils", "abi", "abi-pumpskin-staking.json"
+    )
+    abi = Web3Client._get_contract_abi_from_file(abi_dir)
+    NODE_URL = "https://nd-649-527-621.p2pify.com/310e4898cbdec5754dfb9abfc8fbd9f4/ext/bc/C/rpc"
+
+
+class PotnLpStakingContractWeb3Client(LpStakingContractWeb3Client):
+    """
+    Interact with a smart contract of pumpskin POTN/AVAX LP interaction
+    https://snowtrace.io/address/0x231add43e238b037E488a35014D2646D056df971
+    """
+
+    contract_address = T.cast(Address, "0x231add43e238b037e488a35014d2646d056df971")
+    this_dir = os.path.dirname(os.path.realpath(__file__))
+    abi_dir = os.path.join(
+        os.path.dirname(this_dir), "web3_utils", "abi", "abi-pumpskin-staking.json"
+    )
+    abi = Web3Client._get_contract_abi_from_file(abi_dir)
+    NODE_URL = "https://nd-649-527-621.p2pify.com/310e4898cbdec5754dfb9abfc8fbd9f4/ext/bc/C/rpc"
