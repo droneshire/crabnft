@@ -444,7 +444,7 @@ class PumpskinBot:
                 )
                 continue
 
-            if k in ["commission_ppie"]:
+            if k in ["commission_ppie", "amounts_available"]:
                 continue
 
             if isinstance(v, list):
@@ -757,7 +757,7 @@ class PumpskinBot:
         )
         min_ppie_to_claim = ppie_per_day * multiplier
 
-        if total_claimable_ppie >= min_ppie_to_claim or force:
+        if (total_claimable_ppie > 0.0 and total_claimable_ppie >= min_ppie_to_claim) or force:
             self._claim_ppie(ppie_tokens, total_claimable_ppie)
         else:
             logger.print_warn(

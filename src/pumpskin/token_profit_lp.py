@@ -225,7 +225,7 @@ class PumpskinTokenProfitManager:
             self.token_name.lower()
         ]
         self.stats_logger.lifetime_stats["amounts_available"][self.token_name.lower()] = max(
-            0.0, token_available - avax_token
+            0.0, token_available - avax_token - lp_token
         )
         self.stats_logger.lifetime_stats[f"avax_profits"] += profit_avax
 
