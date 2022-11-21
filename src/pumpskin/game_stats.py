@@ -45,6 +45,16 @@ class PumpskinLifetimeGameStatsLogger(LifetimeGameStatsLogger):
         verbose: bool = False,
     ):
         super().__init__(user, NULL_GAME_STATS, log_dir, backup_stats, dry_run, verbose)
+        self._migrate_new_stats()
+
+    def _migrate_new_stats(self) -> None:
+        if "amounts_available" not in self.lifetime_stats:
+            self.lifetime_stats["amounts_available"] = NULL_GAME_STATS["amounts_available"]
+        if "ppie_lp_tokens" not in self.lifetime_stats:
+            self.lifetime_stats["ppie_lp_tokens"] = NULL_GAME_STATS["ppie_lp_tokens"]
+        if "potn_lp_tokens" not in self.lifetime_stats:
+            self.lifetime_stats["potn_lp_tokens"] = NULL_GAME_STATS["potn_lp_tokens"]
+        self.last_lifetime_stats = copy.deepcopy(self.lifetime_stats)
 
     def delta_game_stats(
         self,
