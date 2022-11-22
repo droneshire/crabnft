@@ -654,7 +654,7 @@ class PumpskinBot:
 
             self.are_all_pumpskins_level_as_desired = False
 
-            if self.config_mgr.config["use_full_available_balances"]:
+            if self.config_mgr.config["game_specific_configs"]["use_full_available_balances"]:
                 potn_balance = self.potn_w3.get_balance()
             else:
                 potn_balance = min(
