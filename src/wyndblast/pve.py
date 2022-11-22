@@ -416,16 +416,27 @@ class PveGame:
             logger.print_fail(f"No players available to battle")
             return
 
-        duration = random.randint(self.MIN_GAME_DURATION, self.MAX_GAME_DURATION)
-        if self.wynd_w2.battle(stage_id, battle_setup, duration=duration):
-            self.completed.add(stage_id)
-            self.last_mission = stage_id
-            levels_completed = set(self.current_stats["pve_game"]["levels_completed"])
-            levels_completed.add(stage_id)
-            self.current_stats["pve_game"]["levels_completed"] = list(levels_completed)
-            logger.print_ok(f"We WON")
-        else:
-            logger.print_warn(f"Failed to submit battle")
+        RETRY_ATTEMPTS = 3
+        did_succeed = False
+        for attempt in range(RETRY_ATTEMPTS):
+            duration = random.randint(self.MIN_GAME_DURATION, self.MAX_GAME_DURATION)
+            if self.wynd_w2.battle(stage_id, battle_setup, duration=duration):
+                self.completed.add(stage_id)
+                self.last_mission = stage_id
+                levels_completed = set(self.current_stats["pve_game"]["levels_completed"])
+                levels_completed.add(stage_id)
+                self.current_stats["pve_game"]["levels_completed"] = list(levels_completed)
+                logger.print_ok(f"We WON")
+                did_succeed = True
+                break
+            else:
+                if attempt + 1 >= RETRY_ATTEMPTS:
+                    logger.print_fail(f"Failed to submit battle")
+                else:
+                    logger.print_warn(f"Failed to submit battle, retrying...")
+                return False
+
+        if not did_succeed:
             return False
 
         if self.num_replays >= self.MAX_REPLAYS_PER_CYCLE:
