@@ -179,6 +179,10 @@ class PveGame:
             return ""
 
         wynds: T.List[types.PveWynd] = nft_data["wynd"]
+        if not wynds:
+            logger.print_warn(f"No wynds in user data! not setting presets")
+            return ""
+
         product_id = wynds[0].get("product_id", "")
         return product_id
 
@@ -359,8 +363,11 @@ class PveGame:
         """
         Do the Quest List for non-story related items
         """
-        logger.print_bold(f"Setting unit presets...")
         product_id = self._get_product_id(nft_data)
+        if not product_id:
+            return
+
+        logger.print_bold(f"Setting unit presets...")
         self.wynd_w2.preset_unit(product_id)
 
         logger.print_bold(f"Setting team presets...")
