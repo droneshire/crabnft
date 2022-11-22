@@ -493,6 +493,7 @@ class PveGame:
         user_data: types.PveUser = self.wynd_w2.get_user_profile()
         chro_rewards: types.PveRewards = self.wynd_w2.get_chro_rewards()
         chro_before = chro_rewards.get("claimable", 0)
+        chro_unclaim_before = chro_rewards.get("unclaimable", 0)
         user_exp = user_data.get("exp", 1000)
 
         self._check_and_do_standard_quest_list(nft_data)
@@ -517,7 +518,13 @@ class PveGame:
 
         chro_rewards: types.PveRewards = self.wynd_w2.get_chro_rewards()
         chro_after = chro_rewards.get("claimable", 0)
+        chro_unclaim_after = chro_rewards.get("unclaimable", 0)
         if chro_after > chro_before:
+            self.current_stats["chro"] += chro_after - chro_before
+            if chro_after - chro_before > 0.0:
+                logger.print_ok_arrow(f"Adding {chro_after - chro_before} CHRO to stats...")
+
+        if chro_unclaim_after > chro_unclaim_before:
             self.current_stats["chro"] += chro_after - chro_before
             if chro_after - chro_before > 0.0:
                 logger.print_ok_arrow(f"Adding {chro_after - chro_before} CHRO to stats...")
