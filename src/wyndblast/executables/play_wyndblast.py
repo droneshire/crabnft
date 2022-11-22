@@ -29,6 +29,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--log-level", choices=["INFO", "DEBUG", "ERROR", "NONE"], default="INFO")
     parser.add_argument("--log-dir", default=log_dir)
     parser.add_argument("--groups", nargs="+", default=USER_GROUPS)
+    parser.add_argument(
+        "--clean-non-group-user-stats",
+        action="store_true",
+        help="delete config files that aren't a part of this group. used when running on multiple machines",
+    )
     return parser.parse_args()
 
 
@@ -76,6 +81,12 @@ def run_bot() -> None:
 
     bots = []
     for user, config in USERS.items():
+        if config["group"] not in [int(i) for i in args.groups]:
+            logger.print_warn(f"Skipping {user} in group {config['group']}...")
+            if args.clean_non_group_user_stats:
+                clean_up_stats_for_user(args.log_dir, user)
+            continue
+
         private_key = decrypt_secret(encrypt_password, config["private_key"])
         config["private_key"] = private_key
 

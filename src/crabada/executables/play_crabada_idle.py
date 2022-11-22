@@ -22,10 +22,11 @@ from utils import discord, logger, security
 from utils.circuit_breaker import CircuitBreaker
 from utils.config_manager import get_config_file
 from utils.email import get_email_accounts_from_password
-from utils.game_stats import get_alias_from_user, get_lifetime_game_stats
+from utils.game_stats import get_alias_from_user
 from utils.general import dict_sum
 from utils.math import Average
 from utils.price import DEFAULT_GAS_USED, get_avax_price_usd, get_token_price_usd, Prices
+from utils.user import clean_up_stats_for_user
 
 PRICE_UPDATE_TIME = 60.0 * 60.0
 BOT_TOTALS_UPDATE = 60.0 * 15
@@ -107,27 +108,6 @@ def handle_subscription_posts(
             verbose=True,
         )
         details["hook"].send(message)
-
-
-def clean_up_stats_for_user(log_dir: str, user: str) -> None:
-    alias = get_alias_from_user(user)
-
-    files_to_delete = []
-
-    if alias == user:
-        game_stats_file = get_lifetime_game_stats(log_dir, alias.lower())
-        files_to_delete.append(game_stats_file)
-
-        game_stats_csv = game_stats_file.split(".")[0] + ".csv"
-        files_to_delete.append(game_stats_csv)
-
-    files_to_delete.append(get_config_file(log_dir, user))
-
-    for user_file in files_to_delete:
-        if not os.path.isfile(user_file):
-            continue
-        logger.print_warn(f"Removing inactive file: {user_file}...")
-        os.remove(user_file)
 
 
 def run_bot() -> None:

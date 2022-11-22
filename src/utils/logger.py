@@ -19,6 +19,10 @@ class Prefixes:
     ARROW = chr(10236)
 
 
+def get_lifetime_game_stats(log_dir: str, user: str) -> str:
+    return os.path.join(log_dir, "stats", user.lower() + "_lifetime_game_bot_stats.json")
+
+
 def get_logging_dir(game: str) -> str:
     this_dir = os.path.dirname(os.path.realpath(__file__))
     src_dir = os.path.dirname(this_dir)
