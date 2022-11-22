@@ -466,7 +466,7 @@ class PveGame:
         if tx_receipt.get("status", 0) != 1:
             logger.print_warn(f"Failed to claim CHRO!")
         else:
-            logger.print_ok(f"Successfully transferred CHRO")
+            logger.print_ok(f"Successfully claimed CHRO")
             logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
 
         return True

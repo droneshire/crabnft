@@ -123,9 +123,9 @@ class WyndBot:
             self.stats_logger.lifetime_stats["avax_gas"] += gas
 
             if tx_receipt.get("status", 0) != 1:
-                logger.print_warn(f"Failed to claim CHRO!")
+                logger.print_warn(f"Failed to allow access!")
             else:
-                logger.print_ok(f"Successfully transferred CHRO")
+                logger.print_ok(f"Successfully allowed access")
                 logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
 
         time.sleep(5.0)
