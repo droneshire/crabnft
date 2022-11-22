@@ -429,13 +429,11 @@ class PveGame:
                 logger.print_ok(f"We WON")
                 did_succeed = True
                 break
+            elif attempt + 1 >= RETRY_ATTEMPTS:
+                logger.print_fail(f"Failed to submit battle")
             else:
-                if attempt + 1 >= RETRY_ATTEMPTS:
-                    logger.print_fail(f"Failed to submit battle")
-                else:
-                    logger.print_warn(f"Failed to submit battle, retrying...")
-                    wait(5.0 * attempt)
-                return False
+                logger.print_warn(f"Failed to submit battle, retrying...")
+                wait(5.0 * attempt)
 
         if not did_succeed:
             return False
