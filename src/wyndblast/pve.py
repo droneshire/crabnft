@@ -434,6 +434,7 @@ class PveGame:
                     logger.print_fail(f"Failed to submit battle")
                 else:
                     logger.print_warn(f"Failed to submit battle, retrying...")
+                    wait(5.0 * attempt)
                 return False
 
         if not did_succeed:
