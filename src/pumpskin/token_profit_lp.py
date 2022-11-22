@@ -56,6 +56,10 @@ class PumpskinTokenProfitManager:
         }
         self.min_token_amount_to_swap = min_token_amount_to_swap
 
+        self.config["use_full_available_balances"] = config["game_specific_configs"][
+            "use_full_available_balances"
+        ]
+
         assert (
             config["game_specific_configs"]["lp_and_profit_strategy"][
                 f"percent_{self.token_name.lower()}_profit_convert"

@@ -20,6 +20,9 @@ from wyndblast.types import (
     PveRewards,
     PveUser,
     PveStages,
+    TeamPreset,
+    Units,
+    UnitPreset,
     WyndLevelUpResponse,
 )
 from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
@@ -258,3 +261,68 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         except:
             logger.print_fail(f"Failed to claim chro!\n{res}")
             return {}
+
+    def _preset_unit_raw(
+        self,
+        payload: T.Dict[T.Any, T.Any],
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
+    ) -> T.Any:
+        url = self.PVE_BASE_URL + f"/preset/unit"
+        return self._post_request(
+            url, json_data=payload, headers=headers, params=params, timeout=10.0
+        )
+
+    def preset_unit(self, product_id: str) -> bool:
+        payload: UnitPreset = UnitPreset()
+        payload["name"] = "TEST"
+        payload["unit"] = {
+            "equipment_product_id": "",
+            "rider_product_id": "",
+            "wynd_product_id": product_id,
+        }
+        try:
+            res = self._preset_unit_raw(
+                payload=json.loads(json.dumps(payload)),
+                headers=self._get_pve_headers(),
+            )
+            return res["result"]["is_active"]
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to preset unit!\n{res}")
+            return False
+
+    def _preset_team_raw(
+        self,
+        payload: T.Dict[T.Any, T.Any],
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
+    ) -> T.Any:
+        url = self.PVE_BASE_URL + f"/preset/team"
+        return self._post_request(
+            url, json_data=payload, headers=headers, params=params, timeout=10.0
+        )
+
+    def preset_team(self, product_ids: T.List[str]) -> bool:
+        payload: TeamPreset = TeamPreset()
+        payload["name"] = "1"
+        payload["units"] = []
+        for i in product_ids:
+            unit: Units = Units()
+            unit["equipment_product_id"] = ""
+            unit["rider_product_id"] = ""
+            unit["wynd_product_id"] = i
+            unit["position"] = {"x": 521.592468, "y": 400.443848}
+            payload["units"].append(unit)
+        try:
+            res = self._preset_team_raw(
+                payload=json.loads(json.dumps(payload)),
+                headers=self._get_pve_headers(),
+            )
+            return res["result"]["is_active"]
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to preset team!\n{res}")
+            return False

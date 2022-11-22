@@ -172,6 +172,16 @@ class PveGame:
 
         return enemies
 
+    def _get_product_id(self, nft_data: types.PveNfts) -> str:
+        units: T.List[types.BattleUnit] = []
+        if not nft_data:
+            logger.print_warn(f"Could not get nft data for product id")
+            return ""
+
+        wynds: T.List[types.PveWynd] = nft_data["wynd"]
+        product_id = wynds[0].get("product_id", "")
+        return product_id
+
     def _get_player_lineup(
         self, num_players: int, our_units: types.PveNfts
     ) -> T.List[types.BattleUnit]:
@@ -345,11 +355,16 @@ class PveGame:
             if res["is_level_up"]:
                 logger.print_ok_arrow(f"Leveled up our Profile!")
 
-    def _check_and_do_standard_quest_list(self) -> None:
+    def _check_and_do_standard_quest_list(self, nft_data: types.PveNfts) -> None:
         """
         Do the Quest List for non-story related items
         """
-        pass
+        logger.print_bold(f"Setting unit presets...")
+        product_id = self._get_product_id(nft_data)
+        self.wynd_w2.preset_unit(product_id)
+
+        logger.print_bold(f"Setting team presets...")
+        self.wynd_w2.preset_team([product_id])
 
     def _check_and_play_story(self, nft_data: types.PveNfts, countdown: types.Countdown) -> bool:
         if self.last_mission is None:
@@ -463,7 +478,7 @@ class PveGame:
         chro_before = chro_rewards.get("claimable", 0)
         user_exp = user_data.get("exp", 1000)
 
-        self._check_and_do_standard_quest_list()
+        self._check_and_do_standard_quest_list(nft_data)
 
         countdown: types.Countdown = self.wynd_w2.get_countdown()
 

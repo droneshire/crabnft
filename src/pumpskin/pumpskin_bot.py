@@ -654,10 +654,13 @@ class PumpskinBot:
 
             self.are_all_pumpskins_level_as_desired = False
 
-            potn_balance = min(
-                self.stats_logger.lifetime_stats["amounts_available"]["potn"],
-                self.potn_w3.get_balance(),
-            )
+            if self.config_mgr.config["use_full_available_balances"]:
+                potn_balance = self.potn_w3.get_balance()
+            else:
+                potn_balance = min(
+                    self.stats_logger.lifetime_stats["amounts_available"]["potn"],
+                    self.potn_w3.get_balance(),
+                )
 
             percent_potn_withheld = (
                 min(

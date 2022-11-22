@@ -432,3 +432,31 @@ class ClaimQuests(T.TypedDict):
     user: PveUser
     is_level_up: bool
     exp: int
+
+
+class Unit(T.TypedDict):
+    equipment_product_id: str
+    rider_product_id: str
+    wynd_product_id: str
+
+
+class UnitPreset(T.TypedDict):
+    unit: Unit
+    name: str
+
+
+class Positions(T.TypedDict):
+    x: float
+    y: float
+
+
+class Units(T.TypedDict):
+    equipment_product_id: str
+    position: Positions
+    rider_product_id: str
+    wynd_product_id: str
+
+
+class TeamPreset(T.TypedDict):
+    units: Units
+    name: str
