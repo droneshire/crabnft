@@ -888,8 +888,12 @@ class PumpskinBot:
         num_pumpskins = len(final_pumpskins.keys())
 
         logger.print_bold(f"{self.user} Balances:")
-        logger.print_ok_arrow(f"PPIE: {ppie_balance:.2f}")
-        logger.print_ok_arrow(f"POTN: {potn_balance:.2f}")
+        logger.print_ok_arrow(
+            f"PPIE: {ppie_balance:.2f} ({self.stats_logger.lifetime_stats['amounts_available']['ppie']} available)"
+        )
+        logger.print_ok_arrow(
+            f"POTN: {potn_balance:.2f} ({self.stats_logger.lifetime_stats['amounts_available']['potn']} available)"
+        )
         logger.print_ok_arrow(f"\U0001F383: {num_pumpskins}")
 
         if not self.are_all_pumpskins_level_as_desired:
