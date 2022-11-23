@@ -70,7 +70,7 @@ def wait(wait_time) -> None:
 def run_bot() -> None:
     args = parse_args()
 
-    setup_log(args.log_level, args.log_dir, "daily")
+    setup_log(args.log_level, args.log_dir, f"wynd_{'_'.join(args.groups)}")
 
     encrypt_password = ""
     email_accounts = []

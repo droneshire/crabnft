@@ -3,15 +3,18 @@ import json
 import random
 import time
 import typing as T
-
+from discord import Color
+from discord_webhook import DiscordEmbed, DiscordWebhook
 from yaspin import yaspin
 
 from config_wyndblast import COMMISSION_WALLET_ADDRESS
+from utils import discord
 from utils import logger
 from utils.config_types import UserConfig
 from utils.email import Email
 from utils.general import get_pretty_seconds
 from utils.price import wei_to_token
+from wyndblast.assets import WYNDBLAST_ASSETS
 from wyndblast.game_stats import WyndblastLifetimeGameStatsLogger
 from wyndblast.game_stats import NULL_GAME_STATS
 from wyndblast import types
@@ -253,15 +256,31 @@ class PveGame:
         stage_id = next_stages[0]
         return stage_id if any([s for s in ALLOWED_MAPS if stage_id.startswith(s)]) else ""
 
-    def _send_pve_update(self) -> None:
-        # TODO: discord bot notification?
-        pass
+    def _send_pve_update(self, account_exp: int) -> None:
+        webhook = DiscordWebhook(
+            url=discord.DISCORD_WEBHOOK_URL["WYNDBLAST_PVE_ACTIVITY"], rate_limit_retry=True
+        )
+        embed = DiscordEmbed(
+            title=f"PVE ACTIVITIES",
+            description=f"Finished for {self.config['discord_handle'].upper()}\n",
+            color=Color.purple().value,
+        )
+
+        chro_won = self.current_stats["chro"]
+        levels_completed = len(self.current_stats["pve_game"]["levels_completed"])
+        embed.add_embed_field(name=f"Account Exp", value=f"{account_exp}", inline=False)
+        embed.add_embed_field(name=f"CHRO Earned", value=f"{chro_won:.2f}", inline=False)
+        embed.add_embed_field(name=f"Levels Won", value=f"{levels_completed}", inline=True)
+
+        embed.set_thumbnail(url=WYNDBLAST_ASSETS["wynd"], height=100, width=100)
+        webhook.add_embed(embed)
+        webhook.execute()
 
     def _send_summary_email(self) -> None:
         # TODO: do we want email updates?
         pass
 
-    def _update_stats(self) -> None:
+    def _update_stats(self, account_exp: int) -> None:
         for k, v in self.current_stats.items():
             if type(v) != type(self.stats_logger.lifetime_stats.get(k)):
                 logger.print_warn(
@@ -300,7 +319,7 @@ class PveGame:
                 f"Added {commission_chro} CHRO for {address} in commission ({commission_percent}%)!"
             )
 
-        self._send_pve_update()
+        self._send_pve_update(account_exp)
 
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
 
@@ -532,4 +551,4 @@ class PveGame:
         self.check_and_claim_if_needed(user_exp)
 
         self._send_summary_email()
-        self._update_stats()
+        self._update_stats(user_exp)

@@ -10,6 +10,7 @@ DISCORD_WEBHOOK_URL = {
     "LOW_MR_LOOT_SNIPE": "https://discord.com/api/webhooks/967646138570248222/uGB8At-fTN-ORWwnRcky4Wb0u311qjNBpDMgHLtuwGUm3PkApu-8VU8Rt25Z9f4SYvSP",
     "WYNDBLAST_UPDATES": "https://discord.com/api/webhooks/988288614343512074/AiVdp_uL_sLTJRO05xhU6E6DEF6aQR1cB65ZO9SjQlzMHlDNTGoHKXv6ucyBErvM1UX6",
     "WYNDBLAST_ACTIVITY": "https://discord.com/api/webhooks/1017484506397159506/uGjNtG68Zkq5nCzDmzJ-MuT2N8X2-W0QrQqmhlamqmPSkZbvgcf_H3jxZVvx3em6P_l8",
+    "WYNDBLAST_PVE_ACTIVITY": "https://discord.com/api/webhooks/1044839682678198294/_JpZxtl1S7PRmvQswnuMdngbzxacMPESHw4pR0l4XLRYqJOFcqVTMW_kZHXwtuhdhJ2Y",
     "PUMPSKIN_ACTIVITY": "https://discord.com/api/webhooks/1028476865607901254/LFh2xkGWQqiOHaR1gwhdYIEbKPc9iJmXMknnJIyy3jIawv1XR-yr-XjwnYGVYkOWoAEx",
     "PUMPSKIN_UPDATES": "https://discord.com/api/webhooks/1028501975219847198/otDCjM8kR0K0oiJHSI3_ZuBq5aJ88cKchxNAKNbuWlYAb2tXMmrxzC8DwrUF-6e6K7ed",
     "PUMPSKIN_MARKET": "https://discord.com/api/webhooks/1035833369314983967/DfepvsK-M32izIfjTSxV4mU5q72E7WbkL43TWSOnx6n8jRXCCHF5oJHhYdNPfhAJQaCO",
