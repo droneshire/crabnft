@@ -267,6 +267,9 @@ class PveGame:
         )
 
         chro_won = self.current_stats["chro"]
+        if chro_won <= 0.0:
+            logger.print_normal(f"Skipping discord post since no new chro earned")
+            return
         levels_completed = len(self.current_stats["pve_game"]["levels_completed"])
         embed.add_embed_field(name=f"Account Exp", value=f"{account_exp}", inline=False)
         embed.add_embed_field(name=f"CHRO Earned", value=f"{chro_won:.2f}", inline=False)
