@@ -42,14 +42,13 @@ class PumpskinTokenProfitManager:
         min_token_amount_to_swap: float,
         dry_run: bool = False,
     ):
-        self.token = token.upper()
+        self.token = token
         self.token_w3 = token_w3
         self.tj_w3 = tj_w3
         self.staking_w3 = staking_w3
         self.lp_w3 = lp_w3
-        self.config = config["game_specific_configs"]["lp_and_profit_strategy"]
+        self.config = config["game_specific_configs"]
         self.discord_handle = config["discord_handle"]
-        self.enabled = self.config["enabled"]
         self.stats_logger = stats_logger
         self.allocator = allocator
         self.txns = []

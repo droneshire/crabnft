@@ -435,7 +435,8 @@ class PumpskinBot:
             self._level_pumpskins(token_id, next_level, is_special)
 
         if self.are_all_pumpskins_level_as_desired:
-            self.allocator[Tokens.POTN].update_percent(Category.LEVELLING, 0.0)
+            for allocator in self.allocator.values():
+                allocator.update_percent(Category.LEVELLING, 0.0)
 
     def _check_and_claim_potn(
         self, pumpskins: T.Dict[int, T.Dict[int, T.Any]], force: bool = False
@@ -644,8 +645,8 @@ class PumpskinBot:
         self.config_mgr.init()
 
     def run(self) -> None:
-        for token in self.allocator.keys():
-            self.allocator[token].maybe_update_full_balance()
+        for allocator in self.allocator.values():
+            allocator.maybe_update_full_balance()
 
         self._check_for_token_approvals()
 

@@ -6,27 +6,6 @@ from utils.config_types import UserConfig
 from pumpskin.types import ALL_CATEGORIES, Category, Tokens
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 
-"""
-"potn_claim_multiplier": 1.0,
-"ppie_claim_multiplier": 1.0,
-"ppie_stake_multiplier": 1.0,
-"max_level": 15,
-"special_pumps": {},
-"only_special_pumps": False,
-"use_full_available_balances": False,
-"rewards_claim_multiplier": 10.0,
-"percent_ppie_profit_convert": 50.0,
-"percent_ppie_hold": 0.0,
-"percent_ppie_levelling": 25.0,
-"percent_ppie_lp": 25.0,
-"percent_potn_profit_convert": 0.0,
-"percent_potn_hold": 0.0,
-"percent_potn_levelling": 100.0,
-"percent_potn_lp": 0.0,
-"min_avax_to_profit": 0.15,
-},
-"""
-
 
 class TokenAllocator:
     def __init__(
