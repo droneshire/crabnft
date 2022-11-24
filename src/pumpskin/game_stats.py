@@ -5,6 +5,8 @@ import typing as T
 
 from utils import logger
 from utils.game_stats import LifetimeGameStatsLogger
+from pumpskin.allocator import TokenAllocator
+from pumpskin.types import Category, Tokens, ALL_CATEGORIES
 
 
 class LifetimeStats(T.TypedDict):
@@ -16,7 +18,7 @@ class LifetimeStats(T.TypedDict):
     avax_profits: float
     ppie_lp_tokens: float
     potn_lp_tokens: float
-    amounts_available: T.Dict[str, float]
+    amounts_available: T.Dict[str, T.Dict[str, float]]
 
 
 NULL_GAME_STATS = {
@@ -29,8 +31,18 @@ NULL_GAME_STATS = {
     "ppie_lp_tokens": 0.0,
     "potn_lp_tokens": 0.0,
     "amounts_available": {
-        "ppie": 0.0,
-        "potn": 0.0,
+        Tokens.PPIE: {
+            Category.HOLD: 0.0,
+            Category.LEVELLING: 0.0,
+            Category.LP: 0.0,
+            Category.PROFIT: 0.0,
+        },
+        Tokens.POTN: {
+            Category.HOLD: 0.0,
+            Category.LEVELLING: 0.0,
+            Category.LP: 0.0,
+            Category.PROFIT: 0.0,
+        },
     },
 }
 
@@ -41,16 +53,27 @@ class PumpskinLifetimeGameStatsLogger(LifetimeGameStatsLogger):
         user: str,
         log_dir: str,
         backup_stats: T.Dict[T.Any, T.Any],
+        allocator: TokenAllocator,
         dry_run: bool = False,
         verbose: bool = False,
     ):
         super().__init__(user, NULL_GAME_STATS, log_dir, backup_stats, dry_run, verbose)
-        self._migrate_new_stats()
+        self._migrate_new_stats(allocator)
 
-    def _migrate_new_stats(self) -> None:
-        for k in ["amounts_available", "ppie_lp_tokens", "ppie_lp_tokens", "avax_profits"]:
+    def _migrate_new_stats(self, allocator: TokenAllocator) -> None:
+        for k in ["ppie_lp_tokens", "ppie_lp_tokens", "avax_profits"]:
             if k not in self.lifetime_stats:
                 self.lifetime_stats[k] = NULL_GAME_STATS[k]
+
+        if "amounts_available" in self.lifetime_stats:
+            for token in [Tokens.PPIE, Tokens.POTN]:
+                allocator[token].maybe_add(self.lifetime_stats["amounts_available"][token.lower()])
+
+        for token in [Tokens.PPIE, Tokens.POTN]:
+            for category in ALL_CATEGORIES:
+                allocator[token].set_amount(
+                    category, self.lifetime_stats["allocations"][token][category]
+                )
 
         self.last_lifetime_stats = copy.deepcopy(self.lifetime_stats)
 
@@ -84,13 +107,20 @@ class PumpskinLifetimeGameStatsLogger(LifetimeGameStatsLogger):
             else:
                 diffed_stats[item] = user_a_stats[item] - user_b_stats[item]
 
-        for item in ["commission_ppie", "amounts_available"]:
+        for item in ["commission_ppie"]:
             for k, v in user_a_stats[item].items():
                 diffed_stats[item][k] = v
 
             for k, v in user_b_stats[item].items():
                 diffed_stats[item][k] = diffed_stats[item].get(k, 0.0) - v
 
+        for item in ["allocations"]:
+            for token in [Tokens.POTN, Tokens.PPIE]:
+                for k, v in user_a_stats[item][token].items():
+                    diffed_stats[item][token][k] = v
+
+                for k, v in user_b_stats[item][token].items():
+                    diffed_stats[item][token][k] = diffed_stats[item][token].get(k, 0.0) - v
         if verbose:
             logger.print_bold("Subtracting game stats:")
             logger.print_normal(json.dumps(diffed_stats, indent=4))
@@ -124,12 +154,20 @@ class PumpskinLifetimeGameStatsLogger(LifetimeGameStatsLogger):
             merged_stats[item] = merged_stats.get(item, 0.0) + user_a_stats.get(item, 0.0)
             merged_stats[item] = merged_stats.get(item, 0.0) + user_b_stats.get(item, 0.0)
 
-        for item in ["commission_ppie", "amounts_available"]:
+        for item in ["commission_ppie"]:
             for k, v in user_a_stats.get(item, {}).items():
                 merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
 
             for k, v in user_b_stats.get(item, {}).items():
                 merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
+
+        for item in ["allocations"]:
+            for token in [Tokens.POTN, Tokens.PPIE]:
+                for k, v in user_a_stats.get(item, {}).items():
+                    merged_stats[item][token][k] = merged_stats[item][token].get(k, 0.0) + v
+
+                for k, v in user_b_stats.get(item, {}).items():
+                    merged_stats[item][token][k] = merged_stats[item][token].get(k, 0.0) + v
 
         if verbose:
             logger.print_bold("Merging game stats:")

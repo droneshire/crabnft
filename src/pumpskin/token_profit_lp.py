@@ -13,9 +13,10 @@ from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.avax_web3_client import AvaxCWeb3Client
 from web3_utils.traderjoe_web3_client import TraderJoeWeb3Client
 from web3_utils.web3_client import Web3Client
+from pumpskin.allocator import TokenAllocator
 from pumpskin.game_stats import PumpskinLifetimeGameStatsLogger
 from pumpskin.lp_token_web3_client import PotnLpWeb3Client, PpieLpWeb3Client
-from pumpskin.types import Tokens
+from pumpskin.types import Category, Tokens
 
 ClassType = T.TypeVar("ClassType", bound="PumpskinTokenProfitManager")
 
@@ -34,13 +35,14 @@ class PumpskinTokenProfitManager:
         lp_w3: AvalancheCWeb3Client,
         tj_w3: TraderJoeWeb3Client,
         token_w3: AvalancheCWeb3Client,
-        token_name: str,
+        token: Tokens,
         config: UserConfig,
         stats_logger: PumpskinLifetimeGameStatsLogger,
+        allocator: TokenAllocator,
         min_token_amount_to_swap: float,
         dry_run: bool = False,
     ):
-        self.token_name = token_name.upper()
+        self.token = token.upper()
         self.token_w3 = token_w3
         self.tj_w3 = tj_w3
         self.staking_w3 = staking_w3
@@ -49,6 +51,7 @@ class PumpskinTokenProfitManager:
         self.discord_handle = config["discord_handle"]
         self.enabled = self.config["enabled"]
         self.stats_logger = stats_logger
+        self.allocator = allocator
         self.txns = []
         # TODO: remove and make this dynamic below
         self.rewards_rate = {
@@ -57,28 +60,16 @@ class PumpskinTokenProfitManager:
         }
         self.min_token_amount_to_swap = min_token_amount_to_swap
 
-        self.config["use_full_available_balances"] = config["game_specific_configs"][
-            "use_full_available_balances"
-        ]
-
-        assert (
-            config["game_specific_configs"]["lp_and_profit_strategy"][
-                f"percent_{self.token_name.lower()}_profit_convert"
-            ]
-            + config["game_specific_configs"]["lp_and_profit_strategy"][
-                f"percent_{self.token_name.lower()}_hold"
-            ]
-        ) <= 100.0, "Invalid percentages for percent profit/hold"
-
     @classmethod
     def create_token_profit_lp_class(
         cls: T.Type[ClassType],
-        token_name: str,
+        token: Tokens,
         config: UserConfig,
         lp_class: T.Any,
         stake_contract_class: T.Any,
         token_w3: AvalancheCWeb3Client,
         stats_logger: PumpskinLifetimeGameStatsLogger,
+        allocator: TokenAllocator,
         min_token_amount_to_swap: float,
         dry_run: bool = False,
     ) -> ClassType:
@@ -113,9 +104,10 @@ class PumpskinTokenProfitManager:
             lp_w3,
             tj_w3,
             token_w3,
-            token_name,
+            token,
             config,
             stats_logger,
+            allocator,
             min_token_amount_to_swap,
             dry_run,
         )
@@ -124,9 +116,9 @@ class PumpskinTokenProfitManager:
         lps_staked = self.staking_w3.get_balance()
         amount_claimable = self.staking_w3.get_rewards()
 
-        multiplier = max(0.1, self.config["rewards_claim_multiplier"])
+        multiplier = self.config["rewards_claim_multiplier"]
         # TODO: min_rewards_amount_claimable = self.staking_w3.get_rewards_rate_per_day() * multiplier
-        rate_per_hour = self.rewards_rate[self.token_name] * lps_staked
+        rate_per_hour = self.rewards_rate[self.token] * lps_staked
         rate_per_day = rate_per_hour * 24
         min_rewards_amount_claimable = max(self.MIN_POTN_REWARDS_CLAIM, rate_per_day * multiplier)
 
@@ -136,7 +128,7 @@ class PumpskinTokenProfitManager:
             )
             return []
 
-        action_str = f"Claiming {self.token_name} LP staking rewards"
+        action_str = f"Claiming {self.token} LP staking rewards"
         self._process_w3_results(action_str, self.staking_w3.claim_rewards())
         total_txns = self.txns
         self.txns = []
@@ -144,48 +136,29 @@ class PumpskinTokenProfitManager:
 
     def check_and_approve_contracts(self) -> T.List[str]:
         if not self.token_w3.is_allowed():
-            action_str = f"Approving {self.token_name} contract for use"
+            action_str = f"Approving {self.token} contract for use"
             self._process_w3_results(action_str, self.token_w3.approve())
         else:
-            logger.print_ok_arrow(f"{self.token_name} contract already approved")
+            logger.print_ok_arrow(f"{self.token} contract already approved")
 
         if not self.lp_w3.is_allowed():
-            action_str = f"Approving {self.token_name}/LP"
+            action_str = f"Approving {self.token}/LP"
             self._process_w3_results(action_str, self.lp_w3.approve())
         else:
-            logger.print_ok_arrow(f"{self.token_name}/LP contract already approved")
+            logger.print_ok_arrow(f"{self.token}/LP contract already approved")
 
         total_txns = self.txns
         self.txns = []
         return total_txns
 
-    def check_swap_and_lp_and_stake(
-        self, amount_available: float, percent_token_leveling: float
-    ) -> T.List[str]:
+    def check_swap_and_lp_and_stake(self) -> T.List[str]:
         if not self.enabled:
-            logger.print_warn(f"Skipping {self.token_name} swap since user not opted in")
+            logger.print_warn(f"Skipping {self.token} swap since user not opted in")
             return []
 
-        if self.config["use_full_available_balances"]:
-            amount_available = self.token_w3.get_balance()
-        else:
-            amount_available = min(amount_available, self.token_w3.get_balance() * 0.95)
+        profit_token = self.allocator[self.token].get_amount(Category.PROFIT)
+        lp_token = self.allocator[self.token].get_amount(Category.LP) / 2.0
 
-        if amount_available < self.min_token_amount_to_swap:
-            logger.print_warn(
-                f"Skipping {self.token_name} swap since we only have {amount_available:.2f} available to swap"
-            )
-            return []
-
-        percent_profit = self.config[f"percent_{self.token_name.lower()}_profit_convert"] / 100.0
-        percent_hold = self.config[f"percent_{self.token_name.lower()}_hold"] / 100.0
-        profit_token = amount_available * percent_profit
-        hold_token = amount_available * percent_hold
-
-        lp_token = max(
-            0.0,
-            (amount_available - profit_token - hold_token) * (1.0 - percent_token_leveling) / 2.0,
-        )
         avax_token = profit_token + lp_token
 
         if avax_token <= 0.0:
@@ -195,7 +168,7 @@ class PumpskinTokenProfitManager:
         path = [self.token_w3.contract_checksum_address, AvaxCWeb3Client.WAVAX_ADDRESS]
 
         logger.print_normal(
-            f"From {amount_available:.2f} {self.token_name} available, Testing {avax_token:.4f} {self.token_name} in..."
+            f"From {self.allocator[self.token].get_total():.2f} {self.token} available, testing {avax_token:.4f} {self.token} in..."
         )
 
         avax_out_wei = self.tj_w3.get_amounts_out(token_to_wei(avax_token), path)[-1]
@@ -207,31 +180,27 @@ class PumpskinTokenProfitManager:
         logger.print_normal(
             f"AVAX for profit: {profit_avax:.4f}, Total AVAX: {profit_avax + lp_avax:.4f}"
         )
-        logger.print_normal(f"{self.token_name} for LP: {lp_token:.2f}, AVAX for LP: {lp_avax:.4f}")
+        logger.print_normal(f"{self.token} for LP: {lp_token:.2f}, AVAX for LP: {lp_avax:.4f}")
 
         if avax_out_wei <= 0.0 or lp_avax <= 0.0 or profit_avax < self.config["min_avax_to_profit"]:
             logger.print_warn(f"Skipping swap due to too low of levels...")
             return []
 
-        action_str = f"Converting {avax_token:.2f} {self.token_name} to AVAX"
+        action_str = f"Converting {avax_token:.2f} {self.token} to AVAX"
         if not self._process_w3_results(
             action_str,
             self.tj_w3.swap_exact_tokens_for_avax(
                 token_to_wei(avax_token), amount_out_min_wei, path
             ),
         ):
-            logger.print_warn(f"Unable to swap {self.token_name} to AVAX...")
+            logger.print_warn(f"Unable to swap {self.token} to AVAX...")
 
             total_txns = self.txns
             self.txns = []
             return total_txns
 
-        token_available = self.stats_logger.lifetime_stats["amounts_available"][
-            self.token_name.lower()
-        ]
-        self.stats_logger.lifetime_stats["amounts_available"][self.token_name.lower()] = max(
-            0.0, token_available - avax_token - lp_token
-        )
+        self.allocator[self.token].maybe_subtract(Category.LP, lp_token * 2)
+        self.allocator[self.token].maybe_subtract(Category.PROFIT, profit_token)
         self.stats_logger.lifetime_stats[f"avax_profits"] += profit_avax
 
         wait(10.0)
@@ -259,7 +228,7 @@ class PumpskinTokenProfitManager:
         )
         embed.add_embed_field(name=f"Profit AVAX", value=f"{profit_avax:.3f}", inline=False)
         embed.add_embed_field(name=f"LP AVAX", value=f"{lp_avax:.3f}", inline=False)
-        embed.add_embed_field(name=f"LP {self.token_name}", value=f"{lp_token:.3f}", inline=True)
+        embed.add_embed_field(name=f"LP {self.token}", value=f"{lp_token:.3f}", inline=True)
         embed.add_embed_field(name=f"JLP Purchased/Staked", value=f"{lp_amount:.3f}", inline=False)
         embed.set_image(
             url=f"https://pumpskin.xyz/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Flogo-full.c1b1f2e3.png&w=1920&q=75"
@@ -287,11 +256,11 @@ class PumpskinTokenProfitManager:
 
     def _buy_and_stake_token_lp(self, amount_avax: float, amount_token: float) -> float:
         logger.print_ok_blue(
-            f"Putting together {self.token_name}/AVAX pool: {amount_token:.2f} {self.token_name} | {amount_avax:.4f} AVAX"
+            f"Putting together {self.token}/AVAX pool: {amount_token:.2f} {self.token} | {amount_avax:.4f} AVAX"
         )
 
         max_slippage_percent = 95.0
-        action_str = f"Buying {self.token_name}/AVAX LP Token"
+        action_str = f"Buying {self.token}/AVAX LP Token"
 
         for i in range(20):
             slippage = 100.0 - 0.25 * i
@@ -313,12 +282,12 @@ class PumpskinTokenProfitManager:
             # wait to let transaction settle
             wait(15.0)
             amount_token_lp = self.lp_w3.get_balance()
-            action_str = f"Staking {amount_token_lp} {self.token_name}/AVAX LP Token"
+            action_str = f"Staking {amount_token_lp} {self.token}/AVAX LP Token"
             if self._process_w3_results(
                 action_str, self.staking_w3.stake(token_to_wei(amount_token_lp))
             ):
                 self.stats_logger.lifetime_stats[
-                    f"{self.token_name.lower()}_lp_tokens"
+                    f"{self.token.lower()}_lp_tokens"
                 ] += amount_token_lp
 
             return amount_token_lp
