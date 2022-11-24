@@ -35,7 +35,7 @@ class StakedPumpskin(T.TypedDict):
     since_ts: int
     last_skipped_ts: int
     eaten_amount: int
-    cooldown_ts: intmax
+    cooldown_ts: int
 
 
 class Pumpskin(T.TypedDict):
