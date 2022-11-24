@@ -257,11 +257,7 @@ class PumpskinBot:
             "commission_ppie", {COMMISSION_WALLET_ADDRESS: 0.0}
         )
 
-        for token in [Tokens.POTN, Tokens.PPIE]:
-            for category in ALL_CATEGORIES:
-                self.stats_logger.lifetime_stats["allocations"][token][category] = self.allocator[
-                    token
-                ].get_amount(category)
+        self.stats_logger.save_allocations_to_stats()
 
         ppie_rewards = self.current_stats["ppie"]
         for address, commission_percent in self.config_mgr.config[

@@ -18,7 +18,7 @@ class LifetimeStats(T.TypedDict):
     avax_profits: float
     ppie_lp_tokens: float
     potn_lp_tokens: float
-    amounts_available: T.Dict[str, T.Dict[str, float]]
+    allocations: T.Dict[str, T.Dict[str, float]]
 
 
 NULL_GAME_STATS = {
@@ -30,7 +30,7 @@ NULL_GAME_STATS = {
     "avax_profits": 0.0,
     "ppie_lp_tokens": 0.0,
     "potn_lp_tokens": 0.0,
-    "amounts_available": {
+    "allocations": {
         Tokens.PPIE: {
             Category.HOLD: 0.0,
             Category.LEVELLING: 0.0,
@@ -58,24 +58,38 @@ class PumpskinLifetimeGameStatsLogger(LifetimeGameStatsLogger):
         verbose: bool = False,
     ):
         super().__init__(user, NULL_GAME_STATS, log_dir, backup_stats, dry_run, verbose)
-        self._migrate_new_stats(allocator)
+        self.allocator = allocator
+        self._migrate_new_stats()
 
-    def _migrate_new_stats(self, allocator: TokenAllocator) -> None:
+    def _migrate_new_stats(self) -> None:
         for k in ["ppie_lp_tokens", "ppie_lp_tokens", "avax_profits"]:
             if k not in self.lifetime_stats:
                 self.lifetime_stats[k] = NULL_GAME_STATS[k]
 
         if "amounts_available" in self.lifetime_stats:
             for token in [Tokens.PPIE, Tokens.POTN]:
-                allocator[token].maybe_add(self.lifetime_stats["amounts_available"][token.lower()])
-
-        for token in [Tokens.PPIE, Tokens.POTN]:
-            for category in ALL_CATEGORIES:
-                allocator[token].set_amount(
-                    category, self.lifetime_stats["allocations"][token][category]
+                self.allocator[token].maybe_add(
+                    self.lifetime_stats["amounts_available"][token.lower()]
                 )
+            del self.lifetime_stats["amounts_available"]
+
+        if "allocations" in self.lifetime_stats:
+            for token in [Tokens.PPIE, Tokens.POTN]:
+                for category in ALL_CATEGORIES:
+                    self.allocator[token].set_amount(
+                        category, self.lifetime_stats["allocations"][token][category]
+                    )
+        else:
+            self.lifetime_stats["allocations"] = NULL_GAME_STATS["allocations"]
 
         self.last_lifetime_stats = copy.deepcopy(self.lifetime_stats)
+
+    def save_allocations_to_stats(self) -> None:
+        for token in [Tokens.PPIE, Tokens.POTN]:
+            for category in ALL_CATEGORIES:
+                self.lifetime_stats["allocations"][token][category] = self.allocator[
+                    token
+                ].get_amount(category)
 
     def delta_game_stats(
         self,
