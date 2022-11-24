@@ -6,10 +6,11 @@ import typing as T
 
 from config_admin import ADMIN_ADDRESS
 from utils import logger
-from pumpskin.pumpskin_bot import PumpskinBot, ATTRIBUTES_FILE
+from pumpskin.pumpskin_bot import PumpskinBot
 from pumpskin.pumpskin_web2_client import PumpskinWeb2Client
 from pumpskin.pumpskin_web3_client import PumpskinNftWeb3Client
 from pumpskin.types import ATTRIBUTE_TO_EMOJI, Pumpskin
+from pumpskin.utils import ATTRIBUTES_FILE, get_json_path, calculate_rarity
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 
 
@@ -26,7 +27,7 @@ class PumpskinListingSniper:
 
         self.w2: PumpskinWeb2Client = PumpskinWeb2Client()
 
-        attributes_file = PumpskinBot.get_json_path(ATTRIBUTES_FILE)
+        attributes_file = get_json_path(ATTRIBUTES_FILE)
         with open(attributes_file, "r") as infile:
             self.pumpskin_stats = json.load(infile)
 
@@ -100,7 +101,7 @@ class PumpskinListingSniper:
             color=discord.Color.orange().value,
         )
         logger.print_ok(f"Found pump mint #{token_id}")
-        pumpskin_rarity = PumpskinBot.calculate_rarity(token_id, pumpskin_info, self.pumpskin_stats)
+        pumpskin_rarity = calculate_rarity(token_id, pumpskin_info, self.pumpskin_stats)
 
         embed.set_image(url=pumpskin_image_uri)
         url = "https://pumpskin.xyz/mint"

@@ -6,6 +6,7 @@ from config_admin import DISCORD_BOT_SERVER, DISCORD_BOT_TOKEN
 from utils import logger
 from discord_bots.command_bots import default, pumpskin
 from pumpskin.pumpskin_bot import PumpskinBot
+from pumpskin.utils import get_mint_stats
 
 intents: discord.Intents = discord.Intents.default()
 intents.typing = False
@@ -28,7 +29,7 @@ async def status_task():
     wait_time = DEFAULT_WAIT_TIME
     while True:
         await asyncio.sleep(wait_time)
-        minted, supply = PumpskinBot.get_mint_stats()
+        minted, supply = get_mint_stats()
         mint_status = f"Mint {minted}/{supply}"
         logger.print_normal(f"Updating: {mint_status}")
         if last_status != mint_status:

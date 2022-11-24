@@ -7,10 +7,18 @@ from crabada.crabada_web2_client import CrabadaWeb2Client
 from discord_bots.command_bots.default import OnMessage
 from joepegs.joepegs_api import JOEPEGS_ICON_URL, JOEPEGS_URL
 from pumpskin.listings import post_rarist_listings
-from pumpskin.pumpskin_bot import PumpskinBot, ATTRIBUTES_FILE
 from pumpskin.pumpskin_web3_client import PumpskinCollectionWeb3Client, PumpskinNftWeb3Client
 from pumpskin.pumpskin_web2_client import PumpskinWeb2Client
 from pumpskin.types import ATTRIBUTE_TO_EMOJI, StakedPumpskin
+from pumpskin.utils import ATTRIBUTES_FILE
+from pumpskin.utils import (
+    get_json_path,
+    get_mint_stats,
+    calc_potn_from_level,
+    calc_ppie_per_day_from_level,
+    calc_roi_from_mint,
+    calculate_rarity_from_query,
+)
 from utils import logger
 from utils.general import get_pretty_seconds
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
@@ -39,15 +47,13 @@ class GetPumpkinLevel(OnMessage):
 
         embed.add_field(name=f"Pumpskin", value=f"{token_id}", inline=True)
         embed.add_field(name=f"Cooldown", value=f"{cooldown_time}", inline=False)
-        ppie_per_day = PumpskinBot.calc_ppie_per_day_from_level(level)
+        ppie_per_day = calc_ppie_per_day_from_level(level)
         embed.add_field(name=f"$PPIE/Day", value=f"{ppie_per_day}", inline=True)
-        potn_to_level = PumpskinBot.calc_potn_from_level(level)
+        potn_to_level = calc_potn_from_level(level)
         embed.add_field(name=f"Level Up:", value=f"{potn_to_level} $POTN", inline=False)
         embed.add_field(name=f"\U0000200b", value=f"**Attribute Rarity**", inline=False)
 
-        pumpskin_rarity = PumpskinBot.calculate_rarity_from_query(
-            token_id, PumpskinBot.get_json_path(ATTRIBUTES_FILE)
-        )
+        pumpskin_rarity = calculate_rarity_from_query(token_id, get_json_path(ATTRIBUTES_FILE))
 
         if not pumpskin_rarity:
             return ""
@@ -92,7 +98,7 @@ class GetPumpkinLevel(OnMessage):
         except ValueError:
             return ""
 
-        minted, _ = PumpskinBot.get_mint_stats()
+        minted, _ = get_mint_stats()
 
         if token_id > minted:
             return "Not yet minted"
@@ -183,9 +189,7 @@ class GetPumpkinRoi(OnMessage):
         # TODO: get price from LP
         ppie_price_usd = 0.3
 
-        roi_days = PumpskinBot.calc_roi_from_mint(
-            ppie_price_usd, prices.avax_usd, pumpskin_price_avax
-        )
+        roi_days = calc_roi_from_mint(ppie_price_usd, prices.avax_usd, pumpskin_price_avax)
         return cls._get_pumpskin_roi_embed(pumpskin_price_avax, ppie_price_usd, roi_days)
 
 
@@ -233,7 +237,7 @@ class MintNumber(OnMessage):
         if not text.startswith(cls.HOTKEY):
             return ""
 
-        minted, supply = PumpskinBot.get_mint_stats()
+        minted, supply = get_mint_stats()
 
         return f"Minted: `{minted}/{supply}`"
 

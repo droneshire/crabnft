@@ -15,8 +15,9 @@ from utils import discord
 from utils import logger
 from utils.email import Email, get_email_accounts_from_password
 from utils.security import decrypt_secret
-from pumpskin.pumpskin_bot import PumpskinBot, ATTRIBUTES_FILE
+from pumpskin.pumpskin_bot import PumpskinBot
 from pumpskin.pumpskin_web3_client import PumpskinNftWeb3Client
+from pumpskin.utils import ATTRIBUTES_FILE, calculate_rarity_for_collection
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 
 MINT_MARGIN = 100
@@ -74,7 +75,7 @@ def snipe() -> None:
 
     setup_log(args.log_level, args.log_dir, "the_den")
 
-    sorted_rarity = PumpskinBot.calculate_rarity_for_collection()
+    sorted_rarity = calculate_rarity_for_collection()
 
     sorted_rarity_unminted = {}
 

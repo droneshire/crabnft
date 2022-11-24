@@ -6,7 +6,14 @@ import tempfile
 from config_admin import GMAIL
 from config_pumpskin import USERS
 from joepegs.joepegs_api import JOEPEGS_ICON_URL, JOEPEGS_URL
-from pumpskin.pumpskin_bot import PumpskinBot, ATTRIBUTES_FILE, PUMPSKIN_ATTRIBUTES
+from pumpskin.pumpskin_bot import PumpskinBot
+from pumpskin.utils import ATTRIBUTES_FILE, PUMPSKIN_ATTRIBUTES
+from pumpskin.utils import (
+    calc_potn_from_level,
+    calculate_rarity_from_query,
+    get_json_path,
+    calc_ppie_per_day_from_level,
+)
 from utils import logger
 from utils import email
 from utils.csv_logger import CsvLogger
@@ -51,12 +58,10 @@ def create_patch_csv(csv_file: str, bot: PumpskinBot, dry_run: bool = False) -> 
         row["NFT Image URL"] = bot.pumpskin_w2.get_pumpskin_image(pumpskin)
         level = int(pumpskin_info["kg"] / 100)
         row["Level"] = level
-        row["PPIE/Day"] = bot.calc_ppie_per_day_from_level(level)
-        row["Level Up Cost"] = PumpskinBot.calc_potn_from_level(level)
+        row["PPIE/Day"] = calc_ppie_per_day_from_level(level)
+        row["Level Up Cost"] = calc_potn_from_level(level)
         row["JoePeg Link"] = f"{JOEPEGS_URL}/{pumpskin}"
-        pumpskin_rarity = PumpskinBot.calculate_rarity_from_query(
-            pumpskin, PumpskinBot.get_json_path(ATTRIBUTES_FILE)
-        )
+        pumpskin_rarity = calculate_rarity_from_query(pumpskin, get_json_path(ATTRIBUTES_FILE))
 
         if not pumpskin_rarity:
             continue

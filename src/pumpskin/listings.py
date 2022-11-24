@@ -2,9 +2,10 @@ import json
 
 from config_admin import ADMIN_ADDRESS
 from joepegs.joepegs_api import JoePegsClient, JOEPEGS_URL
-from pumpskin.pumpskin_bot import PumpskinBot, RARITY_FILE
+from pumpskin.pumpskin_bot import PumpskinBot
 from pumpskin.pumpskin_web3_client import PumpskinCollectionWeb3Client, PumpskinNftWeb3Client
 from pumpskin.types import StakedPumpskin
+from pumpskin.utils import RARITY_FILE, get_json_path
 from utils import discord, logger
 from utils.price import wei_to_token
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
@@ -16,7 +17,7 @@ def post_rarist_listings(max_rarity: float, max_price: float, quiet: bool = True
         PumpskinNftWeb3Client.contract_address, params={"orderBy": "rarity_desc"}
     )
 
-    rarity_file = PumpskinBot.get_json_path(RARITY_FILE)
+    rarity_file = get_json_path(RARITY_FILE)
     with open(rarity_file, "r") as infile:
         collection_rarity = json.load(infile)
 

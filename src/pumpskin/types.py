@@ -15,12 +15,27 @@ ATTRIBUTE_TO_EMOJI = {
 }
 
 
+class Category:
+    PROFIT = "PROFIT"
+    HOLD = "HOLD"
+    LEVELLING = "LEVELLING"
+    LP = "LP"
+
+
+ALL_CATEGORIES = [Category.PROFIT, Category.HOLD, Category.LEVELLING, Category.LP]
+
+
+class Tokens:
+    PPIE = "PPIE"
+    POTN = "POTN"
+
+
 class StakedPumpskin(T.TypedDict):
     kg: int
     since_ts: int
     last_skipped_ts: int
     eaten_amount: int
-    cooldown_ts: int
+    cooldown_ts: intmax
 
 
 class Pumpskin(T.TypedDict):

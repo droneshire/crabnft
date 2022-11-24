@@ -15,6 +15,7 @@ from web3_utils.traderjoe_web3_client import TraderJoeWeb3Client
 from web3_utils.web3_client import Web3Client
 from pumpskin.game_stats import PumpskinLifetimeGameStatsLogger
 from pumpskin.lp_token_web3_client import PotnLpWeb3Client, PpieLpWeb3Client
+from pumpskin.types import Tokens
 
 ClassType = T.TypeVar("ClassType", bound="PumpskinTokenProfitManager")
 
@@ -51,8 +52,8 @@ class PumpskinTokenProfitManager:
         self.txns = []
         # TODO: remove and make this dynamic below
         self.rewards_rate = {
-            "PPIE": 0.869 / 4.046,
-            "POTN": 0.092 / 3.797,
+            Tokens.PPIE: 0.869 / 4.046,
+            Tokens.POTN: 0.092 / 3.797,
         }
         self.min_token_amount_to_swap = min_token_amount_to_swap
 
