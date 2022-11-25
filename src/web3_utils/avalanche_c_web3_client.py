@@ -45,6 +45,18 @@ class AvalancheCWeb3Client(Web3Client):
             logger.print_fail(f"Failed to approve contract")
             return ""
 
+    def unapprove(self) -> HexStr:
+        try:
+            tx: TxParams = self.build_contract_transaction(
+                self.contract.functions.approve(self.contract_checksum_address, 0)
+            )
+            return self.sign_and_send_transaction(tx)
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to unapprove contract")
+            return ""
+
     def is_allowed(self) -> bool:
         try:
             return (
