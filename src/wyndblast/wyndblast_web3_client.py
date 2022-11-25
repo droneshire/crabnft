@@ -54,11 +54,24 @@ class WyndblastGameWeb3Client(AvalancheCWeb3Client):
 
     def move_out_of_inventory(self, token_ids: T.List[int]) -> HexStr:
         """
-        Move nft out of inventory into daily activities
+        Move nft out of inventory into game
         """
         try:
             tx: TxParams = self.build_contract_transaction(
                 self.contract.functions.batchSubmit(self.holder_place, token_ids)
+            )
+            return self.sign_and_send_transaction(tx)
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return ""
+
+    def move_into_inventory(self, token_ids: T.List[int]) -> HexStr:
+        """
+        Move nft in inventory from game
+        """
+        try:
+            tx: TxParams = self.build_contract_transaction(
+                self.contract.functions.batchDispatch(self.holder_place, token_ids)
             )
             return self.sign_and_send_transaction(tx)
         except Exception as e:
