@@ -613,8 +613,10 @@ class PumpskinBot:
         final_pumpskins = {}
         for token_id_str in self.config_mgr.config["game_specific_configs"]["special_pumps"].keys():
             token_id = int(token_id_str)
-            final_pumpskins[token_id] = ordered_pumpskins[token_id]
-            del ordered_pumpskins[token_id]
+            old_info = ordered_pumpskins.get(token_id, {})
+            if old_info:
+                final_pumpskins[token_id] = old_info
+                del ordered_pumpskins[token_id]
 
         final_pumpskins.update(ordered_pumpskins)
 
