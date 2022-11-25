@@ -229,7 +229,7 @@ class WyndBot:
 
             self.pve.play_game()
 
-        self.check_and_maybe_secure_account()
+        self._check_and_maybe_secure_account()
 
         self.stats_logger.write()
 
