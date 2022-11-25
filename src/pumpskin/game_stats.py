@@ -177,10 +177,9 @@ class PumpskinLifetimeGameStatsLogger(LifetimeGameStatsLogger):
 
         for item in ["allocations"]:
             for token in [Tokens.POTN, Tokens.PPIE]:
-                for k, v in user_a_stats.get(item, {}).items():
+                for k, v in user_a_stats.get(item, {}).get(token, {}).items():
                     merged_stats[item][token][k] = merged_stats[item][token].get(k, 0.0) + v
-
-                for k, v in user_b_stats.get(item, {}).items():
+                for k, v in user_b_stats.get(item, {}).get(token, {}).items():
                     merged_stats[item][token][k] = merged_stats[item][token].get(k, 0.0) + v
 
         if verbose:

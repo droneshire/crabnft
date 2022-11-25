@@ -41,6 +41,7 @@ class PumpskinTokenProfitManager:
         allocator: TokenAllocator,
         min_token_amount_to_swap: float,
         dry_run: bool = False,
+        quiet: bool = False,
     ):
         self.token = token
         self.token_w3 = token_w3
@@ -51,6 +52,7 @@ class PumpskinTokenProfitManager:
         self.discord_handle = config["discord_handle"]
         self.stats_logger = stats_logger
         self.allocator = allocator
+        self.quiet = quiet
         self.txns = []
         # TODO: remove and make this dynamic below
         self.rewards_rate = {
@@ -71,6 +73,7 @@ class PumpskinTokenProfitManager:
         allocator: TokenAllocator,
         min_token_amount_to_swap: float,
         dry_run: bool = False,
+        quiet: bool = False,
     ) -> ClassType:
         address = config["address"]
         private_key = config["private_key"]
@@ -109,6 +112,7 @@ class PumpskinTokenProfitManager:
             allocator,
             min_token_amount_to_swap,
             dry_run,
+            quiet,
         )
 
     def check_and_claim_rewards_from_lp_stake(self) -> T.List[str]:
@@ -151,10 +155,6 @@ class PumpskinTokenProfitManager:
         return total_txns
 
     def check_swap_and_lp_and_stake(self) -> T.List[str]:
-        if not self.enabled:
-            logger.print_warn(f"Skipping {self.token} swap since user not opted in")
-            return []
-
         profit_token = self.allocator[self.token].get_amount(Category.PROFIT)
         lp_token = self.allocator[self.token].get_amount(Category.LP) / 2.0
 
@@ -186,14 +186,23 @@ class PumpskinTokenProfitManager:
             return []
 
         action_str = f"Converting {avax_token:.2f} {self.token} to AVAX"
-        if not self._process_w3_results(
-            action_str,
-            self.tj_w3.swap_exact_tokens_for_avax(
-                token_to_wei(avax_token), amount_out_min_wei, path
-            ),
-        ):
-            logger.print_warn(f"Unable to swap {self.token} to AVAX...")
+        did_succeed = False
+        for i in range(20):
+            slippage = 100.0 - 0.25 * i
+            amount_out_min_wei = int(amount_out_min_wei / 100.0 * slippage)
+            logger.print_normal(f"Attempting to swap AVAX with {slippage:.2f}% slippage...")
+            if self._process_w3_results(
+                action_str,
+                self.tj_w3.swap_exact_tokens_for_avax(
+                    token_to_wei(avax_token), amount_out_min_wei, path
+                ),
+            ):
+                did_succeed = True
+                break
+            else:
+                logger.print_warn(f"Unable to swap {self.token} to AVAX...")
 
+        if not did_succeed:
             total_txns = self.txns
             self.txns = []
             return total_txns
@@ -216,6 +225,9 @@ class PumpskinTokenProfitManager:
     def _send_discord_profit_lp_purchase(
         self, profit_avax: float, lp_avax: float, lp_token: float, lp_amount: float
     ) -> None:
+        if self.quiet:
+            return
+
         webhook = DiscordWebhook(
             url=discord.DISCORD_WEBHOOK_URL["PUMPSKIN_ACTIVITY"], rate_limit_retry=True
         )
@@ -280,8 +292,8 @@ class PumpskinTokenProfitManager:
 
             # wait to let transaction settle
             wait(15.0)
-            amount_token_lp = self.lp_w3.get_balance()
-            action_str = f"Staking {amount_token_lp} {self.token}/AVAX LP Token"
+            amount_token_lp = float(f"{self.lp_w3.get_balance():.5f}")
+            action_str = f"Staking {amount_token_lp:.5f} {self.token}/AVAX LP Token"
             if self._process_w3_results(
                 action_str, self.staking_w3.stake(token_to_wei(amount_token_lp))
             ):

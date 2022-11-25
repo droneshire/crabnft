@@ -53,6 +53,7 @@ class PumpskinBot:
         encrypt_password: str,
         log_dir: str,
         dry_run: bool,
+        quiet: bool,
         update_config: bool,
     ):
         self.user: str = user
@@ -60,12 +61,10 @@ class PumpskinBot:
         self.emails: T.List[Email] = email_accounts
         self.log_dir: str = log_dir
         self.dry_run: bool = dry_run
+        self.quiet: bool = quiet
         self.address: Address = Web3.toChecksumAddress(config["address"])
 
         self.last_gas_notification = 0
-        self.is_profits_and_lp_enabled = config["game_specific_configs"]["lp_and_profit_strategy"][
-            "enabled"
-        ]
         self.are_all_pumpskins_level_as_desired = False
 
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
@@ -130,18 +129,19 @@ class PumpskinBot:
             ),
         )
 
-        self.stats_logger: PumpskinLifetimeGameStatsLogger = PumpskinLifetimeGameStatsLogger(
-            get_alias_from_user(self.user),
-            self.log_dir,
-            self.config_mgr.get_lifetime_stats(),
-            self.dry_run,
-            verbose=False,
-        )
-
         self.allocator = {
             Tokens.POTN: PotnAllocator(self.potn_w3, config),
             Tokens.PPIE: PpieAllocator(self.ppie_w3, config),
         }
+
+        self.stats_logger: PumpskinLifetimeGameStatsLogger = PumpskinLifetimeGameStatsLogger(
+            get_alias_from_user(self.user),
+            self.log_dir,
+            self.config_mgr.get_lifetime_stats(),
+            self.allocator,
+            dry_run=self.dry_run,
+            verbose=False,
+        )
 
         self.profit_lp = {
             Tokens.POTN: PumpskinTokenProfitManager.create_token_profit_lp_class(
@@ -153,6 +153,8 @@ class PumpskinBot:
                 self.stats_logger,
                 self.allocator,
                 1000,
+                dry_run=dry_run,
+                quiet=quiet,
             ),
             Tokens.PPIE: PumpskinTokenProfitManager.create_token_profit_lp_class(
                 Tokens.PPIE,
@@ -163,6 +165,8 @@ class PumpskinBot:
                 self.stats_logger,
                 self.allocator,
                 100,
+                dry_run=dry_run,
+                quiet=quiet,
             ),
         }
 
@@ -200,6 +204,9 @@ class PumpskinBot:
             return True
 
     def _send_leveling_discord_activity_update(self, token_id: int, level: int) -> None:
+        if self.quiet:
+            return
+
         webhook = DiscordWebhook(
             url=discord.DISCORD_WEBHOOK_URL["PUMPSKIN_ACTIVITY"], rate_limit_retry=True
         )
@@ -220,6 +227,9 @@ class PumpskinBot:
         webhook.execute()
 
     def _send_discord_low_gas_notification(self, avax_gas: float) -> None:
+        if self.quiet:
+            return
+
         webhook = DiscordWebhook(
             url=discord.DISCORD_WEBHOOK_URL["PUMPSKIN_ACTIVITY"], rate_limit_retry=True
         )
@@ -617,10 +627,8 @@ class PumpskinBot:
         logger.print_bold(f"{self.user} Balances:")
         for token in [Tokens.PPIE, Tokens.POTN]:
             logger.print_ok(f"{token}: {balances[token]:.2f}")
-            for category in [ALL_CATEGORIES]:
-                logger.print_ok_arrow(
-                    f"{category}: {self.allocator[Tokens.PPIE].get_amount(category)}"
-                )
+            for category in ALL_CATEGORIES:
+                logger.print_ok_arrow(f"{category}: {self.allocator[token].get_amount(category)}")
 
         logger.print_ok_arrow(f"\U0001F383: {num_pumpskins}")
 
@@ -628,14 +636,13 @@ class PumpskinBot:
             self._try_to_level_pumpskins(final_pumpskins)
 
         self._check_and_claim_ppie(final_pumpskins)
-        if not self.are_all_pumpskins_level_as_desired or not self.is_profits_and_lp_enabled:
+        if not self.are_all_pumpskins_level_as_desired:
             self._check_and_stake_ppie(final_pumpskins)
         # staking PPIE should claim all outstanding POTN in one transaction
         # so we should really not trigger this often
         self._check_and_claim_potn(final_pumpskins)
 
-        if self.is_profits_and_lp_enabled:
-            self._check_and_take_profits_and_stake_lp()
+        self._check_and_take_profits_and_stake_lp()
 
         self._send_email_update(num_pumpskins)
         self._check_for_low_gas(num_pumpskins)

@@ -8,6 +8,7 @@ from utils.security import decrypt_secret
 class Email(T.TypedDict):
     address: str
     password: str
+    quiet: bool
 
 
 def get_email_accounts_from_password(
@@ -16,7 +17,9 @@ def get_email_accounts_from_password(
     email_accounts = []
     for email_account in encrypted_emails:
         email_password = decrypt_secret(encrypt_password, email_account["password"])
-        email_accounts.append(Email(address=email_account["user"], password=email_password))
+        email_accounts.append(
+            Email(address=email_account["user"], password=email_password, quiet=dry_run)
+        )
     return email_accounts
 
 
@@ -49,6 +52,8 @@ def send_email(
     verbose: bool = False,
 ) -> None:
     for email in emails:
+        if email["quiet"]:
+            continue
         try:
             send_email_raw(
                 email, to_addresses, subject, content, attachments=attachments, verbose=verbose

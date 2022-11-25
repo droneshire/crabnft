@@ -13,7 +13,7 @@ class TokenAllocator:
         token: Tokens,
         token_w3: AvalancheCWeb3Client,
         config: UserConfig,
-        verbose: bool = False,
+        verbose: bool = True,
     ):
         self.config = config
         self.verbose = verbose
@@ -46,7 +46,7 @@ class TokenAllocator:
             Category.LP: 0.0,
         }
 
-    def maybe_update_full_balance(self) -> None:
+    def maybe_update_full_balance(self, force: bool = False) -> None:
         if not self.use_full_balance:
             logger.print_warn(f"Not updating balances since we are using full balance")
             return
@@ -71,7 +71,7 @@ class TokenAllocator:
 
     def get_amount(self, category: Category) -> float:
         if self.use_full_balance:
-            amount = self.token_w3.get_balance()
+            amount = self.token_w3.get_balance() * self.percents[category]
         else:
             amount = min(self.token_w3.get_balance(), self.allocations[category])
 
@@ -80,6 +80,9 @@ class TokenAllocator:
         return amount
 
     def get_total(self) -> float:
+        if self.use_full_balance:
+            return self.token_w3.get_balance()
+
         amount = 0.0
         for category in ALL_CATEGORIES:
             amount += self.get_amount(category)
@@ -90,7 +93,7 @@ class TokenAllocator:
 
     def set_amount(self, category: Category, amount: float) -> None:
         if self.verbose:
-            logger.print_normal(f"Setting allocatoin category {category} to {amount:.2f}")
+            logger.print_normal(f"Setting allocation category {category} to {amount:.2f}")
         self.allocations[category] = amount
 
     def reset(self, category: Category) -> None:

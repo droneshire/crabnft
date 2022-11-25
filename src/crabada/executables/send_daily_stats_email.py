@@ -1,6 +1,7 @@
 import argparse
 import datetime
 import getpass
+import os
 
 from config_admin import GMAIL
 from config_crabada import USERS
@@ -36,7 +37,9 @@ def calc_profits() -> None:
     if args.dry_run:
         encrypt_password = ""
     else:
-        encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
+        encrypt_password = os.getenv("NFT_PWD")
+        if not encrypt_password:
+            encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
 
     aliases = set([get_alias_from_user(u) for u in USERS])
 

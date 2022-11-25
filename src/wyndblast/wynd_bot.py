@@ -3,7 +3,7 @@ import time
 import typing as T
 from yaspin import yaspin
 
-from config_wyndblast import BETA_TEST_LIST
+from config_wyndblast import BETA_TEST_LIST, DAILY_ENABLED, PVE_ENABLED
 from utils import logger
 from utils.config_types import UserConfig
 from utils.email import Email
@@ -148,14 +148,15 @@ class WyndBot:
     def run(self) -> None:
         logger.print_bold(f"\n\nAttempting daily activities for {self.user}")
 
-        if not self.wynd_w2.update_account():
-            self.wynd_w2.authorize_user()
-            self.wynd_w2.update_account()
+        if DAILY_ENABLED:
+            if not self.wynd_w2.update_account():
+                self.wynd_w2.authorize_user()
+                self.wynd_w2.update_account()
 
-        self._check_and_submit_available_inventory()
-        self.daily_activities.run_activity()
+            self._check_and_submit_available_inventory()
+            self.daily_activities.run_activity()
 
-        if self.alias in BETA_TEST_LIST:
+        if self.alias in BETA_TEST_LIST and PVE_ENABLED:
             logger.print_bold(f"\n\nAttempting PVE game for {self.user}")
             self.pve_w2.logout_user()
             self.pve_w2.authorize_user()
