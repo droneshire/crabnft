@@ -26,9 +26,6 @@ from web3_utils.potn_web3_client import PotnWeb3Client
 from web3_utils.ppie_web3_client import PpieWeb3Client
 from pumpskin.config_manager_pumpskin import PumpskinConfigManager
 from pumpskin.game_stats import NULL_GAME_STATS, PumpskinLifetimeGameStatsLogger
-from pumpskin.token_profit_lp import PumpskinTokenProfitManager
-from pumpskin.types import Rarity, StakedPumpskin, Tokens
-from pumpskin.utils import calc_ppie_earned_per_day, calc_potn_from_level
 from pumpskin.lp_token_web3_client import PotnLpWeb3Client, PpieLpWeb3Client
 from pumpskin.pumpskin_web2_client import PumpskinWeb2Client
 from pumpskin.pumpskin_web3_client import (
@@ -38,6 +35,10 @@ from pumpskin.pumpskin_web3_client import (
     PotnLpStakingContractWeb3Client,
     PpieLpStakingContractWeb3Client,
 )
+from pumpskin.allocator import PotnAllocator, PpieAllocator
+from pumpskin.token_profit_lp import PumpskinTokenProfitManager
+from pumpskin.types import Category, Rarity, StakedPumpskin, Tokens, ALL_CATEGORIES
+from pumpskin.utils import calc_ppie_earned_per_day, calc_potn_from_level
 
 
 class PumpskinBot:
@@ -52,6 +53,7 @@ class PumpskinBot:
         encrypt_password: str,
         log_dir: str,
         dry_run: bool,
+        quiet: bool,
         update_config: bool,
     ):
         self.user: str = user
@@ -59,12 +61,10 @@ class PumpskinBot:
         self.emails: T.List[Email] = email_accounts
         self.log_dir: str = log_dir
         self.dry_run: bool = dry_run
+        self.quiet: bool = quiet
         self.address: Address = Web3.toChecksumAddress(config["address"])
 
         self.last_gas_notification = 0
-        self.is_profits_and_lp_enabled = config["game_specific_configs"]["lp_and_profit_strategy"][
-            "enabled"
-        ]
         self.are_all_pumpskins_level_as_desired = False
 
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
@@ -129,37 +129,46 @@ class PumpskinBot:
             ),
         )
 
+        self.allocator = {
+            Tokens.POTN: PotnAllocator(self.potn_w3, config),
+            Tokens.PPIE: PpieAllocator(self.ppie_w3, config),
+        }
+
         self.stats_logger: PumpskinLifetimeGameStatsLogger = PumpskinLifetimeGameStatsLogger(
             get_alias_from_user(self.user),
             self.log_dir,
             self.config_mgr.get_lifetime_stats(),
-            self.dry_run,
+            self.allocator,
+            dry_run=self.dry_run,
             verbose=False,
         )
 
-        self.token_manager = {}
-        self.token_manager[
-            Tokens.POTN
-        ]: PumpskinTokenProfitManager = PumpskinTokenProfitManager.create_token_profit_lp_class(
-            Tokens.POTN,
-            config,
-            PotnLpWeb3Client,
-            PotnLpStakingContractWeb3Client,
-            self.potn_w3,
-            self.stats_logger,
-            1000,
-        )
-        self.token_manager[
-            Tokens.PPIE
-        ]: PumpskinTokenProfitManager = PumpskinTokenProfitManager.create_token_profit_lp_class(
-            Tokens.PPIE,
-            config,
-            PpieLpWeb3Client,
-            PpieLpStakingContractWeb3Client,
-            self.ppie_w3,
-            self.stats_logger,
-            100,
-        )
+        self.profit_lp = {
+            Tokens.POTN: PumpskinTokenProfitManager.create_token_profit_lp_class(
+                Tokens.POTN,
+                config,
+                PotnLpWeb3Client,
+                PotnLpStakingContractWeb3Client,
+                self.potn_w3,
+                self.stats_logger,
+                self.allocator,
+                1000,
+                dry_run=dry_run,
+                quiet=quiet,
+            ),
+            Tokens.PPIE: PumpskinTokenProfitManager.create_token_profit_lp_class(
+                Tokens.PPIE,
+                config,
+                PpieLpWeb3Client,
+                PpieLpStakingContractWeb3Client,
+                self.ppie_w3,
+                self.stats_logger,
+                self.allocator,
+                100,
+                dry_run=dry_run,
+                quiet=quiet,
+            ),
+        }
 
         # convert json to actual IDs
         copy_config = {}
@@ -195,6 +204,9 @@ class PumpskinBot:
             return True
 
     def _send_leveling_discord_activity_update(self, token_id: int, level: int) -> None:
+        if self.quiet:
+            return
+
         webhook = DiscordWebhook(
             url=discord.DISCORD_WEBHOOK_URL["PUMPSKIN_ACTIVITY"], rate_limit_retry=True
         )
@@ -215,6 +227,9 @@ class PumpskinBot:
         webhook.execute()
 
     def _send_discord_low_gas_notification(self, avax_gas: float) -> None:
+        if self.quiet:
+            return
+
         webhook = DiscordWebhook(
             url=discord.DISCORD_WEBHOOK_URL["PUMPSKIN_ACTIVITY"], rate_limit_retry=True
         )
@@ -237,7 +252,7 @@ class PumpskinBot:
                 )
                 continue
 
-            if k in ["commission_ppie", "amounts_available"]:
+            if k in ["commission_ppie", "allocations"]:
                 continue
 
             if isinstance(v, list):
@@ -251,6 +266,8 @@ class PumpskinBot:
         self.stats_logger.lifetime_stats["commission_ppie"] = self.stats_logger.lifetime_stats.get(
             "commission_ppie", {COMMISSION_WALLET_ADDRESS: 0.0}
         )
+
+        self.stats_logger.save_allocations_to_stats()
 
         ppie_rewards = self.current_stats["ppie"]
         for address, commission_percent in self.config_mgr.config[
@@ -267,7 +284,6 @@ class PumpskinBot:
                 f"Added {commission_ppie} $PPIE for {address} in commission ({commission_percent}%)!"
             )
 
-        self.ppie_since_last_claimed = self.current_stats["ppie"]
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
 
         logger.print_ok_blue(
@@ -310,44 +326,13 @@ class PumpskinBot:
             )
 
     def _check_and_stake_ppie(self, pumpskins: T.Dict[int, T.Dict[int, T.Any]]) -> None:
-        # we want to only stake the percent of PPIE we've claimed
-        ppie_balance = min(
-            float(self.ppie_w3.get_balance()),
-            self.stats_logger.lifetime_stats["amounts_available"]["ppie"],
-        )
-
-        percent_ppie_withheld = (
-            min(
-                100.0,
-                self.config_mgr.config["game_specific_configs"]["lp_and_profit_strategy"][
-                    "percent_ppie_profit_convert"
-                ]
-                + self.config_mgr.config["game_specific_configs"]["lp_and_profit_strategy"][
-                    "percent_ppie_hold"
-                ],
-            )
-            / 100.0
-        )
-        percent_ppie_leveling = (
-            self.config_mgr.config["game_specific_configs"]["lp_and_profit_strategy"][
-                "percent_ppie_after_profits_for_leveling"
-            ]
-            / 100.0
-        )
-
-        if self.config_mgr.config["game_specific_configs"]["lp_and_profit_strategy"]["enabled"]:
-            ppie_available_to_stake = (
-                ppie_balance * percent_ppie_leveling * (1.0 - percent_ppie_withheld)
-            )
-        else:
-            ppie_available_to_stake = ppie_balance * (
-                self.config_mgr.config["game_specific_configs"]["percent_ppie_stake"] / 100.0
-            )
-
         multiplier = max(
             0.1, self.config_mgr.config["game_specific_configs"]["ppie_stake_multiplier"]
         )
+
         min_ppie_to_stake = calc_ppie_earned_per_day(pumpskins) * multiplier
+
+        ppie_available_to_stake = self.allocator[Tokens.PPIE].get_amount(Category.LEVELLING)
 
         if ppie_available_to_stake > min_ppie_to_stake:
             # Try to stake PPIE
@@ -356,14 +341,13 @@ class PumpskinBot:
             if self._process_w3_results(
                 action_str, self.game_w3.staking_ppie(token_to_wei(ppie_available_to_stake))
             ):
-                ppie_available = self.stats_logger.lifetime_stats["amounts_available"]["ppie"]
-                self.stats_logger.lifetime_stats["amounts_available"]["ppie"] = max(
-                    0.0, ppie_available - ppie_available_to_stake
+                ppie_available = self.allocator[Tokens.PPIE].maybe_subtract(
+                    ppie_available_to_stake, Category.LEVELLING
                 )
                 # staking PPIE also claims POTN, so track that as POTN we've claimed
-                self.stats_logger.lifetime_stats["amounts_available"][
-                    "potn"
-                ] += total_claimable_potn
+                ppie_available = self.allocator[Tokens.POTN].maybe_subtract(
+                    total_claimable_potn, Category.LEVELLING
+                )
         else:
             logger.print_warn(
                 f"Not going to stake $PPIE since it is below our threshold ({ppie_available_to_stake:.2f} < {min_ppie_to_stake:.2f})"
@@ -376,10 +360,7 @@ class PumpskinBot:
 
         action_str = f"Attempting to have pumpskin {token_id} drink {potn_to_level} $POTN"
         if self._process_w3_results(action_str, self.game_w3.drink_potion(token_id, num_potn_wei)):
-            potn_available = self.stats_logger.lifetime_stats["amounts_available"]["potn"]
-            self.stats_logger.lifetime_stats["amounts_available"]["potn"] = max(
-                0.0, potn_available - potn_to_level
-            )
+            self.allocator[Tokens.POTN].maybe_subtract(potn_to_level, Category.LEVELLING)
             return True
         else:
             return False
@@ -447,39 +428,7 @@ class PumpskinBot:
 
             self.are_all_pumpskins_level_as_desired = False
 
-            if self.config_mgr.config["game_specific_configs"]["use_full_available_balances"]:
-                potn_balance = self.potn_w3.get_balance()
-            else:
-                potn_balance = min(
-                    self.stats_logger.lifetime_stats["amounts_available"]["potn"],
-                    self.potn_w3.get_balance(),
-                )
-
-            percent_potn_withheld = (
-                min(
-                    100.0,
-                    self.config_mgr.config["game_specific_configs"]["lp_and_profit_strategy"][
-                        "percent_potn_profit_convert"
-                    ]
-                    + self.config_mgr.config["game_specific_configs"]["lp_and_profit_strategy"][
-                        "percent_potn_hold"
-                    ],
-                )
-                / 100.0
-            )
-            percent_potn_leveling = (
-                self.config_mgr.config["game_specific_configs"]["lp_and_profit_strategy"][
-                    "percent_potn_after_profits_for_leveling"
-                ]
-                / 100.0
-            )
-
-            if self.config_mgr.config["game_specific_configs"]["lp_and_profit_strategy"]["enabled"]:
-                pton_available_to_level = (
-                    potn_balance * percent_potn_leveling * (1.0 - percent_potn_withheld)
-                )
-            else:
-                pton_available_to_level = potn_balance
+            pton_available_to_level = self.allocator[Tokens.POTN].get_amount(Category.LEVELLING)
 
             if pton_available_to_level < potn_to_level:
                 logger.print_warn(
@@ -494,6 +443,10 @@ class PumpskinBot:
                 continue
 
             self._level_pumpskins(token_id, next_level, is_special)
+
+        if self.are_all_pumpskins_level_as_desired:
+            for allocator in self.allocator.values():
+                allocator.update_percent(Category.LEVELLING, 0.0)
 
     def _check_and_claim_potn(
         self, pumpskins: T.Dict[int, T.Dict[int, T.Any]], force: bool = False
@@ -564,13 +517,13 @@ class PumpskinBot:
         action_str = f"Attempting to claim {ppie_to_claim:.2f} $PPIE for {self.user}..."
         if self._process_w3_results(action_str, self.collection_w3.claim_pies(ppie_tokens)):
             self.current_stats["ppie"] += ppie_to_claim
-            self.stats_logger.lifetime_stats["amounts_available"]["ppie"] += ppie_to_claim
+            self.allocator[Tokens.PPIE].maybe_add(ppie_to_claim)
 
     def _claim_potn(self, potn_to_claim: float) -> None:
         action_str = f"Attempting to claim {potn_to_claim:.2f} $POTN for {self.user}..."
         if self._process_w3_results(action_str, self.game_w3.claim_potn()):
             self.current_stats["potn"] += potn_to_claim
-            self.stats_logger.lifetime_stats["amounts_available"]["potn"] += potn_to_claim
+            self.allocator[Tokens.POTN].maybe_add(potn_to_claim)
 
     def _check_for_low_gas(self, num_pumpskins: int) -> None:
         avax_w3: AvaxCWeb3Client = T.cast(
@@ -626,30 +579,19 @@ class PumpskinBot:
     def _check_for_token_approvals(self) -> None:
         logger.print_bold(f"\n\nChecking PPIE and POTN approvals for {self.user}")
 
-        for _, v in self.token_manager.items():
+        for _, v in self.profit_lp.items():
             self.txns.extend(v.check_and_approve_contracts())
 
     def _check_and_take_profits_and_stake_lp(self) -> None:
         logger.print_bold(f"\n\nAttempting profit and LP activities for {self.user}")
-        for _, v in self.token_manager.items():
+        for _, v in self.profit_lp.items():
             self.txns.extend(v.check_and_claim_rewards_from_lp_stake())
 
-        for k, v in self.token_manager.items():
+        for k, v in self.profit_lp.items():
             if self.are_all_pumpskins_level_as_desired:
-                percent_token_leveling = 0.0
-            else:
-                percent_token_leveling = (
-                    self.config_mgr.config["game_specific_configs"]["lp_and_profit_strategy"][
-                        f"percent_{k.lower()}_after_profits_for_leveling"
-                    ]
-                    / 100.0
-                )
+                self.allocator[k].reallocate(Category.LEVELLING)
 
-            self.txns.extend(
-                v.check_swap_and_lp_and_stake(
-                    self.stats_logger.lifetime_stats["amounts_available"][k], percent_token_leveling
-                )
-            )
+            self.txns.extend(v.check_swap_and_lp_and_stake())
 
     def _run_game_loop(self) -> None:
         logger.print_bold(f"\n\nAttempting leveling activities for {self.user}")
@@ -676,31 +618,31 @@ class PumpskinBot:
 
         final_pumpskins.update(ordered_pumpskins)
 
-        potn_balance = self.potn_w3.get_balance()
-        ppie_balance = self.ppie_w3.get_balance()
+        balances = {
+            Tokens.POTN: self.potn_w3.get_balance(),
+            Tokens.PPIE: self.ppie_w3.get_balance(),
+        }
         num_pumpskins = len(final_pumpskins.keys())
 
         logger.print_bold(f"{self.user} Balances:")
-        logger.print_ok_arrow(
-            f"PPIE: {ppie_balance:.2f} ({self.stats_logger.lifetime_stats['amounts_available']['ppie']} available)"
-        )
-        logger.print_ok_arrow(
-            f"POTN: {potn_balance:.2f} ({self.stats_logger.lifetime_stats['amounts_available']['potn']} available)"
-        )
+        for token in [Tokens.PPIE, Tokens.POTN]:
+            logger.print_ok(f"{token}: {balances[token]:.2f}")
+            for category in ALL_CATEGORIES:
+                logger.print_ok_arrow(f"{category}: {self.allocator[token].get_amount(category)}")
+
         logger.print_ok_arrow(f"\U0001F383: {num_pumpskins}")
 
         if not self.are_all_pumpskins_level_as_desired:
             self._try_to_level_pumpskins(final_pumpskins)
 
         self._check_and_claim_ppie(final_pumpskins)
-        if not self.are_all_pumpskins_level_as_desired or not self.is_profits_and_lp_enabled:
+        if not self.are_all_pumpskins_level_as_desired:
             self._check_and_stake_ppie(final_pumpskins)
         # staking PPIE should claim all outstanding POTN in one transaction
         # so we should really not trigger this often
         self._check_and_claim_potn(final_pumpskins)
 
-        if self.is_profits_and_lp_enabled:
-            self._check_and_take_profits_and_stake_lp()
+        self._check_and_take_profits_and_stake_lp()
 
         self._send_email_update(num_pumpskins)
         self._check_for_low_gas(num_pumpskins)
@@ -710,6 +652,9 @@ class PumpskinBot:
         self.config_mgr.init()
 
     def run(self) -> None:
+        for allocator in self.allocator.values():
+            allocator.maybe_update_full_balance()
+
         self._check_for_token_approvals()
 
         self._run_game_loop()

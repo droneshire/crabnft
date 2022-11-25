@@ -134,7 +134,9 @@ def run_bot() -> None:
     email_accounts = []
 
     if not args.dry_run:
-        encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
+        encrypt_password = os.getenv("NFT_PWD")
+        if not encrypt_password:
+            encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
         email_accounts = get_email_accounts_from_password(encrypt_password, GMAIL)
 
     bots = []

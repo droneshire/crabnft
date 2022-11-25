@@ -1,6 +1,7 @@
 import argparse
 import datetime
 import getpass
+import os
 import tempfile
 
 from config_admin import GMAIL
@@ -88,7 +89,9 @@ def send_patch_stats() -> None:
     if args.dry_run:
         encrypt_password = ""
     else:
-        encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
+        encrypt_password = os.getenv("NFT_PWD")
+        if not encrypt_password:
+            encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
 
     aliases = set([get_alias_from_user(u) for u in USERS])
 

@@ -3,7 +3,7 @@ import time
 import typing as T
 from yaspin import yaspin
 
-from config_wyndblast import BETA_TEST_LIST
+from config_wyndblast import BETA_TEST_LIST, DAILY_ENABLED, PVE_ENABLED
 from utils import logger
 from utils.config_types import UserConfig
 from utils.email import Email
@@ -148,19 +148,28 @@ class WyndBot:
     def run(self) -> None:
         logger.print_bold(f"\n\nAttempting daily activities for {self.user}")
 
-        if not self.wynd_w2.update_account():
-            self.wynd_w2.authorize_user()
-            self.wynd_w2.update_account()
+        if DAILY_ENABLED:
+            if not self.wynd_w2.update_account():
+                self.wynd_w2.authorize_user()
+                self.wynd_w2.update_account()
 
-        self._check_and_submit_available_inventory()
-        self.daily_activities.run_activity()
+            self._check_and_submit_available_inventory()
+            self.daily_activities.run_activity()
 
-        if self.alias in BETA_TEST_LIST:
+        if self.alias in BETA_TEST_LIST and PVE_ENABLED:
             logger.print_bold(f"\n\nAttempting PVE game for {self.user}")
             self.pve_w2.logout_user()
             self.pve_w2.authorize_user()
 
             self.pve.play_game()
+
+        if not DAILY_ENABLED and not PVE_ENABLED:
+            if self.nft_w3.is_approved_for_all(self.wynd_w3.contract_checksum_address):
+                logger.format_ok_blue_arrow(f"Locking down NFTs since not playing game")
+                self.nft_w3.set_approval_for_all(self.wynd_w3.contract_checksum_address, False)
+            if self.wynd_w3.is_allowed():
+                logger.format_ok_blue_arrow(f"Locking down game contract since not playing game")
+                self.nft_w3.unapprove()
 
         self.stats_logger.write()
 

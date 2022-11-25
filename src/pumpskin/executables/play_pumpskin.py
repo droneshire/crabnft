@@ -73,8 +73,10 @@ def run_bot() -> None:
     alerts_enabled = not args.quiet and not args.dry_run
 
     if not args.dry_run:
-        encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
-        email_accounts = get_email_accounts_from_password(encrypt_password, GMAIL)
+        encrypt_password = os.getenv("NFT_PWD")
+        if not encrypt_password:
+            encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
+        email_accounts = get_email_accounts_from_password(encrypt_password, GMAIL, args.quiet)
 
     bots = []
     for user, config in USERS.items():
@@ -88,6 +90,7 @@ def run_bot() -> None:
             encrypt_password,
             args.log_dir,
             dry_run=args.dry_run,
+            quiet=args.quiet,
             update_config=args.update_config,
         )
         bot.init()

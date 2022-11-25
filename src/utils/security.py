@@ -1,6 +1,7 @@
 import argparse
 import base64
 import getpass
+import os
 
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA256
@@ -43,7 +44,9 @@ if __name__ == "__main__":
     group.add_argument("--decrypt", action="store_true")
     options = parser.parse_args()
 
-    key_str = getpass.getpass(prompt="Enter decryption password: ")
+    key_str = os.getenv("NFT_PWD")
+    if not key_str:
+        key_str = getpass.getpass(prompt="Enter decryption password: ")
     byte_key = str.encode(key_str)
     data_str = input("Enter data to encrypt/decrypt: ")
     if options.encrypt:

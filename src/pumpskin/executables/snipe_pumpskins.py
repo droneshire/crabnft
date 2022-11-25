@@ -85,7 +85,9 @@ def snipe() -> None:
     email_accounts = []
 
     if not args.dry_run:
-        encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
+        encrypt_password = os.getenv("NFT_PWD")
+        if not encrypt_password:
+            encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
         email_accounts = get_email_accounts_from_password(encrypt_password, GMAIL)
 
         private_key = decrypt_secret(encrypt_password, USERS["ROSS"]["private_key"])
@@ -174,9 +176,9 @@ def snipe() -> None:
                     )
                     last_alert = target_id
             except KeyboardInterrupt:
-                answer = getpass.getpass("Buy? Y/N")
+                answer = input("Buy? Y/N")
                 if answer in ["Y", "y", "Yes", "YES"]:
-                    buy_amount = getpass.getpass("Buy amount?")
+                    buy_amount = input("Buy amount?")
                     try:
                         buy_num = int(buy_amount)
                         logger.print_ok_blue(f"Minting {buy_num} pumps...")
