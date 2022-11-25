@@ -167,6 +167,9 @@ class WyndBot:
             if self.nft_w3.is_approved_for_all(self.wynd_w3.contract_checksum_address):
                 logger.format_ok_blue_arrow(f"Locking down NFTs since not playing game")
                 self.nft_w3.set_approval_for_all(self.wynd_w3.contract_checksum_address, False)
+            if self.wynd_w3.is_allowed():
+                logger.format_ok_blue_arrow(f"Locking down game contract since not playing game")
+                self.nft_w3.unapprove()
 
         self.stats_logger.write()
 
