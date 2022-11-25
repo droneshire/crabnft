@@ -207,8 +207,8 @@ class PumpskinTokenProfitManager:
             self.txns = []
             return total_txns
 
-        self.allocator[self.token].maybe_subtract(Category.LP, lp_token * 2)
-        self.allocator[self.token].maybe_subtract(Category.PROFIT, profit_token)
+        self.allocator[self.token].maybe_subtract(lp_token * 2, Category.LP)
+        self.allocator[self.token].maybe_subtract(profit_token, Category.PROFIT)
         self.stats_logger.lifetime_stats[f"avax_profits"] += profit_avax
 
         wait(10.0)
