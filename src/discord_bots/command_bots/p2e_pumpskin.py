@@ -4,7 +4,7 @@ import typing as T
 
 from config_pumpskin import USERS
 from discord_bots.command_bots.default import OnMessage
-from pumpskin.pumpskin_bot import PumpskinBot
+from pumpskin.utils import calc_ppie_earned_per_day
 from pumpskin.pumpskin_web3_client import PumpskinCollectionWeb3Client, PumpskinContractWeb3Client
 from utils import logger
 from utils.config_types import UserConfig
@@ -112,7 +112,7 @@ class ManageAccounts(OnMessage):
 
         ppie_staked = wei_to_token(contract_w3.get_ppie_staked(user_config["address"]))
         potn_per_day = ppie_staked * 3.0
-        ppie_per_day = PumpskinBot.calc_ppie_earned_per_day(pumpskins)
+        ppie_per_day = calc_ppie_earned_per_day(pumpskins)
         logger.print_normal(f"{user} -> PPIE/Day: {ppie_per_day} POTN/Day: {potn_per_day}")
 
         try:
