@@ -185,13 +185,15 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
             url, json_data=payload, headers=headers, params=params, timeout=10.0
         )
 
-    def battle(self, stage_id: str, battle_setup: BattleSetup, duration: int = 28) -> bool:
+    def battle(
+        self, stage_id: str, battle_setup: BattleSetup, duration: int = 28, result: str = "win"
+    ) -> bool:
         payload: BattlePayload = BattlePayload()
         payload["duration"] = duration
         payload["setup"] = battle_setup
         payload["stage_id"] = stage_id
         payload["lobby_id"] = self.PVE_LOBBY_ID
-        payload["result"] = "win"
+        payload["result"] = result
         payload["survived"] = {
             "player": battle_setup["player"],
             "enemy": [],

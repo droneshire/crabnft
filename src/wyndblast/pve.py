@@ -108,6 +108,7 @@ class PveGame:
     MAX_REPLAYS_PER_CYCLE = 5  # based on a daily reward that is 20x battles per week
     MIN_CLAIM_CHRO = 1000
     MIN_CHRO_TO_PLAY = 100
+    MIN_STAMINA_TO_PLAY = 10
 
     TIME_BETWEEN_CLAIM_QUEST = 60.0 * 60.0 * 6
     TIME_BETWEEN_LEVEL_UP = 60.0 * 5.0
@@ -121,6 +122,7 @@ class PveGame:
         wynd_w2: PveWyndblastWeb2Client,
         wynd_w3: WyndblastGameWeb3Client,
         stats_logger: WyndblastLifetimeGameStatsLogger,
+        human_mode: bool,
     ) -> None:
         self.user = user
         self.config = config
@@ -128,6 +130,12 @@ class PveGame:
         self.wynd_w2 = wynd_w2
         self.wynd_w3 = wynd_w3
         self.stats_logger = stats_logger
+        self.human_mode = human_mode
+
+        self.min_game_duration = self.MIN_GAME_DURATION if human_mode else self.MIN_GAME_DURATION
+        self.max_game_duration = (
+            self.MAX_GAME_DURATION * 3 if human_mode else self.MAX_GAME_DURATION
+        )
 
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
 
@@ -396,6 +404,14 @@ class PveGame:
         self.wynd_w2.preset_team([product_id])
 
     def _check_and_play_story(self, nft_data: types.PveNfts, countdown: types.Countdown) -> bool:
+        if self.human_mode:
+            user_data: types.PveUser = self.wynd_w2.get_user_profile()
+            if user_data["stamina"] <= self.MIN_STAMINA_TO_PLAY:
+                logger.print_normal(
+                    f"Not playing more since we're behaving and respecting stamina..."
+                )
+                return False
+
         if self.last_mission is None:
             stage_id = self._get_next_stage_from_api()
         else:
@@ -448,14 +464,15 @@ class PveGame:
         RETRY_ATTEMPTS = 3
         did_succeed = False
         for attempt in range(RETRY_ATTEMPTS):
-            duration = random.randint(self.MIN_GAME_DURATION, self.MAX_GAME_DURATION)
-            if self.wynd_w2.battle(stage_id, battle_setup, duration=duration):
+            duration = random.randint(self.min_game_duration, self.max_game_duration)
+            result = "win" if random.randint(1, 4 if self.human_mode else 1) == 1 else "loss"
+            if self.wynd_w2.battle(stage_id, battle_setup, duration=duration, result=result):
                 self.completed.add(stage_id)
                 self.last_mission = stage_id
                 levels_completed = set(self.current_stats["pve_game"]["levels_completed"])
                 levels_completed.add(stage_id)
                 self.current_stats["pve_game"]["levels_completed"] = list(levels_completed)
-                logger.print_ok(f"We WON")
+                logger.print_ok(f"We {result.upper()}")
                 did_succeed = True
                 break
             elif attempt + 1 >= RETRY_ATTEMPTS:
@@ -530,8 +547,8 @@ class PveGame:
 
         logger.print_ok_blue_arrow(f"User EXP: {user_exp}")
 
-        while self._check_and_play_story(nft_data, countdown):
-            wait(random.randint(40, 60))
+        while self._check_and_play_story(nft_data, stamina, countdown):
+            wait(random.randint(40, 120 if self.human_mode else 60))
             if not self.wynd_w2.update_account():
                 self.wynd_w2.authorize_user()
                 self.wynd_w2.update_account()

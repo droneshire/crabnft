@@ -21,6 +21,15 @@ from wyndblast.types import WyndNft
 from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
 from wyndblast.wyndblast_web3_client import WyndblastGameWeb3Client, WyndblastNftGameWeb3Client
 
+ADDR_TO_WYND = {
+    # "0x006444F4CDE37C8bdE1cf0FB58FEA83e1741c82D": [12991],
+    # "0x42f6011718e519B1D320176c0855E051F6E18D32": [11586],
+    # "0x84c75e6a0Fc67CE71e5E5FbF9174831e36038530": [15859],
+    # "0x2B8437ca618e88D577E543d29dc1abB94f098FA7": [16667],
+    # "0xF2d3F857531daCD71a29A1A1b24E02f07135cBDB": [16668],
+    # "0xD1BbAaeDc535C1979D9801AF3E3E89e34cc94781": [16666],
+}
+
 
 class WyndBot:
     TIME_BETWEEN_AUTH = 60.0 * 60.0 * 2.0
@@ -32,6 +41,7 @@ class WyndBot:
         email_accounts: T.List[Email],
         encrypt_password: str,
         log_dir: str,
+        human_mode: bool,
         dry_run: bool,
     ):
         self.config = config
@@ -40,6 +50,7 @@ class WyndBot:
         self.emails: T.List[Email] = email_accounts
         self.log_dir: str = log_dir
         self.dry_run: bool = dry_run
+        self.human_mode: bool = human_mode
         self.address: Address = config["address"]
 
         self.last_pve_auth_time = 0
@@ -53,6 +64,9 @@ class WyndBot:
             dry_run=dry_run,
             verbose=True,
         )
+
+        if human_mode:
+            logger.print_ok_blue_arrow(f"Playing in human mode, by the rules...")
 
         self.wynd_w2: DailyActivitiesWyndblastWeb2Client = DailyActivitiesWyndblastWeb2Client(
             self.config["private_key"],
@@ -96,7 +110,13 @@ class WyndBot:
         )
 
         self.pve: PveGame = PveGame(
-            user, config, email_accounts, self.pve_w2, self.wynd_w3, self.stats_logger
+            user,
+            config,
+            email_accounts,
+            self.pve_w2,
+            self.wynd_w3,
+            self.stats_logger,
+            human_mode,
         )
 
     def _check_and_submit_available_inventory(self) -> None:
@@ -150,6 +170,57 @@ class WyndBot:
             self.wynd_w2.authorize_user()
             self.wynd_w2.update_account()
 
+        wynd_infos: T.List[WyndNft] = self.wynd_w2.get_wynd_status()
+        logger.print_ok_blue(f"Searching for NFTs in game...")
+
+        wynds_to_move = []
+        for wynd in wynd_infos:
+            if wynd["isSubmitted"]:
+                logger.print_ok_blue_arrow(f"Found {wynd['token_id']} in game...")
+                wynds_to_move.append(int(wynd["token_id"]))
+
+        if not wynds_to_move and self.address in ADDR_TO_WYND:
+            wynds_to_move.extend(ADDR_TO_WYND[self.address])
+            del ADDR_TO_WYND[self.address]
+
+        if wynds_to_move:
+            if not self.nft_w3.is_approved_for_all(self.wynd_w3.contract_checksum_address):
+                tx_hash = self.nft_w3.set_approval_for_all(
+                    self.wynd_w3.contract_checksum_address, True
+                )
+                tx_receipt = self.nft_w3.get_transaction_receipt(tx_hash)
+                gas = wei_to_token(self.nft_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+                logger.print_bold(f"Paid {gas} AVAX in gas")
+
+                self.stats_logger.lifetime_stats["avax_gas"] += gas
+
+                if tx_receipt.get("status", 0) != 1:
+                    logger.print_warn(f"Failed to added nft access!")
+                    return
+                else:
+                    logger.print_ok(f"Successfully added nft access")
+                    logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+
+            logger.print_ok_blue_arrow(f"Moving {len(wynds_to_move)} wynds out of game")
+
+            for wynd in wynds_to_move:
+                tx_hash = self.wynd_w3.move_into_inventory([wynd])
+                tx_receipt = self.nft_w3.get_transaction_receipt(tx_hash)
+                gas = wei_to_token(self.nft_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+                logger.print_bold(f"Paid {gas} AVAX in gas")
+
+                self.stats_logger.lifetime_stats["avax_gas"] += gas
+
+                if tx_receipt.get("status", 0) != 1:
+                    logger.print_warn(f"Failed to move wynds out of game!")
+                    return
+                else:
+                    logger.print_ok(f"Successfully move wynds out of game")
+                    logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+
+        else:
+            logger.print_normal(f"No NFTs found in game")
+
         self.pve_w2.logout_user()
         self.pve_w2.authorize_user()
 
@@ -174,7 +245,7 @@ class WyndBot:
         self.config_mgr.init()
 
     def run(self) -> None:
-        logger.print_bold(f"\n\nAttempting daily activities for {self.user}")
+        logger.print_bold(f"\n\nWyndblast Game start for {self.user}")
 
         if self.alias in DAILY_ENABLED:
             if not self.wynd_w2.update_account():
