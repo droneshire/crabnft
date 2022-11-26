@@ -53,6 +53,7 @@ class ManageAccounts(OnMessage):
                 value += f" -> {potn_per_day * setting:.2f} $POTN"
 
             if "percent" in text.lower() and "profit" not in text.lower():
+                text.replace("profit", "%")
                 embed.add_field(name=text, value=value + "%", inline=True)
             else:
                 embed.add_field(name=text, value=value, inline=False)
