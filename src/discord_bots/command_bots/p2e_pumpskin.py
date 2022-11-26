@@ -52,7 +52,10 @@ class ManageAccounts(OnMessage):
             elif "multiplier" in text.lower() and "potn" in text.lower():
                 value += f" -> {potn_per_day * setting:.2f} $POTN"
 
-            embed.add_field(name=text, value=value, inline=False)
+            if "percent" in text.lower() and "lp" not in text.lower():
+                embed.add_field(name=text, value=value, inline=True)
+            else:
+                embed.add_field(name=text, value=value, inline=True)
 
         embed.set_thumbnail(url=pfp)
         return embed
