@@ -213,7 +213,7 @@ class WyndblastWeb2Client:
         headers["referer"] = self.base_url
         return headers
 
-    def authorize_user(self) -> None:
+    def authorize_user(self) -> bool:
         try:
             res = self._authorize_user_raw(headers=self._get_moralis_headers())
             self.session_token = res["sessionToken"]
@@ -222,12 +222,14 @@ class WyndblastWeb2Client:
             logger.print_normal(
                 f"Successfully authorized user {self.user_address}:\nToken: {self.session_token}\nUser: {self.username}"
             )
+            return True
         except KeyboardInterrupt:
             raise
         except:
             logger.print_fail(
                 f"Failed to authorize user {self.user_address}:\n{res if res else ''}"
             )
+            return False
 
     def _update_account_raw(
         self, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}

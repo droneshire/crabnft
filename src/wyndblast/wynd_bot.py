@@ -187,9 +187,8 @@ class WyndBot:
         if self.alias in PVE_ENABLED:
             logger.print_bold(f"\n\nAttempting PVE game for {self.user}")
             self.pve_w2.logout_user()
-            self.pve_w2.authorize_user()
-
-            self.pve.play_game()
+            if self.pve_w2.authorize_user():
+                self.pve.play_game()
 
         self._check_and_maybe_secure_account()
 
