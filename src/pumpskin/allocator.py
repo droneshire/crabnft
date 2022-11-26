@@ -147,16 +147,16 @@ class TokenAllocator:
         category_amount = self.percents[category] * amount
         if self.verbose:
             logger.print_normal(
-                f"Allocator: Adding {self.percents[category]:.2f} of {amount:.2f} -> {category_amount:.2f} to {category}"
+                f"Allocator: Adding {self.percents[category]:.2f}% of {amount:.2f} -> {category_amount:.2f} to {category}"
             )
         self.allocations[category] += category_amount
 
 
 class PpieAllocator(TokenAllocator):
-    def __init__(self, token_w3: AvalancheCWeb3Client, config: UserConfig, verbose: bool = True):
+    def __init__(self, token_w3: AvalancheCWeb3Client, config: UserConfig, verbose: bool = False):
         super().__init__(Tokens.PPIE, token_w3, config, verbose)
 
 
 class PotnAllocator(TokenAllocator):
-    def __init__(self, token_w3: AvalancheCWeb3Client, config: UserConfig, verbose: bool = True):
+    def __init__(self, token_w3: AvalancheCWeb3Client, config: UserConfig, verbose: bool = False):
         super().__init__(Tokens.POTN, token_w3, config, verbose)
