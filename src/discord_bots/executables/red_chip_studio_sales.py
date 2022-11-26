@@ -24,6 +24,7 @@ COLLECTIONS = [
     "0x20625bb21cbb7f3adb66aa7b1f887c0653bde2a5",
     "0xfad87339fe82fa14cb66d639f2e294c147dc187c",
     "0x6176ba2cdf66e5fdd3551da793d2803131a51cb8",
+    "0x1e9ffeac4aefe5c462f276bb0d1bc4a459331bd5",
 ]
 SALES_CHANNEL_ID = 1039107410620600380  # Sales bot channel
 
