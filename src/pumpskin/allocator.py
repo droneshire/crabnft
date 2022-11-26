@@ -13,7 +13,7 @@ class TokenAllocator:
         token: Tokens,
         token_w3: AvalancheCWeb3Client,
         config: UserConfig,
-        verbose: bool = True,
+        verbose: bool = False,
     ):
         self.config = config
         self.verbose = verbose
@@ -151,10 +151,10 @@ class TokenAllocator:
 
 
 class PpieAllocator(TokenAllocator):
-    def __init__(self, token_w3: AvalancheCWeb3Client, config: UserConfig, verbose: bool = False):
+    def __init__(self, token_w3: AvalancheCWeb3Client, config: UserConfig, verbose: bool = True):
         super().__init__(Tokens.PPIE, token_w3, config, verbose)
 
 
 class PotnAllocator(TokenAllocator):
-    def __init__(self, token_w3: AvalancheCWeb3Client, config: UserConfig, verbose: bool = False):
+    def __init__(self, token_w3: AvalancheCWeb3Client, config: UserConfig, verbose: bool = True):
         super().__init__(Tokens.POTN, token_w3, config, verbose)

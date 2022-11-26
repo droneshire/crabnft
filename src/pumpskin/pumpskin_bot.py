@@ -129,7 +129,7 @@ class PumpskinBot:
             ),
         )
 
-        self.allocator = {
+        self.allocator: T.Dict[Tokens, TokenAllocator] = {
             Tokens.POTN: PotnAllocator(self.potn_w3, config),
             Tokens.PPIE: PpieAllocator(self.ppie_w3, config),
         }
