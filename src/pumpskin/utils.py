@@ -5,6 +5,7 @@ import typing as T
 
 from config_admin import ADMIN_ADDRESS
 from pumpskin.pumpskin_web2_client import PumpskinWeb2Client
+from pumpskin.pumpskin_web3_client import PumpskinNftWeb3Client
 from pumpskin.types import Rarity, Tokens
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 
