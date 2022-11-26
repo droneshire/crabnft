@@ -326,6 +326,10 @@ class PumpskinBot:
             )
 
     def _check_and_stake_ppie(self, pumpskins: T.Dict[int, T.Dict[int, T.Any]]) -> None:
+        if self.allocator[Tokens.PPIE].is_hold_only():
+            logger.print_normal(f"Skipping PPIE staking b/c we're hold only")
+            return
+
         multiplier = max(
             0.1, self.config_mgr.config["game_specific_configs"]["ppie_stake_multiplier"]
         )
@@ -452,6 +456,11 @@ class PumpskinBot:
         self, pumpskins: T.Dict[int, T.Dict[int, T.Any]], force: bool = False
     ) -> None:
         logger.print_ok_blue(f"Checking $POTN for claims...")
+
+        if self.allocator[Tokens.POTN].is_hold_only():
+            logger.print_normal(f"Skipping POTN claim since we're holding only")
+            return
+
         total_claimable_potn = wei_to_token(self.game_w3.get_claimable_potn(self.address))
 
         multiplier = max(
@@ -475,8 +484,12 @@ class PumpskinBot:
         verbose: bool = False,
     ) -> None:
         logger.print_ok_blue(f"Checking $PPIE for claims...")
-        total_claimable_ppie = 0.0
 
+        if self.allocator[Tokens.PPIE].is_hold_only():
+            logger.print_normal(f"Skipping PPIE claim since we're holding only")
+            return
+
+        total_claimable_ppie = 0.0
         ppie_tokens = []
         for token_id in pumpskins.keys():
             claimable_tokens = wei_to_token(self.collection_w3.get_claimable_ppie(token_id))
@@ -543,6 +556,12 @@ class PumpskinBot:
         gas_needed_per_pump = avg_gas_per_action * action_per_pump
         num_pump_activites_buffer = 5
         gas_needed = num_pump_activites_buffer * gas_needed_per_pump
+
+        if (
+            self.allocator[Tokens.PPIE].is_hold_only()
+            and self.allocator[Tokens.POTN].is_hold_only()
+        ):
+            return
 
         if avax_balance > gas_needed:
             return

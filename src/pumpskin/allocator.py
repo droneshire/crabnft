@@ -143,6 +143,14 @@ class TokenAllocator:
 
         assert sum(self.percents.values()) <= 1.0, "Percents exceed 100%"
 
+    def is_hold_only(self) -> bool:
+        total = 0.0
+        for category in ALL_CATEGORIES:
+            if category == Category.HOLD:
+                continue
+            total += self.percents[category]
+        return math.isclose(total, 0.0, abs_tol=0.1)
+
     def _add(self, category: Category, amount: float) -> None:
         category_amount = self.percents[category] * amount
         if self.verbose:
