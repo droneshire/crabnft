@@ -26,6 +26,21 @@ MAP_2 = "M2S"
 
 ALLOWED_MAPS = [MAP_1, MAP_2]
 
+STAMINA_AT_LEVELS = {
+    f"{MAP_1}1:": 10,
+    f"{MAP_1}2:": 14,
+    f"{MAP_1}3:": 18,
+    f"{MAP_1}4:": 22,
+    f"{MAP_1}5:": 26,
+    f"{MAP_1}6:": 30,
+    f"{MAP_2}1:": 10,
+    f"{MAP_2}2:": 14,
+    f"{MAP_2}3:": 18,
+    f"{MAP_2}4:": 22,
+    f"{MAP_2}5:": 26,
+    f"{MAP_2}6:": 30,
+}
+
 LEVEL_TO_NUM_ENEMIES = {
     f"{MAP_1}1:1": 2,
     f"{MAP_1}1:2": 3,
@@ -403,15 +418,7 @@ class PveGame:
         logger.print_bold(f"Setting team presets...")
         self.wynd_w2.preset_team([product_id])
 
-    def _check_and_play_story(self, nft_data: types.PveNfts, countdown: types.Countdown) -> bool:
-        if self.human_mode:
-            user_data: types.PveUser = self.wynd_w2.get_user_profile()
-            if user_data["stamina"] <= self.MIN_STAMINA_TO_PLAY:
-                logger.print_normal(
-                    f"Not playing more since we're behaving and respecting stamina..."
-                )
-                return False
-
+    def _get_next_level(self, countdown: types.Countdown) -> str:
         if self.last_mission is None:
             stage_id = self._get_next_stage_from_api()
         else:
@@ -419,10 +426,12 @@ class PveGame:
             if not stage_id:
                 stage_id = self._get_next_stage_from_api()
 
+        user_data: types.PveUser = {}
+
         if not stage_id:
-            user_data: types.PveUser = self.wynd_w2.get_user_profile()
+            user_data = self.wynd_w2.get_user_profile()
             if not user_data:
-                return False
+                return ""
 
             if countdown:
                 daily_countdown_seconds = countdown.get("daily_countdown_second", 0)
@@ -439,16 +448,34 @@ class PveGame:
                 # otherwise no need to play since it only helps with wynd leveling which we don't
                 # care about
                 logger.print_bold(f"We've beat the full map, but still need more exp, replaying...")
-                stage_id = self.sorted_levels[random.randrange(len(self.sorted_levels))]
+                stage_id = self.sorted_levels[random.randrange(3)]
                 self.num_replays += 1
             elif user_data.get("exp", self.LEVEL_FIVE_EXP) >= self.LEVEL_FIVE_EXP:
                 self.num_replays = 0
                 logger.print_bold(f"Beat game, no need to play anymore!")
-                return False
+                return ""
             else:
                 self.num_replays = 0
                 logger.print_bold(f"Waiting for EXP boosts, no way to do that now so not playing")
-                return False
+                return ""
+
+        if self.human_mode:
+            if not user_data:
+                user_data: types.PveUser = self.wynd_w2.get_user_profile()
+
+            if user_data.get("stamina", 0) < STAMINA_AT_LEVELS[stage_id[: len(MAP_2) + 2]]:
+                logger.print_normal(
+                    f"Not playing more since we're behaving and respecting stamina..."
+                )
+                return ""
+
+        return stage_id
+
+    def _check_and_play_story(self, nft_data: types.PveNfts, countdown: types.Countdown) -> bool:
+        stage_id = self._get_next_level(countdown)
+
+        if not stage_id:
+            return False
 
         num_enemies = self._get_num_enemies_for_mission(stage_id)
 
