@@ -52,7 +52,7 @@ class TokenAllocator:
             return
 
         if self.verbose:
-            logger.print_normal(f"Reallocating from {category}")
+            logger.print_normal(f"Updating full balance")
 
         amount = self.token_w3.get_balance()
         for category in ALL_CATEGORIES:
@@ -60,7 +60,7 @@ class TokenAllocator:
 
     def reallocate(self, from_category: Category) -> None:
         if self.verbose:
-            logger.print_normal(f"Reallocating from {category}")
+            logger.print_normal(f"Reallocating from {from_category}")
 
         for category in ALL_CATEGORIES:
             if category == from_category:
