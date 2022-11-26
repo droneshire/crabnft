@@ -146,7 +146,9 @@ class TokenAllocator:
     def _add(self, category: Category, amount: float) -> None:
         category_amount = self.percents[category] * amount
         if self.verbose:
-            logger.print_normal(f"Allocator: Adding {category_amount:.2f} to {category}")
+            logger.print_normal(
+                f"Allocator: Adding {self.percents[category]:.2f} of {amount:.2f} -> {category_amount:.2f} to {category}"
+            )
         self.allocations[category] += category_amount
 
 
