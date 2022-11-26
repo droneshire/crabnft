@@ -143,7 +143,7 @@ class WyndBot:
             logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
 
     def _check_and_maybe_secure_account(self) -> None:
-        if DAILY_ENABLED or PVE_ENABLED:
+        if self.alias in DAILY_ENABLED or self.alias in PVE_ENABLED:
             return
 
         if not self.wynd_w2.update_account():
@@ -176,7 +176,7 @@ class WyndBot:
     def run(self) -> None:
         logger.print_bold(f"\n\nAttempting daily activities for {self.user}")
 
-        if DAILY_ENABLED:
+        if self.alias in DAILY_ENABLED:
             if not self.wynd_w2.update_account():
                 self.wynd_w2.authorize_user()
                 self.wynd_w2.update_account()
@@ -184,7 +184,7 @@ class WyndBot:
             self._check_and_submit_available_inventory()
             self.daily_activities.run_activity()
 
-        if self.alias in BETA_TEST_LIST and PVE_ENABLED:
+        if self.alias in PVE_ENABLED:
             logger.print_bold(f"\n\nAttempting PVE game for {self.user}")
             self.pve_w2.logout_user()
             self.pve_w2.authorize_user()
