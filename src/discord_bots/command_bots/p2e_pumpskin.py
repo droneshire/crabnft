@@ -55,7 +55,7 @@ class ManageAccounts(OnMessage):
             if "percent" in text.lower() and "lp" not in text.lower():
                 embed.add_field(name=text, value=value, inline=True)
             else:
-                embed.add_field(name=text, value=value, inline=True)
+                embed.add_field(name=text, value=value, inline=False)
 
         embed.set_thumbnail(url=pfp)
         return embed
