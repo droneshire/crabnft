@@ -150,31 +150,8 @@ class WyndBot:
             self.wynd_w2.authorize_user()
             self.wynd_w2.update_account()
 
-        wynd_infos: T.List[WyndNft] = self.wynd_w2.get_wynd_status()
-        logger.print_ok_blue(f"Searching for NFTs in game...")
-        wynds_to_move = []
-        for wynd in wynd_infos:
-            if wynd["isSubmitted"]:
-                logger.print_ok_blue_arrow(f"Found {wynd['token_id']} in game...")
-                wynds_to_move.append(int(wynd["token_id"]))
-
-        if wynds_to_move:
-            logger.print_ok_blue_arrow(f"Moving {len(wynds_to_move)} wynds out of game")
-            tx_hash = self.wynd_w3.move_out_of_inventory(wynds_to_move)
-            tx_receipt = self.nft_w3.get_transaction_receipt(tx_hash)
-            gas = wei_to_token(self.nft_w3.get_gas_cost_of_transaction_wei(tx_receipt))
-            logger.print_bold(f"Paid {gas} AVAX in gas")
-
-            self.stats_logger.lifetime_stats["avax_gas"] += gas
-
-            if tx_receipt.get("status", 0) != 1:
-                logger.print_warn(f"Failed to move wynds out of game!")
-            else:
-                logger.print_ok(f"Successfully move wynds out of game")
-                logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
-
-        else:
-            logger.print_normal(f"No NFTs found in game")
+        self.pve_w2.logout_user()
+        self.pve_w2.authorize_user()
 
         if self.nft_w3.is_approved_for_all(self.wynd_w3.contract_checksum_address):
             logger.print_ok_blue_arrow(f"Locking down NFTs since not playing game")
