@@ -28,6 +28,8 @@ ADDR_TO_WYND = {
     # "0x2B8437ca618e88D577E543d29dc1abB94f098FA7": [16667],
     # "0xF2d3F857531daCD71a29A1A1b24E02f07135cBDB": [16668],
     # "0xD1BbAaeDc535C1979D9801AF3E3E89e34cc94781": [16666],
+    # "0x86d3F483e7A4eECE4243634eE6931f4e7fBdFf2D": [12385],
+    # "0xB6C5a50c28805ABB41f79F7945Bf3F9DfeF4C8B0": [15878],
 }
 
 
@@ -170,8 +172,8 @@ class WyndBot:
             self.wynd_w2.authorize_user()
             self.wynd_w2.update_account()
 
-        wynd_infos: T.List[WyndNft] = self.wynd_w2.get_wynd_status()
         logger.print_ok_blue(f"Searching for NFTs in game...")
+        wynd_infos: T.List[WyndNft] = self.wynd_w2.get_wynd_status()
 
         wynds_to_move = []
         for wynd in wynd_infos:
@@ -180,7 +182,9 @@ class WyndBot:
                 wynds_to_move.append(int(wynd["token_id"]))
 
         if not wynds_to_move and self.address in ADDR_TO_WYND:
-            wynds_to_move.extend(ADDR_TO_WYND[self.address])
+            wynd = ADDR_TO_WYND[self.address]
+            wynds_to_move.extend(wynd)
+            logger.print_ok_blue_arrow(f"Found {wynd} in game from list...")
             del ADDR_TO_WYND[self.address]
 
         if wynds_to_move:
