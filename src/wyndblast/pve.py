@@ -595,7 +595,7 @@ class PveGame:
 
         logger.print_ok_blue_arrow(f"User EXP: {user_exp}")
 
-        while self._check_and_play_story(nft_data, stamina, countdown):
+        while self._check_and_play_story(nft_data, countdown):
             wait(random.randint(40, 120 if self.human_mode else 60))
             if not self.wynd_w2.update_account():
                 self.wynd_w2.authorize_user()
