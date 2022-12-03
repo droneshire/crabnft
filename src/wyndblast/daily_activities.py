@@ -52,6 +52,7 @@ class DailyActivitiesGame:
         self.wynd_w2 = wynd_w2
         self.wynd_w3 = wynd_w3
         self.stats_logger = stats_logger
+        self.is_deactivated = False
 
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
 
@@ -88,12 +89,27 @@ class DailyActivitiesGame:
 
         return True
 
+    def check_and_auth_account(self) -> bool:
+        if self.wynd_w2.update_account():
+            self.is_deactivated = True
+            return self.is_deactivated
+
+        if not self.wynd_w2.authorize_user():
+            self.is_deactivated = False
+            return self.is_deactivated
+
+        if not self.wynd_w2.update_account():
+            self.is_deactivated = False
+            return self.is_deactivated
+
+        self.is_deactivated = True
+        return self.is_deactivated
+
     def run_activity(self) -> None:
         account_overview = self.wynd_w2.get_account_overview()
 
         if not account_overview:
-            self.wynd_w2.authorize_user()
-            self.wynd_w2.update_account()
+            self.check_and_auth_account()
             return
 
         try:
@@ -122,8 +138,7 @@ class DailyActivitiesGame:
             wynds.extend(new_wynds)
 
         if not wynds:
-            self.wynd_w2.authorize_user()
-            self.wynd_w2.update_account()
+            self.check_and_auth_account()
             return
 
         rounds_completed = 0
@@ -173,9 +188,7 @@ class DailyActivitiesGame:
         if rounds_completed <= 0:
             return
 
-        if not self.wynd_w2.update_account():
-            self.wynd_w2.authorize_user()
-            self.wynd_w2.update_account()
+        self.check_and_auth_account()
 
         self.check_and_claim_if_needed()
 
@@ -291,8 +304,7 @@ class DailyActivitiesGame:
         options: DailyActivitySelection = self.wynd_w2.get_activity_selection(wynd_id)
 
         if not options:
-            self.wynd_w2.authorize_user()
-            self.wynd_w2.update_account()
+            self.check_and_auth_account()
             return False
 
         if current_stage > 1:
@@ -314,8 +326,7 @@ class DailyActivitiesGame:
         result: ActivityResult = self.wynd_w2.do_activity(selection)
 
         if not result:
-            self.wynd_w2.authorize_user()
-            self.wynd_w2.update_account()
+            self.check_and_auth_account()
             return False
 
         did_succeed = result["stage"]["success"]

@@ -148,6 +148,7 @@ class PveGame:
         self.wynd_w3 = wynd_w3
         self.stats_logger = stats_logger
         self.human_mode = human_mode
+        self.is_deactivated = False
 
         self.min_game_duration = self.MIN_GAME_DURATION if human_mode else self.MIN_GAME_DURATION
         self.max_game_duration = (
@@ -576,7 +577,27 @@ class PveGame:
 
         return True
 
+    def check_and_auth_account(self) -> bool:
+        if self.wynd_w2.update_account():
+            self.is_deactivated = True
+            return self.is_deactivated
+
+        if not self.wynd_w2.authorize_user():
+            self.is_deactivated = False
+            return self.is_deactivated
+
+        if not self.wynd_w2.update_account():
+            self.is_deactivated = False
+            return self.is_deactivated
+
+        self.is_deactivated = True
+        return self.is_deactivated
+
     def play_game(self) -> None:
+        if self.is_deactivated:
+            logger.print_warn(f"Skipping {self.user} since we have been deactivated!")
+            return
+
         nft_data: types.PveNfts = self.wynd_w2.get_nft_data()
         user_data: types.PveUser = self.wynd_w2.get_user_profile()
         chro_rewards: types.PveRewards = self.wynd_w2.get_chro_rewards()
@@ -597,17 +618,13 @@ class PveGame:
 
         while self._check_and_play_story(nft_data, countdown):
             wait(random.randint(40, 120 if self.human_mode else 60))
-            if not self.wynd_w2.update_account():
-                self.wynd_w2.authorize_user()
-                self.wynd_w2.update_account()
+            self.check_and_auth_account()
             logger.print_normal(f"Playing next stage...")
 
         self._check_and_claim_quest_list()
         self._check_and_level_units(nft_data)
 
-        if not self.wynd_w2.update_account():
-            self.wynd_w2.authorize_user()
-            self.wynd_w2.update_account()
+        self.check_and_auth_account()
 
         self.check_and_claim_if_needed(user_exp)
 
