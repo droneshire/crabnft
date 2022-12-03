@@ -1,9 +1,11 @@
 #!/bin/bash
 
-CRABADA_DIR=/home/crabada
-REPO_DIR=$CRABADA_DIR/crabnft
-# DROPBOX_DIR=/root/Dropbox/crabada_bot
-EMAIL="ryeager12@gmail.com"
+HOME_DIR=/home/droplet
+REPO_DIR=$HOME_DIR/gitrepo
+REPO_GITHUB=git@github.com:rossyeager/crabnft.git
+
+# DROPBOX_DIR=/root/Dropbox/droplet_bot
+EMAIL="info.crabada.bot@gmail.com"
 GROUP_NUM=1
 
 wait_for_input() {
@@ -25,7 +27,7 @@ wait_for_input() {
 # apt -y install dropbox
 
 apt -y update
-apt -y install git python3-pip python3-testresources python3.8-venv python3-gpg
+apt -y install git python3-pip python3-testresources python3-venv python3-gpg
 
 ssh-keygen -t ed25519 -C $EMAIL -f /root/.ssh/id_ed25519 -q -N ""
 
@@ -35,13 +37,13 @@ ssh-keygen -lf $TMP_GITHUB_KEY
 echo $TMP_GITHUB_KEY >> ~/.ssh/known_hosts
 ssh-add ~/.ssh/id_ed25519
 
-mkdir -p $CRABADA_DIR
-cd $CRABADA_DIR
+mkdir -p $HOME_DIR
+cd $HOME_DIR
 
 # add deploy keys to github
 wait_for_input
 
-git clone git@github.com:rossyeager/crabnft.git $REPO_DIR
+git clone $REPO_GITHUB $REPO_DIR
 
 python3 -m pip install --user virtualenv
 

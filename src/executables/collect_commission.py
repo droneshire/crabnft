@@ -295,7 +295,7 @@ def collect_commission(
     logger.print_bold(
         f"Collected {sum([c for _, c in total_stats[totals_key].items()])} {token} in commission!!!"
     )
-    logger.print_warn(f"Failed to collect from the following users: {', '.join(failed_to_collect)}")
+    logger.print_warn(f"Failed to collect from the following users: {', '.join(set(failed_to_collect))}")
 
     if dry_run:
         return
