@@ -14,6 +14,8 @@ from utils.config_types import UserConfig
 from utils.email import Email
 from utils.general import get_pretty_seconds
 from utils.price import wei_to_token
+from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
+from web3_utils.chro_web3_client import ChroWeb3Client
 from wyndblast.assets import WYNDBLAST_ASSETS
 from wyndblast.game_stats import WyndblastLifetimeGameStatsLogger
 from wyndblast.game_stats import NULL_GAME_STATS
@@ -152,6 +154,16 @@ class PveGame:
             self.MAX_GAME_DURATION * 3 if human_mode else self.MAX_GAME_DURATION
         )
 
+        self.chro_w3 = T.cast(
+            ChroWeb3Client,
+            (
+                ChroWeb3Client()
+                .set_credentials(config["address"], config["private_key"])
+                .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+                .set_contract()
+                .set_dry_run(False)
+            ),
+        )
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
 
         self.last_level_up = 0.0
@@ -538,6 +550,8 @@ class PveGame:
         else:
             logger.print_ok_arrow(f"Success!")
 
+        chro_before = self.chro_w3.get_balance()
+
         logger.print_ok(f"Claiming rewards! {unclaimed_chro} CHRO")
         tx_hash = self.wynd_w3.claim_rewards()
         tx_receipt = self.wynd_w3.get_transaction_receipt(tx_hash)
@@ -548,9 +562,17 @@ class PveGame:
 
         if tx_receipt.get("status", 0) != 1:
             logger.print_warn(f"Failed to claim CHRO!")
+            return False
         else:
             logger.print_ok(f"Successfully claimed CHRO")
             logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+
+        chro_after = self.chro_w3.get_balance()
+
+        if chro_after > chro_before:
+            delta_chro = chro_after - chro_before
+            self.current_stats["chro"] += delta_chro
+            logger.print_ok_arrow(f"Adding {delta_chro} CHRO to stats...")
 
         return True
 
@@ -558,7 +580,6 @@ class PveGame:
         nft_data: types.PveNfts = self.wynd_w2.get_nft_data()
         user_data: types.PveUser = self.wynd_w2.get_user_profile()
         chro_rewards: types.PveRewards = self.wynd_w2.get_chro_rewards()
-        chro_before = chro_rewards.get("claimable", 0) + chro_rewards.get("unclaimable", 0)
         user_exp = user_data.get("exp", 1000)
 
         self._check_and_do_standard_quest_list(nft_data)
@@ -580,13 +601,6 @@ class PveGame:
                 self.wynd_w2.authorize_user()
                 self.wynd_w2.update_account()
             logger.print_normal(f"Playing next stage...")
-
-        chro_rewards: types.PveRewards = self.wynd_w2.get_chro_rewards()
-        chro_after = chro_rewards.get("claimable", 0) + chro_rewards.get("unclaimable", 0)
-        if chro_after > chro_before:
-            self.current_stats["chro"] += chro_after - chro_before
-            if chro_after - chro_before > 0.0:
-                logger.print_ok_arrow(f"Adding {chro_after - chro_before} CHRO to stats...")
 
         self._check_and_claim_quest_list()
         self._check_and_level_units(nft_data)
