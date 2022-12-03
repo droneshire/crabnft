@@ -112,6 +112,11 @@ class PatBot:
         embed.add_embed_field(
             name=f"Rewards Earned", value=f"{rewards_avax:.2f} $AVAX", inline=True
         )
+        embed.add_embed_field(
+            name=f"Lifeteim Rewards Earned",
+            value=f"{self.stats_logger.lifetime_stats['avax_harvested']:.2f} $AVAX",
+            inline=False,
+        )
         IMAGE_URL = {
             Action.HARVEST: "https://plantatree.finance/images/logo/logo_.png",
             Action.REPLANT: "https://plantatree.finance/images/logo/Plant_A_Tree_Logo_1.png",
