@@ -164,7 +164,7 @@ class WyndBot:
 
     def _check_and_maybe_secure_account(self) -> None:
         are_accounts_deactivated = self.pve.is_deactivated and self.daily_activities.is_deactivated
-        if not is_any_account_deactivated and (
+        if not are_accounts_deactivated and (
             self.alias in DAILY_ENABLED or self.alias in PVE_ENABLED
         ):
             return
