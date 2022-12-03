@@ -34,8 +34,6 @@ ADDR_TO_WYND = {
 
 
 class WyndBot:
-    TIME_BETWEEN_AUTH = 60.0 * 60.0 * 2.0
-
     def __init__(
         self,
         user: str,

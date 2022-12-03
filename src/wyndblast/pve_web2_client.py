@@ -122,7 +122,7 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
             raise
         except:
             logger.print_fail(f"Failed to get pve user profile!\n{res}")
-            return {}
+            return res
 
     def _get_nft_data_raw(
         self, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
@@ -138,7 +138,7 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
             raise
         except:
             logger.print_fail(f"Failed to get pve nft data!\n{res}")
-            return {}
+            return res
 
     def _level_up_wynd_raw(
         self, dna_string: str, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}

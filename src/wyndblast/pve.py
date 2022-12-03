@@ -599,6 +599,11 @@ class PveGame:
             return
 
         nft_data: types.PveNfts = self.wynd_w2.get_nft_data()
+        if nft_data.get("error_code", "") == "ERR:AUTH:FORBIDDEN_ACCESS":
+            self.is_deactivated = True
+            logger.print_warn(f"Detected deactivated account!")
+            return
+
         user_data: types.PveUser = self.wynd_w2.get_user_profile()
         chro_rewards: types.PveRewards = self.wynd_w2.get_chro_rewards()
         user_exp = user_data.get("exp", 1000)
@@ -627,6 +632,9 @@ class PveGame:
         self.check_and_auth_account()
 
         self.check_and_claim_if_needed(user_exp)
+
+        if self.is_deactivated:
+            logger.print_warn(f"Detected deactivated account!")
 
         self._send_summary_email()
         self._update_stats(user_exp)
