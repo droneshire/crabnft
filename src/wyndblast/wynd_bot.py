@@ -164,10 +164,12 @@ class WyndBot:
 
     def _check_and_maybe_secure_account(self) -> None:
         is_active = not self.pve.is_deactivated and not self.daily_activities.is_deactivated
-        if is_active and (
-            self.alias in DAILY_ENABLED or self.alias in PVE_ENABLED
-        ):
+        if is_active and (self.alias in DAILY_ENABLED or self.alias in PVE_ENABLED):
             return
+
+        logger.print_warn(
+            f"\U0000203C\U0000203C ENGAGING ACCOUNT LOCKDOWN PROCEDURE \U0000203C\U0000203C"
+        )
 
         if not self.wynd_w2.update_account():
             self.wynd_w2.authorize_user()
@@ -208,6 +210,7 @@ class WyndBot:
 
             logger.print_ok_blue_arrow(f"Moving {len(wynds_to_move)} wynds out of game")
 
+            did_succeed = True
             for wynd in wynds_to_move:
                 tx_hash = self.wynd_w3.move_into_inventory([wynd])
                 tx_receipt = self.nft_w3.get_transaction_receipt(tx_hash)
@@ -218,13 +221,17 @@ class WyndBot:
 
                 if tx_receipt.get("status", 0) != 1:
                     logger.print_warn(f"Failed to move wynds out of game!")
-                    return
+                    did_succeed = False
+                    continue
                 else:
                     logger.print_ok(f"Successfully move wynds out of game")
                     logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
 
         else:
             logger.print_normal(f"No NFTs found in game")
+
+        if not did_succeed:
+            return
 
         self.pve_w2.logout_user()
         self.pve_w2.authorize_user()
