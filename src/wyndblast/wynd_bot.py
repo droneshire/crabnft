@@ -163,7 +163,10 @@ class WyndBot:
             logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
 
     def _check_and_maybe_secure_account(self) -> None:
-        if self.alias in DAILY_ENABLED or self.alias in PVE_ENABLED:
+        are_accounts_deactivated = self.pve.is_deactivated and self.daily_activities.is_deactivated
+        if not is_any_account_deactivated and (
+            self.alias in DAILY_ENABLED or self.alias in PVE_ENABLED
+        ):
             return
 
         if not self.wynd_w2.update_account():
@@ -250,6 +253,7 @@ class WyndBot:
         logger.print_bold(f"\n\nWyndblast Game start for {self.user}")
 
         if self.alias in DAILY_ENABLED:
+            logger.print_bold(f"\n\nAttempting Daily Activities for {self.user}")
             if not self.wynd_w2.update_account():
                 self.wynd_w2.authorize_user()
                 self.wynd_w2.update_account()
