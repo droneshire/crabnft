@@ -28,6 +28,8 @@ def wait(wait_time) -> None:
 
 class PumpskinTokenProfitManager:
     MIN_POTN_REWARDS_CLAIM = 200.0
+    MAX_SLIPPAGE_PERCENT = 5.0
+    SLIPPAGE_INCREMENT_PERCENT = 0.25
 
     def __init__(
         self,
@@ -60,6 +62,7 @@ class PumpskinTokenProfitManager:
             Tokens.POTN: 0.092 / 3.797,
         }
         self.min_token_amount_to_swap = min_token_amount_to_swap
+        self.max_avax_multiplier = 1.0
 
     @classmethod
     def create_token_profit_lp_class(
@@ -155,8 +158,14 @@ class PumpskinTokenProfitManager:
         return total_txns
 
     def check_swap_and_lp_and_stake(self) -> T.List[str]:
-        profit_token = self.allocator[self.token].get_amount(Category.PROFIT)
-        lp_token = self.allocator[self.token].get_amount(Category.LP) / 2.0
+        logger.print_normal(f"Using a multiplier of: {self.max_avax_multiplier:.2f}")
+
+        profit_token = (
+            self.allocator[self.token].get_amount(Category.PROFIT) * self.max_avax_multiplier
+        )
+        lp_token = (
+            self.allocator[self.token].get_amount(Category.LP) * self.max_avax_multiplier / 2.0
+        )
 
         avax_token = profit_token + lp_token
 
@@ -187,10 +196,12 @@ class PumpskinTokenProfitManager:
 
         action_str = f"Converting {avax_token:.2f} {self.token} to AVAX"
         did_succeed = False
-        for i in range(20):
-            slippage = 100.0 - 0.25 * i
+        for i in range(self.MAX_SLIPPAGE_PERCENT / self.SLIPPAGE_INCREMENT_PERCENT):
+            slippage = 100.0 - self.SLIPPAGE_INCREMENT_PERCENT * i
             amount_out_min_wei = int(amount_out_min_wei / 100.0 * slippage)
-            logger.print_normal(f"Attempting to swap AVAX with {slippage:.2f}% slippage...")
+            logger.print_normal(
+                f"Attempting to swap AVAX with {self.SLIPPAGE_INCREMENT_PERCENT * i:.2f}% slippage..."
+            )
             if self._process_w3_results(
                 action_str,
                 self.tj_w3.swap_exact_tokens_for_avax(
@@ -205,8 +216,14 @@ class PumpskinTokenProfitManager:
         if not did_succeed:
             total_txns = self.txns
             self.txns = []
+            mult_before = self.max_avax_multiplier
+            self.max_avax_multiplier = max(0.05, self.max_avax_multiplier * 0.5)
+            logger.print_bold(
+                f"Updating conversion multiplier from {mult_before:.2f} to {self.max_avax_multiplier:.2f}"
+            )
             return total_txns
 
+        self.max_avax_multiplier = 1.0
         self.allocator[self.token].maybe_subtract(lp_token * 2, Category.LP)
         self.allocator[self.token].maybe_subtract(profit_token, Category.PROFIT)
         self.stats_logger.lifetime_stats[f"avax_profits"] += profit_avax
@@ -273,10 +290,10 @@ class PumpskinTokenProfitManager:
         max_slippage_percent = 95.0
         action_str = f"Buying {self.token}/AVAX LP Token"
 
-        for i in range(20):
-            slippage = 100.0 - 0.25 * i
+        for i in range(self.MAX_SLIPPAGE_PERCENT / self.SLIPPAGE_INCREMENT_PERCENT):
+            slippage = 100.0 - self.SLIPPAGE_INCREMENT_PERCENT * i
             amount_token_min = int(token_to_wei(amount_token) / 100.0 * slippage)
-            amount_avax_min = int(token_to_wei(amount_avax) / 100.0 * 99.5)
+            amount_avax_min = int(token_to_wei(amount_avax) / 100.0 * slippage)
             logger.print_normal(f"Attempting to buy LP with {slippage:.2f}% slippage...")
             if not self._process_w3_results(
                 action_str,

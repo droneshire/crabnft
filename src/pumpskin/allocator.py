@@ -20,6 +20,7 @@ class TokenAllocator:
 
         self.use_full_balance = config["game_specific_configs"]["use_full_available_balances"]
 
+        self.token = token
         self.token_w3 = token_w3
 
         percent_profit = (
@@ -46,15 +47,16 @@ class TokenAllocator:
             Category.LP: 0.0,
         }
 
-    def maybe_update_full_balance(self, force: bool = False) -> None:
+    def maybe_update_full_balance(self) -> None:
         if not self.use_full_balance:
             logger.print_warn(f"Not updating balances since we are using full balance")
             return
 
-        if self.verbose:
-            logger.print_normal(f"Updating full balance")
-
         amount = self.token_w3.get_balance()
+
+        if self.verbose:
+            logger.print_normal(f"Updating using full balance of {amount:.2f} {self.token}")
+
         for category in ALL_CATEGORIES:
             self._add(category, amount)
 
@@ -73,7 +75,9 @@ class TokenAllocator:
         if self.use_full_balance:
             amount = self.token_w3.get_balance() * self.percents[category]
         else:
-            amount = min(self.token_w3.get_balance(), self.allocations[category])
+            amount = min(
+                self.token_w3.get_balance() * self.percents[category], self.allocations[category]
+            )
 
         if self.verbose:
             logger.print_normal(f"Getting {category}: {amount:.2f}")
@@ -152,19 +156,19 @@ class TokenAllocator:
         return math.isclose(total, 0.0, abs_tol=0.1)
 
     def _add(self, category: Category, amount: float) -> None:
-        category_amount = self.percents[category] * amount
+        category_amount = max(0.0, self.percents[category] * amount)
         if self.verbose:
             logger.print_normal(
-                f"Allocator: Adding {self.percents[category]:.2f}% of {amount:.2f} -> {category_amount:.2f} to {category}"
+                f"Allocator: Adding {(self.percents[category] * 100.0):.2f}% of {amount:.2f} -> {category_amount:.2f} to {category}"
             )
         self.allocations[category] += category_amount
 
 
 class PpieAllocator(TokenAllocator):
-    def __init__(self, token_w3: AvalancheCWeb3Client, config: UserConfig, verbose: bool = False):
+    def __init__(self, token_w3: AvalancheCWeb3Client, config: UserConfig, verbose: bool = True):
         super().__init__(Tokens.PPIE, token_w3, config, verbose)
 
 
 class PotnAllocator(TokenAllocator):
-    def __init__(self, token_w3: AvalancheCWeb3Client, config: UserConfig, verbose: bool = False):
+    def __init__(self, token_w3: AvalancheCWeb3Client, config: UserConfig, verbose: bool = True):
         super().__init__(Tokens.POTN, token_w3, config, verbose)

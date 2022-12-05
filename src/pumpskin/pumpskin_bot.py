@@ -402,7 +402,10 @@ class PumpskinBot:
 
             potn_to_level = level_potn - pumpskin.get("eaten_amount", 100000)
 
-            special_pumps = self.config_mgr.config["game_specific_configs"]["special_pumps"]
+            special_pumps = {
+                int(k): v
+                for k, v in self.config_mgr.config["game_specific_configs"]["special_pumps"].items()
+            }
             is_special = token_id in special_pumps
 
             max_level = self.config_mgr.config["game_specific_configs"]["max_level"]
@@ -649,7 +652,9 @@ class PumpskinBot:
         for token in [Tokens.PPIE, Tokens.POTN]:
             logger.print_ok(f"{token}: {balances[token]:.2f}")
             for category in ALL_CATEGORIES:
-                logger.print_ok_arrow(f"{category}: {self.allocator[token].get_amount(category)}")
+                logger.print_ok_arrow(
+                    f"{category} ({(self.allocator[token].percents[category]* 100.0):.2f}%): {self.allocator[token].get_amount(category)}"
+                )
 
         logger.print_ok_arrow(f"\U0001F383: {num_pumpskins}")
 
