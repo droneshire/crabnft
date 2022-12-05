@@ -190,6 +190,7 @@ class WyndBot:
             logger.print_ok_blue_arrow(f"Found {wynd} in game from list...")
             del ADDR_TO_WYND[self.address]
 
+        did_succeed = True
         if wynds_to_move:
             if not self.nft_w3.is_approved_for_all(self.wynd_w3.contract_checksum_address):
                 tx_hash = self.nft_w3.set_approval_for_all(
@@ -210,7 +211,7 @@ class WyndBot:
 
             logger.print_ok_blue_arrow(f"Moving {len(wynds_to_move)} wynds out of game")
 
-            did_succeed = True
+
             for wynd in wynds_to_move:
                 tx_hash = self.wynd_w3.move_into_inventory([wynd])
                 tx_receipt = self.nft_w3.get_transaction_receipt(tx_hash)
@@ -226,7 +227,6 @@ class WyndBot:
                 else:
                     logger.print_ok(f"Successfully move wynds out of game")
                     logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
-
         else:
             logger.print_normal(f"No NFTs found in game")
 
