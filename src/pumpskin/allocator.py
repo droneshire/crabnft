@@ -49,7 +49,7 @@ class TokenAllocator:
 
     def maybe_update_full_balance(self) -> None:
         if not self.use_full_balance:
-            logger.print_warn(f"Not updating balances since we are using full balance")
+            logger.print_warn(f"Not updating {self.token} balances since we are not using full balance")
             return
 
         amount = self.token_w3.get_balance()
@@ -62,7 +62,7 @@ class TokenAllocator:
 
     def reallocate(self, from_category: Category) -> None:
         if self.verbose:
-            logger.print_normal(f"Reallocating from {from_category}")
+            logger.print_normal(f"Reallocating {self.token} from {from_category}")
 
         for category in ALL_CATEGORIES:
             if category == from_category:
@@ -80,7 +80,7 @@ class TokenAllocator:
             )
 
         if self.verbose:
-            logger.print_normal(f"Getting {category}: {amount:.2f}")
+            logger.print_normal(f"{self.use_full_balance} Getting {category}: {amount:.2f} {self.token}")
         return amount
 
     def get_total(self) -> float:
@@ -92,17 +92,18 @@ class TokenAllocator:
             amount += self.get_amount(category)
 
         if self.verbose:
-            logger.print_normal(f"Total available: {amount:.2f}")
+            logger.print_normal(f"Total available: {amount:.2f} {self.token}")
         return amount
 
     def set_amount(self, category: Category, amount: float) -> None:
+        actual_amount = min(self.token_w3.get_balance(), amount)
         if self.verbose:
-            logger.print_normal(f"Setting allocation category {category} to {amount:.2f}")
-        self.allocations[category] = amount
+            logger.print_normal(f"Setting allocation category {category} to {actual_amount:.2f} {self.token}")
+        self.allocations[category] = actual_amount
 
     def reset(self, category: Category) -> None:
         if self.verbose:
-            logger.print_normal(f"Reseting allocation category: {category}")
+            logger.print_normal(f"Reseting {self.token} allocation category: {category}")
         self.set_amount(category, 0.0)
 
     def maybe_add(self, amount: float) -> None:
@@ -121,7 +122,7 @@ class TokenAllocator:
             return
 
         if self.verbose:
-            logger.print_normal(f"Subtracting {amount:.2f} from {category}")
+            logger.print_normal(f"Subtracting {amount:.2f} {self.token} from {category}")
 
         self.allocations[category] = max(0.0, self.allocations[category] - amount)
 
@@ -137,7 +138,7 @@ class TokenAllocator:
 
         if self.verbose:
             logger.print_normal(
-                f"Updating {category} % from {percent_before * 100.0:.2f} to {percent * 100.0:.2f}%"
+                f"Updating {self.token} {category} % from {percent_before * 100.0:.2f} to {percent * 100.0:.2f}%"
             )
 
         for other_category in to_categories:
@@ -159,7 +160,7 @@ class TokenAllocator:
         category_amount = max(0.0, self.percents[category] * amount)
         if self.verbose:
             logger.print_normal(
-                f"Allocator: Adding {(self.percents[category] * 100.0):.2f}% of {amount:.2f} -> {category_amount:.2f} to {category}"
+                f" {self.token} allocator: Adding {(self.percents[category] * 100.0):.2f}% of {amount:.2f} -> {category_amount:.2f} to {category}"
             )
         self.allocations[category] += category_amount
 
