@@ -196,7 +196,7 @@ class PumpskinTokenProfitManager:
 
         action_str = f"Converting {avax_token:.2f} {self.token} to AVAX"
         did_succeed = False
-        for i in range(self.MAX_SLIPPAGE_PERCENT / self.SLIPPAGE_INCREMENT_PERCENT):
+        for i in range(int(self.MAX_SLIPPAGE_PERCENT / self.SLIPPAGE_INCREMENT_PERCENT)):
             slippage = 100.0 - self.SLIPPAGE_INCREMENT_PERCENT * i
             amount_out_min_wei = int(amount_out_min_wei / 100.0 * slippage)
             logger.print_normal(
@@ -290,7 +290,7 @@ class PumpskinTokenProfitManager:
         max_slippage_percent = 95.0
         action_str = f"Buying {self.token}/AVAX LP Token"
 
-        for i in range(self.MAX_SLIPPAGE_PERCENT / self.SLIPPAGE_INCREMENT_PERCENT):
+        for i in range(int(self.MAX_SLIPPAGE_PERCENT / self.SLIPPAGE_INCREMENT_PERCENT)):
             slippage = 100.0 - self.SLIPPAGE_INCREMENT_PERCENT * i
             amount_token_min = int(token_to_wei(amount_token) / 100.0 * slippage)
             amount_avax_min = int(token_to_wei(amount_avax) / 100.0 * slippage)
