@@ -112,7 +112,7 @@ class PatBot:
         embed.add_embed_field(
             name=f"Rewards Earned", value=f"{rewards_avax:.2f} $AVAX", inline=True
         )
-        lifetime_avax = self.stats_logger.lifetime_stats['avax_harvested']
+        lifetime_avax = self.stats_logger.lifetime_stats["avax_harvested"]
         if action == Action.HARVEST:
             lifetime_avax += rewards_avax
         embed.add_embed_field(

@@ -211,7 +211,6 @@ class WyndBot:
 
             logger.print_ok_blue_arrow(f"Moving {len(wynds_to_move)} wynds out of game")
 
-
             for wynd in wynds_to_move:
                 tx_hash = self.wynd_w3.move_into_inventory([wynd])
                 tx_receipt = self.nft_w3.get_transaction_receipt(tx_hash)
