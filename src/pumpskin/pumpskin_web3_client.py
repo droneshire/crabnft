@@ -136,7 +136,6 @@ class PumpskinContractWeb3Client(AvalancheCWeb3Client):
         Stake PPIE
         """
         try:
-            self.contract.functions.staking(amount_ppie_wei).call()
             return self.sign_and_send_transaction(
                 self.build_contract_transaction(self.contract.functions.staking(amount_ppie_wei))
             )

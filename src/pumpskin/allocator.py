@@ -49,7 +49,9 @@ class TokenAllocator:
 
     def maybe_update_full_balance(self) -> None:
         if not self.use_full_balance:
-            logger.print_warn(f"Not updating {self.token} balances since we are not using full balance")
+            logger.print_warn(
+                f"Not updating {self.token} balances since we are not using full balance"
+            )
             return
 
         amount = self.token_w3.get_balance()
@@ -80,7 +82,9 @@ class TokenAllocator:
             )
 
         if self.verbose:
-            logger.print_normal(f"{self.use_full_balance} Getting {category}: {amount:.2f} {self.token}")
+            logger.print_normal(
+                f"{self.use_full_balance} Getting {category}: {amount:.2f} {self.token}"
+            )
         return amount
 
     def get_total(self) -> float:
@@ -98,7 +102,9 @@ class TokenAllocator:
     def set_amount(self, category: Category, amount: float) -> None:
         actual_amount = min(self.token_w3.get_balance(), amount)
         if self.verbose:
-            logger.print_normal(f"Setting allocation category {category} to {actual_amount:.2f} {self.token}")
+            logger.print_normal(
+                f"Setting allocation category {category} to {actual_amount:.2f} {self.token}"
+            )
         self.allocations[category] = actual_amount
 
     def reset(self, category: Category) -> None:
