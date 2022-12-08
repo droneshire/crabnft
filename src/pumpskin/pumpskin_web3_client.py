@@ -26,7 +26,7 @@ class PumpskinCollectionWeb3Client(AvalancheCWeb3Client):
         os.path.dirname(this_dir), "web3_utils", "abi", "abi-pumpskin-collection.json"
     )
     abi = Web3Client._get_contract_abi_from_file(abi_dir)
-    NODE_URL = "https://nd-649-527-621.p2pify.com/310e4898cbdec5754dfb9abfc8fbd9f4/ext/bc/C/rpc"
+    NODE_URL = "https://rpc.ankr.com/avalanche"
 
     def level_up_pumpkin(self, token_id: int) -> HexStr:
         """

@@ -1,7 +1,6 @@
 import getpass
 import time
 import typing as T
-from yaspin import yaspin
 
 from config_wyndblast import BETA_TEST_LIST, DAILY_ENABLED, PVE_ENABLED
 from utils import logger

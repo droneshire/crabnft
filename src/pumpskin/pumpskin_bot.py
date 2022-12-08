@@ -130,8 +130,12 @@ class PumpskinBot:
         )
 
         self.allocator: T.Dict[Tokens, TokenAllocator] = {
-            Tokens.POTN: PotnAllocator(self.potn_w3, config),
-            Tokens.PPIE: PpieAllocator(self.ppie_w3, config),
+            Tokens.POTN: PotnAllocator(
+                self.potn_w3, config, config["game_specific_configs"]["all_available_potn_balances"]
+            ),
+            Tokens.PPIE: PpieAllocator(
+                self.ppie_w3, config, config["game_specific_configs"]["all_available_ppie_balances"]
+            ),
         }
 
         self.stats_logger: PumpskinLifetimeGameStatsLogger = PumpskinLifetimeGameStatsLogger(
@@ -334,7 +338,11 @@ class PumpskinBot:
             0.1, self.config_mgr.config["game_specific_configs"]["ppie_stake_multiplier"]
         )
 
-        min_ppie_to_stake = calc_ppie_earned_per_day(pumpskins) * multiplier
+        min_ppie_to_stake = (
+            calc_ppie_earned_per_day(pumpskins)
+            * multiplier
+            * self.allocator[Tokens.PPIE].percents[Category.LEVELLING]
+        )
 
         ppie_available_to_stake = self.allocator[Tokens.PPIE].get_amount(Category.LEVELLING)
 

@@ -16,8 +16,8 @@ from utils.security import decrypt_secret
 from pumpskin.pumpskin_bot import PumpskinBot
 
 TIME_BETWEEN_PLAYERS = 10.0
-TIME_BETWEEN_RUNS = 60.0
-TOTALS_UPDATE_TIME = 60.0 * 60.0 * 12
+TIME_BETWEEN_RUNS = 60.0 * 60.0
+TOTALS_UPDATE_TIME = 60.0 * 60.0 * 24
 
 
 def parse_args() -> argparse.Namespace:
