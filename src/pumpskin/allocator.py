@@ -25,7 +25,7 @@ class TokenAllocator:
         self.token_w3 = token_w3
 
         percent_profit = (
-            config["game_specific_configs"][f"percent_{token.lower()}_profit_convert"] / 100.0
+            config["game_specific_configs"][f"percent_{token.lower()}_profit"] / 100.0
         )
         percent_hold = config["game_specific_configs"][f"percent_{token.lower()}_hold"] / 100.0
         percent_levelling = (
