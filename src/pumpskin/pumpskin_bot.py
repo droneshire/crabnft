@@ -341,7 +341,7 @@ class PumpskinBot:
         min_ppie_to_stake = (
             calc_ppie_earned_per_day(pumpskins)
             * multiplier
-            * self.allocator[Tokens.PPIE].percents[Category.LEVELLING]
+            * self.allocator[Tokens.PPIE].percents(Category.LEVELLING)
         )
 
         ppie_available_to_stake = self.allocator[Tokens.PPIE].get_amount(Category.LEVELLING)
@@ -660,8 +660,9 @@ class PumpskinBot:
         for token in [Tokens.PPIE, Tokens.POTN]:
             logger.print_ok(f"{token}: {balances[token]:.2f}")
             for category in ALL_CATEGORIES:
+                percent = self.allocator[token].percents(category) * 100.0
                 logger.print_ok_arrow(
-                    f"{category} ({(self.allocator[token].percents[category]* 100.0):.2f}%): {self.allocator[token].get_amount(category)}"
+                    f"{category} ({percent:.2f}%): {self.allocator[token].get_amount(category)}"
                 )
 
         logger.print_ok_arrow(f"\U0001F383: {num_pumpskins}")
