@@ -310,7 +310,13 @@ class DailyActivitiesGame:
         if current_stage > 1:
             actions: Action = options["selection_detail"]
         else:
-            faction_options = options["selection_detail"][wynd_info["faction"]]
+            faction_options: T.List[Action] = options.get("selection_detail", {}).get(
+                wynd_info.get("faction", ""), []
+            )
+
+            if not faction_options:
+                return False
+
             actions: Action = faction_options[0]
 
         selection: ActivitySelection = self._get_best_action(current_stage, actions, wynd_info)
