@@ -162,8 +162,9 @@ class WyndBot:
             logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
 
     def _check_and_maybe_secure_account(self) -> None:
-        is_active = not self.pve.is_deactivated and not self.daily_activities.is_deactivated
-        if is_active and (self.alias in DAILY_ENABLED or self.alias in PVE_ENABLED):
+        if (
+            not self.pve.is_deactivated and self.alias in PVE_ENABLED
+        ) or self.alias in DAILY_ENABLED:
             return
 
         logger.print_warn(
