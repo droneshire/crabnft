@@ -48,11 +48,9 @@ class TokenAllocator:
             Category.LP: 0.0,
         }
 
-    @property
     def percents(self, category: Category) -> float:
         return self._percents[category]
 
-    @property
     def allocations(self, category: Category) -> float:
         return self._allocations[category]
 
