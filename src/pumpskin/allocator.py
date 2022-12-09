@@ -132,10 +132,14 @@ class TokenAllocator:
                 logger.print_normal(f"Tried to subtract but we're using full balance so ignoring")
             return
 
-        if self.verbose:
-            logger.print_normal(f"Subtracting {amount:.2f} {self.token} from {category}")
+        new_balance = max(0.0, self._allocations[category] - amount)
 
-        self._allocations[category] = max(0.0, self._allocations[category] - amount)
+        if self.verbose:
+            logger.print_normal(
+                f"Subtracting {amount:.2f} {self.token} from {category} [Total: {new_balance}]"
+            )
+
+        self._allocations[category] = new_balance
 
     def update_percent(
         self, category: Category, percent: float, to_categories: T.List[Category] = ALL_CATEGORIES
@@ -169,11 +173,14 @@ class TokenAllocator:
 
     def _add(self, category: Category, amount: float) -> None:
         category_amount = max(0.0, self._percents[category] * amount)
+
+        new_balance = self._allocations[category] + category_amount
+
         if self.verbose:
             logger.print_normal(
-                f" {self.token} allocator: Adding {(self._percents[category] * 100.0):.2f}% of {amount:.2f} -> {category_amount:.2f} to {category}"
+                f" {self.token} allocator: Adding {(self._percents[category] * 100.0):.2f}% of {amount:.2f} -> {category_amount:.2f} to {category} [Total: {new_balance}]"
             )
-        self._allocations[category] += category_amount
+        self._allocations[category] = new_balance
 
 
 class PpieAllocator(TokenAllocator):
