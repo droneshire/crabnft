@@ -623,6 +623,17 @@ class PumpskinBot:
 
             self.txns.extend(v.check_swap_and_lp_and_stake())
 
+    def _print_balances(self) -> None:
+        logger.print_bold(f"{self.user} Balances:")
+
+        for token in [Tokens.PPIE, Tokens.POTN]:
+            logger.print_ok(f"{token}: {balances[token]:.2f}")
+            for category in ALL_CATEGORIES:
+                percent = self.allocator[token].percents(category) * 100.0
+                logger.print_ok_arrow(
+                    f"{category} ({percent:.2f}%): {self.allocator[token].get_amount(category)}"
+                )
+
     def _run_game_loop(self) -> None:
         logger.print_bold(f"\n\nAttempting leveling activities for {self.user}")
 
@@ -656,14 +667,7 @@ class PumpskinBot:
         }
         num_pumpskins = len(final_pumpskins.keys())
 
-        logger.print_bold(f"{self.user} Balances:")
-        for token in [Tokens.PPIE, Tokens.POTN]:
-            logger.print_ok(f"{token}: {balances[token]:.2f}")
-            for category in ALL_CATEGORIES:
-                percent = self.allocator[token].percents(category) * 100.0
-                logger.print_ok_arrow(
-                    f"{category} ({percent:.2f}%): {self.allocator[token].get_amount(category)}"
-                )
+        self._print_balances()
 
         logger.print_ok_arrow(f"\U0001F383: {num_pumpskins}")
 
@@ -671,13 +675,14 @@ class PumpskinBot:
             self._try_to_level_pumpskins(final_pumpskins)
 
         self._check_and_claim_ppie(final_pumpskins)
-        if not self.are_all_pumpskins_level_as_desired:
-            self._check_and_stake_ppie(final_pumpskins)
+        self._check_and_stake_ppie(final_pumpskins)
         # staking PPIE should claim all outstanding POTN in one transaction
         # so we should really not trigger this often
         self._check_and_claim_potn(final_pumpskins)
 
         self._check_and_take_profits_and_stake_lp()
+
+        self._print_balances()
 
         self._send_email_update(num_pumpskins)
         self._check_for_low_gas(num_pumpskins)
