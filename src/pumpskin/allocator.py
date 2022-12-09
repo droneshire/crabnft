@@ -65,6 +65,7 @@ class TokenAllocator:
             logger.print_normal(f"Updating using full balance of {amount:.2f} {self.token}")
 
         for category in ALL_CATEGORIES:
+            self.reset(category)
             self._add(category, amount)
 
     def reallocate(self, from_category: Category) -> None:
