@@ -624,6 +624,11 @@ class PumpskinBot:
             self.txns.extend(v.check_swap_and_lp_and_stake())
 
     def _print_balances(self) -> None:
+        balances = {
+            Tokens.POTN: self.potn_w3.get_balance(),
+            Tokens.PPIE: self.ppie_w3.get_balance(),
+        }
+
         logger.print_bold(f"{self.user} Balances:")
 
         for token in [Tokens.PPIE, Tokens.POTN]:
@@ -661,10 +666,6 @@ class PumpskinBot:
 
         final_pumpskins.update(ordered_pumpskins)
 
-        balances = {
-            Tokens.POTN: self.potn_w3.get_balance(),
-            Tokens.PPIE: self.ppie_w3.get_balance(),
-        }
         num_pumpskins = len(final_pumpskins.keys())
 
         self._print_balances()
