@@ -612,8 +612,15 @@ class PumpskinBot:
         for _, v in self.profit_lp.items():
             self.txns.extend(v.check_and_approve_contracts())
 
-        if not self.game_w3.is_allowed():
-            self.txns.append(self.game_w3.approve())
+        if not self.potn_w3.is_allowed(approval_address=self.game_w3.contract_checksum_address):
+            self.txns.append(
+                self.potn_w3.approve(approval_address=self.game_w3.contract_checksum_address)
+            )
+
+        if not self.ppie_w3.is_allowed(approval_address=self.game_w3.contract_checksum_address):
+            self.txns.append(
+                self.ppie_w3.approve(approval_address=self.game_w3.contract_checksum_address)
+            )
 
     def _check_and_take_profits_and_stake_lp(self) -> None:
         logger.print_bold(f"\n\nAttempting profit and LP activities for {self.user}")

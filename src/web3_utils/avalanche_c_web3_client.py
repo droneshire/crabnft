@@ -33,10 +33,14 @@ class AvalancheCWeb3Client(Web3Client):
         self.w3.middleware_onion.inject(geth_poa_middleware, layer=0)
         return self
 
-    def approve(self, max_amount: int = MAX_UINT256) -> HexStr:
+    def approve(self, approval_address: Address = None, max_amount: int = MAX_UINT256) -> HexStr:
+        if approval_address is None:
+            approval_address = self.contract_checksum_address
+
+        address = Web3.toChecksumAddress(approval_address)
         try:
             tx: TxParams = self.build_contract_transaction(
-                self.contract.functions.approve(self.contract_checksum_address, max_amount)
+                self.contract.functions.approve(address, max_amount)
             )
             return self.sign_and_send_transaction(tx)
         except KeyboardInterrupt:
@@ -57,11 +61,15 @@ class AvalancheCWeb3Client(Web3Client):
             logger.print_fail(f"Failed to unapprove contract")
             return ""
 
-    def is_allowed(self) -> bool:
+    def is_allowed(self, approval_address: Address = None) -> bool:
+        if approval_address is None:
+            approval_address = self.user_address
+
+        address = Web3.toChecksumAddress(approval_address)
         try:
             return (
                 self.contract.functions.allowance(
-                    self.user_address, self.contract_checksum_address
+                    approval_address, self.contract_checksum_address
                 ).call()
                 > 0
             )
