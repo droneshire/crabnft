@@ -39,16 +39,16 @@ class AvalancheCWeb3Client(Web3Client):
             approval_address = self.contract_checksum_address
 
         address = Web3.toChecksumAddress(approval_address)
-        try:
-            tx: TxParams = self.build_contract_transaction(
-                self.contract.functions.approve(address, max_amount)
-            )
-            return self.sign_and_send_transaction(tx)
-        except KeyboardInterrupt:
-            raise
-        except:
-            logger.print_fail(f"Failed to approve contract")
-            return ""
+        # try:
+        tx: TxParams = self.build_contract_transaction(
+            self.contract.functions.approve(address, max_amount)
+        )
+        return self.sign_and_send_transaction(tx)
+        # except KeyboardInterrupt:
+        #     raise
+        # except:
+        #     logger.print_fail(f"Failed to approve contract")
+        #     return ""
 
     def unapprove(self) -> HexStr:
         try:
@@ -64,16 +64,11 @@ class AvalancheCWeb3Client(Web3Client):
 
     def is_allowed(self, approval_address: Address = None) -> bool:
         if approval_address is None:
-            approval_address = self.user_address
+            approval_address = self.contract_checksum_address
 
         address = Web3.toChecksumAddress(approval_address)
         try:
-            return (
-                self.contract.functions.allowance(
-                    approval_address, self.contract_checksum_address
-                ).call()
-                > 0
-            )
+            return self.contract.functions.allowance(self.user_address, address).call() > 0
         except KeyboardInterrupt:
             raise
         except:

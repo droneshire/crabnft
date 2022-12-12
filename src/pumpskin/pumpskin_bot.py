@@ -613,14 +613,26 @@ class PumpskinBot:
             self.txns.extend(v.check_and_approve_contracts())
 
         if not self.potn_w3.is_allowed(approval_address=self.game_w3.contract_checksum_address):
+            action_str = f"Approving game contract to use POTN"
             self.txns.append(
-                self.potn_w3.approve(approval_address=self.game_w3.contract_checksum_address)
+                self._process_w3_results(
+                    action_str,
+                    self.potn_w3.approve(approval_address=self.game_w3.contract_checksum_address),
+                )
             )
+        else:
+            logger.print_ok_arrow(f"Game contract already approved to use POTN")
 
         if not self.ppie_w3.is_allowed(approval_address=self.game_w3.contract_checksum_address):
+            action_str = f"Approving game contract to use POTN"
             self.txns.append(
-                self.ppie_w3.approve(approval_address=self.game_w3.contract_checksum_address)
+                self._process_w3_results(
+                    action_str,
+                    self.ppie_w3.approve(approval_address=self.game_w3.contract_checksum_address),
+                )
             )
+        else:
+            logger.print_ok_arrow(f"Game contract already approved to use PPIE")
 
     def _check_and_take_profits_and_stake_lp(self) -> None:
         logger.print_bold(f"\n\nAttempting profit and LP activities for {self.user}")
