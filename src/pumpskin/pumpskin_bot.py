@@ -612,6 +612,8 @@ class PumpskinBot:
         for _, v in self.profit_lp.items():
             self.txns.extend(v.check_and_approve_contracts())
 
+        self.txns.append(self.game_w3.approve())
+
     def _check_and_take_profits_and_stake_lp(self) -> None:
         logger.print_bold(f"\n\nAttempting profit and LP activities for {self.user}")
         for _, v in self.profit_lp.items():
