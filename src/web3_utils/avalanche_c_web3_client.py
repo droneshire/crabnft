@@ -3,6 +3,7 @@ from __future__ import annotations
 from eth_typing import Address
 from utils.price import Avax
 from eth_typing.encoding import HexStr
+from web3 import Web3
 from web3.middleware import geth_poa_middleware
 from web3.types import TxParams, Wei
 from web3_utils.web3_client import Web3Client
