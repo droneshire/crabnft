@@ -1,36 +1,34 @@
 import os
 import typing as T
 
+from eth_typing import Address
+
 from utils import logger
 from utils.discord import DISCORD_WEBHOOK_URL
 from utils.file_util import make_sure_path_exists
 
 
 class NftCollectionAnalyzerBase:
-    ATTRIBUTES_FILE = "attributes.json"
-    COLLECTION_FILE = "collection.json"
-    RARITY_FILE = "rarity.json"
     ATTRIBUTES: T.Dict[str, T.Dict[T.Any, T.Any]] = {}
     MAX_TOTAL_SUPPLY = 0
+    DISCORD_WEBHOOK = ""
+    CONTRACT_ADDRESS: Address = ""
 
     def __init__(
         self,
         collection_name: str,
-        address: Address,
-        discord_webhook: str,
-        attributes_dict: T.Dict[str, T.Dict[T.Any, T.Any]],
     ):
         self.collection_name = collection_name
-        self.address = address
-        self.discord_webhook = DISCORD_WEBHOOK_URL[discord_webhook]
+        self.address = self.CONTRACT_ADDRESS
+        self.discord_webhook = DISCORD_WEBHOOK_URL[self.DISCORD_WEBHOOK]
 
         this_dir = os.path.dirname(os.path.abspath(__file__))
         collection_dir = os.path.join(this_dir, "collections", collection_name)
 
         self.files = {
-            "attributes": os.path.join(collection_dir, f"{collection_name}_{self.ATTRIBUTES_FILE}"),
-            "collection": os.path.join(collection_dir, f"{collection_name}_{self.COLLECTION_FILE}"),
-            "rarity": os.path.join(collection_dir, f"{collection_name}_{self.RARITY_FILE}"),
+            "attributes": os.path.join(collection_dir, f"{collection_name}_attributes.json"),
+            "collection": os.path.join(collection_dir, f"{collection_name}_collection.json"),
+            "rarity": os.path.join(collection_dir, f"{collection_name}_rarity.json"),
         }
 
         for path in self.files.keys():
