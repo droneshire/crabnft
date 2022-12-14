@@ -221,8 +221,8 @@ class PumpskinTokenProfitManager:
                 logger.print_warn(f"Unable to swap {self.token} to AVAX...")
 
         if not did_succeed:
-            total_txns = self.txns
             self.txns = []
+            total_txns = self.txns
             mult_before = self.max_avax_multiplier
             self.max_avax_multiplier = max(0.05, self.max_avax_multiplier * 0.5)
             logger.print_bold(
