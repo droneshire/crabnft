@@ -8,7 +8,7 @@ import time
 from config_admin import GMAIL
 from config_pumpskin import USERS
 from joepegs.joepegs_api import JOEPEGS_ICON_URL, JOEPEGS_URL
-from pumpskin.pumpskin_bot import PumpskinBot
+from pumpskin.bot import PumpskinBot
 from pumpskin.utils import ATTRIBUTES_FILE, PUMPSKIN_ATTRIBUTES
 from pumpskin.utils import (
     calc_potn_from_level,

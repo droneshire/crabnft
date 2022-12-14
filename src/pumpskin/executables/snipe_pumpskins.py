@@ -15,7 +15,7 @@ from utils import discord
 from utils import logger
 from utils.email import Email, get_email_accounts_from_password
 from utils.security import decrypt_secret
-from pumpskin.pumpskin_bot import PumpskinBot
+from pumpskin.bot import PumpskinBot
 from pumpskin.pumpskin_web3_client import PumpskinNftWeb3Client
 from pumpskin.utils import ATTRIBUTES_FILE, calculate_rarity_for_collection
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client

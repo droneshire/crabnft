@@ -13,7 +13,7 @@ from utils import discord
 from utils import logger
 from utils.email import Email, get_email_accounts_from_password
 from utils.security import decrypt_secret
-from pumpskin.pumpskin_bot import PumpskinBot
+from pumpskin.bot import PumpskinBot
 
 TIME_BETWEEN_PLAYERS = 10.0
 TIME_BETWEEN_RUNS = 60.0 * 60.0

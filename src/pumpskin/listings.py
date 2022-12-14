@@ -2,7 +2,7 @@ import json
 
 from config_admin import ADMIN_ADDRESS
 from joepegs.joepegs_api import JoePegsClient, JOEPEGS_URL
-from pumpskin.pumpskin_bot import PumpskinBot
+from pumpskin.bot import PumpskinBot
 from pumpskin.pumpskin_web3_client import PumpskinCollectionWeb3Client, PumpskinNftWeb3Client
 from pumpskin.types import StakedPumpskin
 from pumpskin.utils import RARITY_FILE, get_json_path

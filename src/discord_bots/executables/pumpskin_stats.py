@@ -5,7 +5,7 @@ import os
 from config_admin import DISCORD_BOT_SERVER, DISCORD_BOT_TOKEN
 from utils import logger
 from discord_bots.command_bots import default, pumpskin
-from pumpskin.pumpskin_bot import PumpskinBot
+from pumpskin.bot import PumpskinBot
 from pumpskin.utils import get_mint_stats
 
 intents: discord.Intents = discord.Intents.default()
