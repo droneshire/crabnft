@@ -357,9 +357,7 @@ class PumpskinBot:
                     ppie_available_to_stake, Category.LEVELLING
                 )
                 # staking PPIE also claims POTN, so track that as POTN we've claimed
-                ppie_available = self.allocator[Tokens.POTN].maybe_subtract(
-                    total_claimable_potn, Category.LEVELLING
-                )
+                ppie_available = self.allocator[Tokens.POTN].maybe_add(total_claimable_potn)
         else:
             logger.print_warn(
                 f"Not going to stake $PPIE since it is below our threshold ({ppie_available_to_stake:.2f} < {min_ppie_to_stake:.2f})"

@@ -3,6 +3,7 @@ import datetime
 import getpass
 import os
 import tempfile
+import time
 
 from config_admin import GMAIL
 from config_pumpskin import USERS
@@ -26,11 +27,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--user", choices=list(USERS.keys()) + ["ALL"], default="ALL")
     parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument(
-        "--target-date",
-        help="date format %m/%d/%Y",
-        default=datetime.date.today().strftime("%m/%d/%Y"),
-    )
+    parser.add_argument("--quiet", action="store_true")
     return parser.parse_args()
 
 
@@ -55,7 +52,11 @@ def create_patch_csv(csv_file: str, bot: PumpskinBot, dry_run: bool = False) -> 
     for pumpskin in pumpskins:
         row = {}
         row["Pumpskin ID"] = pumpskin
-        pumpskin_info: StakedPumpskin = bot.collection_w3.get_staked_pumpskin_info(pumpskin)
+        for _ in range(3):
+            pumpskin_info: StakedPumpskin = bot.collection_w3.get_staked_pumpskin_info(pumpskin)
+            if pumpskin_info:
+                break
+            time.sleep(3.0)
         row["NFT Image URL"] = bot.pumpskin_w2.get_pumpskin_image(pumpskin)
         level = int(pumpskin_info["kg"] / 100)
         row["Level"] = level
@@ -118,6 +119,7 @@ def send_patch_stats() -> None:
             encrypt_password,
             "",
             dry_run=args.dry_run,
+            quiet=args.quiet,
             update_config=True,
         )
 
@@ -126,7 +128,6 @@ def send_patch_stats() -> None:
         ) as csv_file:
             create_patch_csv(csv_file.name, bot, dry_run=args.dry_run)
 
-            target_date = datetime.datetime.strptime(args.target_date, "%m/%d/%Y").date()
             message = f"Hi {user.upper()},\n"
             message += f"Congrats on your Pumpskin Patch!\n"
             message += f"See attached stats on your Pumpskin Patch!\n"
