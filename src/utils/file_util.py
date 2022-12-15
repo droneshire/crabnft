@@ -2,10 +2,11 @@ import os
 
 
 def make_sure_path_exists(path: str) -> None:
-    path = os.path.dirname(path) if os.path.isfile(path) else path
+    path = os.path.dirname(path) if len(path.split(".")) > 1 else path
 
-    root = ""
-    for directory in path.split("/"):
+    root = "/"
+    dirs = path.split("/")[1:]
+    for directory in dirs:
         section = os.path.join(root, directory)
         root = section
 

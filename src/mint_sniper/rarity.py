@@ -1,4 +1,7 @@
+import copy
+import json
 import os
+import requests
 import typing as T
 
 from eth_typing import Address
@@ -31,8 +34,23 @@ class NftCollectionAnalyzerBase:
             "rarity": os.path.join(collection_dir, f"{collection_name}_rarity.json"),
         }
 
-        for path in self.files.keys():
+        for path in self.files.values():
             make_sure_path_exists(path)
+
+    def _get_collection_info(self, token_id: int) -> T.Dict[T.Any, T.Any]:
+        info = {}
+        url = self.get_collection_uri(token_id)
+        return self._get_request(url)
+
+    def _get_request(
+        self, url: str, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+    ) -> T.Any:
+        try:
+            return requests.request("GET", url, params=params, headers=headers, timeout=5.0).json()
+        except KeyboardInterrupt:
+            raise
+        except:
+            return {}
 
     def get_collection_uri(self) -> str:
         """
@@ -40,17 +58,12 @@ class NftCollectionAnalyzerBase:
         """
         raise NotImplementedError
 
-    def _get_collection_info(self, token_id: int) -> T.Dict[T.Any, T.Any]:
-        info = {}
-        url = self.get_collection_uri()
-        return info
-
-    def get_nft_collection_attributes(self) -> T.Dict[int, float]:
+    def save_nft_collection_attributes(self) -> None:
         collection_info = {}
         collection_stats = copy.deepcopy(self.ATTRIBUTES)
 
         for nft in range(self.MAX_TOTAL_SUPPLY):
-            collection_info[nft] = self.get_collection_info(nft)
+            collection_info[nft] = self._get_collection_info(nft)
             logger.print_normal(f"Processing nft {nft}...")
             for attribute in collection_info[nft].get("attributes", []):
                 if attribute["trait_type"] not in collection_stats:
@@ -121,12 +134,12 @@ class NftCollectionAnalyzerBase:
         Download info from the web source for a particular nft in the collection
         and get its attributes rarity
         """
-        nft_info = self.get_collection_info(token_id)
+        nft_info = self._get_collection_info(token_id)
 
         with open(self.files["attributes"], "r") as infile:
             collection_stats = json.load(infile)
 
-        return calculate_rarity(token_id, nft_info, collection_stats)
+        return self.calculate_rarity(token_id, nft_info, collection_stats)
 
     def get_full_collection_rarity(
         self,
@@ -140,16 +153,20 @@ class NftCollectionAnalyzerBase:
         """
         collection_rarity = {}
 
-        assert os.path.isfile(self.files["attributes"]), "Missing attribute file!"
+        if not os.path.isfile(self.files["attributes"]):
+            raise ValueError("missing attributes file")
+
         with open(self.files["attributes"], "r") as infile:
             collection_stats = json.load(infile)
 
-        assert os.path.isfile(self.files["attributes"]), "Missing collection file!"
+        if not os.path.isfile(self.files["attributes"]):
+            raise ValueError("missing collections file")
+
         with open(self.files["collection"], "r") as infile:
             collection_traits = json.load(infile)
 
         for nft in range(self.MAX_TOTAL_SUPPLY):
-            collection_rarity[nft] = calculate_rarity(
+            collection_rarity[nft] = self.calculate_rarity(
                 nft, collection_traits[str(nft)], collection_stats
             )
 
