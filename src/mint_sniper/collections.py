@@ -51,8 +51,8 @@ class AhmcMint(NftCollectionAnalyzerBase):
     DISCORD_WEBHOOK = "DEEP_ALPHA_MINT_MINER"
     CONTRACT_ADDRESS: Address = "0x66F703e48F68C03FFFEE0eAee7BE2fE411cB3713"
 
-    def __init__(self):
-        super().__init__("avalanche_hills_muscle_cars")
+    def __init__(self, force: bool = False):
+        super().__init__("avalanche_hills_muscle_cars", force)
         self.w3: AhmcWeb3Client = T.cast(
             AhmcWeb3Client,
             (

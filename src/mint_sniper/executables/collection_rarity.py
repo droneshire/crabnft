@@ -47,7 +47,7 @@ def get_mint_stats(collection: str, download_and_parse: bool) -> None:
     class_name = collections.Collections(args.collection).value
     class_obj = getattr(sys.modules[inspect.getmodule(collections).__name__], class_name)
 
-    mint_collection = class_obj()
+    mint_collection = class_obj(download_and_parse)
 
     logger.print_bold(
         f"Collecting mint attribute data and rarity for {' '.join(mint_collection.collection_name.split('_'))}"

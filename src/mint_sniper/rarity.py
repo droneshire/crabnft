@@ -22,6 +22,7 @@ class NftCollectionAnalyzerBase:
     def __init__(
         self,
         collection_name: str,
+        force: bool,
     ):
         self.collection_name = collection_name
         self.address = self.CONTRACT_ADDRESS
@@ -38,13 +39,21 @@ class NftCollectionAnalyzerBase:
         }
 
         csv_file = os.path.join(collection_dir, f"{collection_name}_rarity.csv")
+
+        if force and os.path.isfile(csv_file):
+            os.remove(csv_file)
+
         csv_header = ["NFT ID"]
         for k in self.ATTRIBUTES.keys():
             csv_header.append(f"{k} trait")
             csv_header.append(f"{k} rarity %")
         csv_header.append(f"Overall Rarity %")
+        csv_header.append(f"Rank")
         self.csv = CsvLogger(csv_file, csv_header)
+
         for path in self.files.values():
+            if force and os.path.isfile(path):
+                os.remove(path)
             make_sure_path_exists(path)
 
     def _get_collection_info(self, token_id: int) -> T.Dict[T.Any, T.Any]:
@@ -148,7 +157,7 @@ class NftCollectionAnalyzerBase:
             nft_rarity[trait] = {"trait": nft_traits[trait], "rarity": rarity}
 
         nft_rarity["Overall"] = {
-            "trait": None,
+            "rank": -1,
             "rarity": float(total_trait_count) / (total_count * len(collection_stats.keys())),
         }
 
@@ -202,6 +211,11 @@ class NftCollectionAnalyzerBase:
             )
         )
 
+        for token_id, rank in zip(
+            sorted_collection_rarity.keys(), range(1, self.MAX_TOTAL_SUPPLY + 1)
+        ):
+            sorted_collection_rarity[token_id]["Overall"]["rank"] = rank
+
         if save_to_disk and self.files["rarity"] is not None:
             with open(self.files["rarity"], "w") as outfile:
                 json.dump(
@@ -212,9 +226,19 @@ class NftCollectionAnalyzerBase:
 
         return sorted_collection_rarity
 
-    def write_rarity_to_csv(self, rarity: T.Dict[str, T.Dict[int, float]]) -> None:
+    def write_rarity_to_csv(self, collection_rarity: T.Dict[str, T.Dict[int, float]]) -> None:
         logger.print_bold(f"Writing rarity stats to {self.csv.csv_file}...")
-        for k, v in rarity.items():
-
+        for token_id in range(self.MAX_TOTAL_SUPPLY):
+            row = {}
+            row["NFT ID"] = token_id
+            overall_rarity = 0.0
+            for trait, info in collection_rarity[token_id].items():
+                if trait == "Overall":
+                    row["Overall Rarity %"] = info["rarity"] * 100.0
+                    row["Rank"] = info["rank"]
+                    continue
+                rarity_percent = info["rarity"] * 100.0
+                row[f"{trait} rarity %"] = f"{rarity_percent:.2f}"
+                row[f"{trait} trait"] = f"{info['trait']}"
             self.csv.write(row)
         logger.print_ok_arrow(f"SUCCESS")
