@@ -47,7 +47,7 @@ class AhmcMint(NftCollectionAnalyzerBase):
         "Spoiler": {},
         "Wheels": {},
     }
-    MAX_TOTAL_SUPPLY = 10
+    MAX_TOTAL_SUPPLY = 10000
     DISCORD_WEBHOOK = "DEEP_ALPHA_MINT_MINER"
     CONTRACT_ADDRESS: Address = "0x66F703e48F68C03FFFEE0eAee7BE2fE411cB3713"
 
