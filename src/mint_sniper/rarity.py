@@ -2,6 +2,7 @@ import copy
 import json
 import os
 import requests
+import time
 import typing as T
 
 from concurrent.futures import ThreadPoolExecutor, wait, ALL_COMPLETED
@@ -18,6 +19,7 @@ class NftCollectionAnalyzerBase:
     MAX_TOTAL_SUPPLY = 0
     DISCORD_WEBHOOK = ""
     CONTRACT_ADDRESS: Address = ""
+    MAX_PER_BATCH = 50
 
     def __init__(
         self,
@@ -27,7 +29,7 @@ class NftCollectionAnalyzerBase:
         self.collection_name = collection_name
         self.address = self.CONTRACT_ADDRESS
         self.discord_webhook = DISCORD_WEBHOOK_URL[self.DISCORD_WEBHOOK]
-        self.pool = ThreadPoolExecutor(max_workers=10)
+        self.pool = ThreadPoolExecutor(max_workers=20)
 
         this_dir = os.path.dirname(os.path.abspath(__file__))
         collection_dir = os.path.join(this_dir, "collections", collection_name)
@@ -56,25 +58,30 @@ class NftCollectionAnalyzerBase:
                 os.remove(path)
             make_sure_path_exists(path)
 
-    def _get_collection_info(self, token_id: int) -> T.Dict[T.Any, T.Any]:
-        info = {}
-        url = self.get_token_uri(token_id)
-        return self._get_request(url)
+    def _get_token_info(self, token_id: int) -> T.Dict[T.Any, T.Any]:
+        return self._get_request(self.get_token_uri(token_id))
+
+    def _get_collection_info(self, collection_urls: T.List[str], parallelize: bool=True) -> T.List[T.Dict[T.Any, T.Any]]:
+        results = []
+        if parallelize:
+            pool_results = [self.pool.submit(self._get_request, url) for url in collection_urls]
+            wait(pool_results)
+            results.extend([r.result() for r in pool_results])
+        else:
+            for url in collection_urls:
+                results.append(self._get_request(url))
+        return results
 
     @staticmethod
     def _get_request(
         url: str, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
     ) -> T.Any:
         try:
-            return requests.request("GET", url, params=params, headers=headers, timeout=5.0).json()
+            return requests.request("GET", url, params=params, headers=headers, timeout=8.0).json()
         except KeyboardInterrupt:
             raise
         except:
             return {}
-
-    def _get_collection_info(self, token_id: str) -> T.Dict[T.Any, T.Any]:
-
-        return self._get_info(token_id, self.get_collection_uri())
 
     def get_token_uri(self, token_id: int) -> str:
         """
@@ -91,23 +98,25 @@ class NftCollectionAnalyzerBase:
         ]
 
         logger.print_ok_blue(f"Have URLs for {self.MAX_TOTAL_SUPPLY} NFTs...")
-        pool_results = [self.pool.submit(self._get_request, url) for url in collection_urls]
-        wait(pool_results, timeout=10, return_when=ALL_COMPLETED)
 
-        for result in pool_results:
-            nft_info = result.result()
-            nft = int(nft_info["tokenId"])
-            collection_info[nft] = nft_info
-            logger.print_normal(f"Processing nft {nft}...")
-            for attribute in collection_info[nft].get("attributes", []):
-                if attribute["trait_type"] not in collection_stats:
-                    logger.print_fail(f"Unknown attribute: {attribute['trait_type']}")
-                    continue
-                trait_type = attribute["trait_type"]
-                trait_value = attribute["value"]
-                collection_stats[trait_type][trait_value] = (
-                    collection_stats[trait_type].get(trait_value, 0) + 1
+        assert self.MAX_TOTAL_SUPPLY % self.MAX_PER_BATCH == 0, "Batch amount mismatch!"
+
+        for index in range(int(self.MAX_TOTAL_SUPPLY / self.MAX_PER_BATCH)):
+            did_succeed = False
+            offset = index * self.MAX_PER_BATCH
+            logger.print_normal(f"Range: {offset}-{offset + self.MAX_PER_BATCH}")
+            for i in range(1, 6):
+                did_succeed = self.get_nft_attributes(
+                    collection_urls[offset : offset + self.MAX_PER_BATCH],
+                    collection_stats,
+                    collection_info,
                 )
+                if did_succeed:
+                    break
+                logger.print_fail_arrow(f"Failed to get full range")
+                time.sleep(i * 4.0)
+            if not did_succeed:
+                raise TimeoutError("Timed out during requests!")
 
         with open(self.files["attributes"], "w") as outfile:
             json.dump(
@@ -123,6 +132,33 @@ class NftCollectionAnalyzerBase:
                 indent=4,
                 sort_keys=True,
             )
+
+    def get_nft_attributes(
+        self,
+        collection_urls: T.List[str],
+        collection_stats: T.Dict[str, T.Any],
+        collection_info: T.Dict[T.Any, T.Any],
+    ) -> bool:
+        results = self._get_collection_info(collection_urls, parallelize=True)
+
+        for nft_info in results:
+            if not nft_info:
+                logger.print_warn(f"Skipping empty result...")
+                return False
+
+            nft = int(nft_info["tokenId"])
+            collection_info[nft] = nft_info
+            logger.print_normal(f"Processing nft {nft}...")
+            for attribute in collection_info[nft].get("attributes", []):
+                if attribute["trait_type"] not in collection_stats:
+                    logger.print_fail(f"Unknown attribute: {attribute['trait_type']}")
+                    return False
+                trait_type = attribute["trait_type"]
+                trait_value = attribute["value"]
+                collection_stats[trait_type][trait_value] = (
+                    collection_stats[trait_type].get(trait_value, 0) + 1
+                )
+        return True
 
     def calculate_rarity(
         self,
@@ -168,7 +204,7 @@ class NftCollectionAnalyzerBase:
         Download info from the web source for a particular nft in the collection
         and get its attributes rarity
         """
-        nft_info = self._get_collection_info(token_id)
+        nft_info = self._get_token_info(token_id)
 
         with open(self.files["attributes"], "r") as infile:
             collection_stats = json.load(infile)

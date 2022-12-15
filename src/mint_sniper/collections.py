@@ -10,6 +10,7 @@ from web3.types import TxParams, Wei
 
 from config_admin import ADMIN_ADDRESS
 from mint_sniper.rarity import NftCollectionAnalyzerBase
+from utils import logger
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.web3_client import Web3Client
 
@@ -63,11 +64,13 @@ class AhmcMint(NftCollectionAnalyzerBase):
             ),
         )
 
+        self.collection_uri = self.w3.get_token_uri(0).split("?")[0]
+
     def get_token_uri(self, token_id: int) -> str:
         """
         Should be overridden by derived class to query the contract for the ipfs-like base URI
         """
-        return self.w3.get_token_uri(token_id)
+        return f"{self.collection_uri}?id={token_id}"
 
 
 class Collections(Enum):
