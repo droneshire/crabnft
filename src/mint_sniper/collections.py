@@ -63,7 +63,7 @@ class AhmcMint(NftCollectionAnalyzerBase):
             ),
         )
 
-    def get_collection_uri(self, token_id: int) -> str:
+    def get_token_uri(self, token_id: int) -> str:
         """
         Should be overridden by derived class to query the contract for the ipfs-like base URI
         """

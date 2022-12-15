@@ -15,7 +15,7 @@ def parse_args() -> argparse.Namespace:
     log_dir = logger.get_logging_dir("mint_sniper")
     parser.add_argument("--log-dir", default=log_dir)
     parser.add_argument("--collection", choices=[c.value for c in collections.Collections])
-    parser.add_argument("--force", store_action=True)
+    parser.add_argument("--force", action="store_true")
 
     return parser.parse_args()
 
@@ -54,16 +54,18 @@ def get_mint_stats(collection: str, download_and_parse: bool) -> None:
     )
     if not download_and_parse:
         try:
-            mint_collection.get_full_collection_rarity(save_to_disk=True)
+            rarity = mint_collection.get_full_collection_rarity(save_to_disk=True)
         except ValueError:
             download_and_parse = True
 
     if download_and_parse:
         logger.print_normal(f"Processing data from web source...")
         mint_collection.save_nft_collection_attributes()
-        mint_collection.get_full_collection_rarity(save_to_disk=True)
+        rarity = mint_collection.get_full_collection_rarity(save_to_disk=True)
 
     logger.print_ok_arrow(f"Done!")
+
+    mint_collection.write_rarity_to_csv(rarity)
 
 
 if __name__ == "__main__":
@@ -76,4 +78,4 @@ if __name__ == "__main__":
         "sniper",
     )
 
-    get_mint_stats(args.collection)
+    get_mint_stats(args.collection, args.force)

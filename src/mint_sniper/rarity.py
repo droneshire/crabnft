@@ -4,9 +4,11 @@ import os
 import requests
 import typing as T
 
+from concurrent.futures import ThreadPoolExecutor, wait, ALL_COMPLETED
 from eth_typing import Address
 
 from utils import logger
+from utils.csv_logger import CsvLogger
 from utils.discord import DISCORD_WEBHOOK_URL
 from utils.file_util import make_sure_path_exists
 
@@ -24,6 +26,7 @@ class NftCollectionAnalyzerBase:
         self.collection_name = collection_name
         self.address = self.CONTRACT_ADDRESS
         self.discord_webhook = DISCORD_WEBHOOK_URL[self.DISCORD_WEBHOOK]
+        self.pool = ThreadPoolExecutor(max_workers=10)
 
         this_dir = os.path.dirname(os.path.abspath(__file__))
         collection_dir = os.path.join(this_dir, "collections", collection_name)
@@ -34,16 +37,24 @@ class NftCollectionAnalyzerBase:
             "rarity": os.path.join(collection_dir, f"{collection_name}_rarity.json"),
         }
 
+        csv_file = os.path.join(collection_dir, f"{collection_name}_rarity.csv")
+        csv_header = ["NFT ID"]
+        for k in self.ATTRIBUTES.keys():
+            csv_header.append(f"{k} trait")
+            csv_header.append(f"{k} rarity %")
+        csv_header.append(f"Overall Rarity %")
+        self.csv = CsvLogger(csv_file, csv_header)
         for path in self.files.values():
             make_sure_path_exists(path)
 
     def _get_collection_info(self, token_id: int) -> T.Dict[T.Any, T.Any]:
         info = {}
-        url = self.get_collection_uri(token_id)
+        url = self.get_token_uri(token_id)
         return self._get_request(url)
 
+    @staticmethod
     def _get_request(
-        self, url: str, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+        url: str, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
     ) -> T.Any:
         try:
             return requests.request("GET", url, params=params, headers=headers, timeout=5.0).json()
@@ -52,7 +63,11 @@ class NftCollectionAnalyzerBase:
         except:
             return {}
 
-    def get_collection_uri(self) -> str:
+    def _get_collection_info(self, token_id: str) -> T.Dict[T.Any, T.Any]:
+
+        return self._get_info(token_id, self.get_collection_uri())
+
+    def get_token_uri(self, token_id: int) -> str:
         """
         Should be overridden by derived class to query the contract for the ipfs-like base URI
         """
@@ -62,8 +77,18 @@ class NftCollectionAnalyzerBase:
         collection_info = {}
         collection_stats = copy.deepcopy(self.ATTRIBUTES)
 
-        for nft in range(self.MAX_TOTAL_SUPPLY):
-            collection_info[nft] = self._get_collection_info(nft)
+        collection_urls = [
+            self.get_token_uri(token_id) for token_id in range(self.MAX_TOTAL_SUPPLY)
+        ]
+
+        logger.print_ok_blue(f"Have URLs for {self.MAX_TOTAL_SUPPLY} NFTs...")
+        pool_results = [self.pool.submit(self._get_request, url) for url in collection_urls]
+        wait(pool_results, timeout=10, return_when=ALL_COMPLETED)
+
+        for result in pool_results:
+            nft_info = result.result()
+            nft = int(nft_info["tokenId"])
+            collection_info[nft] = nft_info
             logger.print_normal(f"Processing nft {nft}...")
             for attribute in collection_info[nft].get("attributes", []):
                 if attribute["trait_type"] not in collection_stats:
@@ -144,7 +169,7 @@ class NftCollectionAnalyzerBase:
     def get_full_collection_rarity(
         self,
         save_to_disk: bool = False,
-    ) -> T.Dict[int, float]:
+    ) -> T.Dict[str, T.Dict[int, float]]:
         """
         Use cached collection stats and collection attributes to calculate rarity
         for the entire collection and optionally save that to disk.
@@ -186,3 +211,10 @@ class NftCollectionAnalyzerBase:
                 )
 
         return sorted_collection_rarity
+
+    def write_rarity_to_csv(self, rarity: T.Dict[str, T.Dict[int, float]]) -> None:
+        logger.print_bold(f"Writing rarity stats to {self.csv.csv_file}...")
+        for k, v in rarity.items():
+
+            self.csv.write(row)
+        logger.print_ok_arrow(f"SUCCESS")
