@@ -61,7 +61,9 @@ class NftCollectionAnalyzerBase:
     def _get_token_info(self, token_id: int) -> T.Dict[T.Any, T.Any]:
         return self._get_request(self.get_token_uri(token_id))
 
-    def _get_collection_info(self, collection_urls: T.List[str], parallelize: bool=True) -> T.List[T.Dict[T.Any, T.Any]]:
+    def _get_collection_info(
+        self, collection_urls: T.List[str], parallelize: bool = True
+    ) -> T.List[T.Dict[T.Any, T.Any]]:
         results = []
         if parallelize:
             pool_results = [self.pool.submit(self._get_request, url) for url in collection_urls]

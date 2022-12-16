@@ -196,6 +196,11 @@ class PumpskinTokenProfitManager:
         if (
             avax_out_wei <= 0.0
             or (lp_avax <= 0.0 and is_contributing_to_lp)
+            or (
+                lp_avax < self.config["min_avax_to_profit"]
+                and not is_taking_profits
+                and is_contributing_to_lp
+            )
             or (profit_avax < self.config["min_avax_to_profit"] and is_taking_profits)
         ):
             logger.print_warn(f"Skipping swap due to too low of levels...")
