@@ -30,6 +30,7 @@ class PumpskinTokenProfitManager:
     MIN_POTN_REWARDS_CLAIM = 200.0
     MAX_SLIPPAGE_PERCENT = 5.0
     SLIPPAGE_INCREMENT_PERCENT = 0.25
+    MIN_AVAX_CONVERSION = 0.1
 
     def __init__(
         self,
@@ -193,15 +194,13 @@ class PumpskinTokenProfitManager:
         is_contributing_to_lp = self.allocator[self.token].percents(Category.LP) > 0.0
         is_taking_profits = self.allocator[self.token].percents(Category.PROFIT) > 0.0
 
+        total_avax = wei_to_token(avax_out_wei)
+
         if (
             avax_out_wei <= 0.0
             or (lp_avax <= 0.0 and is_contributing_to_lp)
-            or (
-                lp_avax < self.config["min_avax_to_profit"]
-                and not is_taking_profits
-                and is_contributing_to_lp
-            )
             or (profit_avax < self.config["min_avax_to_profit"] and is_taking_profits)
+            or total_avax < max(self.MIN_AVAX_CONVERSION, self.config["min_avax_to_profit"])
         ):
             logger.print_warn(f"Skipping swap due to too low of levels...")
             return []
