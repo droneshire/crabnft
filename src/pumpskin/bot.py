@@ -174,14 +174,6 @@ class PumpskinBot:
             ),
         }
 
-        # convert json to actual IDs
-        copy_config = {}
-        for k, v in self.config_mgr.config["game_specific_configs"]["special_pumps"].items():
-            copy_config[int(k)] = v
-        self.config_mgr.config["game_specific_configs"]["special_pumps"] = copy.deepcopy(
-            copy_config
-        )
-
     def get_pumpskin_ids(self) -> T.List[int]:
         pumpskin_ids: T.List[int] = self.collection_w3.get_staked_pumpskins(self.address)
 
