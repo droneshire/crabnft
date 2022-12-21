@@ -20,13 +20,8 @@ from wyndblast.types import WyndNft
 from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
 from wyndblast.wyndblast_web3_client import WyndblastGameWeb3Client, WyndblastNftGameWeb3Client
 
-ADDR_TO_WYND = {
-    "0x9b25c500769F9c7eF1c6413A7Bb0AE4d68240003": [0x32CF, 0x32E1],
-    "0x6A54f825E0Dc1B0E6c245A8Da0d672b91835050b": [0x3f58],
-    "0x0EaF579f52AE9c8E1B31Baec2D663876224C4ba3": [0x3191],
-    "0x92901693c9c07cC4108c9f5C99a4c8C51741Bdca": [0x3e86, 0x3c13],
-    "0x5050691f321479e9E2841CF1f248abf762c0cdF1": [0x32ba],
-}
+ADDR_TO_WYND = {}
+
 
 class WyndBot:
     def __init__(
