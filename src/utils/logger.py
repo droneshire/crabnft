@@ -1,7 +1,7 @@
+import logging
 import os
 import sys
 import typing as T
-import logging
 
 
 class Colors:
@@ -19,14 +19,69 @@ class Prefixes:
     ARROW = chr(10236)
 
 
+class MultiHandler(logging.Handler):
+    """
+    Create a special logger that logs to per-thread-name files
+    I'm not confident the locking strategy here is correct, I think this is
+    a global lock and it'd be OK to just have a per-thread or per-file lock.
+    """
+
+    def __init__(self, dirname, block_list_prefixes: T.List[str] = []):
+        super().__init__()
+        self.files: T.Dict[str, T.TextIO] = {}
+        self.dirname = dirname
+        self.block_list_prefixes = block_list_prefixes
+        if not os.access(dirname, os.W_OK):
+            raise Exception(f"Directory {dirname} not writeable")
+
+    def flush(self):
+        self.acquire()
+        try:
+            for fp in self.files.values():
+                fp.flush()
+        finally:
+            self.release()
+
+    def _get_or_open(self, key):
+        "Get the file pointer for the given key, or else open the file"
+        self.acquire()
+        try:
+            if key in self.files:
+                return self.files[key]
+            else:
+                fp = open(os.path.join(self.dirname, f"{key}.log"), "a")
+                self.files[key] = fp
+                return fp
+        finally:
+            self.release()
+
+    def emit(self, record):
+        # No lock here; following code for StreamHandler and FileHandler
+        try:
+            name = record.threadName
+            if any([n for n in self.block_list_prefixes if name.startswith(n)]):
+                return
+            fp = self._get_or_open(name)
+            msg = self.format(record)
+            fp.write(f"{msg.encode('utf-8')}\n")
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except:
+            self.handleError(record)
+
+
 def get_lifetime_game_stats(log_dir: str, user: str) -> str:
     return os.path.join(log_dir, "stats", user.lower() + "_lifetime_game_bot_stats.json")
 
 
-def get_logging_dir(game: str) -> str:
-    this_dir = os.path.dirname(os.path.realpath(__file__))
-    src_dir = os.path.dirname(this_dir)
-    return os.path.join(os.path.dirname(src_dir), "logs", game)
+def get_logging_dir(name: str, create_if_not_exist: bool = True) -> str:
+    src_dir = os.path.dirname(os.path.realpath(__file__))
+    log_dir = os.path.join(os.path.dirname(src_dir), "logs", name)
+
+    if not os.path.isdir(log_dir) and create_if_not_exist:
+        os.mkdir(log_dir)
+
+    return log_dir
 
 
 def is_color_supported() -> bool:
@@ -34,9 +89,9 @@ def is_color_supported() -> bool:
 
 
 def make_formatter_printer(
-    color: Colors,
+    color: str,
     log_level: int = logging.INFO,
-    prefix: Prefixes = None,
+    prefix: str = "",
     return_formatter: bool = False,
 ) -> T.Callable:
     game_logger = logging.getLogger(__name__)
@@ -47,12 +102,16 @@ def make_formatter_printer(
         else:
             formatted_text = message
 
-        if prefix is not None:
+        if prefix and sys.platform.lower() == "linux":
             formatted_text = prefix + "\t" + formatted_text
 
         if is_color_supported():
-            return color + formatted_text + Colors.ENDC
-        return formatted_text
+            return (
+                str(color + formatted_text + Colors.ENDC)
+                .encode("utf-8")
+                .decode(sys.stdout.encoding, errors="ignore")
+            )
+        return formatted_text.encode("utf-8").decode(sys.stdout.encoding, errors="ignore")
 
     def printer(message, *args, **kwargs):
         if log_level == logging.DEBUG:
