@@ -3,6 +3,8 @@ import os
 import sys
 import typing as T
 
+from utils.file_util import make_sure_path_exists
+
 
 class Colors:
     HEADER = "\033[95m"
@@ -75,11 +77,12 @@ def get_lifetime_game_stats(log_dir: str, user: str) -> str:
 
 
 def get_logging_dir(name: str, create_if_not_exist: bool = True) -> str:
-    src_dir = os.path.dirname(os.path.realpath(__file__))
+    this_dir = os.path.dirname(os.path.realpath(__file__))
+    src_dir = os.path.dirname(this_dir)
     log_dir = os.path.join(os.path.dirname(src_dir), "logs", name)
 
     if not os.path.isdir(log_dir) and create_if_not_exist:
-        os.mkdir(log_dir)
+        make_sure_path_exists(log_dir)
 
     return log_dir
 
