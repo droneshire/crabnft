@@ -140,51 +140,45 @@ class PveGame:
     def _get_stage_info_from_cache(self, mission: str) -> types.StageDifficulty:
         stages = []
 
-        logger.print_bold(f"Trying to get info for {mission}...")
-
         for stages in self.stages_info:
-            if mission[:4] != stages.get("id", ""):
-                continue
-            stages = stages.get("stages", [])
+            if stages.get("id", "") in mission:
+                stages = stages.get("stages", [])
+                break
 
         level_info: types.StageInfo = types.StageInfo()
         for stage in stages:
-            if mission[:6] != stage.get("id", ""):
-                continue
-            level_info = stage
+            if stage.get("id", "") in mission:
+                level_info = stage
+                break
 
-        stage_difficulty: types.StageDifficulty = types.StageDifficulty()
         for difficulty, stage_difficulty_info in level_info.get("difficulties", {}).items():
-            if mission != stage_difficulty_info.get("id", ""):
-                continue
-            stage_difficulty = stage_difficulty_info
+            if stage_difficulty_info.get("id", "") in mission:
+                return stage_difficulty_info
 
-        return stage_difficulty
+        return {}
 
     def _get_num_enemies_for_mission(self, mission: str) -> int:
         if mission[:3] not in ALLOWED_MAPS:
+            logger.print_warn(f"{mission} not in allowed maps [{ALLOWED_MAPS}]")
             return 0
 
         return len(self._get_enemy_lineup(mission))
 
-    def _get_enemy_lineup(self, mission: str, verbose: bool = False) -> T.List[types.BattleUnit]:
+    def _get_enemy_lineup(self, mission: str) -> T.List[types.BattleUnit]:
         enemies: T.List[types.BattleUnit] = []
 
         stage_info: types.StageDifficulty = self._get_stage_info_from_cache(mission)
 
-        enemies_info = stage_info.get("enemies", {})
+        enemies_info = stage_info.get("enemy", {})
         for enemy_type, category in enemies_info.items():
-            for status, units in category.items():
+            for status, info in category.items():
+                units = info.get("units", [])
                 for enemy_unit in units:
                     unit = types.BattleUnit = {
-                        "equipment_dna": "",
-                        "rider_dna": enemy_unit["rider"],
-                        "wynd_dna": enemy_unit["wynd"],
+                        "equipment_dna": enemy_unit.get("equipment", ""),
+                        "rider_dna": enemy_unit.get("rider", ""),
+                        "wynd_dna": enemy_unit.get("wynd", ""),
                     }
-                    if verbose:
-                        logger.print_normal(
-                            f"Using enemy wynd: {enemy_unit['wynd']} rider: {enemy_unit['rider']}"
-                        )
                     enemies.append(unit)
 
         return enemies
@@ -242,10 +236,13 @@ class PveGame:
         return units
 
     def _get_next_stage(self) -> str:
-        index = self.sorted_levels.index(self.last_mission)
-        if index + 1 >= len(self.sorted_levels):
-            return ""
-        proposed_stage = self.sorted_levels[index + 1]
+        if self.last_mission is not None:
+            index = self.sorted_levels.index(self.last_mission) + 1
+            if index + 1 >= len(self.sorted_levels):
+                return ""
+        else:
+            index = 0
+        proposed_stage = self.sorted_levels[index]
         if proposed_stage in self.completed:
             for i in range(len(self.sorted_levels)):
                 if self.sorted_levels[i] not in self.completed:
@@ -262,12 +259,16 @@ class PveGame:
         for s in stages["completed"]:
             self.completed.add(s)
         unlocked = stages["unlocked"]
-        next_stages = sorted([s for s in unlocked if s not in list(self.completed)])
+        next_stages = [s for s in unlocked if s not in list(self.completed)]
         if len(next_stages) == 0:
             logger.print_normal(f"Not playing b/c no stages left to play!")
             return ""
 
-        stage_id = next_stages[0]
+        available_indices = [self.sorted_levels.index(v) for v in next_stages]
+        if available_indices:
+            stage_id = self.sorted_levels[min(available_indices)]
+        else:
+            return ""
         return stage_id if any([s for s in ALLOWED_MAPS if stage_id.startswith(s)]) else ""
 
     def _get_stamina_for_level(self, mission: str) -> int:
@@ -483,14 +484,18 @@ class PveGame:
 
         RETRY_ATTEMPTS = 3
         did_succeed = False
-        difficulty_adjustment = LEVEL_HIERARCHY[stage_id[:-2]]
+        difficulty_adjustment = LEVEL_HIERARCHY[stage_id[-2:]]
         for attempt in range(RETRY_ATTEMPTS):
             duration = random.randint(self.min_game_duration, self.max_game_duration)
             result = (
                 "win"
-                if random.randint(1, 7 - difficulty_adjustment if self.human_mode else 1) == 1
+                if random.randint(1, 6 - difficulty_adjustment if self.human_mode else 1) == 1
                 else "lose"
             )
+            logger.print_normal(f"Getting stamina...")
+            self.wynd_w2.get_stamina()
+            logger.print_normal(f"Pinging realtime...")
+            self.wynd_w2.ping_realtime()
             if self.wynd_w2.battle(stage_id, battle_setup, duration=duration, result=result):
                 self.completed.add(stage_id)
                 self.last_mission = stage_id

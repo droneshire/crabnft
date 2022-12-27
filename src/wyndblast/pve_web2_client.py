@@ -1,5 +1,6 @@
 import copy
 import json
+import random
 import typing as T
 
 from eth_typing import Address
@@ -244,8 +245,10 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         payload["lobby_id"] = self.PVE_LOBBY_ID
         payload["result"] = result
         payload["survived"] = {
-            "player": battle_setup["player"],
-            "enemy": [],
+            "player": battle_setup["player"] if result == "win" else [],
+            "enemy": battle_setup["enemy"][: random.randint(1, len(battle_setup["enemy"]))]
+            if result == "lose"
+            else [],
         }
         try:
             res = self._battle_raw(
