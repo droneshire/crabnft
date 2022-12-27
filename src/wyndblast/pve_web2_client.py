@@ -158,17 +158,17 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         url = self.PVE_BASE_URL + f"/stamina"
         return self._get_request(url, headers=headers, params=params, timeout=20.0)
 
-    def get_stamina(self) -> Stamina:
+    def get_stamina(self) -> int:
         try:
             res = self._get_stamina_raw(headers=self._get_pve_headers())
-            return res["result"]
+            return res["result"]["current"]
         except KeyboardInterrupt:
             raise
         except:
             logger.print_fail(f"Failed to get stamina!")
             if res:
                 logger.print_normal(f"{res}")
-            return {}
+            return 0
 
     def _refresh_auth_raw(
         self, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}

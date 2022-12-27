@@ -1,4 +1,5 @@
 import copy
+import enum
 import json
 import random
 import time
@@ -29,10 +30,17 @@ MAP_3 = "M3S"
 
 ALLOWED_MAPS = [MAP_1, MAP_2, MAP_3]
 
+
+class Difficulty(enum.Enum):
+    EASY = ":E"
+    MEDIUM = ":M"
+    HARD = ":H"
+
+
 LEVEL_HIERARCHY = {
-    ":E": 3,
-    ":M": 2,
-    ":H": 1,
+    Difficulty.EASY.value: 3,
+    Difficulty.MEDIUM.value: 2,
+    Difficulty.HARD.value: 1,
 }
 
 
@@ -268,8 +276,7 @@ class PveGame:
         return stage_info.get("stamina_cost", 10000)
 
     def _get_stamina(self) -> int:
-        results: types.Stamina = self.wynd_w2.get_stamina()
-        return results.get("current", 0)
+        return self.wynd_w2.get_stamina()
 
     def _send_pve_update(self, account_exp: int) -> None:
         webhook = DiscordWebhook(
@@ -410,6 +417,9 @@ class PveGame:
         logger.print_bold(f"Setting team presets...")
         self.wynd_w2.preset_team([product_id])
 
+    def _get_levels_at_difficulty(self, difficulty: Difficulty) -> T.List[str]:
+        return [l for l in self.sorted_levels if difficulty.value in l]
+
     def _get_next_level(self, countdown: types.Countdown) -> str:
         stage_id = self._get_next_stage()
 
@@ -435,7 +445,8 @@ class PveGame:
                 # otherwise no need to play since it only helps with wynd leveling which we don't
                 # care about
                 logger.print_bold(f"We've beat the full map, but still need more exp, replaying...")
-                stage_id = self.sorted_levels[random.randrange(3)]
+                easy_levels = self._get_levels_at_difficulty(difficulty=Difficulty.EASY)
+                stage_id = easy_levels[random.randrange(len(easy_levels))]
                 self.num_replays += 1
             elif user_data.get("exp", self._get_level_five_exp()) >= self._get_level_five_exp():
                 self.num_replays = 0
@@ -485,7 +496,7 @@ class PveGame:
             should_win = result == "win"
 
             logger.print_normal(f"Getting stamina...")
-            self.wynd_w2.get_stamina()
+            logger.print_normal(f"Stamina: {self._get_stamina()}")
             logger.print_normal(f"Pinging realtime...")
             self.wynd_w2.ping_realtime()
 
