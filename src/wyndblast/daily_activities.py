@@ -121,10 +121,12 @@ class DailyActivitiesGame:
             return
 
         if available_wynds <= 0:
-            logger.print_warn(f"No wynds available for daily activities...")
+            logger.print_warn(f"0/{total} wynds available for daily activities...")
             return
 
-        logger.print_bold(f"Found {available_wynds} Wynds available for daily activities\n\n")
+        logger.print_bold(
+            f"Found {available_wynds}/{total} Wynds available for daily activities\n\n"
+        )
 
         wynds: T.List[WyndStatus] = []
         ITEMS_PER_PAGE = 5
