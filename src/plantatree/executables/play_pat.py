@@ -20,7 +20,7 @@ from utils.price import get_avax_price_usd
 from utils.security import decrypt_secret
 
 TIME_BETWEEN_PLAYERS = 5.0
-TIME_BETWEEN_RUNS = 60.0 * 10.0
+TIME_BETWEEN_RUNS = 60.0 * 5.0
 
 
 def parse_args() -> argparse.Namespace:
