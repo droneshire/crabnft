@@ -245,7 +245,7 @@ class PveGame:
             }
             units.append(unit)
 
-        logger.print_normal(f"Using {num_players} wynds in battle")
+        logger.print_normal(f"Using {len(units)} wynds in battle")
 
         return units
 
@@ -499,8 +499,8 @@ class PveGame:
         battle_setup["player"] = self._get_player_lineup(self.MAX_WYNDS_PER_BATTLE, nft_data)
 
         if not battle_setup["player"]:
-            logger.print_fail(f"No players available to battle")
-            return
+            logger.print_warn(f"No players available to battle")
+            return False
 
         RETRY_ATTEMPTS = 6
         did_succeed = False
