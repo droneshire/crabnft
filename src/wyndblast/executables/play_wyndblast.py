@@ -1,5 +1,6 @@
 import argparse
 import getpass
+import json
 import logging
 import os
 import time
@@ -91,10 +92,27 @@ def run_bot() -> None:
         dry_run=False,
     )
 
-    logger.print_normal("Caching stages info...")
-    stages_info: T.List[types.LevelsInformation] = google_w2.get_level_data()
-    logger.print_normal("Caching account info...")
-    account_info: T.List[types.AccountLevels] = google_w2.get_account_stats()
+    stages_info_file = os.path.join(args.log_dir, "stages_info.json")
+    if os.path.isfile(stages_info_file):
+        with open(stages_info_file) as infile:
+            stages_info: T.List[types.LevelsInformation] = json.load(infile)["data"]
+    else:
+        logger.print_normal("Caching stages info...")
+        stages_info: T.List[types.LevelsInformation] = google_w2.get_level_data()
+        with open(stages_info_file, "w") as outfile:
+            data = {"data": stages_info}
+            json.dump(data, outfile, indent=4)
+
+    account_info_file = os.path.join(args.log_dir, "account_info.json")
+    if os.path.isfile(account_info_file):
+        with open(account_info_file) as infile:
+            account_info: T.List[types.AccountLevels] = json.load(infile)["data"]
+    else:
+        logger.print_normal("Caching account info...")
+        account_info: T.List[types.AccountLevels] = google_w2.get_account_stats()
+        with open(account_info_file, "w") as outfile:
+            data = {"data": account_info}
+            json.dump(data, outfile, indent=4)
 
     bots = []
     for user, config in USERS.items():

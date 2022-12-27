@@ -346,7 +346,12 @@ class PveGame:
                 self.stats_logger.lifetime_stats[k] = new_set
             elif isinstance(v, dict):
                 for i, j in self.stats_logger.lifetime_stats[k].items():
-                    self.stats_logger.lifetime_stats[k][i] += self.current_stats[k][i]
+                    if "levels_completed" in i:
+                        for address, levels in self.stats_logger.lifetime_stats[k][i].items():
+                            new_stats = set(self.current_stats[k][i].get(address, []))
+                            self.stats_logger.lifetime_stats[k][i][address] = list(new_stats)
+                    else:
+                        self.stats_logger.lifetime_stats[k][i] += self.current_stats[k][i]
             else:
                 self.stats_logger.lifetime_stats[k] += v
 
@@ -527,11 +532,19 @@ class PveGame:
             should_win = result == "win"
 
             logger.print_normal(f"Getting stamina...")
-            logger.print_normal(f"Stamina: {self._get_stamina()}")
+            needed_stamina = self._get_stamina_for_level(stage_id)
+            current_stamina = self._get_stamina()
+            logger.print_normal(f"Stamina, Have: {current_stamina} Need: {needed_stamina}")
+
             logger.print_normal(f"Pinging realtime...")
             self.wynd_w2.ping_realtime()
 
             did_succeed = False
+
+            if current_stamina < needed_stamina:
+                logger.print_warn("Not enough stamina not attempting battle...")
+                break
+
             if self.wynd_w2.battle(stage_id, battle_setup, duration=duration, result=result):
                 if result == "win":
                     logger.print_ok(f"We {result.upper()}! \U0001F389")
@@ -641,13 +654,13 @@ class PveGame:
 
     def _check_and_try_tutorial(self) -> bool:
         logger.print_normal("Attempting tutorial...")
-        if not self.complete_opening():
+        if not self.wynd_w2.complete_opening():
             return False
         time.sleep(5.0)
-        if not self.complete_novel_before_main1():
+        if not self.wynd_w2.complete_novel_before_main1():
             return False
         time.sleep(5.0)
-        if not self.complete_novel_stage1():
+        if not self.wynd_w2.complete_novel_stage1():
             return False
 
         logger.print_ok_arrow("Completed tutorial!")
