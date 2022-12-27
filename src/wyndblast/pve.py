@@ -491,11 +491,6 @@ class PveGame:
 
             did_succeed = False
             if self.wynd_w2.battle(stage_id, battle_setup, duration=duration, result=result):
-                self.completed.add(stage_id)
-                self.last_mission = stage_id
-                levels_completed = set(self.current_stats["pve_game"]["levels_completed"])
-                levels_completed.add(stage_id)
-                self.current_stats["pve_game"]["levels_completed"] = list(levels_completed)
                 if result == "win":
                     logger.print_ok(f"We {result.upper()}! \U0001F389")
                 else:
@@ -506,7 +501,12 @@ class PveGame:
                 if result == "lose" and attempt + 1 < RETRY_ATTEMPTS:
                     logger.print_normal(f"Since we lost, let's retry here shortly...")
                     wait(10.0)
-                else:
+                elif result == "win":
+                    self.completed.add(stage_id)
+                    self.last_mission = stage_id
+                    levels_completed = set(self.current_stats["pve_game"]["levels_completed"])
+                    levels_completed.add(stage_id)
+                    self.current_stats["pve_game"]["levels_completed"] = list(levels_completed)
                     break
             elif attempt + 1 >= RETRY_ATTEMPTS:
                 logger.print_fail(f"Failed to submit battle")
