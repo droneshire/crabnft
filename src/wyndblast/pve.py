@@ -346,7 +346,8 @@ class PveGame:
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
 
         logger.print_ok_blue(
-            f"Lifetime Stats for {self.user.upper()}\n{json.dumps(self.stats_logger.lifetime_stats, indent=4)}"
+            f"Lifetime Stats for {self.user.upper()}\n"
+            f"{json.dumps(self.stats_logger.lifetime_stats, indent=4)}"
         )
 
     def _check_and_level_units(self, our_units: types.PveNfts) -> None:
