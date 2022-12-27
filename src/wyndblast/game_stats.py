@@ -171,6 +171,7 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
         for item in ["pve_game"]:
             for k, v in user_a_stats.get(item, {}).items():
                 if "levels_completed" in k:
+                    merged_set = set()
                     for address, levels in user_a_stats[item][k].items():
                         merged_set = merged_set.union(merged_stats[item][k].get(address, []))
                         for i in levels:
