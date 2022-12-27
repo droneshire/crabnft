@@ -668,7 +668,8 @@ class PveGame:
             weekly_reset_left = get_pretty_seconds(countdown.get("weekly_countdown_second", -1))
             logger.print_ok_blue(f"Weekly quests reset in {weekly_reset_left}")
 
-        logger.print_ok_blue_arrow(f"User EXP: {user_exp}")
+        logger.print_ok_blue_arrow(f"User exp: {user_exp}")
+        logger.print_ok_blue_arrow(f"User stamina: {self._get_stamina()}")
 
         while self._check_and_play_story(nft_data, countdown):
             wait(random.randint(30, 70 if self.human_mode else 50))
