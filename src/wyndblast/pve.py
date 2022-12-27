@@ -452,8 +452,13 @@ class PveGame:
                 logger.print_bold(f"Waiting for EXP boosts, no way to do that now so not playing")
                 return ""
 
-        if self.human_mode and self._get_stamina() < self._get_stamina_for_level(stage_id):
-            logger.print_normal(f"Not playing more since we're behaving and respecting stamina...")
+        needed_stamina = self._get_stamina_for_level(stage_id)
+        current_stamina = self._get_stamina()
+        if self.human_mode and current_stamina < needed_stamina:
+            logger.print_normal(
+                f"Not playing more since we're behaving and respecting "
+                "stamina...Have: {current_stamina} Need: {needed_stamina}"
+            )
             return ""
 
         return stage_id
