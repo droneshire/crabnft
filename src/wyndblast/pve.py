@@ -114,7 +114,7 @@ class PveGame:
         self.did_tutorial = (
             len(
                 self.stats_logger.lifetime_stats["pve_game"]["levels_completed"].get(
-                    self.config["address"], []
+                    self.config["address"], self.completed
                 )
             )
             > 0
@@ -312,7 +312,9 @@ class PveGame:
 
         chro_won = self.current_stats["chro"]
         levels_completed = len(
-            self.current_stats["pve_game"]["levels_completed"].get(self.config["address"], [])
+            self.current_stats["pve_game"]["levels_completed"].get(
+                self.config["address"], self.completed
+            )
         )
         if levels_completed < 1 and chro_won <= 0:
             return
@@ -562,7 +564,7 @@ class PveGame:
                     self.last_mission = stage_id
                     levels_completed = set(
                         self.current_stats["pve_game"]["levels_completed"].get(
-                            self.config["address"], []
+                            self.config["address"], self.completed
                         )
                     )
                     levels_completed.add(stage_id)
