@@ -111,7 +111,7 @@ class PveGame:
             self.sorted_levels.extend([l + difficulty for l in levels])
         self.completed = set()
 
-        self.self.did_tutorial = (
+        self.did_tutorial = (
             len(self.stats_logger.lifetime_stats["pve_game"]["levels_completed"]) > 0
         )
 
