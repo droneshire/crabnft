@@ -312,7 +312,7 @@ class PveGame:
 
         chro_won = self.current_stats["chro"]
         levels_completed = len(
-            self.current_stats["pve_game"]["levels_completed"].get(self.config["address"])
+            self.current_stats["pve_game"]["levels_completed"].get(self.config["address"], [])
         )
         if levels_completed < 1 and chro_won <= 0:
             return
@@ -561,7 +561,9 @@ class PveGame:
                     self.completed.add(stage_id)
                     self.last_mission = stage_id
                     levels_completed = set(
-                        self.current_stats["pve_game"]["levels_completed"][self.config["address"]]
+                        self.current_stats["pve_game"]["levels_completed"].get(
+                            self.config["address"], []
+                        )
                     )
                     levels_completed.add(stage_id)
                     self.current_stats["pve_game"]["levels_completed"][
