@@ -307,6 +307,8 @@ class PveGame:
 
         chro_won = self.current_stats["chro"]
         levels_completed = len(self.current_stats["pve_game"]["levels_completed"])
+        if levels_completed < 1 and chro_won <= 0:
+            return
         embed.add_embed_field(name=f"Account Exp", value=f"{account_exp}", inline=False)
         embed.add_embed_field(name=f"CHRO Earned", value=f"{chro_won:.2f}", inline=False)
         embed.add_embed_field(name=f"Levels Won", value=f"{levels_completed}", inline=True)
