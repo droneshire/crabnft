@@ -93,6 +93,7 @@ class WyndBot:
             self.alias,
             self.log_dir,
             self.config_mgr.get_lifetime_stats(),
+            config["address"],
             self.dry_run,
             verbose=False,
         )

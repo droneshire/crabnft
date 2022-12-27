@@ -112,7 +112,12 @@ class PveGame:
         self.completed = set()
 
         self.did_tutorial = (
-            len(self.stats_logger.lifetime_stats["pve_game"]["levels_completed"]) > 0
+            len(
+                self.stats_logger.lifetime_stats["pve_game"]["levels_completed"].get(
+                    self.config["address"], []
+                )
+            )
+            > 0
         )
 
         logger.print_ok_blue(f"\nStarting PVE game for user {user}...")
@@ -306,7 +311,9 @@ class PveGame:
         )
 
         chro_won = self.current_stats["chro"]
-        levels_completed = len(self.current_stats["pve_game"]["levels_completed"])
+        levels_completed = len(
+            self.current_stats["pve_game"]["levels_completed"][self.config["address"]]
+        )
         if levels_completed < 1 and chro_won <= 0:
             return
         embed.add_embed_field(name=f"Account Exp", value=f"{account_exp}", inline=False)
@@ -540,9 +547,13 @@ class PveGame:
                 elif result == "win":
                     self.completed.add(stage_id)
                     self.last_mission = stage_id
-                    levels_completed = set(self.current_stats["pve_game"]["levels_completed"])
+                    levels_completed = set(
+                        self.current_stats["pve_game"]["levels_completed"][self.config["address"]]
+                    )
                     levels_completed.add(stage_id)
-                    self.current_stats["pve_game"]["levels_completed"] = list(levels_completed)
+                    self.current_stats["pve_game"]["levels_completed"][
+                        self.config["address"]
+                    ] = list(levels_completed)
                     break
             elif attempt + 1 >= RETRY_ATTEMPTS:
                 logger.print_fail(f"Failed to submit battle")

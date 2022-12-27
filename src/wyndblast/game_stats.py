@@ -9,8 +9,7 @@ from wyndblast import types
 
 
 class PveStats(T.TypedDict):
-    levels_completed: T.List[str]
-    quests_completed: T.List[str]
+    levels_completed: T.Dict[str, T.List[str]]
     account_exp: int
 
 
@@ -53,10 +52,8 @@ NULL_GAME_STATS = {
     "commission_chro": {},
     "avax_gas": 0.0,
     "pve_game": {
-        "levels_completed": [],
-        "quests_completed": [],
+        "levels_completed": {},
         "account_exp": 0,
-        "max_level": "",
     },
 }
 
@@ -67,16 +64,15 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
         user: str,
         log_dir: str,
         backup_stats: T.Dict[T.Any, T.Any],
+        address: str,
         dry_run: bool = False,
         verbose: bool = False,
     ):
         super().__init__(user, NULL_GAME_STATS, log_dir, backup_stats, dry_run, verbose)
 
-        if "max_level" not in self.lifetime_stats["pve_game"]:
+        if not isinstance(self.lifetime_stats["pve_game"]["levels_completed"], dict):
             logger.print_bold(f"Erasing old game stats...")
-            self.lifetime_stats["pve_game"]["levels_completed"] = []
-            self.lifetime_stats["pve_game"]["quests_completed"] = []
-            self.lifetime_stats["pve_game"]["account_exp"] = 0
+            self.lifetime_stats["pve_game"]["levels_completed"] = {address: []}
 
         self.last_lifetime_stats = copy.deepcopy(self.lifetime_stats)
         self.write_game_stats(self.lifetime_stats)
@@ -111,19 +107,22 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
                 diffed_stats[item][k] = diffed_stats[item].get(k, 0.0) - v
 
         for item in ["pve_game"]:
+            new_levels = []
             for k, v in user_a_stats[item].items():
                 if k == "account_exp":
                     diffed_stats[item][k] = v
+                elif k == "levels_completed":
+                    for address, levels in user_a_stats[item][k].items():
+                        new_levels = set(levels)
 
             for k, v in user_b_stats[item].items():
                 if k == "account_exp":
                     diffed_stats[item][k] = diffed_stats[item].get(k, 0.0) - v
-
-            for k in ["levels_completed", "quests_completed"]:
-                new_set = set(user_a_stats[item].get(k, []))
-                for b in user_b_stats[item].get(k, []):
-                    new_set.add(b)
-                diffed_stats[item][k] = list(new_set)
+                elif k == "levels_completed":
+                    for address, levels in user_a_stats[item][k].items():
+                        for level in levels:
+                            new_levels.add(level)
+                    diffed_stats[item][k][address] = list(new_levels)
 
         if verbose:
             logger.print_bold("Subtracting game stats:")
@@ -165,20 +164,22 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
 
         for item in ["pve_game"]:
             for k, v in user_a_stats.get(item, {}).items():
-                if isinstance(v, list):
-                    merged_set = set(merged_stats[item].get(k, []))
-                    for i in v:
-                        merged_set.add(i)
-                    merged_stats[item][k] = list(merged_set)
+                if "levels_completed" in k:
+                    for address, levels in user_a_stats[item][k].items():
+                        merged_set = set(merged_stats[item][k].get(address, []))
+                        for i in levels:
+                            merged_set.add(i)
+                    merged_stats[item][k][address] = list(merged_set)
                 else:
                     merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
 
             for k, v in user_b_stats.get(item, {}).items():
-                if isinstance(v, list):
-                    merged_set = set(merged_stats[item].get(k, []))
-                    for i in v:
-                        merged_set.add(i)
-                    merged_stats[item][k] = list(merged_set)
+                if "levels_completed" in k:
+                    for address, levels in user_b_stats[item][k].items():
+                        merged_set = set(merged_stats[item][k].get(address, []))
+                        for i in levels:
+                            merged_set.add(i)
+                    merged_stats[item][k][address] = list(merged_set)
                 else:
                     merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
         if verbose:
