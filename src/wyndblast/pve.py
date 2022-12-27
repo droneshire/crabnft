@@ -469,14 +469,17 @@ class PveGame:
             logger.print_fail(f"No players available to battle")
             return
 
-        RETRY_ATTEMPTS = 3
+        RETRY_ATTEMPTS = 6
         did_succeed = False
         difficulty_adjustment = LEVEL_HIERARCHY[stage_id[-2:]]
         for attempt in range(RETRY_ATTEMPTS):
             duration = random.randint(self.min_game_duration, self.max_game_duration)
             result = (
                 "win"
-                if random.randint(1, 6 - difficulty_adjustment if self.human_mode else 1) == 1
+                if random.randint(
+                    1, RETRY_ATTEMPTS - difficulty_adjustment if self.human_mode else 1
+                )
+                == 1
                 else "lose"
             )
             should_win = result == "win"
@@ -485,6 +488,8 @@ class PveGame:
             self.wynd_w2.get_stamina()
             logger.print_normal(f"Pinging realtime...")
             self.wynd_w2.ping_realtime()
+
+            did_succeed = False
             if self.wynd_w2.battle(stage_id, battle_setup, duration=duration, result=result):
                 self.completed.add(stage_id)
                 self.last_mission = stage_id
@@ -496,7 +501,13 @@ class PveGame:
                 else:
                     logger.print_warn(f"We {result.upper()} \U0001F62D")
                 did_succeed = True
-                break
+
+            if did_succeed:
+                if result == "lose" and attempt + 1 < RETRY_ATTEMPTS:
+                    logger.print_normal(f"Since we lost, let's retry here shortly...")
+                    wait(10.0)
+                else:
+                    break
             elif attempt + 1 >= RETRY_ATTEMPTS:
                 logger.print_fail(f"Failed to submit battle")
             else:
