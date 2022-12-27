@@ -113,22 +113,21 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
                 diffed_stats[item][k] = diffed_stats[item].get(k, 0.0) - v
 
         for item in ["pve_game"]:
-            new_levels = []
             for k, v in user_a_stats[item].items():
                 if k == "account_exp":
                     diffed_stats[item][k] = v
                 elif k == "levels_completed":
                     for address, levels in user_a_stats[item][k].items():
-                        new_levels = set(levels)
+                        diffed_stats[item][k][address] = set(levels)
 
             for k, v in user_b_stats[item].items():
                 if k == "account_exp":
                     diffed_stats[item][k] = diffed_stats[item].get(k, 0.0) - v
                 elif k == "levels_completed":
                     for address, levels in user_a_stats[item][k].items():
-                        for level in levels:
-                            new_levels.add(level)
-                    diffed_stats[item][k][address] = list(new_levels)
+                        diffed_stats[item][k][address] = [
+                            b for b in set(levels) if b not in diffed_stats[item][k][address]
+                        ]
 
         if verbose:
             logger.print_bold("Subtracting game stats:")
