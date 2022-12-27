@@ -49,9 +49,9 @@ class WyndblastWeb2Client:
     """Access api endpoints of Wyndblast Game"""
 
     DAILY_ACTIVITY_BASE_URL = "https://api.wyndblast.com/daily-activity"
-    PVE_BASE_URL = "https://wyndblast-pve-api-26nte4kk3a-ey.a.run.app"
+    GOOGLE_STORAGE_URL = "https://storage.googleapis.com/wyndblast-dev.appspot.com/public/json"
     MORALIS_BASE_URL = "https://qheky5jm92sj.usemoralis.com:2053/server/"
-    GOOGLE_STORAGE_URL = "https://storage.googleapis.com/wyndblast-dev.appspot.com/public/json/"
+    PVE_BASE_URL = "https://wyndblast-pve-api-26nte4kk3a-ey.a.run.app"
 
     TO_SIGN = "WyndBlast Authentication\n\nId: lQBcMbRFdVKdFM2ToB0LZEjzhGEbXFilLikZY759:{}"
 

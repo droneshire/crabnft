@@ -101,7 +101,9 @@ class PveGame:
 
         self.last_mission = None
 
+        logger.print_normal("Caching stages info...")
         self.stages_info: T.List[types.LevelsInformation] = self.google_w2.get_level_data()
+        logger.print_normal("Caching account info...")
         self.account_info: T.List[types.AccountLevels] = self.google_w2.get_account_stats()
 
         self.sorted_levels = []

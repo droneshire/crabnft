@@ -20,7 +20,7 @@ class PveGoogleStorageWeb2Client(WyndblastWeb2Client):
     ) -> None:
         super().__init__(private_key, user_address, base_url, dry_run=dry_run)
 
-    def _get_pve_headers(
+    def _get_google_pve_headers(
         self, x_client: str = GOOGLE_STORAGE_X_CLIENT_DATA_KEYS["pve"]
     ) -> T.Dict[str, str]:
         headers = copy.deepcopy(WYNDBLAST_PVE_GOOGLESTORAGE_HEADERS)
@@ -34,7 +34,7 @@ class PveGoogleStorageWeb2Client(WyndblastWeb2Client):
     ) -> T.Any:
         url = self.GOOGLE_STORAGE_URL + f"/PvE-enemy.json"
         default_params = {
-            "v": int(time.time() * 1000),
+            "v": self._get_server_time(),
         }
         default_params.update(params)
 
@@ -42,7 +42,7 @@ class PveGoogleStorageWeb2Client(WyndblastWeb2Client):
 
     def get_all_enemies(self) -> T.List[PveWynd]:
         try:
-            res = self._get_all_enemies_raw(headers=self._get_pve_headers())
+            res = self._get_all_enemies_raw(headers=self._get_google_pve_headers())
             return res
         except KeyboardInterrupt:
             raise
@@ -59,7 +59,7 @@ class PveGoogleStorageWeb2Client(WyndblastWeb2Client):
     ) -> T.Any:
         url = self.GOOGLE_STORAGE_URL + f"/account-stats.json"
         default_params = {
-            "v": int(time.time() * 1000),
+            "v": self._get_server_time(),
         }
         default_params.update(params)
 
@@ -67,7 +67,7 @@ class PveGoogleStorageWeb2Client(WyndblastWeb2Client):
 
     def get_account_stats(self) -> T.List[AccountLevels]:
         try:
-            res = self._get_account_stats_raw(headers=self._get_pve_headers())
+            res = self._get_account_stats_raw(headers=self._get_google_pve_headers())
             return res
         except KeyboardInterrupt:
             raise
@@ -84,7 +84,7 @@ class PveGoogleStorageWeb2Client(WyndblastWeb2Client):
     ) -> T.Any:
         url = self.GOOGLE_STORAGE_URL + f"/PvE-stages.json"
         default_params = {
-            "v": int(time.time() * 1000),
+            "v": self._get_server_time(),
         }
         default_params.update(params)
 
@@ -92,7 +92,7 @@ class PveGoogleStorageWeb2Client(WyndblastWeb2Client):
 
     def get_level_data(self) -> T.List[LevelsInformation]:
         try:
-            res = self._get_level_data_raw(headers=self._get_pve_headers())
+            res = self._get_level_data_raw(headers=self._get_google_pve_headers())
             return res
         except KeyboardInterrupt:
             raise
