@@ -250,7 +250,12 @@ class DailyActivitiesGame:
                 self.stats_logger.lifetime_stats[k] = new_set
             elif isinstance(v, dict):
                 for i, j in self.stats_logger.lifetime_stats[k].items():
-                    self.stats_logger.lifetime_stats[k][i] += self.current_stats[k][i]
+                    if "levels_completed" in i:
+                        for address, levels in self.stats_logger.lifetime_stats[k][i].items():
+                            new_stats = set(self.current_stats[k][i].get(address, []))
+                            self.stats_logger.lifetime_stats[k][i][address] = list(new_stats)
+                    else:
+                        self.stats_logger.lifetime_stats[k][i] += self.current_stats[k][i]
             else:
                 self.stats_logger.lifetime_stats[k] += v
 
@@ -276,7 +281,8 @@ class DailyActivitiesGame:
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
 
         logger.print_ok_blue(
-            f"Lifetime Stats for {self.user.upper()}\n{json.dumps(self.stats_logger.lifetime_stats, indent=4)}"
+            f"Lifetime Stats for {self.user.upper()}\n"
+            f"{json.dumps(self.stats_logger.lifetime_stats, indent=4)}"
         )
 
     def _send_summary_email(self, active_nfts: int) -> None:
