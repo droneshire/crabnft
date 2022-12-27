@@ -457,7 +457,7 @@ class PveGame:
         if self.human_mode and current_stamina < needed_stamina:
             logger.print_normal(
                 f"Not playing more since we're behaving and respecting "
-                "stamina...Have: {current_stamina} Need: {needed_stamina}"
+                f"stamina...Have: {current_stamina} Need: {needed_stamina}"
             )
             return ""
 
