@@ -20,6 +20,7 @@ from wyndblast.types import (
     PveRewards,
     PveUser,
     PveStages,
+    Stamina,
     TeamPreset,
     Units,
     UnitPreset,
@@ -57,7 +58,9 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed to get pve countdown!\n{res}")
+            logger.print_fail(f"Failed to get pve countdown!")
+            if res:
+                logger.print_normal(f"{res}")
             return {}
 
     def _get_level_quests_raw(
@@ -73,7 +76,9 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed to get pve level quests!\n{res}")
+            logger.print_fail(f"Failed to get pve level quests!")
+            if res:
+                logger.print_normal(f"{res}")
             return {}
 
     def _get_stages_raw(
@@ -89,7 +94,9 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed to get pve stages!\n{res}")
+            logger.print_fail(f"Failed to get pve stages!")
+            if res:
+                logger.print_normal(f"{res}")
             return {}
 
     def _get_chro_rewards_raw(
@@ -105,7 +112,7 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed to get pve chro rewards!\n{res}")
+            logger.print_fail(f"Failed to get pve chro rewards!")
             return {}
 
     def _get_user_profile_raw(
@@ -121,7 +128,9 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed to get pve user profile!\n{res}")
+            logger.print_fail(f"Failed to get pve user profile!")
+            if res:
+                logger.print_normal(f"{res}")
             return res
 
     def _get_nft_data_raw(
@@ -137,8 +146,46 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed to get pve nft data!\n{res}")
-            return res
+            logger.print_fail(f"Failed to get pve nft data!")
+            if res:
+                logger.print_normal(f"{res}")
+            return {}
+
+    def _get_stamina_raw(
+        self, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+    ) -> T.Any:
+        url = self.PVE_BASE_URL + f"/stamina"
+        return self._get_request(url, headers=headers, params=params, timeout=20.0)
+
+    def get_stamina(self) -> Stamina:
+        try:
+            res = self._get_stamina_raw(headers=self._get_pve_headers())
+            return res["result"]
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to get stamina!")
+            if res:
+                logger.print_normal(f"{res}")
+            return {}
+
+    def _refresh_auth_raw(
+        self, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+    ) -> T.Any:
+        url = self.PVE_BASE_URL + f"/stamina"
+        return self._get_request(url, headers=headers, params=params, timeout=20.0)
+
+    def refresh_auth(self) -> bool:
+        try:
+            res = self._refresh_auth_raw(headers=self._get_pve_headers())
+            return res.get("status", False)
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to refresh pve authorization!")
+            if res:
+                logger.print_normal(f"{res}")
+            return False
 
     def _level_up_wynd_raw(
         self, dna_string: str, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
@@ -171,7 +218,9 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed to level up wynd!\n{res}")
+            logger.print_fail(f"Failed to level up wynd!")
+            if res:
+                logger.print_normal(f"{res}")
             return False
 
     def _battle_raw(
@@ -207,7 +256,9 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed to battle!\n{res}")
+            logger.print_fail(f"Failed to battle!")
+            if res:
+                logger.print_normal(f"{res}")
             return False
 
     def _claim_daily_raw(
@@ -225,7 +276,9 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed to claim dailies!\n{res}")
+            logger.print_fail(f"Failed to claim dailies!")
+            if res:
+                logger.print_normal(f"{res}")
             return {}
 
     def _claim_weekly_raw(
@@ -243,7 +296,9 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed to claim weeklies!\n{res}")
+            logger.print_fail(f"Failed to claim weeklies!")
+            if res:
+                logger.print_normal(f"{res}")
             return {}
 
     def _claim_chro_raw(
@@ -261,7 +316,9 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed to claim chro!\n{res}")
+            logger.print_fail(f"Failed to claim chro!")
+            if res:
+                logger.print_normal(f"{res}")
             return {}
 
     def _preset_unit_raw(
@@ -292,7 +349,9 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed to preset unit!\n{res}")
+            logger.print_fail(f"Failed to preset unit!")
+            if res:
+                logger.print_normal(f"{res}")
             return False
 
     def _preset_team_raw(
@@ -326,5 +385,27 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed to preset team!\n{res}")
+            logger.print_fail(f"Failed to preset team!")
+            if res:
+                logger.print_normal(f"{res}")
             return False
+
+    def _ping_realtime_raw(
+        self,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
+    ) -> T.Any:
+        url = self.PVE_BASE_URL + "/ws/realtime"
+        return self._post_request(url, json_data={}, headers=headers, params=params, timeout=15.0)
+
+    def ping_realtime(self) -> T.Dict[str, str]:
+        try:
+            res = self._ping_realtime_raw(headers=self._get_pve_headers())
+            return res["result"]
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to ping realtime!")
+            if res:
+                logger.print_normal(f"{res}")
+            return {}

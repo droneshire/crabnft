@@ -460,3 +460,74 @@ class Units(T.TypedDict):
 class TeamPreset(T.TypedDict):
     units: Units
     name: str
+
+
+class Stamina(T.TypedDict):
+    user_id: str
+    pool: 0
+    current: int
+    recharged: int
+
+
+class AccountLevels(T.TypedDict):
+    level: int
+    exp_level_up: int
+    total_exp: int
+    max_stamina: int
+    max_unit_cost: int
+    max_unit_slot: int
+
+
+class StageEnemyIds(T.TypedDict):
+    wynd: str
+    rider: str
+
+
+class StageEnemy(T.TypedDict):
+    level: int
+    position: T.List[str]
+    units: T.List[StageEnemyIds]
+
+
+class StageEnemyTypes(T.TypedDict):
+    boss: StageEnemy
+    normal: StageEnemy
+
+
+class StageEnemies(T.TypedDict):
+    assaulter: StageEnemyTypes
+    ranger: StageEnemyTypes
+    vanguard: StageEnemyTypes
+
+
+StageDifficulty = T.TypedDict(
+    "StageDifficulty",
+    {
+        "enemy": StageEnemies,
+        "item_drops": T.List[T.Any],
+        "rewards": T.List[T.Dict[str, int]],
+        "stamina_cost": int,
+        "type": str,
+    },
+)
+
+
+class StageDifficulties(T.TypedDict):
+    easy: StageDifficulty
+    medium: StageDifficulty
+    hard: StageDifficulty
+
+
+class StageInfo(T.TypedDict):
+    id: str
+    name: str
+    desc: T.Dict[str, str]
+    difficulties: StageDifficulties
+    position: T.List[float]
+
+
+class LevelsInformation(T.TypedDict):
+    id: str
+    name: str
+    background: str
+    stages: T.List[StageInfo]

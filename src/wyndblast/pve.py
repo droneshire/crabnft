@@ -20,96 +20,22 @@ from wyndblast.assets import WYNDBLAST_ASSETS
 from wyndblast.game_stats import WyndblastLifetimeGameStatsLogger
 from wyndblast.game_stats import NULL_GAME_STATS
 from wyndblast import types
+from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
 from wyndblast.pve_web2_client import PveWyndblastWeb2Client
 from wyndblast.wyndblast_web3_client import WyndblastGameWeb3Client
+from wyndblast.pve_google_storage_web2_client import PveGoogleStorageWeb2Client
 
 MAP_1 = "M1S"
 MAP_2 = "M2S"
+MAP_3 = "M3S"
 
-ALLOWED_MAPS = [MAP_1, MAP_2]
-
-STAMINA_AT_LEVELS = {
-    f"{MAP_1}1:": 10,
-    f"{MAP_1}2:": 14,
-    f"{MAP_1}3:": 18,
-    f"{MAP_1}4:": 22,
-    f"{MAP_1}5:": 26,
-    f"{MAP_1}6:": 30,
-    f"{MAP_2}1:": 10,
-    f"{MAP_2}2:": 14,
-    f"{MAP_2}3:": 18,
-    f"{MAP_2}4:": 22,
-    f"{MAP_2}5:": 26,
-    f"{MAP_2}6:": 30,
-}
-
-LEVEL_TO_NUM_ENEMIES = {
-    f"{MAP_1}1:1": 2,
-    f"{MAP_1}1:2": 3,
-    f"{MAP_1}1:3": 4,
-    f"{MAP_1}2:1": 3,
-    f"{MAP_1}2:2": 3,
-    f"{MAP_1}2:3": 4,
-    f"{MAP_1}3:1": 3,
-    f"{MAP_1}3:2": 5,
-    f"{MAP_1}3:3": 6,
-    f"{MAP_1}4:1": 4,
-    f"{MAP_1}4:2": 6,
-    f"{MAP_1}4:3": 6,
-    f"{MAP_1}5:1": 4,
-    f"{MAP_1}5:2": 6,
-    f"{MAP_1}5:3": 9,
-    f"{MAP_1}6:1": 6,
-    f"{MAP_1}6:2": 9,
-    f"{MAP_1}6:3": 9,
-    f"{MAP_2}1:1": 2,
-    f"{MAP_2}1:2": 3,
-    f"{MAP_2}1:3": 4,
-    f"{MAP_2}2:1": 3,
-    f"{MAP_2}2:2": 3,
-    f"{MAP_2}2:3": 4,
-    f"{MAP_2}3:1": 3,
-    f"{MAP_2}3:2": 5,
-    f"{MAP_2}3:3": 6,
-    f"{MAP_2}4:1": 4,
-    f"{MAP_2}4:2": 6,
-    f"{MAP_2}4:3": 6,
-    f"{MAP_2}5:1": 4,
-    f"{MAP_2}5:2": 6,
-    f"{MAP_2}5:3": 9,
-    f"{MAP_2}6:1": 6,
-    f"{MAP_2}6:2": 9,
-    f"{MAP_2}6:3": 9,
-}
+ALLOWED_MAPS = [MAP_1, MAP_2, MAP_3]
 
 LEVEL_HIERARCHY = {
     ":E": 3,
     ":M": 2,
     ":H": 1,
 }
-
-BATTLE_ENEMY_DNAS = [
-    "W0000000000WSW000002WE00004:W0000000000WSW000009WE00004:W0000000000WSW000015WE00004:W0000000000WSW000021WE00004:W0000000000D00000000WE00004:W0000000000D00000000WE00004:W0000000000D00000000WE00004:W0000000000D00000000WE00004:0xA000000B000000000C0002092022D00000080004:80004",
-    "W0000000000WSW000003WE00017:W0000000000WSW000010WE00017:W0000000000WSW000016WE00017:W0000000000WSW000022WE00017:W0000000000D00000000WE00017:W0000000000D00000000WE00017:W0000000000D00000000WE00017:W0000000000D00000000WE00017:0xA000000B000000000C0002092022D00000080040:80040",
-    "W0000000000WSW000050WE00005:W0000000000WSW000058WE00005:W0000000000WSW000062WE00005:W0000000000WSW000068WE00005:W0000000000D00000000WE00005:W0000000000D00000000WE00005:W0000000000D00000000WE00005:W0000000000D00000000WE00005:0xA000000B000000000C0002092022D00000080028:80028",
-    "W0000000000WSW000052WE00017:W0000000000WSW000055WE00017:W0000000000WSW000063WE00017:W0000000000WSW000067WE00017:W0000000000D00000000WE00017:W0000000000D00000000WE00017:W0000000000D00000000WE00017:W0000000000D00000000WE00017:0xA000000B000000000C0002092022D00000080048:80048",
-    "W0000000000DSW000030W000158:W0000000000WSW000039W000153:W0000000000WSW000033W000020:W0000000000WSW000029W000129:W0000000000DSW000048W000129:W0000000000DSW000025W000155:W0000000000WSW000042W000155:W0000000000DSW000040W000153:0x4B3903952A25961B9E66216186Efd9B21903AEd3:13728",
-    "W0000000000DSW000045W000133:W0000000000WSW000027W000036:W0000000000DSW000028W000133:W0000000000DSW000044W000124:W0000000000DSW000043W000148:W0000000000WSW000038W000148:W0000000000WSW000040W000132:W0000000000WSW000036W000133:0x4B3903952A25961B9E66216186Efd9B21903AEd3:11118",
-    "W0000000000WSW000002WE00004:W0000000000WSW000009WE00004:W0000000000WSW000015WE00004:W0000000000WSW000021WE00004:W0000000000D00000000WE00004:W0000000000D00000000WE00004:W0000000000D00000000WE00004:W0000000000D00000000WE00004:0xA000000B000000000C0002092022D00000080005:80005",
-    "W0000000000WSW000004WE00010:W0000000000WSW000007WE00010:W0000000000WSW000014WE00010:W0000000000WSW000019WE00010:W0000000000D00000000WE00010:W0000000000D00000000WE00010:W0000000000D00000000WE00010:W0000000000D00000000WE00010:0xA000000B000000000C0002092022D00000080011:80011",
-    "W0000000000WSW000003WE00007:W0000000000WSW000010WE00007:W0000000000WSW000016WE00007:W0000000000WSW000022WE00007:W0000000000D00000000WE00007:W0000000000D00000000WE00007:W0000000000D00000000WE00007:W0000000000D00000000WE00007:0xA000000B000000000C0002092022D00000080008:80008",
-    "W0000000000WSW000001WE00002:W0000000000WSW000008WE00002:W0000000000WSW000013WE00002:W0000000000WSW000020WE00002:W0000000000D00000000WE00002:W0000000000D00000000WE00002:W0000000000D00000000WE00002:W0000000000D00000000WE00002:0xA000000B000000000C0002092022D00000080002:80002",
-    "W0000000000WSW000002WE00004:W0000000000WSW000009WE00004:W0000000000WSW000015WE00004:W0000000000WSW000021WE00004:W0000000000D00000000WE00004:W0000000000D00000000WE00004:W0000000000D00000000WE00004:W0000000000D00000000WE00004:0xA000000B000000000C0002092022D00000080005:80005",
-    "W0000000000WSW000002WE00004:W0000000000WSW000009WE00004:W0000000000WSW000015WE00004:W0000000000WSW000021WE00004:W0000000000D00000000WE00004:W0000000000D00000000WE00004:W0000000000D00000000WE00004:W0000000000D00000000WE00004:0xA000000B000000000C0002092022D00000080004:80004",
-    "W0000000000WSW000002WE00004:W0000000000WSW000009WE00004:W0000000000WSW000015WE00004:W0000000000WSW000021WE00004:W0000000000D00000000WE00004:W0000000000D00000000WE00004:W0000000000D00000000WE00004:W0000000000D00000000WE00004:0xA000000B000000000C0002092022D00000080004:80004",
-    "W0000000000WSW000003WE00017:W0000000000WSW000010WE00017:W0000000000WSW000016WE00017:W0000000000WSW000022WE00017:W0000000000D00000000WE00017:W0000000000D00000000WE00017:W0000000000D00000000WE00017:W0000000000D00000000WE00017:0xA000000B000000000C0002092022D00000080040:80040",
-    "W0000000000WSW000004WE00019:W0000000000WSW000007WE00019:W0000000000WSW000014WE00019:W0000000000WSW000019WE00019:W0000000000D00000000WE00019:W0000000000D00000000WE00019:W0000000000D00000000WE00019:W0000000000D00000000WE00019:0xA000000B000000000C0002092022D00000080041:80041",
-]
-
-STOCK_PLAYER_WYNDS = [
-    "W0000000000DSW000030W000158:W0000000000WSW000039W000153:W0000000000WSW000033W000020:W0000000000WSW000029W000129:W0000000000DSW000048W000129:W0000000000DSW000025W000155:W0000000000WSW000042W000155:W0000000000DSW000040W000153:0x4B3903952A25961B9E66216186Efd9B21903AEd3:13728",
-    "W0000000000DSW000045W000133:W0000000000WSW000027W000036:W0000000000DSW000028W000133:W0000000000DSW000044W000124:W0000000000DSW000043W000148:W0000000000WSW000038W000148:W0000000000WSW000040W000132:W0000000000WSW000036W000133:0x4B3903952A25961B9E66216186Efd9B21903AEd3:11118",
-]
 
 
 @yaspin(text="Resting between battles...")
@@ -155,7 +81,7 @@ class PveGame:
             self.MAX_GAME_DURATION * 3 if human_mode else self.MAX_GAME_DURATION
         )
 
-        self.chro_w3 = T.cast(
+        self.chro_w3: ChroWeb3Client = T.cast(
             ChroWeb3Client,
             (
                 ChroWeb3Client()
@@ -167,47 +93,92 @@ class PveGame:
         )
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
 
+        self.google_w2: PveGoogleStorageWeb2Client = PveGoogleStorageWeb2Client(
+            config["private_key"],
+            config["address"],
+            WyndblastWeb2Client.GOOGLE_STORAGE_URL,
+            dry_run=False,
+        )
+
         self.last_level_up = 0.0
         self.last_quest_claim = 0.0
         self.num_replays = 0
 
         self.last_mission = None
 
+        self.stages_info: T.List[types.LevelsInformation] = self.google_w2.get_level_data()
+
         self.sorted_levels = []
         for difficulty in LEVEL_HIERARCHY.keys():
-            levels = sorted(LEVEL_TO_NUM_ENEMIES.keys())
+            levels = self._get_all_levels_from_cache(exclude_difficulty=True)
             self.sorted_levels.extend([l + difficulty for l in levels])
         self.completed = set()
 
         logger.print_ok_blue(f"\nStarting PVE game for user {user}...")
 
+    def _get_all_levels_from_cache(self, exclude_difficulty: bool = False) -> T.List[str]:
+        levels = []
+        for stages in self.stages_info:
+            for stage in stages.get("stages", []):
+                if exclude_difficulty:
+                    stage_id = stage.get("id", "")
+                    if stage_id:
+                        levels.append(stage_id)
+                else:
+                    for difficulty, stage_difficulty_info in stage.get("difficulties", {}).items():
+                        stage_id = stage_difficulty_info.get("id", "")
+                        if stage_id:
+                            levels.append(stage_id)
+
+        return sorted(levels)
+
+    def _get_stage_info_from_cache(self, mission: str) -> types.StageDifficulty:
+        stages = []
+
+        for stages in self.stages_info:
+            if mission[:4] != stages.get("id", ""):
+                continue
+            stages = stages.get("stages", [])
+
+        level_info: types.StageInfo = types.StageInfo()
+        for stage in stages:
+            if mission[:6] != stage.get("id", ""):
+                continue
+            level_info = stage
+
+        stage_difficulty: types.StageDifficulty()
+        for difficulty, stage_difficulty_info in level_info.get("difficulties", {}).items():
+            if mission != stage_difficulty_info.get("id", ""):
+                continue
+            stage_difficulty = stage_difficulty_info
+
+        return stage_difficulty
+
     def _get_num_enemies_for_mission(self, mission: str) -> int:
         if mission[:3] not in ALLOWED_MAPS:
             return 0
 
-        # strip off the difficulty part since all difficulties are same num enemies
-        mission_stage = mission[:-2]
-        return LEVEL_TO_NUM_ENEMIES.get(mission_stage, 0)
+        return len(self._get_enemy_lineup(mission))
 
-    def _get_enemy_lineup(self, num_enemies: int) -> T.List[types.BattleUnit]:
+    def _get_enemy_lineup(self, mission: str, verbose: bool = False) -> T.List[types.BattleUnit]:
         enemies: T.List[types.BattleUnit] = []
-        num_enemies = min(len(BATTLE_ENEMY_DNAS), num_enemies)
 
-        used_dnas_inx = []
-        index = 0
-        for _ in range(num_enemies):
+        stage_info: types.StageDifficulty = self._get_stage_info_from_cache(mission)
 
-            while index in used_dnas_inx:
-                index = random.randrange(num_enemies)
-
-            used_dnas_inx.append(index)
-
-            unit = types.BattleUnit = {
-                "equipment_dna": "",
-                "rider_dna": "",
-                "wynd_dna": BATTLE_ENEMY_DNAS[index],
-            }
-            enemies.append(unit)
+        enemies_info = stage_info.get("enemies", {})
+        for enemy_type, category in enemies_info.items():
+            for status, units in category.items():
+                for enemy_unit in units:
+                    unit = types.BattleUnit = {
+                        "equipment_dna": "",
+                        "rider_dna": enemy_unit["rider"],
+                        "wynd_dna": enemy_unit["wynd"],
+                    }
+                    if verbose:
+                        logger.print_normal(
+                            f"Using enemy wynd: {enemy_unit['wynd']} rider: {enemy_unit['rider']}"
+                        )
+                    enemies.append(unit)
 
         return enemies
 
@@ -265,7 +236,7 @@ class PveGame:
 
     def _get_next_stage(self) -> str:
         index = self.sorted_levels.index(self.last_mission)
-        if index + 1 >= len(LEVEL_TO_NUM_ENEMIES.keys()):
+        if index + 1 >= len(self.sorted_levels):
             return ""
         proposed_stage = self.sorted_levels[index + 1]
         if proposed_stage in self.completed:
@@ -291,6 +262,14 @@ class PveGame:
 
         stage_id = next_stages[0]
         return stage_id if any([s for s in ALLOWED_MAPS if stage_id.startswith(s)]) else ""
+
+    def _get_stamina_for_level(self, mission: str) -> int:
+        stage_info: types.StageDifficulty = self._get_stage_info_from_cache(mission)
+        return stage_info.get("stamina_cost", 10000)
+
+    def _get_stamina(self) -> int:
+        results: types.Stamina = self.wynd_w2.get_stamina()
+        return results.get("current", 0)
 
     def _send_pve_update(self, account_exp: int) -> None:
         webhook = DiscordWebhook(
@@ -472,15 +451,9 @@ class PveGame:
                 logger.print_bold(f"Waiting for EXP boosts, no way to do that now so not playing")
                 return ""
 
-        if self.human_mode:
-            if not user_data:
-                user_data: types.PveUser = self.wynd_w2.get_user_profile()
-
-            if user_data.get("stamina", 0) < STAMINA_AT_LEVELS[stage_id[: len(MAP_2) + 2]]:
-                logger.print_normal(
-                    f"Not playing more since we're behaving and respecting stamina..."
-                )
-                return ""
+        if self.human_mode and self._get_stamina() < self._get_stamina_for_level(stage_id):
+            logger.print_normal(f"Not playing more since we're behaving and respecting stamina...")
+            return ""
 
         return stage_id
 
@@ -494,7 +467,7 @@ class PveGame:
 
         logger.print_ok_blue(f"We will be battling {num_enemies} enemies in stage {stage_id}...")
         battle_setup: types.BattleSetup = types.BattleSetup()
-        battle_setup["enemy"] = self._get_enemy_lineup(num_enemies)
+        battle_setup["enemy"] = self._get_enemy_lineup(stage_id)
         battle_setup["player"] = self._get_player_lineup(self.MAX_WYNDS_PER_BATTLE, nft_data)
 
         if not battle_setup["player"]:
@@ -505,7 +478,7 @@ class PveGame:
         did_succeed = False
         for attempt in range(RETRY_ATTEMPTS):
             duration = random.randint(self.min_game_duration, self.max_game_duration)
-            result = "win" if random.randint(1, 4 if self.human_mode else 1) == 1 else "loss"
+            result = "win" if random.randint(1, 4 if self.human_mode else 1) == 1 else "lose"
             if self.wynd_w2.battle(stage_id, battle_setup, duration=duration, result=result):
                 self.completed.add(stage_id)
                 self.last_mission = stage_id
@@ -579,18 +552,24 @@ class PveGame:
 
     def check_and_auth_account(self) -> bool:
         if self.wynd_w2.update_account():
-            self.is_deactivated = True
+            self.is_deactivated = False
             return self.is_deactivated
 
         if not self.wynd_w2.authorize_user():
-            self.is_deactivated = False
+            self.is_deactivated = True
             return self.is_deactivated
 
         if not self.wynd_w2.update_account():
-            self.is_deactivated = False
+            self.is_deactivated = True
             return self.is_deactivated
 
-        self.is_deactivated = True
+        if not self.wynd_w2.refresh_auth():
+            self.is_deactivated = True
+            return self.is_deactivated
+
+        self.wynd_w2.ping_realtime()
+
+        self.is_deactivated = False
         return self.is_deactivated
 
     def play_game(self) -> None:
@@ -606,7 +585,7 @@ class PveGame:
 
         user_data: types.PveUser = self.wynd_w2.get_user_profile()
         chro_rewards: types.PveRewards = self.wynd_w2.get_chro_rewards()
-        user_exp = user_data.get("exp", 1000)
+        user_exp = user_data.get("exp", 0)
 
         self._check_and_do_standard_quest_list(nft_data)
 

@@ -1,0 +1,100 @@
+import copy
+import json
+import time
+import typing as T
+
+from eth_typing import Address
+
+from utils import logger
+from wyndblast.api_headers import (
+    WYNDBLAST_PVE_GOOGLESTORAGE_HEADERS,
+    GOOGLE_STORAGE_X_CLIENT_DATA_KEYS,
+)
+from wyndblast.types import AccountLevels, PveWynd
+from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
+
+
+class PveGoogleStorageWeb2Client(WyndblastWeb2Client):
+    def __init__(
+        self, private_key: str, user_address: Address, base_url: str, dry_run: bool = False
+    ) -> None:
+        super().__init__(private_key, user_address, base_url, dry_run=dry_run)
+
+    def _get_pve_headers(
+        self, x_client: str = GOOGLE_STORAGE_X_CLIENT_DATA_KEYS["pve"]
+    ) -> T.Dict[str, str]:
+        headers = copy.deepcopy(WYNDBLAST_PVE_GOOGLESTORAGE_HEADERS)
+        headers["x-client-data"] = x_client
+        return headers
+
+    def _get_all_enemies_raw(
+        self,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
+    ) -> T.Any:
+        url = self.GOOGLE_STORAGE_URL + f"/PvE-enemy.json"
+        default_params = {
+            "v": int(time.time() * 1000),
+        }
+        default_params.update(params)
+
+        return self._post_request(url, headers=headers, params=default_params, timeout=10.0)
+
+    def get_all_enemies(self) -> T.List[PveWynd]:
+        try:
+            res = self._get_all_enemies_raw(headers=self._get_pve_headers())
+            return res
+        except KeyboardInterrupt:
+            raise
+        except:
+            if res:
+                logger.print_fail(f"Failed to get enemies list!\n{res}")
+            return False
+
+    def _get_account_stats_raw(
+        self,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
+    ) -> T.Any:
+        url = self.GOOGLE_STORAGE_URL + f"/account-stats.json"
+        default_params = {
+            "v": int(time.time() * 1000),
+        }
+        default_params.update(params)
+
+        return self._post_request(url, headers=headers, params=default_params, timeout=10.0)
+
+    def get_account_stats(self) -> T.List[AccountLevels]:
+        try:
+            res = self._get_account_stats_raw(headers=self._get_pve_headers())
+            return res
+        except KeyboardInterrupt:
+            raise
+        except:
+            if res:
+                logger.print_fail(f"Failed to get account stats list!\n{res}")
+            return False
+
+    def _get_level_data_raw(
+        self,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
+    ) -> T.Any:
+        url = self.GOOGLE_STORAGE_URL + f"/PvE-stages.json"
+        default_params = {
+            "v": int(time.time() * 1000),
+        }
+        default_params.update(params)
+
+        return self._post_request(url, headers=headers, params=default_params, timeout=10.0)
+
+    def get_level_data(self) -> T.List[LevelsInformation]:
+        try:
+            res = self._get_level_data_raw(headers=self._get_pve_headers())
+            return res
+        except KeyboardInterrupt:
+            raise
+        except:
+            if res:
+                logger.print_fail(f"Failed to get level stats list!\n{res}")
+            return False

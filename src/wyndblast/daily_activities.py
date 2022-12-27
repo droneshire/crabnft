@@ -91,18 +91,18 @@ class DailyActivitiesGame:
 
     def check_and_auth_account(self) -> bool:
         if self.wynd_w2.update_account():
-            self.is_deactivated = True
+            self.is_deactivated = False
             return self.is_deactivated
 
         if not self.wynd_w2.authorize_user():
-            self.is_deactivated = False
+            self.is_deactivated = True
             return self.is_deactivated
 
         if not self.wynd_w2.update_account():
-            self.is_deactivated = False
+            self.is_deactivated = True
             return self.is_deactivated
 
-        self.is_deactivated = True
+        self.is_deactivated = False
         return self.is_deactivated
 
     def run_activity(self) -> None:
