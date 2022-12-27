@@ -383,6 +383,8 @@ class PveGame:
                 logger.print_normal(f"Attempting to level up wynd {product_id}...")
                 if self.wynd_w2.level_up_wynd(product_id):
                     logger.print_ok_arrow(f"Leveled up wynd {product_id}!")
+                else:
+                    logger.print_normal(f"Unable to level up wynd {product_id}")
             self.last_level_up = now
 
     def _check_and_claim_quest_list(self) -> None:
