@@ -145,17 +145,18 @@ class WyndBot:
 
         time.sleep(5.0)
 
-        tx_hash = self.wynd_w3.move_out_of_inventory(token_ids=wynds_to_move)
-        tx_receipt = self.wynd_w3.get_transaction_receipt(tx_hash)
-        gas = wei_to_token(self.wynd_w3.get_gas_cost_of_transaction_wei(tx_receipt))
-        logger.print_bold(f"Paid {gas} AVAX in gas")
+        for wynd in wynds_to_move:
+            tx_hash = self.wynd_w3.move_out_of_inventory(token_ids=[wynd])
+            tx_receipt = self.wynd_w3.get_transaction_receipt(tx_hash)
+            gas = wei_to_token(self.wynd_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+            logger.print_bold(f"Paid {gas} AVAX in gas")
 
-        self.stats_logger.lifetime_stats["avax_gas"] += gas
-        if tx_receipt.get("status", 0) != 1:
-            logger.print_fail(f"Failed to move wynds to game!\n{tx_receipt}")
-        else:
-            logger.print_ok(f"Successfully moved to game")
-            logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+            self.stats_logger.lifetime_stats["avax_gas"] += gas
+            if tx_receipt.get("status", 0) != 1:
+                logger.print_fail(f"Failed to move wynds to game!\n{tx_receipt}")
+            else:
+                logger.print_ok(f"Successfully moved to game")
+                logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
 
     def _check_and_maybe_secure_account(self) -> None:
         if (
