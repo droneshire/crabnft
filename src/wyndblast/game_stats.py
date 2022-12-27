@@ -56,6 +56,7 @@ NULL_GAME_STATS = {
         "levels_completed": [],
         "quests_completed": [],
         "account_exp": 0,
+        "max_level": "",
     },
 }
 
@@ -70,6 +71,14 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
         verbose: bool = False,
     ):
         super().__init__(user, NULL_GAME_STATS, log_dir, backup_stats, dry_run, verbose)
+
+        if "max_level" not in self.lifetime_stats["pve_game"]:
+            logger.print_bold(f"Erasing old game stats...")
+            self.lifetime_stats["pve_game"]["levels_completed"] = []
+            self.lifetime_stats["pve_game"]["quests_completed"] = []
+            self.lifetime_stats["pve_game"]["account_exp"] = 0
+
+        self.last_lifetime_stats = copy.deepcopy(self.lifetime_stats)
 
     def delta_game_stats(
         self,

@@ -464,7 +464,7 @@ class TeamPreset(T.TypedDict):
 
 class Stamina(T.TypedDict):
     user_id: str
-    pool: 0
+    pool: int
     current: int
     recharged: int
 

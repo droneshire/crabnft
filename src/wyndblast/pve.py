@@ -47,15 +47,10 @@ class PveGame:
     MAX_WYNDS_PER_BATTLE = 2
     MIN_GAME_DURATION = 10
     MAX_GAME_DURATION = 29
-    LEVEL_FIVE_EXP = 500
     MAX_REPLAYS_PER_CYCLE = 5  # based on a daily reward that is 20x battles per week
-    MIN_CLAIM_CHRO = 1000
-    MIN_CHRO_TO_PLAY = 100
-    MIN_STAMINA_TO_PLAY = 10
 
     TIME_BETWEEN_CLAIM_QUEST = 60.0 * 60.0 * 6
     TIME_BETWEEN_LEVEL_UP = 60.0 * 5.0
-    TIME_BETWEEN_BATTLES = 60.0
 
     def __init__(
         self,
@@ -107,6 +102,7 @@ class PveGame:
         self.last_mission = None
 
         self.stages_info: T.List[types.LevelsInformation] = self.google_w2.get_level_data()
+        self.account_info: T.List[types.AccountLevels] = self.google_w2.get_account_stats()
 
         self.sorted_levels = []
         for difficulty in LEVEL_HIERARCHY.keys():
@@ -115,6 +111,13 @@ class PveGame:
         self.completed = set()
 
         logger.print_ok_blue(f"\nStarting PVE game for user {user}...")
+
+    def _get_level_five_exp(self) -> int:
+        INVALID_EXP = 1000000
+        for level in self.account_info:
+            if level.get("level", -1) == 5:
+                return level.get("total_exp", INVALID_EXP)
+        return INVALID_EXP
 
     def _get_all_levels_from_cache(self, exclude_difficulty: bool = False) -> T.List[str]:
         levels = []
@@ -135,6 +138,8 @@ class PveGame:
     def _get_stage_info_from_cache(self, mission: str) -> types.StageDifficulty:
         stages = []
 
+        logger.print_bold(f"Trying to get info for {mission}...")
+
         for stages in self.stages_info:
             if mission[:4] != stages.get("id", ""):
                 continue
@@ -146,7 +151,7 @@ class PveGame:
                 continue
             level_info = stage
 
-        stage_difficulty: types.StageDifficulty()
+        stage_difficulty: types.StageDifficulty = types.StageDifficulty()
         for difficulty, stage_difficulty_info in level_info.get("difficulties", {}).items():
             if mission != stage_difficulty_info.get("id", ""):
                 continue
@@ -431,7 +436,7 @@ class PveGame:
                 daily_countdown_seconds = 0
 
             if (
-                user_data.get("exp", self.LEVEL_FIVE_EXP) < self.LEVEL_FIVE_EXP
+                user_data.get("exp", self._get_level_five_exp()) < self._get_level_five_exp()
                 and self.num_replays < self.MAX_REPLAYS_PER_CYCLE
                 and daily_countdown_seconds < 60 * 60 * 3
             ):
@@ -442,7 +447,7 @@ class PveGame:
                 logger.print_bold(f"We've beat the full map, but still need more exp, replaying...")
                 stage_id = self.sorted_levels[random.randrange(3)]
                 self.num_replays += 1
-            elif user_data.get("exp", self.LEVEL_FIVE_EXP) >= self.LEVEL_FIVE_EXP:
+            elif user_data.get("exp", self._get_level_five_exp()) >= self._get_level_five_exp():
                 self.num_replays = 0
                 logger.print_bold(f"Beat game, no need to play anymore!")
                 return ""
@@ -476,9 +481,14 @@ class PveGame:
 
         RETRY_ATTEMPTS = 3
         did_succeed = False
+        difficulty_adjustment = LEVEL_HIERARCHY[stage_id[:-2]]
         for attempt in range(RETRY_ATTEMPTS):
             duration = random.randint(self.min_game_duration, self.max_game_duration)
-            result = "win" if random.randint(1, 4 if self.human_mode else 1) == 1 else "lose"
+            result = (
+                "win"
+                if random.randint(1, 7 - difficulty_adjustment if self.human_mode else 1) == 1
+                else "lose"
+            )
             if self.wynd_w2.battle(stage_id, battle_setup, duration=duration, result=result):
                 self.completed.add(stage_id)
                 self.last_mission = stage_id
@@ -512,7 +522,7 @@ class PveGame:
             logger.print_normal(f"Nothing to claim!")
             return False
 
-        if exp < self.LEVEL_FIVE_EXP:
+        if exp < self._get_level_five_exp():
             logger.print_normal(f"Waiting till level 5 to claim rewards ({unclaimed_chro} CHRO)")
             return False
 

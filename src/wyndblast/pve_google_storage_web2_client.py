@@ -10,7 +10,7 @@ from wyndblast.api_headers import (
     WYNDBLAST_PVE_GOOGLESTORAGE_HEADERS,
     GOOGLE_STORAGE_X_CLIENT_DATA_KEYS,
 )
-from wyndblast.types import AccountLevels, PveWynd
+from wyndblast.types import AccountLevels, LevelsInformation, PveWynd
 from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
 
 
@@ -38,7 +38,7 @@ class PveGoogleStorageWeb2Client(WyndblastWeb2Client):
         }
         default_params.update(params)
 
-        return self._post_request(url, headers=headers, params=default_params, timeout=10.0)
+        return self._get_request(url, headers=headers, params=default_params, timeout=10.0)
 
     def get_all_enemies(self) -> T.List[PveWynd]:
         try:
@@ -47,8 +47,9 @@ class PveGoogleStorageWeb2Client(WyndblastWeb2Client):
         except KeyboardInterrupt:
             raise
         except:
+            logger.print_fail(f"Failed to get enemies list!")
             if res:
-                logger.print_fail(f"Failed to get enemies list!\n{res}")
+                logger.print_normal(f"{res}")
             return False
 
     def _get_account_stats_raw(
@@ -62,7 +63,7 @@ class PveGoogleStorageWeb2Client(WyndblastWeb2Client):
         }
         default_params.update(params)
 
-        return self._post_request(url, headers=headers, params=default_params, timeout=10.0)
+        return self._get_request(url, headers=headers, params=default_params, timeout=10.0)
 
     def get_account_stats(self) -> T.List[AccountLevels]:
         try:
@@ -71,8 +72,9 @@ class PveGoogleStorageWeb2Client(WyndblastWeb2Client):
         except KeyboardInterrupt:
             raise
         except:
+            logger.print_fail(f"Failed to get account stats list!")
             if res:
-                logger.print_fail(f"Failed to get account stats list!\n{res}")
+                logger.print_normal(f"{res}")
             return False
 
     def _get_level_data_raw(
@@ -86,7 +88,7 @@ class PveGoogleStorageWeb2Client(WyndblastWeb2Client):
         }
         default_params.update(params)
 
-        return self._post_request(url, headers=headers, params=default_params, timeout=10.0)
+        return self._get_request(url, headers=headers, params=default_params, timeout=10.0)
 
     def get_level_data(self) -> T.List[LevelsInformation]:
         try:
@@ -95,6 +97,7 @@ class PveGoogleStorageWeb2Client(WyndblastWeb2Client):
         except KeyboardInterrupt:
             raise
         except:
+            logger.print_fail(f"Failed to get level stats list!")
             if res:
-                logger.print_fail(f"Failed to get level stats list!\n{res}")
+                logger.print_normal(f"{res}")
             return False
