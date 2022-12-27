@@ -20,10 +20,8 @@ from wyndblast.assets import WYNDBLAST_ASSETS
 from wyndblast.game_stats import WyndblastLifetimeGameStatsLogger
 from wyndblast.game_stats import NULL_GAME_STATS
 from wyndblast import types
-from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
 from wyndblast.pve_web2_client import PveWyndblastWeb2Client
 from wyndblast.wyndblast_web3_client import WyndblastGameWeb3Client
-from wyndblast.pve_google_storage_web2_client import PveGoogleStorageWeb2Client
 
 MAP_1 = "M1S"
 MAP_2 = "M2S"
@@ -60,6 +58,8 @@ class PveGame:
         wynd_w2: PveWyndblastWeb2Client,
         wynd_w3: WyndblastGameWeb3Client,
         stats_logger: WyndblastLifetimeGameStatsLogger,
+        stages_info: T.List[types.LevelsInformation],
+        account_info: T.List[types.AccountLevels],
         human_mode: bool,
     ) -> None:
         self.user = user
@@ -88,23 +88,14 @@ class PveGame:
         )
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
 
-        self.google_w2: PveGoogleStorageWeb2Client = PveGoogleStorageWeb2Client(
-            config["private_key"],
-            config["address"],
-            WyndblastWeb2Client.GOOGLE_STORAGE_URL,
-            dry_run=False,
-        )
-
         self.last_level_up = 0.0
         self.last_quest_claim = 0.0
         self.num_replays = 0
 
         self.last_mission = None
 
-        logger.print_normal("Caching stages info...")
-        self.stages_info: T.List[types.LevelsInformation] = self.google_w2.get_level_data()
-        logger.print_normal("Caching account info...")
-        self.account_info: T.List[types.AccountLevels] = self.google_w2.get_account_stats()
+        self.stages_info: T.List[types.LevelsInformation] = stages_info
+        self.account_info: T.List[types.AccountLevels] = account_info
 
         self.sorted_levels = []
         for difficulty in LEVEL_HIERARCHY.keys():

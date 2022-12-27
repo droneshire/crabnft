@@ -13,7 +13,9 @@ from utils import discord
 from utils import logger
 from utils.email import Email, get_email_accounts_from_password
 from utils.security import decrypt_secret
+from wyndblast import types
 from wyndblast.daily_activities import DailyActivitiesGame
+from wyndblast.pve_google_storage_web2_client import PveGoogleStorageWeb2Client
 from wyndblast.wynd_bot import WyndBot
 from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
 
@@ -82,6 +84,18 @@ def run_bot() -> None:
             encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
         email_accounts = get_email_accounts_from_password(encrypt_password, GMAIL)
 
+    google_w2: PveGoogleStorageWeb2Client = PveGoogleStorageWeb2Client(
+        "",
+        "",
+        WyndblastWeb2Client.GOOGLE_STORAGE_URL,
+        dry_run=False,
+    )
+
+    logger.print_normal("Caching stages info...")
+    stages_info: T.List[types.LevelsInformation] = google_w2.get_level_data()
+    logger.print_normal("Caching account info...")
+    account_info: T.List[types.AccountLevels] = google_w2.get_account_stats()
+
     bots = []
     for user, config in USERS.items():
         if config["group"] not in [int(i) for i in args.groups]:
@@ -99,7 +113,9 @@ def run_bot() -> None:
             email_accounts,
             encrypt_password,
             args.log_dir,
-            args.human_mode,
+            stages_info,
+            account_info,
+            human_mode=args.human_mode,
             dry_run=args.dry_run,
         )
         bot.init()

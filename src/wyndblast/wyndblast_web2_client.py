@@ -77,7 +77,7 @@ class WyndblastWeb2Client:
         self, private_key: str, user_address: Address, base_url: str, dry_run: bool = False
     ) -> None:
         self.private_key = private_key
-        self.user_address = Web3.toChecksumAddress(user_address)
+        self.user_address = Web3.toChecksumAddress(user_address) if user_address else ""
 
         self.session_token = None
         self.object_id = None
@@ -138,6 +138,8 @@ class WyndblastWeb2Client:
         return json.loads(json.dumps(payload))
 
     def _get_moralis_auth_payload(self) -> T.Dict[str, T.Any]:
+        if not self.user_address:
+            return {}
         signature, timestamp = self._get_login_signature()
 
         payload = self._get_moralis_base_payload()
@@ -152,6 +154,9 @@ class WyndblastWeb2Client:
         return json.loads(json.dumps(payload))
 
     def _get_moralis_login_payload(self) -> T.Dict[str, T.Any]:
+        if not self.user_address:
+            logger.print_warn("Cannot use moralis, no key pairs provided")
+            return {}
         payload = self._get_moralis_base_payload()
         payload["_method"] = "PUT"
         payload["_SessionToken"] = self.session_token
@@ -161,6 +166,9 @@ class WyndblastWeb2Client:
         return json.loads(json.dumps(payload))
 
     def _get_login_signature(self) -> (str, int):
+        if not self.user_address:
+            logger.print_warn("Cannot use moralis, no key pairs provided")
+            return "", 0
         server_time = self._get_server_time()
         signable = messages.encode_defunct(text=self.TO_SIGN.format(server_time))
         signed = Account.sign_message(signable, private_key=self.private_key)

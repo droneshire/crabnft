@@ -16,7 +16,7 @@ from wyndblast.daily_activities_web2_client import DailyActivitiesWyndblastWeb2C
 from wyndblast.game_stats import NULL_GAME_STATS, WyndblastLifetimeGameStatsLogger
 from wyndblast.pve import PveGame
 from wyndblast.pve_web2_client import PveWyndblastWeb2Client
-from wyndblast.types import WyndNft
+from wyndblast.types import AccountLevels, LevelsInformation, WyndNft
 from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
 from wyndblast.wyndblast_web3_client import WyndblastGameWeb3Client, WyndblastNftGameWeb3Client
 
@@ -31,6 +31,8 @@ class WyndBot:
         email_accounts: T.List[Email],
         encrypt_password: str,
         log_dir: str,
+        stages_info: T.List[LevelsInformation],
+        account_info: T.List[AccountLevels],
         human_mode: bool,
         dry_run: bool,
     ):
@@ -106,6 +108,8 @@ class WyndBot:
             self.pve_w2,
             self.wynd_w3,
             self.stats_logger,
+            stages_info,
+            account_info,
             human_mode,
         )
 
