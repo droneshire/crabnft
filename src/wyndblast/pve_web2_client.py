@@ -255,7 +255,7 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
                 payload=json.loads(json.dumps(payload)),
                 headers=self._get_pve_headers(api_key=API_KEYS["internal"]),
             )
-            return res["result"]["won"]
+            return res["status"]
         except KeyboardInterrupt:
             raise
         except:

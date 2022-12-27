@@ -236,20 +236,21 @@ class PveGame:
         return units
 
     def _get_next_stage(self) -> str:
-        if self.last_mission is not None:
-            index = self.sorted_levels.index(self.last_mission) + 1
-            if index + 1 >= len(self.sorted_levels):
-                return ""
+        if self.last_mission is None:
+            self._get_next_stage_from_api()
         else:
-            index = 0
+            index = self.sorted_levels.index(self.last_mission) + 1
+            if index >= len(self.sorted_levels):
+                return self._get_next_stage_from_api()
+
         proposed_stage = self.sorted_levels[index]
         if proposed_stage in self.completed:
-            for i in range(len(self.sorted_levels)):
-                if self.sorted_levels[i] not in self.completed:
-                    return self.sorted_levels[i]
-            return ""
+            for level in self.sorted_levels:
+                if level not in self.completed:
+                    return level
+            return self._get_next_stage_from_api()
 
-        return self.sorted_levels[index + 1]
+        return self.sorted_levels[index]
 
     def _get_next_stage_from_api(self) -> str:
         stages: types.PveStages = self.wynd_w2.get_stages()
@@ -419,12 +420,7 @@ class PveGame:
         self.wynd_w2.preset_team([product_id])
 
     def _get_next_level(self, countdown: types.Countdown) -> str:
-        if self.last_mission is None:
-            stage_id = self._get_next_stage_from_api()
-        else:
-            stage_id = self._get_next_stage()
-            if not stage_id:
-                stage_id = self._get_next_stage_from_api()
+        stage_id = self._get_next_stage()
 
         user_data: types.PveUser = {}
 
@@ -498,16 +494,16 @@ class PveGame:
             self.wynd_w2.get_stamina()
             logger.print_normal(f"Pinging realtime...")
             self.wynd_w2.ping_realtime()
-            if (
-                self.wynd_w2.battle(stage_id, battle_setup, duration=duration, result=result)
-                == should_win
-            ):
+            if self.wynd_w2.battle(stage_id, battle_setup, duration=duration, result=result):
                 self.completed.add(stage_id)
                 self.last_mission = stage_id
                 levels_completed = set(self.current_stats["pve_game"]["levels_completed"])
                 levels_completed.add(stage_id)
                 self.current_stats["pve_game"]["levels_completed"] = list(levels_completed)
-                logger.print_ok(f"We {result.upper()}")
+                if result == "win":
+                    logger.print_ok(f"We {result.upper()}! \U0001F389")
+                else:
+                    logger.print_warn(f"We {result.upper()} \U0001F62D")
                 did_succeed = True
                 break
             elif attempt + 1 >= RETRY_ATTEMPTS:
