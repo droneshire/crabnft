@@ -492,11 +492,16 @@ class PveGame:
                 if random.randint(1, 6 - difficulty_adjustment if self.human_mode else 1) == 1
                 else "lose"
             )
+            should_win = result == "win"
+
             logger.print_normal(f"Getting stamina...")
             self.wynd_w2.get_stamina()
             logger.print_normal(f"Pinging realtime...")
             self.wynd_w2.ping_realtime()
-            if self.wynd_w2.battle(stage_id, battle_setup, duration=duration, result=result):
+            if (
+                self.wynd_w2.battle(stage_id, battle_setup, duration=duration, result=result)
+                == should_win
+            ):
                 self.completed.add(stage_id)
                 self.last_mission = stage_id
                 levels_completed = set(self.current_stats["pve_game"]["levels_completed"])
