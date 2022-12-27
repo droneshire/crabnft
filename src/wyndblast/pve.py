@@ -627,7 +627,7 @@ class PveGame:
         logger.print_ok_blue_arrow(f"User EXP: {user_exp}")
 
         while self._check_and_play_story(nft_data, countdown):
-            wait(random.randint(40, 120 if self.human_mode else 60))
+            wait(random.randint(30, 70 if self.human_mode else 50))
             self.check_and_auth_account()
             logger.print_normal(f"Playing next stage...")
 
