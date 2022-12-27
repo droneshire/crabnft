@@ -255,6 +255,8 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
                 payload=json.loads(json.dumps(payload)),
                 headers=self._get_pve_headers(api_key=API_KEYS["internal"]),
             )
+            if not res["status"]:
+                logger.print_fail_arrow(f"{res}")
             return res["status"]
         except KeyboardInterrupt:
             raise
@@ -412,3 +414,63 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
             if res:
                 logger.print_normal(f"{res}")
             return {}
+
+    def _complete_opening_raw(
+        self,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
+    ) -> T.Any:
+        url = self.PVE_BASE_URL + "/opening"
+        return self._post_request(url, json_data={}, headers=headers, params=params, timeout=15.0)
+
+    def complete_opening(self) -> bool:
+        try:
+            res = self._complete_opening_raw(headers=self._get_pve_headers())
+            return res["status"]
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to complete_opening!")
+            if res:
+                logger.print_normal(f"{res}")
+            return False
+
+    def _complete_novel_stage1_raw(
+        self,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
+    ) -> T.Any:
+        url = self.PVE_BASE_URL + "/visual-novel/Selecting_Stage_1_1"
+        return self._post_request(url, json_data={}, headers=headers, params=params, timeout=15.0)
+
+    def complete_novel_stage1(self) -> bool:
+        try:
+            res = self._complete_novel_stage1_raw(headers=self._get_pve_headers())
+            return res["status"]
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to complete_novel_stage1!")
+            if res:
+                logger.print_normal(f"{res}")
+            return False
+
+    def _complete_novel_before_main1_raw(
+        self,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
+    ) -> T.Any:
+        url = self.PVE_BASE_URL + "/visual-novel/Before_Main_Map_1"
+        return self._post_request(url, json_data={}, headers=headers, params=params, timeout=15.0)
+
+    def complete_novel_before_main1(self) -> bool:
+        try:
+            res = self._complete_novel_before_main1_raw(headers=self._get_pve_headers())
+            return res["status"]
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to complete_novel_before_main1!")
+            if res:
+                logger.print_normal(f"{res}")
+            return False

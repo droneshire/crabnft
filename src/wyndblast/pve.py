@@ -111,6 +111,10 @@ class PveGame:
             self.sorted_levels.extend([l + difficulty for l in levels])
         self.completed = set()
 
+        self.self.did_tutorial = (
+            len(self.stats_logger.lifetime_stats["pve_game"]["levels_completed"]) > 0
+        )
+
         logger.print_ok_blue(f"\nStarting PVE game for user {user}...")
 
     def _get_level_five_exp(self) -> int:
@@ -211,6 +215,9 @@ class PveGame:
         used_dnas_inx = []
         index = 0
         for _ in range(num_players):
+            if len(used_dnas_inx) >= len(wynds):
+                logger.print_warn(f"Unable to find enough wynds to play with. Found {len(units)}")
+                return units
 
             while index in used_dnas_inx:
                 index = random.randrange(num_players)
@@ -219,9 +226,17 @@ class PveGame:
 
             dna_string = wynds[index].get("metadata", {}).get("dna", {}).get("all", "")
             product_id = wynds[index].get("product_id", "")
+            cooldown_time = wynds[index].get("cooldown_time", 1)
+
+            if cooldown_time > 0:
+                logger.print_warn(
+                    f"Not using {product_id} since cooldown is {get_pretty_seconds(cooldown_time)}"
+                )
+                continue
+
             if not dna_string:
                 logger.print_warn(f"Could not get DNA string for ID: {product_id}")
-                return []
+                continue
 
             unit = types.BattleUnit = {
                 "equipment_dna": "",
@@ -258,6 +273,8 @@ class PveGame:
             return ""
         for s in stages["completed"]:
             self.completed.add(s)
+        if self.completed:
+            self.did_tutorial = True
         unlocked = stages["unlocked"]
         next_stages = [s for s in unlocked if s not in list(self.completed)]
         if len(next_stages) == 0:
@@ -379,6 +396,8 @@ class PveGame:
             return
 
         self.last_quest_claim = now
+
+        self.wynd_w2.ping_realtime()
 
         logger.print_ok_blue(f"Attempting to claim daily quests")
         res: types.ClaimQuests = self.wynd_w2.claim_daily()
@@ -508,6 +527,7 @@ class PveGame:
                 else:
                     logger.print_warn(f"We {result.upper()} \U0001F62D")
                 did_succeed = True
+                self.did_tutorial = True
 
             if did_succeed:
                 if result == "lose" and attempt + 1 < RETRY_ATTEMPTS:
@@ -604,10 +624,28 @@ class PveGame:
         self.is_deactivated = False
         return self.is_deactivated
 
+    def _check_and_try_tutorial(self) -> bool:
+        logger.print_normal("Attempting tutorial...")
+        if not self.complete_opening():
+            return False
+        time.sleep(5.0)
+        if not self.complete_novel_before_main1():
+            return False
+        time.sleep(5.0)
+        if not self.complete_novel_stage1():
+            return False
+
+        logger.print_ok_arrow("Completed tutorial!")
+        return True
+
     def play_game(self) -> None:
         if self.is_deactivated:
             logger.print_warn(f"Skipping {self.user} since we have been deactivated!")
             return
+
+        if not self.did_tutorial:
+            if not self._check_and_try_tutorial():
+                logger.print_fail_arrow(f"Failed to complete tutorial...")
 
         nft_data: types.PveNfts = self.wynd_w2.get_nft_data()
         if nft_data.get("error_code", "") == "ERR:AUTH:FORBIDDEN_ACCESS":
