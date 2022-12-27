@@ -71,8 +71,14 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
         super().__init__(user, NULL_GAME_STATS, log_dir, backup_stats, dry_run, verbose)
 
         if not isinstance(self.lifetime_stats["pve_game"]["levels_completed"], dict):
-            logger.print_bold(f"Erasing old game stats...")
             self.lifetime_stats["pve_game"]["levels_completed"] = {address: []}
+
+        if address not in self.lifetime_stats["pve_game"]["levels_completed"]:
+            self.lifetime_stats["pve_game"]["levels_completed"][address] = []
+
+        for key in ["max_level", "quests_completed"]:
+            if key in self.lifetime_stats["pve_game"]:
+                del self.lifetime_stats["pve_game"][key]
 
         self.last_lifetime_stats = copy.deepcopy(self.lifetime_stats)
         self.write_game_stats(self.lifetime_stats)
@@ -166,7 +172,7 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
             for k, v in user_a_stats.get(item, {}).items():
                 if "levels_completed" in k:
                     for address, levels in user_a_stats[item][k].items():
-                        merged_set = set(merged_stats[item][k].get(address, []))
+                        merged_set = merged_set.union(merged_stats[item][k].get(address, []))
                         for i in levels:
                             merged_set.add(i)
                     merged_stats[item][k][address] = list(merged_set)
@@ -175,8 +181,9 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
 
             for k, v in user_b_stats.get(item, {}).items():
                 if "levels_completed" in k:
+                    merged_set = set()
                     for address, levels in user_b_stats[item][k].items():
-                        merged_set = set(merged_stats[item][k].get(address, []))
+                        merged_set = merged_set.union(merged_stats[item][k].get(address, []))
                         for i in levels:
                             merged_set.add(i)
                     merged_stats[item][k][address] = list(merged_set)
