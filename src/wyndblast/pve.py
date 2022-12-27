@@ -228,7 +228,7 @@ class PveGame:
 
     def _get_next_stage(self) -> str:
         if self.last_mission is None:
-            self._get_next_stage_from_api()
+            index = self._get_next_stage_from_api()
         else:
             index = self.sorted_levels.index(self.last_mission) + 1
             if index >= len(self.sorted_levels):
