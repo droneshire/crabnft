@@ -189,9 +189,9 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
             return False
 
     def _level_up_wynd_raw(
-        self, dna_string: str, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+        self, product_id: str, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
     ) -> T.Any:
-        url = self.PVE_BASE_URL + f"/rewards/wynd/claim/{dna_string}"
+        url = self.PVE_BASE_URL + f"/rewards/wynd/claim/{product_id}"
         return self._post_request(url, json_data={}, headers=headers, params=params)
 
     def get_wynd_dna_str(self, product_id: str) -> str:
@@ -212,9 +212,9 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
 
         return ""
 
-    def level_up_wynd(self, dna_string: str) -> bool:
+    def level_up_wynd(self, product_id: str) -> bool:
         try:
-            res = self._level_up_wynd_raw(dna_string, headers=self._get_pve_headers())
+            res = self._level_up_wynd_raw(product_id, headers=self._get_pve_headers())
             return res["result"]["is_level_up"]
         except KeyboardInterrupt:
             raise

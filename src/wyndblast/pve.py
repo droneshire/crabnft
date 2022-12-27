@@ -289,9 +289,6 @@ class PveGame:
         )
 
         chro_won = self.current_stats["chro"]
-        if chro_won <= 0.0:
-            logger.print_normal(f"Skipping discord post since no new chro earned")
-            return
         levels_completed = len(self.current_stats["pve_game"]["levels_completed"])
         embed.add_embed_field(name=f"Account Exp", value=f"{account_exp}", inline=False)
         embed.add_embed_field(name=f"CHRO Earned", value=f"{chro_won:.2f}", inline=False)
@@ -358,17 +355,15 @@ class PveGame:
         """
         now = time.time()
         if now - self.last_level_up > self.TIME_BETWEEN_LEVEL_UP:
+            logger.print_normal("Pinging realtime...")
+            self.wynd_w2.ping_realtime()
+
             wynds: T.List[types.PveWynd] = our_units.get("wynd", [])
 
             for player in wynds:
-                dna = player.get("metadata", {}).get("dna", {}).get("all", "")
-                if not dna:
-                    continue
-
-                dna_split = dna.split(":")
-                product_id = ":".join(dna_split[-2:])
+                product_id = player.get("product_id", "")
                 logger.print_normal(f"Attempting to level up wynd {product_id}...")
-                if self.wynd_w2.level_up_wynd(dna):
+                if product_id and self.wynd_w2.level_up_wynd(product_id):
                     logger.print_ok_arrow(f"Leveled up wynd {product_id}!")
             self.last_level_up = now
 
