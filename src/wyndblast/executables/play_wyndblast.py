@@ -29,6 +29,7 @@ def parse_args() -> argparse.Namespace:
     log_dir = logger.get_logging_dir("wyndblast")
     parser.add_argument("--dry-run", action="store_true", help="Dry run")
     parser.add_argument("--human-mode", action="store_true", help="Human mode")
+    parser.add_argument("--ignore-utc", action="store_true", help="Ignore the utc time hold")
     parser.add_argument("--quiet", action="store_true", help="Disable alerts")
     parser.add_argument("--log-level", choices=["INFO", "DEBUG", "ERROR", "NONE"], default="INFO")
     parser.add_argument("--log-dir", default=log_dir)
@@ -135,6 +136,7 @@ def run_bot() -> None:
             account_info,
             human_mode=args.human_mode,
             dry_run=args.dry_run,
+            ignore_utc_time=args.ignore_utc,
         )
         bot.init()
         bots.append(bot)

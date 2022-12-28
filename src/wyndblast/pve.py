@@ -1,4 +1,5 @@
 import copy
+import datetime
 import enum
 import json
 import random
@@ -57,6 +58,7 @@ class PveGame:
 
     TIME_BETWEEN_CLAIM_QUEST = 60.0 * 60.0 * 6
     TIME_BETWEEN_LEVEL_UP = 60.0 * 5.0
+    MARGIN_AFTER_MIDNIGHT_SECONDS = 60.0 * 60.0 * 1.5
 
     def __init__(
         self,
@@ -69,6 +71,7 @@ class PveGame:
         stages_info: T.List[types.LevelsInformation],
         account_info: T.List[types.AccountLevels],
         human_mode: bool,
+        ignore_utc_time: bool = False,
     ) -> None:
         self.user = user
         self.config = config
@@ -78,6 +81,7 @@ class PveGame:
         self.stats_logger = stats_logger
         self.human_mode = human_mode
         self.is_deactivated = False
+        self.ignore_utc_time = ignore_utc_time
 
         self.min_game_duration = self.MIN_GAME_DURATION if human_mode else self.MIN_GAME_DURATION
         self.max_game_duration = (
@@ -109,18 +113,24 @@ class PveGame:
         for difficulty in LEVEL_HIERARCHY.keys():
             levels = self._get_all_levels_from_cache(exclude_difficulty=True)
             self.sorted_levels.extend([l + difficulty for l in levels])
-        self.completed = set()
 
-        self.did_tutorial = (
-            len(
-                self.stats_logger.lifetime_stats["pve_game"]["levels_completed"].get(
-                    self.config["address"], []
-                )
+        self.completed = set(
+            self.stats_logger.lifetime_stats["pve_game"]["levels_completed"].get(
+                self.config["address"], []
             )
-            > 0
         )
 
+        self.did_tutorial = len(self.completed) > 0
+
         logger.print_ok_blue(f"\nStarting PVE game for user {user}...")
+
+    def _is_just_past_midnight_utc(self) -> bool:
+        if self.ignore_utc_time:
+            return True
+        now = datetime.datetime.now(datetime.timezone.utc)
+        midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        time_delta = now - midnight
+        return time_delta.total_seconds() < self.MARGIN_AFTER_MIDNIGHT_SECONDS
 
     def _get_level_five_exp(self) -> int:
         INVALID_EXP = 1000000
@@ -280,6 +290,11 @@ class PveGame:
             self.completed.add(s)
         if self.completed:
             self.did_tutorial = True
+
+        self.stats_logger.lifetime_stats["pve_game"]["levels_completed"][
+            self.config["address"]
+        ] = list(self.completed)
+
         unlocked = stages["unlocked"]
         next_stages = [s for s in unlocked if s not in list(self.completed)]
         if len(next_stages) == 0:
@@ -349,7 +364,7 @@ class PveGame:
                     if "levels_completed" in i:
                         for address, levels in self.stats_logger.lifetime_stats[k][i].items():
                             new_stats = set(self.current_stats[k][i].get(address, []))
-                            self.stats_logger.lifetime_stats[k][i][address] = list(new_stats)
+                            self.stats_logger.lifetime_stats[k][i][address].extend(list(new_stats))
                     else:
                         self.stats_logger.lifetime_stats[k][i] += self.current_stats[k][i]
             else:
@@ -500,6 +515,10 @@ class PveGame:
         return stage_id
 
     def _check_and_play_story(self, nft_data: types.PveNfts, countdown: types.Countdown) -> bool:
+        if not self._is_just_past_midnight_utc():
+            logger.print_warn(f"Not within midnight window, waiting to play game...")
+            return False
+
         stage_id = self._get_next_level(countdown)
 
         if not stage_id:
@@ -559,7 +578,6 @@ class PveGame:
                     wait(10.0)
                 elif result == "win":
                     self.completed.add(stage_id)
-                    self.last_mission = stage_id
                     levels_completed = set(
                         self.current_stats["pve_game"]["levels_completed"].get(
                             self.config["address"], []
@@ -569,6 +587,7 @@ class PveGame:
                     self.current_stats["pve_game"]["levels_completed"][
                         self.config["address"]
                     ] = list(levels_completed)
+                    self.last_mission = stage_id
                     break
             elif attempt + 1 >= RETRY_ATTEMPTS:
                 logger.print_fail(f"Failed to submit battle")

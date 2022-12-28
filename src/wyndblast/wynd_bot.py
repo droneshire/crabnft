@@ -35,6 +35,7 @@ class WyndBot:
         account_info: T.List[AccountLevels],
         human_mode: bool,
         dry_run: bool,
+        ignore_utc_time: bool,
     ):
         self.config = config
         self.alias = get_alias_from_user(user)
@@ -95,7 +96,7 @@ class WyndBot:
             self.config_mgr.get_lifetime_stats(),
             config["address"],
             self.dry_run,
-            verbose=False,
+            verbose=True,
         )
 
         self.daily_activities: DailyActivitiesGame = DailyActivitiesGame(
@@ -112,6 +113,7 @@ class WyndBot:
             stages_info,
             account_info,
             human_mode,
+            ignore_utc_time,
         )
 
     def _check_and_submit_available_inventory(self) -> None:
