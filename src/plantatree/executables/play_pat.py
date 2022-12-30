@@ -102,7 +102,7 @@ def harvester() -> None:
     avg_gas_gwei: Average = Average()
     avg_gas_used: Average = Average()
 
-    health_monitor = HealthMonitor(args.server_url, "pumpskin", USERS).run(daemon=True)
+    health_monitor = HealthMonitor(args.server_url, "plant-a-tree", USERS).run(daemon=True)
 
     try:
         while True:
