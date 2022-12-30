@@ -1,4 +1,4 @@
-PYTHON ?= python3.8
+PYTHON ?= python3
 PY_PATH=$(PWD)/src
 RUN_PY = PYTHONPATH=$(PY_PATH) $(PYTHON) -m
 BLACK_CMD = $(RUN_PY) black --line-length 100 .
@@ -27,7 +27,7 @@ test:
 	$(RUN_PY) unittest discover -s test/ -p *_test.py -v
 
 wyndblast:
-	$(RUN_PY) wyndblast.executables.play_wyndblast --groups 1 2 3 4 5 --human
+	$(RUN_PY) wyndblast.executables.play_wyndblast --groups 1 2 3 4 5 --human-mode --ignore-utc
 
 pat:
 	$(RUN_PY) plantatree.executables.play_pat
