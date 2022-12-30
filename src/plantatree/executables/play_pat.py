@@ -11,6 +11,7 @@ from yaspin import yaspin
 
 from config_admin import ADMIN_ADDRESS, GMAIL, IEX_API_TOKEN, TWILIO_CONFIG
 from config_pat import USERS
+from health_monitor.health_monitor import HealthMonitor
 from plantatree.pat_bot import PatBot
 from utils import discord
 from utils import logger
@@ -30,7 +31,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--quiet", action="store_true", help="Disable alerts")
     parser.add_argument("--log-level", choices=["INFO", "DEBUG", "ERROR", "NONE"], default="INFO")
     parser.add_argument("--log-dir", default=log_dir)
-
+    parser.add_argument("--server-url", default="http://localhost:8080")
     return parser.parse_args()
 
 
@@ -100,6 +101,8 @@ def harvester() -> None:
 
     avg_gas_gwei: Average = Average()
     avg_gas_used: Average = Average()
+
+    health_monitor = HealthMonitor(args.server_url, "pumpskin", USERS).run(daemon=True)
 
     try:
         while True:

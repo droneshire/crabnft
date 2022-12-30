@@ -9,6 +9,7 @@ from yaspin import yaspin
 
 from config_admin import GMAIL, TWILIO_CONFIG
 from config_pumpskin import USERS, USER_GROUPS
+from health_monitor.health_monitor import HealthMonitor
 from utils import discord
 from utils import logger
 from utils.email import Email, get_email_accounts_from_password
@@ -29,6 +30,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--log-level", choices=["INFO", "DEBUG", "ERROR", "NONE"], default="INFO")
     parser.add_argument("--log-dir", default=log_dir)
     parser.add_argument("--groups", nargs="+", default=USER_GROUPS)
+    parser.add_argument("--server-url", default="http://localhost:8080")
     return parser.parse_args()
 
 
@@ -97,6 +99,8 @@ def run_bot() -> None:
         bots.append(bot)
 
     last_totals_update = 0.0
+
+    health_monitor = HealthMonitor(args.server_url, "pumpskin", USERS).run(daemon=True)
 
     try:
         while True:

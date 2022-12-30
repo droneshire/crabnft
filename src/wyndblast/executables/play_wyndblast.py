@@ -10,6 +10,7 @@ from yaspin import yaspin
 
 from config_admin import GMAIL, TWILIO_CONFIG
 from config_wyndblast import USERS, USER_GROUPS
+from health_monitor.health_monitor import HealthMonitor
 from utils import discord
 from utils import logger
 from utils.email import Email, get_email_accounts_from_password
@@ -142,6 +143,8 @@ def run_bot() -> None:
         bots.append(bot)
 
     alerts_enabled = not args.quiet and not args.dry_run
+
+    health_monitor = HealthMonitor(args.server_url, "pumpskin", USERS).run(daemon=True)
 
     try:
         while True:

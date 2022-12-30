@@ -53,11 +53,16 @@ class HealthMonitor:
         except:
             logger.print_fail(f"Failed to update {self.server_url} for {self.bot_name}")
 
-    def run(self) -> None:
+    def run(self, daemon: bool = True) -> None:
         def loop() -> None:
             while True:
                 self.update()
                 time.sleep(self.SLEEP_TIME)
 
-        thread = threading.Thread(name=f"{self.bot_name}_health_monitor", target=loop, daemon=True)
-        thread.start()
+        if daemon:
+            thread = threading.Thread(
+                name=f"{self.bot_name}_health_monitor", target=loop, daemon=True
+            )
+            thread.start()
+        else:
+            loop()
