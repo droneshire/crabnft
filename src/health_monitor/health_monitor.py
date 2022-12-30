@@ -1,6 +1,8 @@
 import json
 import requests
 import threading
+import time
+import typing as T
 
 from utils import logger
 from utils.config_types import UserConfig
@@ -28,7 +30,7 @@ class HealthMonitor:
         aliases = {}
         for user in self.users:
             alias = get_alias_from_user(user)
-            alias[alias] = alias.get(alias, 0) + 1
+            aliases[alias] = aliases.get(alias, 0) + 1
 
         users = []
         for user, wallets in aliases.items():
