@@ -10,7 +10,7 @@ from wyndblast import types
 
 class PveStats(T.TypedDict):
     levels_completed: T.Dict[str, T.List[str]]
-    account_exp: int
+    account_exp: T.Dict[str, int]
 
 
 class LifetimeStats(T.TypedDict):
@@ -53,7 +53,7 @@ NULL_GAME_STATS = {
     "avax_gas": 0.0,
     "pve_game": {
         "levels_completed": {},
-        "account_exp": 0,
+        "account_exp": {},
     },
 }
 
