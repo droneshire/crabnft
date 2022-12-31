@@ -100,7 +100,8 @@ def run_bot() -> None:
 
     last_totals_update = 0.0
 
-    health_monitor = HealthMonitor(args.server_url, "pumpskin", USERS).run(daemon=True)
+    users = [b.user for b in bots]
+    health_monitor = HealthMonitor(args.server_url, "pumpskin", users).run(daemon=True)
 
     try:
         while True:

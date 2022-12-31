@@ -145,7 +145,8 @@ def run_bot() -> None:
 
     alerts_enabled = not args.quiet and not args.dry_run
 
-    health_monitor = HealthMonitor(args.server_url, "wyndblast", USERS).run(daemon=True)
+    users = [b.user for b in bots]
+    health_monitor = HealthMonitor(args.server_url, "wyndblast", users).run(daemon=True)
 
     try:
         while True:

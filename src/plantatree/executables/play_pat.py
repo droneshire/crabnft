@@ -102,7 +102,8 @@ def harvester() -> None:
     avg_gas_gwei: Average = Average()
     avg_gas_used: Average = Average()
 
-    health_monitor = HealthMonitor(args.server_url, "plant-a-tree", USERS).run(daemon=True)
+    users = [b.user for b in bots]
+    health_monitor = HealthMonitor(args.server_url, "plant-a-tree", users).run(daemon=True)
 
     try:
         while True:
