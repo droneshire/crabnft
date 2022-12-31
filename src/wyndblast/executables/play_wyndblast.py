@@ -35,7 +35,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--log-level", choices=["INFO", "DEBUG", "ERROR", "NONE"], default="INFO")
     parser.add_argument("--log-dir", default=log_dir)
     parser.add_argument("--groups", nargs="+", default=USER_GROUPS)
-    parser.add_argument("--server-url", default="http://localhost:8080/api")
+    parser.add_argument("--server-url", default="http://localhost:8080/monitor")
     parser.add_argument(
         "--clean-non-group-user-stats",
         action="store_true",

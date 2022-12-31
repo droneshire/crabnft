@@ -31,7 +31,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--quiet", action="store_true", help="Disable alerts")
     parser.add_argument("--log-level", choices=["INFO", "DEBUG", "ERROR", "NONE"], default="INFO")
     parser.add_argument("--log-dir", default=log_dir)
-    parser.add_argument("--server-url", default="http://localhost:8080/api")
+    parser.add_argument("--server-url", default="http://localhost:8080/monitor")
     return parser.parse_args()
 
 
