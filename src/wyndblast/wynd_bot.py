@@ -96,7 +96,6 @@ class WyndBot:
             self.config_mgr.get_lifetime_stats(),
             config["address"],
             self.dry_run,
-            verbose=True,
         )
 
         self.daily_activities: DailyActivitiesGame = DailyActivitiesGame(
