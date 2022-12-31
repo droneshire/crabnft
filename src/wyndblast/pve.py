@@ -363,9 +363,11 @@ class PveGame:
                 for i, j in self.stats_logger.lifetime_stats[k].items():
                     if "levels_completed" in i:
                         for address, levels in self.stats_logger.lifetime_stats[k][i].items():
-                            new_stats = set(self.current_stats[k][i].get(address, []))
-                            total_stats = set(levels.extend(list(new_stats)))
-                            self.stats_logger.lifetime_stats[k][i][address] = list(total_stats)
+                            new_stats = self.current_stats[k][i].get(address, [])
+                            total_stats = levels.extend(new_stats)
+                            if not total_stats:
+                                continue
+                            self.stats_logger.lifetime_stats[k][i][address] = list(set(total_stats))
                     elif "account_exp" in i:
                         for address, levels in self.stats_logger.lifetime_stats[k][i].items():
                             new_stats = self.current_stats[k][i].get(address, 0)

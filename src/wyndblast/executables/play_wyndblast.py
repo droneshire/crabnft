@@ -161,19 +161,7 @@ def run_bot() -> None:
     except Exception as e:
         stop_message = f"Wyndblast Alert \U0001F432\n\n"
         stop_message += f"Wyndblast Bot Stopped \U0000203C\n"
-        if alerts_enabled and TWILIO_CONFIG["enable_admin_sms"]:
-            sms_client = Client(TWILIO_CONFIG["account_sid"], TWILIO_CONFIG["account_auth_token"])
-            message = sms_client.messages.create(
-                body=stop_message,
-                from_=TWILIO_CONFIG["from_sms_number"],
-                to=TWILIO_CONFIG["admin_sms_number"],
-            )
-        if alerts_enabled:
-            stop_message += "Please manually attend your wynds until we're back up"
-            try:
-                discord.get_discord_hook("WYNDBLAST_UPDATES").send(stop_message)
-            except:
-                pass
+        logger.print_fail(stop_message)
         logger.print_fail(traceback.format_exc())
     finally:
         for bot in bots:
