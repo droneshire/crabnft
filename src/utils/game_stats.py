@@ -4,6 +4,7 @@ import os
 import typing as T
 
 from utils import logger
+from utils.file_util import make_sure_path_exists
 from utils.price import Prices, wei_to_token
 from utils.user import get_alias_from_user
 
@@ -56,6 +57,7 @@ class LifetimeGameStatsLogger:
             return
 
         game_stats_file = self.get_lifetime_stats_file()
+        make_sure_path_exists(game_stats_file)
         with open(game_stats_file, "w") as outfile:
             json.dump(
                 game_stats,
