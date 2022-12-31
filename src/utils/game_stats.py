@@ -80,23 +80,26 @@ class LifetimeGameStatsLogger:
             logger.print_fail(f"Failed to read game stats from {game_stats_file}")
             return {}
 
-    def write(self, verbose: bool = False) -> None:
+    def write(self) -> None:
         delta_stats = self.delta_game_stats(
-            self.lifetime_stats, self.last_lifetime_stats, verbose=verbose
+            self.lifetime_stats,
+            self.last_lifetime_stats,
         )
         file_stats = self.read()
         combined_stats = self.merge_game_stats(
-            delta_stats, file_stats, self.log_dir, verbose=verbose
+            delta_stats,
+            file_stats,
+            self.log_dir,
         )
 
-        if verbose:
+        if self.verbose:
             logger.print_bold(f"Writing stats for {self.user} [alias: {self.alias}]")
 
         self.write_game_stats(combined_stats, dry_run=self.dry_run)
         self.last_lifetime_stats = copy.deepcopy(self.lifetime_stats)
 
-    def read(self, verbose: bool = False) -> T.Dict[T.Any, T.Any]:
-        if verbose:
+    def read(self) -> T.Dict[T.Any, T.Any]:
+        if self.verbose:
             logger.print_bold(f"Reading stats for {self.user} [alias: {self.alias}]")
 
         return self.get_game_stats()
@@ -106,7 +109,6 @@ class LifetimeGameStatsLogger:
         user_a_stats: T.Dict[T.Any, T.Any],
         user_b_stats: T.Dict[T.Any, T.Any],
         log_dir: str,
-        verbose,
     ) -> T.Dict[T.Any, T.Any]:
         raise NotImplementedError
 
@@ -114,6 +116,5 @@ class LifetimeGameStatsLogger:
         self,
         user_a_stats: T.Dict[T.Any, T.Any],
         user_b_stats: T.Dict[T.Any, T.Any],
-        verbose: bool = False,
     ) -> T.Dict[T.Any, T.Any]:
         raise NotImplementedError

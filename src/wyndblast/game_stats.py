@@ -87,7 +87,6 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
         self,
         user_a_stats: LifetimeStats,
         user_b_stats: LifetimeStats,
-        verbose: bool = False,
     ) -> LifetimeStats:
         diff = deepdiff.DeepDiff(user_a_stats, user_b_stats)
         if not diff:
@@ -115,27 +114,29 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
         for item in ["pve_game"]:
             for k, v in user_a_stats[item].items():
                 if k == "account_exp":
-                    diffed_stats[item][k] = v
+                    for address, exp in user_a_stats[item][k].items():
+                        diffed_stats[item][k][address] = exp
                 elif k == "levels_completed":
                     for address, levels in user_a_stats[item][k].items():
                         diffed_stats[item][k][address] = set(levels)
 
             for k, v in user_b_stats[item].items():
                 if k == "account_exp":
-                    diffed_stats[item][k] = diffed_stats[item].get(k, 0.0) - v
+                    for address, exp in user_b_stats[item][k].items():
+                        diffed_stats[item][k][address] = diffed_stats[item][k](address, 0) - exp
                 elif k == "levels_completed":
-                    for address, levels in user_a_stats[item][k].items():
+                    for address, levels in user_b_stats[item][k].items():
                         diffed_stats[item][k][address] = [
                             b for b in set(levels) if b not in diffed_stats[item][k][address]
                         ]
 
-        if verbose:
+        if self.verbose:
             logger.print_bold("Subtracting game stats:")
             logger.print_normal(json.dumps(diffed_stats, indent=4))
         return diffed_stats
 
     def merge_game_stats(
-        self, user_a_stats: LifetimeStats, user_b_stats: LifetimeStats, log_dir: str, verbose
+        self, user_a_stats: LifetimeStats, user_b_stats: LifetimeStats, log_dir: str
     ) -> LifetimeStats:
         diff = deepdiff.DeepDiff(user_a_stats, user_b_stats)
         if not diff:
@@ -143,7 +144,7 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
 
         merged_stats = copy.deepcopy(NULL_GAME_STATS)
 
-        if verbose:
+        if self.verbose:
             logger.print_bold("Merge inputs:")
             logger.print_ok_blue_arrow("A:")
             logger.print_normal(json.dumps(user_a_stats, indent=4))
@@ -175,6 +176,9 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
                         for i in levels:
                             merged_set.add(i)
                         merged_stats[item][k][address] = list(merged_set)
+                elif "account_exp" in k:
+                    for address, exp in user_a_stats[item][k].items():
+                        merged_stats[item][k][address] = merged_stats[item][k].get(address, 0) + exp
                 else:
                     merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
 
@@ -185,9 +189,12 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
                         for i in levels:
                             merged_set.add(i)
                         merged_stats[item][k][address] = list(merged_set)
+                elif "account_exp" in k:
+                    for address, exp in user_b_stats[item][k].items():
+                        merged_stats[item][k][address] = merged_stats[item][k].get(address, 0) + exp
                 else:
                     merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
-        if verbose:
+        if self.verbose:
             logger.print_bold("Merging game stats:")
             logger.print_normal(json.dumps(merged_stats, indent=4))
         return merged_stats

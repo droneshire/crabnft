@@ -39,7 +39,6 @@ class PatLifetimeGameStatsLogger(LifetimeGameStatsLogger):
         self,
         user_a_stats: LifetimeStats,
         user_b_stats: LifetimeStats,
-        verbose: bool = False,
     ) -> LifetimeStats:
         diff = deepdiff.DeepDiff(user_a_stats, user_b_stats)
         if not diff:
@@ -64,13 +63,13 @@ class PatLifetimeGameStatsLogger(LifetimeGameStatsLogger):
             for k, v in user_b_stats[item].items():
                 diffed_stats[item][k] = diffed_stats[item].get(k, 0.0) - v
 
-        if verbose:
+        if self.verbose:
             logger.print_bold("Subtracting game stats:")
             logger.print_normal(json.dumps(diffed_stats, indent=4))
         return diffed_stats
 
     def merge_game_stats(
-        self, user_a_stats: LifetimeStats, user_b_stats: LifetimeStats, log_dir: str, verbose
+        self, user_a_stats: LifetimeStats, user_b_stats: LifetimeStats, log_dir: str
     ) -> LifetimeStats:
         diff = deepdiff.DeepDiff(user_a_stats, user_b_stats)
         if not diff:
@@ -78,7 +77,7 @@ class PatLifetimeGameStatsLogger(LifetimeGameStatsLogger):
 
         merged_stats = copy.deepcopy(NULL_GAME_STATS)
 
-        if verbose:
+        if self.verbose:
             logger.print_bold("Merge inputs:")
             logger.print_ok_blue_arrow("A:")
             logger.print_normal(json.dumps(user_a_stats, indent=4))
@@ -96,7 +95,7 @@ class PatLifetimeGameStatsLogger(LifetimeGameStatsLogger):
             for k, v in user_b_stats.get(item, {}).items():
                 merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
 
-        if verbose:
+        if self.verbose:
             logger.print_bold("Merging game stats:")
             logger.print_normal(json.dumps(merged_stats, indent=4))
         return merged_stats

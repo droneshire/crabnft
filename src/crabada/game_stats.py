@@ -238,7 +238,6 @@ class CrabadaLifetimeGameStatsLogger(LifetimeGameStatsLogger):
         self,
         user_a_stats: T.Dict[T.Any, T.Any],
         user_b_stats: T.Dict[T.Any, T.Any],
-        verbose: bool = False,
     ) -> T.Dict[T.Any, T.Any]:
         diff = deepdiff.DeepDiff(user_a_stats, user_b_stats)
         if not diff:
@@ -266,7 +265,7 @@ class CrabadaLifetimeGameStatsLogger(LifetimeGameStatsLogger):
             for k, v in user_b_stats[game_type].items():
                 diffed_stats[game_type][k] = diffed_stats[game_type].get(k, 0.0) - v
 
-        if verbose:
+        if self.verbose:
             logger.print_bold("Subtracting game stats:")
             logger.print_normal(json.dumps(diffed_stats, indent=4))
         return diffed_stats
@@ -276,7 +275,6 @@ class CrabadaLifetimeGameStatsLogger(LifetimeGameStatsLogger):
         user_a_stats: LifetimeGameStats,
         user_b_stats: LifetimeGameStats,
         log_dir: str,
-        verbose,
     ) -> LifetimeGameStats:
         diff = deepdiff.DeepDiff(user_a_stats, user_b_stats)
         if not diff:
@@ -302,7 +300,7 @@ class CrabadaLifetimeGameStatsLogger(LifetimeGameStatsLogger):
             for k, v in user_b_stats[game_type].items():
                 merged_stats[game_type][k] += v
 
-        if verbose:
+        if self.verbose:
             logger.print_bold("Merging game stats:")
             logger.print_normal(json.dumps(merged_stats, indent=4))
         return merged_stats
