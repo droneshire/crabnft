@@ -2,7 +2,7 @@ from config_admin import ALIAS_POSTFIX
 from utils import logger
 
 
-def get_alias_from_user(user: str) -> str:
+def get_alias_from_user(user: str, verbose: bool = False) -> str:
     user_split = user.split(ALIAS_POSTFIX[0])
 
     if not user_split:
@@ -12,7 +12,8 @@ def get_alias_from_user(user: str) -> str:
         return user
 
     alias = user_split[0]
-    logger.print_normal(f"\tmapping {user} -> {alias}")
+    if verbose:
+        logger.print_normal(f"\tmapping {user} -> {alias}")
     return alias
 
 

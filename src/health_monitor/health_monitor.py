@@ -29,7 +29,7 @@ class HealthMonitor:
 
         aliases = {}
         for user in self.users:
-            alias = get_alias_from_user(user)
+            alias = get_alias_from_user(user, False)
             aliases[alias] = aliases.get(alias, 0) + 1
 
         users = []
