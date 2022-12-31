@@ -435,7 +435,10 @@ class PveGame:
 
         if res:
             logger.print_ok(f"Successfully claimed daily rewards! +{res['exp']} exp")
-            self.current_stats["pve_game"]["account_exp"] += res["exp"]
+            self.current_stats["pve_game"]["account_exp"][self.config["address"]] = (
+                self.current_stats["pve_game"]["account_exp"].get(self.config["address"], 0)
+                + res["exp"]
+            )
 
             if res["is_level_up"]:
                 logger.print_ok_arrow(f"Leveled up our Profile!")

@@ -80,6 +80,12 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
             if key in self.lifetime_stats["pve_game"]:
                 del self.lifetime_stats["pve_game"][key]
 
+        if "account_exp" in self.lifetime_stats["pve_game"] and not isinstance(
+            self.lifetime_stats["pve_game"]["account_exp"], dict
+        ):
+            del self.lifetime_stats["pve_game"]["account_exp"]
+            self.lifetime_stats["pve_game"]["account_exp"] = {address: 0}
+
         self.last_lifetime_stats = copy.deepcopy(self.lifetime_stats)
         self.write_game_stats(self.lifetime_stats)
 
