@@ -28,7 +28,7 @@ class DailyActivitiesWyndblastWeb2Client(WyndblastWeb2Client):
     def __init__(
         self, private_key: str, user_address: Address, base_url: str, dry_run: bool = False
     ) -> None:
-        super().__init__(private_key, user_address, base_url, dry_run=dry_run)
+        super().__init__(private_key, user_address, base_url, rate_limit_delay=1.0, dry_run=dry_run)
 
     def _get_daily_activity_headers(self) -> T.Dict[str, str]:
         headers = copy.deepcopy(WYNDBLAST_DAILY_ACTIVITIES_HEADERS)

@@ -340,8 +340,9 @@ class PveGame:
         webhook.execute()
 
     def _send_summary_email(self) -> None:
-        # TODO: do we want email updates?
-        pass
+        logger.print_bold(content)
+
+        send_email(self.email_accounts, self.config["email"], "Wyndblast PVE Update", content)
 
     def _update_stats(self, account_exp: int) -> None:
         for k, v in self.current_stats.items():

@@ -74,7 +74,12 @@ class WyndblastWeb2Client:
     WYNDBLAST_NFT_CONTRACT_ADDRESS = "0x4B3903952A25961B9E66216186Efd9B21903AEd3"
 
     def __init__(
-        self, private_key: str, user_address: Address, base_url: str, dry_run: bool = False
+        self,
+        private_key: str,
+        user_address: Address,
+        base_url: str,
+        rate_limit_delay: float = 4.0,
+        dry_run: bool = False,
     ) -> None:
         self.private_key = private_key
         self.user_address = Web3.toChecksumAddress(user_address) if user_address else ""
@@ -84,6 +89,7 @@ class WyndblastWeb2Client:
         self.username = None
         self.dry_run = dry_run
         self.base_url = base_url
+        self.rate_limit_delay = rate_limit_delay
         if dry_run:
             logger.print_warn("Web2 Client in dry run mode...")
 
@@ -93,10 +99,9 @@ class WyndblastWeb2Client:
         headers: T.Dict[str, T.Any] = {},
         params: T.Dict[str, T.Any] = {},
         timeout: float = 5.0,
-        delay: float = 5.0,
     ) -> T.Any:
-        if delay > 0.0:
-            wait(delay)
+        if self.rate_limit_delay > 0.0:
+            wait(self.rate_limit_delay)
         try:
             return requests.request(
                 "GET", url, params=params, headers=headers, timeout=timeout
