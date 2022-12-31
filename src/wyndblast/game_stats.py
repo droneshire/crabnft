@@ -129,7 +129,7 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
             for k, v in user_b_stats[item].items():
                 if k == "account_exp":
                     for address, exp in user_b_stats[item][k].items():
-                        diffed_stats[item][k][address] = diffed_stats[item][k](address, 0) - exp
+                        diffed_stats[item][k][address] = diffed_stats[item][k].get(address, 0) - exp
                 elif k == "levels_completed":
                     for address, levels in user_b_stats[item][k].items():
                         diffed_stats[item][k][address] = [
