@@ -10,7 +10,7 @@ from utils.user import get_alias_from_user
 
 
 class HealthMonitor:
-    SLEEP_TIME = 60.0 * 2.0
+    SLEEP_TIME = 60.0 * 1.0
 
     def __init__(
         self,

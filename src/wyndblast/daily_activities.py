@@ -250,11 +250,7 @@ class DailyActivitiesGame:
                 self.stats_logger.lifetime_stats[k] = new_set
             elif isinstance(v, dict):
                 for i, j in self.stats_logger.lifetime_stats[k].items():
-                    if "levels_completed" in i:
-                        for address, levels in self.stats_logger.lifetime_stats[k][i].items():
-                            new_stats = set(self.current_stats[k][i].get(address, []))
-                            self.stats_logger.lifetime_stats[k][i][address] = list(new_stats)
-                    else:
+                    if i not in ["levels_completed", "account_exp"]:
                         self.stats_logger.lifetime_stats[k][i] += self.current_stats[k][i]
             else:
                 self.stats_logger.lifetime_stats[k] += v
