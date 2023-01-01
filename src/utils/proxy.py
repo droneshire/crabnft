@@ -31,5 +31,5 @@ class Proxies:
             logger.print_fail(f"No proxies available!")
             return ""
 
-        index = random.randbytes(len(self.proxies))
+        index = random.randrange(len(self.proxies))
         return self.proxies[index]
