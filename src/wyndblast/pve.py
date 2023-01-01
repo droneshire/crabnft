@@ -335,7 +335,7 @@ class PveGame:
 
         user_data: types.PveUser = self.wynd_w2.get_user_profile()
 
-        max_level = sorted(list(self.completed))[-1]
+        max_level = sorted(list(self.completed))[-1] if self.completed else 0
         account_exp = user_data.get("exp", 0)
 
         self._send_summary_email(
@@ -366,10 +366,10 @@ class PveGame:
         embed.add_embed_field(name=f"Levels Won", value=f"{levels_completed}", inline=True)
         embed.add_embed_field(name=f"Account Exp", value=f"{account_exp}", inline=True)
         embed.add_embed_field(
-            name=f"Total Chro (unclaimed)", value=f"{claimed_chro_earned:.2f}", inline=False
+            name=f"Total Chro (unclaimed)", value=f"{unclaimed_chro_earned:.2f}", inline=False
         )
         embed.add_embed_field(
-            name=f"Total Chro (claimed)", value=f"{unclaimed_chro_earned:.2f}", inline=False
+            name=f"Total Chro (claimed)", value=f"{claimed_chro_earned:.2f}", inline=False
         )
 
         try:
@@ -658,12 +658,9 @@ class PveGame:
                     wait(3.0)
                 elif result == "win":
                     self.completed.add(stage_id)
-                    levels_completed = set(
-                        self.current_stats["pve_game"][self.address].get("levels_completed", [])
-                    )
-                    levels_completed.add(stage_id)
+                    self.current_stats["pve_game"][self.address].get("levels_completed", []).append(stage_id)
                     self.current_stats["pve_game"][self.address]["levels_completed"] = list(
-                        levels_completed
+                        set(self.current_stats["pve_game"][self.address]["levels_completed"])
                     )
                     self.last_mission = stage_id
                     break

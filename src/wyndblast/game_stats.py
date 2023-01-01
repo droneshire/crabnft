@@ -80,6 +80,13 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
 
         diffed_stats = copy.deepcopy(NULL_GAME_STATS)
 
+        if self.verbose:
+            logger.print_bold("Delta inputs:")
+            logger.print_ok_blue_arrow("A:")
+            logger.print_normal(json.dumps(user_a_stats, indent=4))
+            logger.print_ok_blue_arrow("B:")
+            logger.print_normal(json.dumps(user_b_stats, indent=4))
+
         for item in ["avax_gas", "gas_tus", "chro", "wams"]:
             if item not in user_a_stats and item not in user_b_stats:
                 diffed_stats[item] = 0.0
