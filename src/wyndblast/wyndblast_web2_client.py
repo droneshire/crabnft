@@ -171,7 +171,7 @@ class WyndblastWeb2Client:
         return json.loads(json.dumps(payload))
 
     def _get_login_signature(self) -> (str, int):
-        if not self.user_address:
+        if not self.user_address or not self.private_key:
             logger.print_warn("Cannot use moralis, no key pairs provided")
             return "", 0
         server_time = self._get_server_time()
@@ -244,9 +244,7 @@ class WyndblastWeb2Client:
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(
-                f"Failed to authorize user {self.user_address}"
-            )
+            logger.print_fail(f"Failed to authorize user {self.user_address}")
             if res:
                 logger.print_normal(f"{res}")
             return False
