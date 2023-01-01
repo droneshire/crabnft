@@ -355,7 +355,7 @@ class PveGame:
                 level = wynd["metadata"]["stats"]["level"]
                 if level > 1:
                     text += f"Wynd {token_id}: Level {level} {wynd['metadata']['faction']}\n"
-            embed.add_embed_field(name=f"Wynds [id, level, faction]", value=text, inline=False)
+            embed.add_embed_field(name=f"Wynds", value=text, inline=False)
 
             item = wynds[0]
             url = item["metadata"]["image_url"]
