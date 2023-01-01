@@ -358,7 +358,7 @@ class PveGame:
 
     def _send_summary_email(self) -> None:
         pve_stats = self.current_stats["pve_game"][self.address]
-        levels_completed = len(pve_stats.get("levels_completed", -1))
+        levels_completed = len(pve_stats.get("levels_completed", []))
         unclaimed_chro_earned = pve_stats.get("unclaimed_chro", 0)
         claimed_chro_earned = pve_stats.get("claimed_chro", 0)
         exp = pve_stats.get("account_exp", 0)
