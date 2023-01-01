@@ -399,6 +399,10 @@ class PveGame:
                 for i, j in self.stats_logger.lifetime_stats[k].items():
                     if isinstance(j, dict):
                         for l, m in j.items():
+
+                            if i not in self.current_stats[k]:
+                                continue
+
                             if isinstance(m, list):
                                 new_stats = self.current_stats[k][i].get(l, [])
                                 total_stats = m.extend(new_stats)
