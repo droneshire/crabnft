@@ -58,6 +58,9 @@ class WyndBot:
             verbose=True,
         )
 
+        assert self.config["private_key"], "Missing private key"
+        assert self.config["address"], "Missing public key"
+
         if human_mode:
             logger.print_ok_blue_arrow(f"Playing in human mode, by the rules...")
 

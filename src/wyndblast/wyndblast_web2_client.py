@@ -1,17 +1,14 @@
 import copy
 import datetime
 import json
-import requests
-import time
 import typing as T
 
 
 from eth_account import Account, messages
 from eth_typing import Address
 from web3 import Web3
-from yaspin import yaspin
 
-from utils import logger, proxy
+from utils import logger, web2_client
 from wyndblast.api_headers import (
     API_KEYS,
     MORALIS_HEADERS,
@@ -40,12 +37,7 @@ from wyndblast.types import (
 )
 
 
-@yaspin(text="Waiting...")
-def wait(wait_time) -> None:
-    time.sleep(wait_time)
-
-
-class WyndblastWeb2Client:
+class WyndblastWeb2Client(web2_client.Web2Client):
     """Access api endpoints of Wyndblast Game"""
 
     DAILY_ACTIVITY_BASE_URL = "https://api.wyndblast.com/daily-activity"
@@ -82,6 +74,10 @@ class WyndblastWeb2Client:
         use_proxy: bool = True,
         dry_run: bool = False,
     ) -> None:
+        super().__init__(
+            base_url, rate_limit_delay=rate_limit_delay, use_proxy=use_proxy, dry_run=dry_run
+        )
+
         self.private_key = private_key
         self.user_address = Web3.toChecksumAddress(user_address) if user_address else ""
 
@@ -90,65 +86,6 @@ class WyndblastWeb2Client:
         self.session_token = None
         self.object_id = None
         self.username = None
-        self.dry_run = dry_run
-        self.base_url = base_url
-        self.rate_limit_delay = rate_limit_delay
-        if dry_run:
-            logger.print_warn("Web2 Client in dry run mode...")
-
-        if use_proxy:
-            self.proxies = proxy.Proxies()
-            self.proxies.init()
-        else:
-            self.proxies = None
-
-    def _get_request(
-        self,
-        url: str,
-        headers: T.Dict[str, T.Any] = {},
-        params: T.Dict[str, T.Any] = {},
-        timeout: float = 5.0,
-    ) -> T.Any:
-        if self.rate_limit_delay > 0.0:
-            wait(self.rate_limit_delay)
-
-        if self.proxies is not None:
-            proxy = {"https": self.proxies.get_proxy()}
-        else:
-            proxy = None
-
-        try:
-            return requests.request(
-                "GET", url, params=params, headers=headers, timeout=timeout, proxies=proxy
-            ).json()
-        except KeyboardInterrupt:
-            raise
-        except:
-            return {}
-
-    def _post_request(
-        self,
-        url: str,
-        json_data: T.Dict[str, T.Any] = {},
-        headers: T.Dict[str, T.Any] = {},
-        params: T.Dict[str, T.Any] = {},
-        timeout: float = 5.0,
-        delay: float = 5.0,
-    ) -> T.Any:
-        if self.dry_run:
-            return {}
-
-        if delay > 0.0:
-            wait(delay)
-
-        try:
-            return requests.request(
-                "POST", url, json=json_data, params=params, headers=headers, timeout=timeout
-            ).json()
-        except KeyboardInterrupt:
-            raise
-        except:
-            return {}
 
     def _get_product_id(self, nft_id: int) -> str:
         return ":".join([self.WYNDBLAST_NFT_CONTRACT_ADDRESS, str(nft_id)])
