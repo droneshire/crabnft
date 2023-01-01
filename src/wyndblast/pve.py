@@ -329,20 +329,18 @@ class PveGame:
 
         pve_stats = self.current_stats["pve_game"][self.address]
         levels_completed = len(pve_stats.get("levels_completed", []))
-        unclaimed_chro_earned = pve_stats["unclaimed_chro"]
-        claimed_chro_earned = pve_stats["claimed_chro"]
-        exp = pve_stats["account_exp"]
+        unclaimed_chro_earned = pve_stats.get("unclaimed_chro", 0)
+        claimed_chro_earned = pve_stats.get("claimed_chro", 0)
+        exp = pve_stats.get("account_exp", 0)
 
         if levels_completed < 1 and (unclaimed_chro_earned <= 0 or claimed_chro_earned <= 0):
             return
 
-        embed.add_embed_field(name=f"Exp Earned", value=f"{exp}", inline=False)
-        embed.add_embed_field(name=f"Levels Won", value=f"{levels_completed}", inline=True)
+        embed.add_embed_field(name=f"Exp Earned", value=f"{exp}", inline=True)
+        embed.add_embed_field(name=f"Levels Won", value=f"{levels_completed}", inline=False)
+        embed.add_embed_field(name=f"Claimed CHRO", value=f"{claimed_chro_earned:.2f}", inline=True)
         embed.add_embed_field(
-            name=f"Claimed CHRO", value=f"{claimed_chro_earned:.2f}", inline=False
-        )
-        embed.add_embed_field(
-            name=f"Unclaimed CHRO", value=f"{unclaimed_chro_earned:.2f}", inline=True
+            name=f"Unclaimed CHRO", value=f"{unclaimed_chro_earned:.2f}", inline=False
         )
 
         try:
@@ -614,7 +612,7 @@ class PveGame:
             if did_succeed:
                 if result == "lose" and attempt + 1 < RETRY_ATTEMPTS:
                     logger.print_normal(f"Since we lost, let's retry here shortly...")
-                    wait(10.0)
+                    wait(3.0)
                 elif result == "win":
                     self.completed.add(stage_id)
                     levels_completed = set(
@@ -630,7 +628,7 @@ class PveGame:
                 logger.print_fail(f"Failed to submit battle")
             else:
                 logger.print_warn(f"Failed to submit battle, retrying...")
-                wait(5.0 * attempt)
+                wait(2.0 * attempt)
 
         if not did_succeed:
             return False
@@ -761,7 +759,7 @@ class PveGame:
             logger.print_ok_blue_arrow(f"Claimed: {chro_rewards_before['claimed']}")
 
         while self._check_and_play_story(nft_data, countdown):
-            wait(random.randint(30, 70 if self.human_mode else 50))
+            wait(random.randint(1, 10 if self.human_mode else 5))
             self.check_and_auth_account()
             logger.print_normal(f"Playing next stage...")
 
