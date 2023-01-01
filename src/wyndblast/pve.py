@@ -57,6 +57,7 @@ class PveGame:
     MIN_GAME_DURATION = 10
     MAX_GAME_DURATION = 29
     MAX_REPLAYS_PER_CYCLE = 5  # based on a daily reward that is 20x battles per week
+    MIN_CHRO_CLAIM = 2000
 
     TIME_BETWEEN_CLAIM_QUEST = 60.0 * 60.0 * 6
     TIME_BETWEEN_LEVEL_UP = 60.0 * 5.0
@@ -661,6 +662,12 @@ class PveGame:
 
         if exp < self._get_level_five_exp():
             logger.print_normal(f"Waiting till level 5 to claim rewards ({unclaimed_chro} CHRO)")
+            return False
+
+        if unclaimed_chro < self.MIN_CHRO_CLAIM:
+            logger.print_normal(
+                f"Waiting till we have {self.MIN_CHRO_CLAIM} chro ({unclaimed_chro} CHRO)"
+            )
             return False
 
         logger.print_ok(f"Sending rewards to the contract: {unclaimed_chro} CHRO...")
