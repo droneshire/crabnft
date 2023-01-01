@@ -328,7 +328,7 @@ class PveGame:
         )
 
         pve_stats = self.current_stats["pve_game"][self.address]
-        levels_completed = len(pve_stats["levels_completed"])
+        levels_completed = len(pve_stats.get("levels_completed", []))
         unclaimed_chro_earned = pve_stats["unclaimed_chro"]
         claimed_chro_earned = pve_stats["claimed_chro"]
         exp = pve_stats["account_exp"]

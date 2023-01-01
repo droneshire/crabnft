@@ -119,9 +119,8 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
                 diffed_stats[item][k] = diffed_stats[item].get(k, 0.0) - v
 
         for item in ["pve_game"]:
-            diffed_stats[item][address] = {}
-
             for address, pve_stat in user_a_stats[item].items():
+                diffed_stats[item][address] = {}
                 for stat, value in user_a_stats[item][address].items():
                     diffed_stats[item][address][stat] = value
 
