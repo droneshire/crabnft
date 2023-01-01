@@ -712,10 +712,8 @@ class PveGame:
         logger.print_normal("Attempting tutorial...")
         if not self.wynd_w2.complete_opening():
             return False
-        time.sleep(5.0)
         if not self.wynd_w2.complete_novel_before_main1():
             return False
-        time.sleep(5.0)
         if not self.wynd_w2.complete_novel_stage1():
             return False
 
