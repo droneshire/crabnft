@@ -227,7 +227,7 @@ class PveGame:
             logger.print_warn(f"Could not get nft data for player lineup creation")
             return []
 
-        wynds: T.List[types.PveWynd] = our_units("wynd", [])
+        wynds: T.List[types.PveWynd] = our_units.get("wynd", [])
 
         if not wynds:
             return []
