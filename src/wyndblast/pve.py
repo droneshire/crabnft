@@ -400,6 +400,7 @@ class PveGame:
         levels_completed: int,
         max_level: str,
         account_exp: int,
+        account_level: int,
         claimed_chro_earned: float,
         unclaimed_chro_earned: float,
     ) -> None:
@@ -411,6 +412,7 @@ class PveGame:
         content += f"LEVELS BEAT: {levels_completed}\n"
         content += f"HIGHEST LEVEL COMPLETED: {max_level}\n"
         content += f"TOTAL ACCOUNT EXP: {account_exp}\n"
+        content += f"TOTAL ACCOUNT LEVEL: {account_level}\n"
         content += f"TOTAL UNCLAIMED CHRO: {unclaimed_chro_earned}\n"
         content += f"TOTAL CLAIMED CHRO: {claimed_chro_earned}\n"
 
