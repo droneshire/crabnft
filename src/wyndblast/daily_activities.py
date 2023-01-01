@@ -314,7 +314,7 @@ class DailyActivitiesGame:
     ) -> bool:
         options: DailyActivitySelection = self.wynd_w2.get_activity_selection(wynd_id)
 
-        if not options:
+        if not options or not isinstance(options, dict):
             self.check_and_auth_account()
             return False
 
