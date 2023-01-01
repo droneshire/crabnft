@@ -431,7 +431,7 @@ class PveGame:
             )
 
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
-        self.current_stats["pve_game"][config["address"]] = {}
+        self.current_stats["pve_game"][self.address] = {}
 
         logger.print_ok_blue(
             f"Lifetime Stats for {self.user.upper()}\n"
