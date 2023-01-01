@@ -24,6 +24,8 @@ ADDR_TO_WYND = {}
 
 
 class WyndBot:
+    MIN_DAILY_DOWNSAMPLE = 10
+
     def __init__(
         self,
         user: str,
@@ -47,6 +49,7 @@ class WyndBot:
         self.address: Address = config["address"]
 
         self.last_pve_auth_time = 0
+        self.daily_downsample = 0
 
         self.config_mgr = WyndblastConfigManager(
             user,
@@ -266,13 +269,17 @@ class WyndBot:
                 self.pve.play_game()
 
         if self.alias in DAILY_ENABLED:
-            logger.print_bold(f"\n\nAttempting Daily Activities for {self.user}")
-            if not self.wynd_w2.update_account():
-                self.wynd_w2.authorize_user()
-                self.wynd_w2.update_account()
+            if self.daily_downsample > self.MIN_DAILY_DOWNSAMPLE:
+                logger.print_bold(f"\n\nAttempting Daily Activities for {self.user}")
+                if not self.wynd_w2.update_account():
+                    self.wynd_w2.authorize_user()
+                    self.wynd_w2.update_account()
 
-            self._check_and_submit_available_inventory()
-            self.daily_activities.run_activity()
+                self._check_and_submit_available_inventory()
+                self.daily_activities.run_activity()
+                self.daily_downsample = 0
+            else:
+                self.daily_downsample += 1
 
         self._check_and_maybe_secure_account()
 
