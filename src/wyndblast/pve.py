@@ -10,12 +10,14 @@ from discord_webhook import DiscordEmbed, DiscordWebhook
 from yaspin import yaspin
 
 from config_wyndblast import COMMISSION_WALLET_ADDRESS
+from joepegs.joepegs_api import JoePegsClient
 from utils import discord
 from utils import logger
 from utils.config_types import UserConfig
-from utils.email import Email
+from utils.email import Email, send_email
 from utils.general import get_pretty_seconds
 from utils.price import wei_to_token
+from utils.user import get_alias_from_user
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.chro_web3_client import ChroWeb3Client
 from wyndblast.assets import WYNDBLAST_ASSETS
@@ -99,6 +101,7 @@ class PveGame:
             ),
         )
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
+        self.current_stats["pve_game"][config["address"]] = {}
 
         self.last_level_up = 0.0
         self.last_quest_claim = 0.0
@@ -115,9 +118,7 @@ class PveGame:
             self.sorted_levels.extend([l + difficulty for l in levels])
 
         self.completed = set(
-            self.stats_logger.lifetime_stats["pve_game"]["levels_completed"].get(
-                self.config["address"], []
-            )
+            self.stats_logger.lifetime_stats["pve_game"][self.config["address"]]["levels_completed"]
         )
 
         self.did_tutorial = len(self.completed) > 0
@@ -291,8 +292,8 @@ class PveGame:
         if self.completed:
             self.did_tutorial = True
 
-        self.stats_logger.lifetime_stats["pve_game"]["levels_completed"][
-            self.config["address"]
+        self.stats_logger.lifetime_stats["pve_game"][self.config["address"]][
+            "levels_completed"
         ] = list(self.completed)
 
         unlocked = stages["unlocked"]
@@ -315,7 +316,7 @@ class PveGame:
     def _get_stamina(self) -> int:
         return self.wynd_w2.get_stamina()
 
-    def _send_pve_update(self, account_exp: int) -> None:
+    def _send_pve_update(self) -> None:
         webhook = DiscordWebhook(
             url=discord.DISCORD_WEBHOOK_URL["WYNDBLAST_PVE_ACTIVITY"], rate_limit_retry=True
         )
@@ -325,26 +326,61 @@ class PveGame:
             color=Color.purple().value,
         )
 
-        chro_won = self.current_stats["chro"]
-        levels_completed = len(
-            self.current_stats["pve_game"]["levels_completed"].get(self.config["address"], [])
-        )
-        if levels_completed < 1 and chro_won <= 0:
-            return
-        embed.add_embed_field(name=f"Account Exp", value=f"{account_exp}", inline=False)
-        embed.add_embed_field(name=f"CHRO Earned", value=f"{chro_won:.2f}", inline=False)
-        embed.add_embed_field(name=f"Levels Won", value=f"{levels_completed}", inline=True)
+        pve_stats = self.current_stats["pve_game"][self.config["address"]]
+        levels_completed = len(pve_stats["levels_completed"])
+        unclaimed_chro_earned = pve_stats["unclaimed_chro"]
+        claimed_chro_earned = pve_stats["claimed_chro"]
+        exp = pve_stats["account_exp"]
 
-        embed.set_thumbnail(url=WYNDBLAST_ASSETS["wynd"], height=100, width=100)
+        if levels_completed < 1 and (unclaimed_chro_earned <= 0 or claimed_chro_earned <= 0):
+            return
+
+        embed.add_embed_field(name=f"Exp Earned", value=f"{exp}", inline=False)
+        embed.add_embed_field(name=f"Levels Won", value=f"{levels_completed}", inline=True)
+        embed.add_embed_field(
+            name=f"Claimed CHRO", value=f"{claimed_chro_earned:.2f}", inline=False
+        )
+        embed.add_embed_field(
+            name=f"Unclaimed CHRO", value=f"{unclaimed_chro_earned:.2f}", inline=True
+        )
+
+        try:
+            wynds: T.List[T.Any] = self.wynd_w2.get_nft_data()["wynd"]
+            item = wynds[0]
+            url = item["metadata"]["image_url"]
+            embed.set_image(url=url)
+        except:
+            embed.set_thumbnail(url=WYNDBLAST_ASSETS["wynd"], height=100, width=100)
+
         webhook.add_embed(embed)
         webhook.execute()
 
     def _send_summary_email(self) -> None:
+        pve_stats = self.current_stats["pve_game"][self.config["address"]]
+        levels_completed = len(pve_stats.get("levels_completed", -1))
+        unclaimed_chro_earned = pve_stats.get("unclaimed_chro", 0)
+        claimed_chro_earned = pve_stats.get("claimed_chro", 0)
+        exp = pve_stats.get("account_exp", 0)
+
+        if levels_completed < 1 and (unclaimed_chro_earned <= 0 or claimed_chro_earned <= 0):
+            return
+
+        alias = get_alias_from_user(self.user)
+        content = f"Hi {alias}!\n\n"
+        content += f"{'-' * 40}\n"
+        content += "Wyndblast PVE Activity\n\n"
+        content += f"{'-'*3}\n"
+        content += f"LEVELS BEAT: {levels_completed}\n"
+        content += f"EXP EARNED: {exp}\n"
+        content += f"UNCLAIMED CHRO: {unclaimed_chro_earned}\n"
+        content += f"CLAIMED CHRO: {claimed_chro_earned}\n"
+
         logger.print_bold(content)
 
         send_email(self.email_accounts, self.config["email"], "Wyndblast PVE Update", content)
 
-    def _update_stats(self, account_exp: int) -> None:
+    def _update_stats(self) -> None:
+
         for k, v in self.current_stats.items():
             if type(v) != type(self.stats_logger.lifetime_stats.get(k)):
                 logger.print_warn(
@@ -362,19 +398,17 @@ class PveGame:
                 self.stats_logger.lifetime_stats[k] = new_set
             elif isinstance(v, dict):
                 for i, j in self.stats_logger.lifetime_stats[k].items():
-                    if "levels_completed" in i:
-                        for address, levels in self.stats_logger.lifetime_stats[k][i].items():
-                            new_stats = self.current_stats[k][i].get(address, [])
-                            total_stats = levels.extend(new_stats)
-                            if not total_stats:
-                                continue
-                            self.stats_logger.lifetime_stats[k][i][address] = list(set(total_stats))
-                    elif "account_exp" in i:
-                        for address, levels in self.stats_logger.lifetime_stats[k][i].items():
-                            new_stats = self.current_stats[k][i].get(address, 0)
-                            self.stats_logger.lifetime_stats[k][i][address] = (
-                                self.stats_logger.lifetime_stats[k][i].get(address, 0) + new_stats
-                            )
+                    if isinstance(j, dict):
+                        for l, m in j.items():
+                            if isinstance(m, list):
+                                new_stats = self.current_stats[k][i].get(l, [])
+                                total_stats = m.extend(new_stats)
+                                if not total_stats:
+                                    continue
+                                self.stats_logger.lifetime_stats[k][i][l] = list(set(total_stats))
+                            else:
+                                new_stats = self.current_stats[k][i].get(l, 0)
+                                self.stats_logger.lifetime_stats[k][i][l] += new_stats
                     else:
                         self.stats_logger.lifetime_stats[k][i] += self.current_stats[k][i]
             else:
@@ -397,9 +431,8 @@ class PveGame:
                 f"Added {commission_chro} CHRO for {address} in commission ({commission_percent}%)!"
             )
 
-        self._send_pve_update(account_exp)
-
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
+        self.current_stats["pve_game"][config["address"]] = {}
 
         logger.print_ok_blue(
             f"Lifetime Stats for {self.user.upper()}\n"
@@ -440,27 +473,23 @@ class PveGame:
 
         self.wynd_w2.ping_realtime()
 
-        logger.print_ok_blue(f"Attempting to claim daily quests")
-        res: types.ClaimQuests = self.wynd_w2.claim_daily()
+        QUESTS = {"weekly": self.wynd_w2.claim_weekly, "daily": self.wynd_w2.claim_daily}
+        for quest, action in QUESTS.items():
+            logger.print_ok_blue(f"Attempting to claim {quest.upper()} quests")
+            res: types.ClaimQuests = action()
 
-        if res:
-            logger.print_ok(f"Successfully claimed daily rewards! +{res['exp']} exp")
-            self.current_stats["pve_game"]["account_exp"][self.config["address"]] = (
-                self.current_stats["pve_game"]["account_exp"].get(self.config["address"], 0)
-                + res["exp"]
-            )
+            if res:
+                logger.print_ok(f"Successfully claimed {quest.upper()} rewards! +{res['exp']} exp")
+                self.current_stats["pve_game"][self.config["address"]][
+                    "account_exp"
+                ] = self.current_stats["pve_game"][self.config["address"]].get(
+                    "account_exp", 0
+                ) + res.get(
+                    "exp", 0
+                )
 
-            if res["is_level_up"]:
-                logger.print_ok_arrow(f"Leveled up our Profile!")
-
-        logger.print_ok_blue(f"Attempting to claim weekly quests")
-        res: types.ClaimQuests = self.wynd_w2.claim_weekly()
-
-        if res:
-            logger.print_ok(f"Successfully claimed weekly rewards! EXP[{res['exp']}]")
-
-            if res["is_level_up"]:
-                logger.print_ok_arrow(f"Leveled up our Profile!")
+                if res.get("is_level_up", False):
+                    logger.print_ok_arrow(f"Leveled up our Profile!")
 
     def _check_and_do_standard_quest_list(self, nft_data: types.PveNfts) -> None:
         """
@@ -592,13 +621,13 @@ class PveGame:
                 elif result == "win":
                     self.completed.add(stage_id)
                     levels_completed = set(
-                        self.current_stats["pve_game"]["levels_completed"].get(
-                            self.config["address"], []
+                        self.current_stats["pve_game"][self.config["address"]].get(
+                            "levels_completed", []
                         )
                     )
                     levels_completed.add(stage_id)
-                    self.current_stats["pve_game"]["levels_completed"][
-                        self.config["address"]
+                    self.current_stats["pve_game"][self.config["address"]][
+                        "levels_completed"
                     ] = list(levels_completed)
                     self.last_mission = stage_id
                     break
@@ -749,4 +778,5 @@ class PveGame:
             logger.print_warn(f"Detected deactivated account!")
 
         self._send_summary_email()
-        self._update_stats(user_exp)
+        self._send_pve_update()
+        self._update_stats()

@@ -16,10 +16,9 @@ from utils import logger
 from utils.email import Email, get_email_accounts_from_password
 from utils.security import decrypt_secret
 from wyndblast import types
+from wyndblast.cache import get_cache_info
 from wyndblast.daily_activities import DailyActivitiesGame
-from wyndblast.pve_google_storage_web2_client import PveGoogleStorageWeb2Client
 from wyndblast.wynd_bot import WyndBot
-from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
 
 TIME_BETWEEN_PLAYERS = 5.0
 TIME_BETWEEN_RUNS = 60.0 * 5.0
@@ -88,34 +87,7 @@ def run_bot() -> None:
             encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
         email_accounts = get_email_accounts_from_password(encrypt_password, GMAIL)
 
-    google_w2: PveGoogleStorageWeb2Client = PveGoogleStorageWeb2Client(
-        "",
-        "",
-        WyndblastWeb2Client.GOOGLE_STORAGE_URL,
-        dry_run=False,
-    )
-
-    stages_info_file = os.path.join(args.log_dir, "stages_info.json")
-    if os.path.isfile(stages_info_file):
-        with open(stages_info_file) as infile:
-            stages_info: T.List[types.LevelsInformation] = json.load(infile)["data"]
-    else:
-        logger.print_normal("Caching stages info...")
-        stages_info: T.List[types.LevelsInformation] = google_w2.get_level_data()
-        with open(stages_info_file, "w") as outfile:
-            data = {"data": stages_info}
-            json.dump(data, outfile, indent=4)
-
-    account_info_file = os.path.join(args.log_dir, "account_info.json")
-    if os.path.isfile(account_info_file):
-        with open(account_info_file) as infile:
-            account_info: T.List[types.AccountLevels] = json.load(infile)["data"]
-    else:
-        logger.print_normal("Caching account info...")
-        account_info: T.List[types.AccountLevels] = google_w2.get_account_stats()
-        with open(account_info_file, "w") as outfile:
-            data = {"data": account_info}
-            json.dump(data, outfile, indent=4)
+    stages_info, account_info = get_cache_info(args.log_dir)
 
     bots = []
     for user, config in USERS.items():

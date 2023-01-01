@@ -531,3 +531,13 @@ class LevelsInformation(T.TypedDict):
     name: str
     background: str
     stages: T.List[StageInfo]
+
+
+class StaminaBuy(T.TypedDict):
+    invoice_id: str
+    stamina: int
+    chro: int
+    is_paid: bool
+    user_id: str
+    redirect_url: str
+    expired_at: int

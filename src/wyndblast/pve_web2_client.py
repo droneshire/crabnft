@@ -22,6 +22,7 @@ from wyndblast.types import (
     PveUser,
     PveStages,
     Stamina,
+    StaminaBuy,
     TeamPreset,
     Units,
     UnitPreset,
@@ -474,3 +475,27 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
             if res:
                 logger.print_normal(f"{res}")
             return False
+
+    def _request_stamina_buy_raw(
+        self,
+        stamina: int,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
+    ) -> T.Any:
+        url = self.PVE_BASE_URL + "/stamina/buy"
+        data = {
+            "amount": stamina,
+        }
+        return self._post_request(url, json_data=data, headers=headers, params=params, timeout=20.0)
+
+    def request_stamina_buy(self, stamina: int) -> StaminaBuy:
+        try:
+            res = self._request_stamina_buy_raw(stamina, headers=self._get_pve_headers())
+            return res["result"]
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to request_stamina_buy_raw!")
+            if res:
+                logger.print_normal(f"{res}")
+            return {}

@@ -37,6 +37,7 @@ WYNDBLAST_DAILY_ACTIVITIES_HEADERS = {
 API_KEYS = {
     "pve": "wyndblast-pve-407d11fc-0ec3-42af-adb1-a26c8b5074e5",
     "internal": "wb-pve-internal-0e97b9a3-f32c-4eb3-8ba1-eac0cedc1128",
+    "marketplace": "public-1747ea40-6cca-4d25-887f-bc5301ab05df",
 }
 
 WYNDBLAST_PVE_HEADERS = {

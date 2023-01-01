@@ -60,6 +60,21 @@ class JoePegsClient:
         url = f"{BASE_URL}v2/{endpoint}"
         return self._get_request(url, headers=headers, params=params)
 
+    def get_item(
+        self,
+        address: Address,
+        token_id: int,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
+    ) -> T.Any:
+        try:
+            return self._joepegs_api(f"/collections/{address}/tokens/{token_id}", params=params)
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to get item {token_id}\n{res if res else ''}")
+            return {}
+
     def get_collection(
         self, address: Address, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
     ) -> T.Any:
@@ -68,7 +83,7 @@ class JoePegsClient:
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed to get collection\n{res if res else ''}")
+            logger.print_fail(f"Failed to get collection {address}\n{res if res else ''}")
             return {}
 
     def get_listings(

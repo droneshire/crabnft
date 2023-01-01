@@ -9,8 +9,10 @@ from wyndblast import types
 
 
 class PveStats(T.TypedDict):
-    levels_completed: T.Dict[str, T.List[str]]
-    account_exp: T.Dict[str, int]
+    levels_completed: T.List[str]
+    account_exp: int
+    unclaimed_chro: float
+    claimed_chro: float
 
 
 class LifetimeStats(T.TypedDict):
@@ -22,7 +24,7 @@ class LifetimeStats(T.TypedDict):
     stage_3: T.Dict[str, float]
     commission_chro: T.Dict[str, float]
     avax_gas: float
-    pve_game: PveStats
+    pve_game: T.Dict[str, PveStats]
 
 
 NULL_GAME_STATS = {
@@ -51,10 +53,7 @@ NULL_GAME_STATS = {
     },
     "commission_chro": {},
     "avax_gas": 0.0,
-    "pve_game": {
-        "levels_completed": {},
-        "account_exp": {},
-    },
+    "pve_game": {},
 }
 
 
@@ -70,21 +69,22 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
     ):
         super().__init__(user, NULL_GAME_STATS, log_dir, backup_stats, dry_run, verbose)
 
-        if not isinstance(self.lifetime_stats["pve_game"]["levels_completed"], dict):
-            self.lifetime_stats["pve_game"]["levels_completed"] = {address: []}
-
-        if address not in self.lifetime_stats["pve_game"]["levels_completed"]:
-            self.lifetime_stats["pve_game"]["levels_completed"][address] = []
-
-        for key in ["max_level", "quests_completed"]:
-            if key in self.lifetime_stats["pve_game"]:
-                del self.lifetime_stats["pve_game"][key]
-
-        if "account_exp" in self.lifetime_stats["pve_game"] and not isinstance(
+        if "account_exp" in self.lifetime_stats["pve_game"] and isinstance(
             self.lifetime_stats["pve_game"]["account_exp"], dict
         ):
             del self.lifetime_stats["pve_game"]["account_exp"]
-            self.lifetime_stats["pve_game"]["account_exp"] = {address: 0}
+            del self.lifetime_stats["pve_game"]["levels_completed"]
+            self.lifetime_stats["pve_game"][address] = {}
+            self.lifetime_stats["pve_game"][address]["account_exp"] = 0
+            self.lifetime_stats["pve_game"][address]["claimed_chro"] = 0.0
+            self.lifetime_stats["pve_game"][address]["unclaimed_chro"] = 0.0
+            self.lifetime_stats["pve_game"][address]["levels_completed"] = []
+        elif address not in self.lifetime_stats["pve_game"]:
+            self.lifetime_stats["pve_game"][address] = {}
+            self.lifetime_stats["pve_game"][address]["account_exp"] = 0
+            self.lifetime_stats["pve_game"][address]["claimed_chro"] = 0.0
+            self.lifetime_stats["pve_game"][address]["unclaimed_chro"] = 0.0
+            self.lifetime_stats["pve_game"][address]["levels_completed"] = []
 
         self.last_lifetime_stats = copy.deepcopy(self.lifetime_stats)
         self.write_game_stats(self.lifetime_stats)
@@ -118,23 +118,21 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
                 diffed_stats[item][k] = diffed_stats[item].get(k, 0.0) - v
 
         for item in ["pve_game"]:
-            for k, v in user_a_stats[item].items():
-                if k == "account_exp":
-                    for address, exp in user_a_stats[item][k].items():
-                        diffed_stats[item][k][address] = exp
-                elif k == "levels_completed":
-                    for address, levels in user_a_stats[item][k].items():
-                        diffed_stats[item][k][address] = set(levels)
+            diffed_stats[item][address] = {}
 
-            for k, v in user_b_stats[item].items():
-                if k == "account_exp":
-                    for address, exp in user_b_stats[item][k].items():
-                        diffed_stats[item][k][address] = diffed_stats[item][k].get(address, 0) - exp
-                elif k == "levels_completed":
-                    for address, levels in user_b_stats[item][k].items():
-                        diffed_stats[item][k][address] = [
-                            b for b in set(levels) if b not in diffed_stats[item][k][address]
+            for address, pve_stat in user_a_stats[item].items():
+                for stat, value in user_a_stats[item][address].items():
+                    diffed_stats[item][address][stat] = value
+
+            for address, pve_stat in user_b_stats[item].items():
+                for stat, value in user_b_stats[item][address].items():
+                    if stat == "levels_completed":
+                        levels = user_b_stats[item][address][stat]
+                        diffed_stats[item][address][stat] = [
+                            b for b in set(levels) if b not in diffed_stats[item][address][stat]
                         ]
+                    else:
+                        diffed_stats[item][address][stat] -= value
 
         if self.verbose:
             logger.print_bold("Subtracting game stats:")
@@ -175,31 +173,26 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
                 merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
 
         for item in ["pve_game"]:
-            for k, v in user_a_stats.get(item, {}).items():
-                if "levels_completed" in k:
-                    for address, levels in user_a_stats[item][k].items():
-                        merged_set = set(merged_stats[item][k].get(address, []))
-                        for i in levels:
-                            merged_set.add(i)
-                        merged_stats[item][k][address] = list(merged_set)
-                elif "account_exp" in k:
-                    for address, exp in user_a_stats[item][k].items():
-                        merged_stats[item][k][address] = merged_stats[item][k].get(address, 0) + exp
-                else:
-                    merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
+            merged_stats[item][address] = {}
 
-            for k, v in user_b_stats.get(item, {}).items():
-                if "levels_completed" in k:
-                    for address, levels in user_b_stats[item][k].items():
-                        merged_set = set(merged_stats[item][k].get(address, []))
-                        for i in levels:
-                            merged_set.add(i)
-                        merged_stats[item][k][address] = list(merged_set)
-                elif "account_exp" in k:
-                    for address, exp in user_b_stats[item][k].items():
-                        merged_stats[item][k][address] = merged_stats[item][k].get(address, 0) + exp
-                else:
-                    merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
+            for address, pve_stat in user_a_stats[item].items():
+                for stat, value in user_a_stats[item][address].items():
+                    if isinstance(value, list):
+                        merged_stats[item][address][stat] = list(set(value))
+                    else:
+                        merged_stats[item][address][stat] = value
+
+            for address, pve_stat in user_b_stats[item].items():
+                for stat, value in user_b_stats[item][address].items():
+                    if isinstance(value, list):
+                        merged_set = set(merged_stats[item][address][stat])
+                        value_set = set(value)
+                        merged_stats[item][address][stat].extend(list(merged_set.union(value_set)))
+                    else:
+                        merged_stats[item][address][stat] = (
+                            merged_stats[item][address].get(stat, 0) + v
+                        )
+
         if self.verbose:
             logger.print_bold("Merging game stats:")
             logger.print_normal(json.dumps(merged_stats, indent=4))
