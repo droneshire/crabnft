@@ -193,7 +193,9 @@ class WyndblastWeb2Client:
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed to get server time:\n{res if res else ''}")
+            logger.print_fail(f"Failed to get server time")
+            if res:
+                logger.print_normal(f"{res}")
             return 0
 
     def _authorize_user_raw(
@@ -219,7 +221,9 @@ class WyndblastWeb2Client:
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed to logout user {self.user_address}:\n{res if res else ''}")
+            logger.print_fail(f"Failed to logout user {self.user_address}")
+            if res:
+                logger.print_normal(f"{res}")
 
     def _get_moralis_headers(self) -> T.Dict[str, T.Any]:
         headers = copy.deepcopy(MORALIS_HEADERS)
@@ -241,8 +245,10 @@ class WyndblastWeb2Client:
             raise
         except:
             logger.print_fail(
-                f"Failed to authorize user {self.user_address}:\n{res if res else ''}"
+                f"Failed to authorize user {self.user_address}"
             )
+            if res:
+                logger.print_normal(f"{res}")
             return False
 
     def _update_account_raw(
@@ -263,5 +269,7 @@ class WyndblastWeb2Client:
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed to update {self.object_id}:\n{res if res else ''}")
+            logger.print_fail(f"Failed to update {self.object_id}")
+            if res:
+                logger.print_normal(f"{res}")
             return False
