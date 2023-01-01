@@ -28,14 +28,16 @@ class Web2Client:
         self.rate_limit_delay = rate_limit_delay
 
         if dry_run:
-            logger.print_warn("Web2 Client in dry run mode...")
+            logger.print_warn("Web2Client in dry run mode...")
 
         if use_proxy:
             self.requests = tor.get_tor_session()
         else:
             self.requests = requests
 
-        logger.print_bold(f"Web2Client IP: {self.requests.get(MY_IP_URL).text.strip()}")
+        logger.print_bold(
+            f"Web2Client IP (proxy={use_proxy}): {self.requests.get(MY_IP_URL).text.strip()}"
+        )
 
     def _get_request(
         self,
