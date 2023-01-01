@@ -770,8 +770,6 @@ class PveGame:
         return True
 
     def play_game(self) -> None:
-        self._send_pve_update()
-
         if self.is_deactivated:
             logger.print_warn(f"Skipping {self.user} since we have been deactivated!")
             return
