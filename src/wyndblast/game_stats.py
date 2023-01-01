@@ -69,27 +69,6 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
     ):
         super().__init__(user, NULL_GAME_STATS, log_dir, backup_stats, dry_run, verbose)
 
-        if "account_exp" in self.lifetime_stats["pve_game"] and isinstance(
-            self.lifetime_stats["pve_game"]["account_exp"], dict
-        ):
-            del self.lifetime_stats["pve_game"]["account_exp"]
-            del self.lifetime_stats["pve_game"]["levels_completed"]
-            self.lifetime_stats["pve_game"][address] = {}
-            self.lifetime_stats["pve_game"][address]["account_exp"] = 0
-            self.lifetime_stats["pve_game"][address]["claimed_chro"] = 0.0
-            self.lifetime_stats["pve_game"][address]["unclaimed_chro"] = 0.0
-            self.lifetime_stats["pve_game"][address]["levels_completed"] = []
-        elif address not in self.lifetime_stats["pve_game"]:
-            self.lifetime_stats["pve_game"][address] = {}
-            self.lifetime_stats["pve_game"][address]["account_exp"] = 0
-            self.lifetime_stats["pve_game"][address]["claimed_chro"] = 0.0
-            self.lifetime_stats["pve_game"][address]["unclaimed_chro"] = 0.0
-            self.lifetime_stats["pve_game"][address]["levels_completed"] = []
-
-        self.last_lifetime_stats = copy.deepcopy(self.lifetime_stats)
-        self.write_game_stats(self.lifetime_stats)
-        self.address = address
-
     def delta_game_stats(
         self,
         user_a_stats: LifetimeStats,
