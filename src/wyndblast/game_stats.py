@@ -187,8 +187,11 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
 
                 for stat, value in user_b_stats[item][address].items():
                     if isinstance(value, list):
-                        merged_set = set(merged_stats[item][address].get(stat, []))
+                        if stat not in merged_stats[item][address]:
+                            merged_stats[item][address][stat] = []
+
                         value_set = set(value)
+                        merged_set = set(merged_stats[item][address][stat])
                         if merged_set:
                             value_set = value_set.union(merged_set)
                         merged_stats[item][address][stat].extend(list(value_set))
