@@ -35,7 +35,7 @@ class Web2Client:
         else:
             self.requests = requests
 
-        logger.print_bold(f"IP Addr: {self.requests.get(MY_IP_URL).text.strip()}")
+        logger.print_bold(f"Web2Client IP: {self.requests.get(MY_IP_URL).text.strip()}")
 
     def _get_request(
         self,
