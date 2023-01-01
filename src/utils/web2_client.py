@@ -4,7 +4,7 @@ import typing as T
 
 from yaspin import yaspin
 
-from utils import logger, proxy
+from utils import logger, tor
 
 
 @yaspin(text="Waiting...")
@@ -12,12 +12,15 @@ def wait(wait_time) -> None:
     time.sleep(wait_time)
 
 
+MY_IP_URL = "http://icanhazip.com/"
+
+
 class Web2Client:
     def __init__(
         self,
         base_url: str,
         rate_limit_delay: float = 5.0,
-        use_proxy: bool = True,
+        use_proxy: bool = False,
         dry_run: bool = False,
     ) -> None:
         self.dry_run = dry_run
@@ -28,10 +31,11 @@ class Web2Client:
             logger.print_warn("Web2 Client in dry run mode...")
 
         if use_proxy:
-            self.proxies = proxy.Proxies()
-            self.proxies.init()
+            self.requests = tor.get_tor_session()
         else:
-            self.proxies = None
+            self.requests = requests
+
+        logger.print_bold(f"IP Addr: {self.requests.get(MY_IP_URL).text.strip()}")
 
     def _get_request(
         self,
@@ -43,14 +47,9 @@ class Web2Client:
         if self.rate_limit_delay > 0.0:
             wait(self.rate_limit_delay)
 
-        if self.proxies is not None:
-            proxy = {"https": self.proxies.get_proxy()}
-        else:
-            proxy = None
-
         try:
-            return requests.request(
-                "GET", url, params=params, headers=headers, timeout=timeout, proxies=proxy
+            return self.requests.request(
+                "GET", url, params=params, headers=headers, timeout=timeout
             ).json()
         except KeyboardInterrupt:
             raise
@@ -73,7 +72,7 @@ class Web2Client:
             wait(delay)
 
         try:
-            return requests.request(
+            return self.requests.request(
                 "POST", url, json=json_data, params=params, headers=headers, timeout=timeout
             ).json()
         except KeyboardInterrupt:

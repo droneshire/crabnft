@@ -42,7 +42,7 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
             user_address,
             base_url,
             rate_limit_delay=2.0,
-            use_proxy=True,
+            use_proxy=False,
             dry_run=dry_run,
         )
 

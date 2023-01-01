@@ -71,7 +71,7 @@ class WyndblastWeb2Client(web2_client.Web2Client):
         user_address: Address,
         base_url: str,
         rate_limit_delay: float = 5.0,
-        use_proxy: bool = True,
+        use_proxy: bool = False,
         dry_run: bool = False,
     ) -> None:
         super().__init__(
