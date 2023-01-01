@@ -3,7 +3,7 @@ import requests
 
 from utils import logger
 
-GET_PROXY_LIST = "https://api.proxyscrape.com/v2/?request=displayproxies&protocol=http&timeout=10000&country=all&ssl=all&anonymity=all"
+GET_PROXY_LIST = "https://api.proxyscrape.com/v2/"
 
 
 class Proxies:
@@ -16,11 +16,11 @@ class Proxies:
             "protocol": "http",
             "timeout": 10000,
             "country": "all",
-            "ssl": "all",
+            "ssl": "yes",
             "anonymity": "all",
         }
         try:
-            response = requests.get(GET_PROXY_LIST).text()
+            response = requests.get(GET_PROXY_LIST).text
             self.proxies = response.split()
             logger.print_ok_arrow(f"Found {len(self.proxies)} proxies!")
         except:

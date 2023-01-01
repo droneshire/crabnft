@@ -11,7 +11,7 @@ from eth_typing import Address
 from web3 import Web3
 from yaspin import yaspin
 
-from utils import logger
+from utils import logger, proxy
 from wyndblast.api_headers import (
     API_KEYS,
     MORALIS_HEADERS,
@@ -79,6 +79,7 @@ class WyndblastWeb2Client:
         user_address: Address,
         base_url: str,
         rate_limit_delay: float = 5.0,
+        use_proxy: bool = True,
         dry_run: bool = False,
     ) -> None:
         self.private_key = private_key
@@ -93,6 +94,8 @@ class WyndblastWeb2Client:
         if dry_run:
             logger.print_warn("Web2 Client in dry run mode...")
 
+        self.proxies = proxy.Proxies() if use_proxy else None
+
     def _get_request(
         self,
         url: str,
@@ -102,9 +105,15 @@ class WyndblastWeb2Client:
     ) -> T.Any:
         if self.rate_limit_delay > 0.0:
             wait(self.rate_limit_delay)
+
+        if self.proxy is not None:
+            proxy = {"https": self.proxies.get_proxy()}
+        else:
+            proxy = None
+
         try:
             return requests.request(
-                "GET", url, params=params, headers=headers, timeout=timeout
+                "GET", url, params=params, headers=headers, timeout=timeout, proxies=proxy
             ).json()
         except KeyboardInterrupt:
             raise
