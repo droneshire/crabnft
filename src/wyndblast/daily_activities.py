@@ -1,6 +1,7 @@
 import copy
 import datetime
 import json
+import random
 import time
 import typing as T
 from discord import Color
@@ -26,6 +27,7 @@ from wyndblast.types import (
     Rewards,
     Stage,
     ProductMetadata,
+    WyndNft,
     WyndStatus,
 )
 from wyndblast.daily_activities_web2_client import DailyActivitiesWyndblastWeb2Client
@@ -228,7 +230,12 @@ class DailyActivitiesGame:
             inline=True,
         )
 
-        embed.set_thumbnail(url=WYNDBLAST_ASSETS["wynd"], height=100, width=100)
+        try:
+            wynds: T.List[WyndNft] = self.wynd_w2.get_wynd_status()
+            embed.set_image(url=wynds[random.randrange(len(wynds))]["image"])
+        except:
+            embed.set_thumbnail(url=WYNDBLAST_ASSETS["wynd"], height=100, width=100)
+
         webhook.add_embed(embed)
         webhook.execute()
 
