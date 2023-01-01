@@ -22,6 +22,7 @@ class Web2Client:
         rate_limit_delay: float = 5.0,
         use_proxy: bool = False,
         dry_run: bool = False,
+        verbose: bool = False,
     ) -> None:
         self.dry_run = dry_run
         self.base_url = base_url
@@ -35,9 +36,10 @@ class Web2Client:
         else:
             self.requests = requests
 
-        logger.print_bold(
-            f"Web2Client IP (proxy={use_proxy}): {self.requests.get(MY_IP_URL).text.strip()}"
-        )
+        if verbose:
+            logger.print_bold(
+                f"Web2Client IP (proxy={use_proxy}): {self.requests.get(MY_IP_URL).text.strip()}"
+            )
 
     def _get_request(
         self,

@@ -349,7 +349,7 @@ class PveGame:
             text = ""
             for wynd in wynds:
                 token_id = int(wynd["product_id"].split(":")[1])
-                text += f"{token_id}: {wynd['stats']['level']}\n"
+                text += f"{token_id}: {wynd['metadata']['stats']['level']} {wynd['metadata']['faction']}\n"
             embed.add_embed_field(name=f"Wynds", value=text, inline=False)
 
             item = wynds[0]
@@ -732,6 +732,8 @@ class PveGame:
         return True
 
     def play_game(self) -> None:
+        self._send_pve_update()
+
         if self.is_deactivated:
             logger.print_warn(f"Skipping {self.user} since we have been deactivated!")
             return

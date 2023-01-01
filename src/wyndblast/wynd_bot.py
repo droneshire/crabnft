@@ -259,6 +259,12 @@ class WyndBot:
     def run(self) -> None:
         logger.print_bold(f"\n\nWyndblast Game start for {self.user}")
 
+        if self.alias in PVE_ENABLED:
+            logger.print_bold(f"\n\nAttempting PVE game for {self.user}")
+            self.pve_w2.logout_user()
+            if self.pve_w2.authorize_user():
+                self.pve.play_game()
+
         if self.alias in DAILY_ENABLED:
             logger.print_bold(f"\n\nAttempting Daily Activities for {self.user}")
             if not self.wynd_w2.update_account():
@@ -267,12 +273,6 @@ class WyndBot:
 
             self._check_and_submit_available_inventory()
             self.daily_activities.run_activity()
-
-        if self.alias in PVE_ENABLED:
-            logger.print_bold(f"\n\nAttempting PVE game for {self.user}")
-            self.pve_w2.logout_user()
-            if self.pve_w2.authorize_user():
-                self.pve.play_game()
 
         self._check_and_maybe_secure_account()
 
