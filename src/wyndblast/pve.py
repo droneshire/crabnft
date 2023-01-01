@@ -335,7 +335,7 @@ class PveGame:
 
         user_data: types.PveUser = self.wynd_w2.get_user_profile()
 
-        max_level = self.completed[-1]
+        max_level = sorted(list(self.completed))[-1]
         account_exp = user_data.get("exp", 0)
 
         self._send_summary_email(
