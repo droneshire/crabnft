@@ -337,12 +337,13 @@ class PveGame:
 
         max_level = sorted(list(self.completed))[-1] if self.completed else 0
         account_exp = user_data.get("exp", 0)
+        account_level = user_data.get("level", 0)
 
         self._send_summary_email(
-            levels_completed, max_level, account_exp, claimed_chro_earned, unclaimed_chro_earned
+            levels_completed, max_level, account_exp, account_level, claimed_chro_earned, unclaimed_chro_earned
         )
         self._send_pve_update(
-            levels_completed, max_level, account_exp, claimed_chro_earned, unclaimed_chro_earned
+            levels_completed, max_level, account_exp, account_level, claimed_chro_earned, unclaimed_chro_earned
         )
 
     def _send_pve_update(
@@ -350,6 +351,7 @@ class PveGame:
         levels_completed: int,
         max_level: str,
         account_exp: int,
+        account_level: int,
         claimed_chro_earned: float,
         unclaimed_chro_earned: float,
     ) -> None:
@@ -365,6 +367,7 @@ class PveGame:
         embed.add_embed_field(name=f"Max Level", value=f"{max_level}", inline=True)
         embed.add_embed_field(name=f"Levels Won", value=f"{levels_completed}", inline=True)
         embed.add_embed_field(name=f"Account Exp", value=f"{account_exp}", inline=True)
+        embed.add_embed_field(name=f"Account Level", value=f"{account_level}", inline=True)
         embed.add_embed_field(
             name=f"Total Chro (unclaimed)", value=f"{unclaimed_chro_earned:.2f}", inline=False
         )
