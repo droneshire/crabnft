@@ -110,6 +110,7 @@ class PveGame:
         self.num_replays = 0
 
         self.last_mission = None
+        self.units_last_used = []
 
         self.stages_info: T.List[types.LevelsInformation] = stages_info
         self.account_info: T.List[types.AccountLevels] = account_info
@@ -261,6 +262,7 @@ class PveGame:
                 "rider_dna": "",
                 "wynd_dna": dna_string,
             }
+            self.units_last_used.append(product_id)
             units.append(unit)
 
         logger.print_normal(f"Using {len(units)} wynds in battle")
@@ -465,6 +467,8 @@ class PveGame:
 
             for player in wynds:
                 product_id = player.get("product_id", "")
+                if product_id not in self.units_last_used:
+                    continue
                 logger.print_normal(f"Attempting to level up wynd {product_id}...")
                 if self.wynd_w2.level_up_wynd(product_id):
                     logger.print_ok_arrow(f"Leveled up wynd {product_id}!")
@@ -805,6 +809,8 @@ class PveGame:
         else:
             self.current_stats["pve_game"][self.address]["claimed_chro"] = 0
             self.current_stats["pve_game"][self.address]["unclaimed_chro"] = 0
+
+        self.units_last_used = []
 
         self._send_summary_email()
         self._send_pve_update()
