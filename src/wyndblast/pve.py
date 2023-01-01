@@ -323,7 +323,36 @@ class PveGame:
     def _get_stamina(self) -> int:
         return self.wynd_w2.get_stamina()
 
-    def _send_pve_update(self) -> None:
+    def _send_notifications(self, chro_rewards: types.PveReward) -> None:
+        unclaimed_chro_earned = chro_rewards.get("claimable", 0)
+        claimed_chro_earned = chro_rewards.get("claimed", 0)
+
+        pve_stats = self.current_stats["pve_game"][self.address]
+        levels_completed = len(pve_stats.get("levels_completed", []))
+
+        if levels_completed < 1 and (unclaimed_chro_earned <= 0 or claimed_chro_earned <= 0):
+            return
+
+        user_data: types.PveUser = self.wynd_w2.get_user_profile()
+
+        max_level = self.completed[-1]
+        account_exp = user_data.get("exp", 0)
+
+        self._send_summary_email(
+            levels_completed, max_level, account_exp, claimed_chro_earned, unclaimed_chro_earned
+        )
+        self._send_pve_update(
+            levels_completed, max_level, account_exp, claimed_chro_earned, unclaimed_chro_earned
+        )
+
+    def _send_pve_update(
+        self,
+        levels_completed: int,
+        max_level: str,
+        account_exp: int,
+        claimed_chro_earned: float,
+        unclaimed_chro_earned: float,
+    ) -> None:
         webhook = DiscordWebhook(
             url=discord.DISCORD_WEBHOOK_URL["WYNDBLAST_PVE_ACTIVITY"], rate_limit_retry=True
         )
@@ -333,20 +362,14 @@ class PveGame:
             color=Color.purple().value,
         )
 
-        pve_stats = self.current_stats["pve_game"][self.address]
-        levels_completed = len(pve_stats.get("levels_completed", []))
-        unclaimed_chro_earned = pve_stats.get("unclaimed_chro", 0)
-        claimed_chro_earned = pve_stats.get("claimed_chro", 0)
-        exp = pve_stats.get("account_exp", 0)
-
-        if levels_completed < 1 and (unclaimed_chro_earned <= 0 or claimed_chro_earned <= 0):
-            return
-
-        embed.add_embed_field(name=f"Exp Earned", value=f"{exp}", inline=True)
-        embed.add_embed_field(name=f"Levels Won", value=f"{levels_completed}", inline=False)
-        embed.add_embed_field(name=f"Claimed CHRO", value=f"{claimed_chro_earned:.2f}", inline=True)
+        embed.add_embed_field(name=f"Max Level", value=f"{max_level}", inline=True)
+        embed.add_embed_field(name=f"Levels Won", value=f"{levels_completed}", inline=True)
+        embed.add_embed_field(name=f"Account Exp", value=f"{account_exp}", inline=True)
         embed.add_embed_field(
-            name=f"Unclaimed CHRO", value=f"{unclaimed_chro_earned:.2f}", inline=False
+            name=f"Total Chro (unclaimed)", value=f"{claimed_chro_earned:.2f}", inline=True
+        )
+        embed.add_embed_field(
+            name=f"Total Chro (claimed)", value=f"{unclaimed_chro_earned:.2f}", inline=False
         )
 
         try:
@@ -369,25 +392,24 @@ class PveGame:
         webhook.add_embed(embed)
         webhook.execute()
 
-    def _send_summary_email(self) -> None:
-        pve_stats = self.current_stats["pve_game"][self.address]
-        levels_completed = len(pve_stats.get("levels_completed", []))
-        unclaimed_chro_earned = pve_stats.get("unclaimed_chro", 0)
-        claimed_chro_earned = pve_stats.get("claimed_chro", 0)
-        exp = pve_stats.get("account_exp", 0)
-
-        if levels_completed < 1 and (unclaimed_chro_earned <= 0 or claimed_chro_earned <= 0):
-            return
-
+    def _send_summary_email(
+        self,
+        levels_completed: int,
+        max_level: str,
+        account_exp: int,
+        claimed_chro_earned: float,
+        unclaimed_chro_earned: float,
+    ) -> None:
         alias = get_alias_from_user(self.user)
         content = f"Hi {alias}!\n\n"
         content += f"{'-' * 40}\n"
         content += "Wyndblast PVE Activity\n\n"
         content += f"{'-'*3}\n"
         content += f"LEVELS BEAT: {levels_completed}\n"
-        content += f"EXP EARNED: {exp}\n"
-        content += f"UNCLAIMED CHRO: {unclaimed_chro_earned}\n"
-        content += f"CLAIMED CHRO: {claimed_chro_earned}\n"
+        content += f"HIGHEST LEVEL COMPLETED: {max_level}\n"
+        content += f"TOTAL ACCOUNT EXP: {account_exp}\n"
+        content += f"TOTAL UNCLAIMED CHRO: {unclaimed_chro_earned}\n"
+        content += f"TOTAL CLAIMED CHRO: {claimed_chro_earned}\n"
 
         logger.print_bold(content)
 
@@ -802,19 +824,18 @@ class PveGame:
 
         chro_rewards_after: types.PveRewards = self.wynd_w2.get_chro_rewards()
 
+        if chro_rewards_after:
+            logger.print_ok_blue_arrow(f"Unclaimed (after): {chro_rewards_after['claimable']}")
+            logger.print_ok_blue_arrow(f"Claimed (after): {chro_rewards_after['claimed']}")
+
         if chro_rewards_before and chro_rewards_after:
-            self.current_stats["pve_game"][self.address]["unclaimed_chro"] = (
-                chro_rewards_after["claimable"] - chro_rewards_before["claimable"]
-            )
-            self.current_stats["pve_game"][self.address]["claimed_chro"] = (
-                chro_rewards_after["claimed"] - chro_rewards_before["claimed"]
+            self.current_stats["pve_game"][self.address]["unclaimed_chro"] = max(
+                0, (chro_rewards_after["claimable"] - chro_rewards_before["claimable"])
             )
         else:
-            self.current_stats["pve_game"][self.address]["claimed_chro"] = 0
             self.current_stats["pve_game"][self.address]["unclaimed_chro"] = 0
 
         self.units_last_used = []
 
-        self._send_summary_email()
-        self._send_pve_update()
+        self._send_notifications(chro_rewards_after)
         self._update_stats()
