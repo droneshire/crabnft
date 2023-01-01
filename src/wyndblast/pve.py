@@ -231,7 +231,7 @@ class PveGame:
         num_players = min(len(wynds), num_players)
 
         used_dnas_inx = []
-        index = 0
+        index = random.randrange(num_players)
         for _ in range(num_players):
             if len(used_dnas_inx) >= len(wynds):
                 logger.print_warn(f"Unable to find enough wynds to play with. Found {len(units)}")
