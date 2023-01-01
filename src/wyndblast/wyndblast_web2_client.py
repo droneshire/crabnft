@@ -85,6 +85,8 @@ class WyndblastWeb2Client:
         self.private_key = private_key
         self.user_address = Web3.toChecksumAddress(user_address) if user_address else ""
 
+        assert self.private_key and self.user_address, "Missing keys!!!"
+
         self.session_token = None
         self.object_id = None
         self.username = None
