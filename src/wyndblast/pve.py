@@ -366,7 +366,7 @@ class PveGame:
         embed.add_embed_field(name=f"Levels Won", value=f"{levels_completed}", inline=True)
         embed.add_embed_field(name=f"Account Exp", value=f"{account_exp}", inline=True)
         embed.add_embed_field(
-            name=f"Total Chro (unclaimed)", value=f"{claimed_chro_earned:.2f}", inline=True
+            name=f"Total Chro (unclaimed)", value=f"{claimed_chro_earned:.2f}", inline=False
         )
         embed.add_embed_field(
             name=f"Total Chro (claimed)", value=f"{unclaimed_chro_earned:.2f}", inline=False
