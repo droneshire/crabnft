@@ -95,6 +95,7 @@ class WyndblastWeb2Client:
             logger.print_warn("Web2 Client in dry run mode...")
 
         self.proxies = proxy.Proxies() if use_proxy else None
+        self.proxies.init()
 
     def _get_request(
         self,
@@ -106,7 +107,7 @@ class WyndblastWeb2Client:
         if self.rate_limit_delay > 0.0:
             wait(self.rate_limit_delay)
 
-        if self.proxy is not None:
+        if self.proxies is not None:
             proxy = {"https": self.proxies.get_proxy()}
         else:
             proxy = None
