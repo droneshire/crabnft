@@ -345,6 +345,13 @@ class PveGame:
 
         try:
             wynds: T.List[T.Any] = self.wynd_w2.get_nft_data()["wynd"]
+
+            text = ""
+            for wynd in wynds:
+                token_id = int(wynd["product_id"].split(":")[1])
+                text += f"{token_id}: {wynd['stats']['level']}\n"
+            embed.add_embed_field(name=f"Wynds", value=text, inline=False)
+
             item = wynds[0]
             url = item["metadata"]["image_url"]
             embed.set_image(url=url)
