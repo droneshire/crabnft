@@ -116,7 +116,7 @@ class PatBot:
         if action == Action.HARVEST:
             lifetime_avax += rewards_avax
         embed.add_embed_field(
-            name=f"Lifeteim Rewards Earned",
+            name=f"Lifetime Rewards Earned",
             value=f"{lifetime_avax:.2f} $AVAX",
             inline=False,
         )
