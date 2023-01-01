@@ -350,8 +350,10 @@ class PveGame:
             text = ""
             for wynd in wynds:
                 token_id = int(wynd["product_id"].split(":")[1])
-                text += f"{token_id}: {wynd['metadata']['stats']['level']} {wynd['metadata']['faction']}\n"
-            embed.add_embed_field(name=f"Wynds", value=text, inline=False)
+                level = wynd["metadata"]["stats"]["level"]
+                if level > 1:
+                    text += f"{token_id}: {level} {wynd['metadata']['faction']}\n"
+            embed.add_embed_field(name=f"Wynds [id, level, faction]", value=text, inline=False)
 
             item = wynds[0]
             url = item["metadata"]["image_url"]
