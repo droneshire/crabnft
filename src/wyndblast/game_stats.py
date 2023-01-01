@@ -88,6 +88,7 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
 
         self.last_lifetime_stats = copy.deepcopy(self.lifetime_stats)
         self.write_game_stats(self.lifetime_stats)
+        self.address = address
 
     def delta_game_stats(
         self,
@@ -173,10 +174,9 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
                 merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
 
         for item in ["pve_game"]:
-            merged_stats[item][address] = {}
-
             for address, pve_stat in user_a_stats[item].items():
                 for stat, value in user_a_stats[item][address].items():
+                    merged_stats[item][address] = {}
                     if isinstance(value, list):
                         merged_stats[item][address][stat] = list(set(value))
                     else:
