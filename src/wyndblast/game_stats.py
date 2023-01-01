@@ -174,8 +174,8 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
 
         for item in ["pve_game"]:
             for address, pve_stat in user_a_stats[item].items():
+                merged_stats[item][address] = {}
                 for stat, value in user_a_stats[item][address].items():
-                    merged_stats[item][address] = {}
                     if isinstance(value, list):
                         merged_stats[item][address][stat] = list(set(value))
                     else:
@@ -184,7 +184,7 @@ class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
             for address, pve_stat in user_b_stats[item].items():
                 for stat, value in user_b_stats[item][address].items():
                     if isinstance(value, list):
-                        merged_set = set(merged_stats[item][address][stat])
+                        merged_set = set(merged_stats[item][address].get(stat, []))
                         value_set = set(value)
                         merged_stats[item][address][stat].extend(list(merged_set.union(value_set)))
                     else:
