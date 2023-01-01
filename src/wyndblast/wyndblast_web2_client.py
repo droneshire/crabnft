@@ -78,7 +78,7 @@ class WyndblastWeb2Client:
         private_key: str,
         user_address: Address,
         base_url: str,
-        rate_limit_delay: float = 4.0,
+        rate_limit_delay: float = 5.0,
         dry_run: bool = False,
     ) -> None:
         self.private_key = private_key

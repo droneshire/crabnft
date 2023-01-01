@@ -77,6 +77,7 @@ class PveGame:
     ) -> None:
         self.user = user
         self.config = config
+        self.address = config["address"]
         self.email_accounts = email_accounts
         self.wynd_w2 = wynd_w2
         self.wynd_w3 = wynd_w3
@@ -118,7 +119,7 @@ class PveGame:
             self.sorted_levels.extend([l + difficulty for l in levels])
 
         self.completed = set(
-            self.stats_logger.lifetime_stats["pve_game"][self.config["address"]]["levels_completed"]
+            self.stats_logger.lifetime_stats["pve_game"][self.address]["levels_completed"]
         )
 
         self.did_tutorial = len(self.completed) > 0
@@ -292,9 +293,9 @@ class PveGame:
         if self.completed:
             self.did_tutorial = True
 
-        self.stats_logger.lifetime_stats["pve_game"][self.config["address"]][
-            "levels_completed"
-        ] = list(self.completed)
+        self.stats_logger.lifetime_stats["pve_game"][self.address]["levels_completed"] = list(
+            self.completed
+        )
 
         unlocked = stages["unlocked"]
         next_stages = [s for s in unlocked if s not in list(self.completed)]
@@ -326,7 +327,7 @@ class PveGame:
             color=Color.purple().value,
         )
 
-        pve_stats = self.current_stats["pve_game"][self.config["address"]]
+        pve_stats = self.current_stats["pve_game"][self.address]
         levels_completed = len(pve_stats["levels_completed"])
         unclaimed_chro_earned = pve_stats["unclaimed_chro"]
         claimed_chro_earned = pve_stats["claimed_chro"]
@@ -356,7 +357,7 @@ class PveGame:
         webhook.execute()
 
     def _send_summary_email(self) -> None:
-        pve_stats = self.current_stats["pve_game"][self.config["address"]]
+        pve_stats = self.current_stats["pve_game"][self.address]
         levels_completed = len(pve_stats.get("levels_completed", -1))
         unclaimed_chro_earned = pve_stats.get("unclaimed_chro", 0)
         claimed_chro_earned = pve_stats.get("claimed_chro", 0)
@@ -480,13 +481,9 @@ class PveGame:
 
             if res:
                 logger.print_ok(f"Successfully claimed {quest.upper()} rewards! +{res['exp']} exp")
-                self.current_stats["pve_game"][self.config["address"]][
-                    "account_exp"
-                ] = self.current_stats["pve_game"][self.config["address"]].get(
-                    "account_exp", 0
-                ) + res.get(
-                    "exp", 0
-                )
+                self.current_stats["pve_game"][self.address]["account_exp"] = self.current_stats[
+                    "pve_game"
+                ][self.address].get("account_exp", 0) + res.get("exp", 0)
 
                 if res.get("is_level_up", False):
                     logger.print_ok_arrow(f"Leveled up our Profile!")
@@ -621,14 +618,12 @@ class PveGame:
                 elif result == "win":
                     self.completed.add(stage_id)
                     levels_completed = set(
-                        self.current_stats["pve_game"][self.config["address"]].get(
-                            "levels_completed", []
-                        )
+                        self.current_stats["pve_game"][self.address].get("levels_completed", [])
                     )
                     levels_completed.add(stage_id)
-                    self.current_stats["pve_game"][self.config["address"]][
-                        "levels_completed"
-                    ] = list(levels_completed)
+                    self.current_stats["pve_game"][self.address]["levels_completed"] = list(
+                        levels_completed
+                    )
                     self.last_mission = stage_id
                     break
             elif attempt + 1 >= RETRY_ATTEMPTS:
@@ -745,7 +740,6 @@ class PveGame:
             return
 
         user_data: types.PveUser = self.wynd_w2.get_user_profile()
-        chro_rewards: types.PveRewards = self.wynd_w2.get_chro_rewards()
         user_exp = user_data.get("exp", 0)
 
         self._check_and_do_standard_quest_list(nft_data)
@@ -761,6 +755,10 @@ class PveGame:
 
         logger.print_ok_blue_arrow(f"User exp: {user_exp}")
         logger.print_ok_blue_arrow(f"User stamina: {self._get_stamina()}")
+        chro_rewards_before: types.PveRewards = self.wynd_w2.get_chro_rewards()
+        if chro_rewards_before:
+            logger.print_ok_blue_arrow(f"Unclaimed: {chro_rewards_before['claimable']}")
+            logger.print_ok_blue_arrow(f"Claimed: {chro_rewards_before['claimed']}")
 
         while self._check_and_play_story(nft_data, countdown):
             wait(random.randint(30, 70 if self.human_mode else 50))
@@ -776,6 +774,19 @@ class PveGame:
 
         if self.is_deactivated:
             logger.print_warn(f"Detected deactivated account!")
+
+        chro_rewards_after: types.PveRewards = self.wynd_w2.get_chro_rewards()
+
+        if chro_rewards_before and chro_rewards_after:
+            self.current_stats["pve_game"][self.address]["unclaimed_chro"] = (
+                chro_rewards_after["claimable"] - chro_rewards_before["claimable"]
+            )
+            self.current_stats["pve_game"][self.address]["claimed_chro"] = (
+                chro_rewards_after["claimed"] - chro_rewards_before["claimed"]
+            )
+        else:
+            self.current_stats["pve_game"][self.address]["claimed_chro"] = 0
+            self.current_stats["pve_game"][self.address]["unclaimed_chro"] = 0
 
         self._send_summary_email()
         self._send_pve_update()
