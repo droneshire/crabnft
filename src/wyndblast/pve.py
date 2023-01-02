@@ -340,10 +340,20 @@ class PveGame:
         account_level = user_data.get("level", 0)
 
         self._send_summary_email(
-            levels_completed, max_level, account_exp, account_level, claimed_chro_earned, unclaimed_chro_earned
+            levels_completed,
+            max_level,
+            account_exp,
+            account_level,
+            claimed_chro_earned,
+            unclaimed_chro_earned,
         )
         self._send_pve_update(
-            levels_completed, max_level, account_exp, account_level, claimed_chro_earned, unclaimed_chro_earned
+            levels_completed,
+            max_level,
+            account_exp,
+            account_level,
+            claimed_chro_earned,
+            unclaimed_chro_earned,
         )
 
     def _send_pve_update(
@@ -664,10 +674,17 @@ class PveGame:
                 elif result == "win":
                     self.completed.add(stage_id)
                     if "levels_completed" in self.current_stats["pve_game"][self.address]:
-                        self.current_stats["pve_game"][self.address]["levels_completed"].append(stage_id)
-                    self.current_stats["pve_game"][self.address]["levels_completed"] = list(
-                        set(self.current_stats["pve_game"][self.address].get("levels_completed", []))
-                    )
+                        self.current_stats["pve_game"][self.address]["levels_completed"] = list(
+                            set(
+                                self.current_stats["pve_game"][self.address].get(
+                                    "levels_completed", []
+                                )
+                            ).append(stage_id)
+                        )
+                    else:
+                        self.current_stats["pve_game"][self.address]["levels_completed"] = [
+                            stage_id
+                        ]
                     self.last_mission = stage_id
                     break
             elif attempt + 1 >= RETRY_ATTEMPTS:
