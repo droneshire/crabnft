@@ -330,7 +330,7 @@ class PveGame:
         pve_stats = self.current_stats["pve_game"][self.address]
         levels_completed = len(pve_stats.get("levels_completed", []))
 
-        if levels_completed < 1 and (unclaimed_chro_earned <= 0 or claimed_chro_earned <= 0):
+        if levels_completed < 1:
             return
 
         user_data: types.PveUser = self.wynd_w2.get_user_profile()
