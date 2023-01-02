@@ -673,18 +673,13 @@ class PveGame:
                     wait(3.0)
                 elif result == "win":
                     self.completed.add(stage_id)
-                    if "levels_completed" in self.current_stats["pve_game"][self.address]:
-                        self.current_stats["pve_game"][self.address]["levels_completed"] = list(
-                            set(
-                                self.current_stats["pve_game"][self.address].get(
-                                    "levels_completed", []
-                                )
-                            ).append(stage_id)
+                    self.current_stats["pve_game"][self.address]["levels_completed"] = list(
+                        set(
+                            self.current_stats["pve_game"][self.address]
+                            .get("levels_completed", [])
+                            .append(stage_id)
                         )
-                    else:
-                        self.current_stats["pve_game"][self.address]["levels_completed"] = [
-                            stage_id
-                        ]
+                    )
                     self.last_mission = stage_id
                     break
             elif attempt + 1 >= RETRY_ATTEMPTS:
