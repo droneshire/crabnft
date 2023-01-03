@@ -299,10 +299,6 @@ class PveGame:
         if self.completed:
             self.did_tutorial = True
 
-        self.stats_logger.lifetime_stats["pve_game"][self.address]["levels_completed"] = list(
-            self.completed
-        )
-
         unlocked = stages["unlocked"]
         next_stages = [s for s in unlocked if s not in list(self.completed)]
         if len(next_stages) == 0:
