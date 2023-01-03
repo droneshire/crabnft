@@ -14,8 +14,15 @@ from utils.config_types import UserConfig
 from utils.email import Email, send_email
 from utils.price import wei_to_token
 from wyndblast.assets import WYNDBLAST_ASSETS
-from wyndblast.game_stats import NULL_GAME_STATS
-from wyndblast.game_stats import WyndblastLifetimeGameStatsLogger
+from wyndblast.database.daily_activities import (
+    DailyActivities,
+    DailyActivitiesSchema,
+    ElementalStones,
+    ElementalStonesSchema,
+    WinLoss,
+    WinLossSchema,
+)
+from wyndblast.game_stats import WyndblastLifetimeGameStats
 from wyndblast.types import (
     Action,
     AccountOverview,
@@ -46,17 +53,25 @@ class DailyActivitiesGame:
         email_accounts: T.List[Email],
         wynd_w2: DailyActivitiesWyndblastWeb2Client,
         wynd_w3: WyndblastGameWeb3Client,
-        stats_logger: WyndblastLifetimeGameStatsLogger,
+        stats: WyndblastLifetimeGameStats,
     ):
         self.user = user
         self.config = config
         self.email_accounts = email_accounts
         self.wynd_w2 = wynd_w2
         self.wynd_w3 = wynd_w3
-        self.stats_logger = stats_logger
+        self.stats = stats
         self.is_deactivated = False
 
-        self.current_stats = copy.deepcopy(NULL_GAME_STATS)
+        self.current_stats = DailyActivities(user=user, address=self.config["address"])
+        self.current_stats.elemental_stones = ElementalStones(
+            daily_activities_id=self.current_stats.id
+        )
+        self.current_stats.stages = []
+        for stage in range(1, 4):
+            self.current_stats.stages.append(
+                WinLoss(stage=stage, daily_activities_id=self.current_stats.id)
+            )
 
         logger.print_ok_blue(f"\nStarting for user {user}...")
 
@@ -81,7 +96,8 @@ class DailyActivitiesGame:
         gas = wei_to_token(self.wynd_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         logger.print_bold(f"Paid {gas} AVAX in gas")
 
-        self.stats_logger.lifetime_stats["avax_gas"] += gas
+        with self.stats.user() as user:
+            user.gas_avax += gas
 
         if tx_receipt.get("status", 0) != 1:
             logger.print_fail(f"Failed to claim CHRO!")
@@ -208,13 +224,7 @@ class DailyActivitiesGame:
             description=f"Finished for {self.config['discord_handle'].upper()}\n",
             color=Color.red().value,
         )
-        totals = {
-            "wins": 0,
-            "losses": 0,
-        }
-        for games in ["stage_1", "stage_2", "stage_3"]:
-            for result in ["wins", "losses"]:
-                totals[result] += self.stats_logger.lifetime_stats[games][result]
+        totals: WinLossSchema = self.stats.get_win_loss()
         total_games = float(totals["losses"] + totals["wins"])
         if total_games > 0:
             win_percent = totals["wins"] / total_games * 100.0
@@ -240,40 +250,14 @@ class DailyActivitiesGame:
         webhook.execute()
 
     def _update_stats(self) -> None:
-        for k, v in self.current_stats.items():
-            if type(v) != type(self.stats_logger.lifetime_stats.get(k)):
-                logger.print_warn(
-                    f"Mismatched stats:\n{self.current_stats}\n{self.stats_logger.lifetime_stats}"
-                )
-                continue
-
-            if k in ["commission_chro"]:
-                continue
-
-            if isinstance(v, list):
-                new_set = set(self.stats_logger.lifetime_stats[k])
-                for i in v:
-                    new_set.add(i)
-                self.stats_logger.lifetime_stats[k] = new_set
-            elif isinstance(v, dict):
-                for i, j in self.stats_logger.lifetime_stats[k].items():
-                    if not isinstance(j, dict):
-                        self.stats_logger.lifetime_stats[k][i] += self.current_stats[k][i]
-            else:
-                self.stats_logger.lifetime_stats[k] += v
-
-        self.stats_logger.lifetime_stats["commission_chro"] = self.stats_logger.lifetime_stats.get(
-            "commission_chro", {COMMISSION_WALLET_ADDRESS: 0.0}
-        )
-
         chro_rewards = self.current_stats["chro"]
+        with self.stats.user() as user:
+            user.chro += chro_rewards
         for address, commission_percent in self.config["commission_percent_per_mine"].items():
             commission_chro = chro_rewards * (commission_percent / 100.0)
 
-            self.stats_logger.lifetime_stats["commission_chro"][address] = (
-                self.stats_logger.lifetime_stats["commission_chro"].get(address, 0.0)
-                + commission_chro
-            )
+            with self.stats.commission(address) as commission:
+                commission += commission_chro
 
             logger.print_ok(
                 f"Added {commission_chro} CHRO for {address} in commission ({commission_percent}%)!"
@@ -281,12 +265,21 @@ class DailyActivitiesGame:
 
         self._send_close_game_discord_activity_update()
 
-        self.current_stats = copy.deepcopy(NULL_GAME_STATS)
-
-        logger.print_ok_blue(
-            f"Lifetime Stats for {self.user.upper()}\n"
-            f"{json.dumps(self.stats_logger.lifetime_stats, indent=4)}"
+        self.current_stats = DailyActivities(user=user, address=self.config["address"])
+        self.current_stats.elemental_stones = ElementalStones(
+            daily_activities_id=self.current_stats.id
         )
+        self.current_stats.stages = []
+        for stage in range(1, 4):
+            self.current_stats.stages.append(
+                WinLoss(stage=stage, daily_activities_id=self.current_stats.id)
+            )
+
+        with self.stats.user() as user:
+            stats_json = DailyActivitiesSchema().dump(user.daily_activity_stats)
+            logger.print_ok_blue(
+                f"Lifetime Stats for {self.user.upper()}\n" f"{json.dumps(stats_json, indent=4)}"
+            )
 
     def _send_summary_email(self, active_nfts: int) -> None:
         content = f"Activity Stats for {self.user.upper()}:\n"

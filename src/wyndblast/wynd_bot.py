@@ -13,7 +13,8 @@ from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from wyndblast.config_manager_wyndblast import WyndblastConfigManager
 from wyndblast.daily_activities import DailyActivitiesGame
 from wyndblast.daily_activities_web2_client import DailyActivitiesWyndblastWeb2Client
-from wyndblast.game_stats import NULL_GAME_STATS, WyndblastLifetimeGameStatsLogger
+from wyndblast.database.user import WyndblastUser, WyndblastUserSchema
+from wyndblast.game_stats import WyndblastLifetimeGameStats
 from wyndblast.pve import PveGame
 from wyndblast.pve_web2_client import PveWyndblastWeb2Client
 from wyndblast.types import AccountLevels, LevelsInformation, WyndNft
@@ -96,17 +97,12 @@ class WyndBot:
             .set_dry_run(dry_run)
         )
 
-        self.stats_logger = WyndblastLifetimeGameStatsLogger(
-            self.alias,
-            self.log_dir,
-            self.config_mgr.get_lifetime_stats(),
-            config["address"],
-            self.dry_run,
-            verbose=False,
+        self.stats = WyndblastLifetimeGameStats(
+            user, config["address"], COMMISSION_WALLET_ADDRESS, "chro"
         )
 
         self.daily_activities: DailyActivitiesGame = DailyActivitiesGame(
-            user, config, email_accounts, self.wynd_w2, self.wynd_w3, self.stats_logger
+            user, config, email_accounts, self.wynd_w2, self.wynd_w3, self.stats
         )
 
         self.pve: PveGame = PveGame(
@@ -115,7 +111,7 @@ class WyndBot:
             email_accounts,
             self.pve_w2,
             self.wynd_w3,
-            self.stats_logger,
+            self.stats,
             stages_info,
             account_info,
             human_mode,
@@ -143,7 +139,8 @@ class WyndBot:
             gas = wei_to_token(self.nft_w3.get_gas_cost_of_transaction_wei(tx_receipt))
             logger.print_bold(f"Paid {gas} AVAX in gas")
 
-            self.stats_logger.lifetime_stats["avax_gas"] += gas
+            with self.stats.user() as user:
+                user.gas_avax += gas
 
             if tx_receipt.get("status", 0) != 1:
                 logger.print_warn(f"Failed to allow access!")
@@ -159,7 +156,9 @@ class WyndBot:
             gas = wei_to_token(self.wynd_w3.get_gas_cost_of_transaction_wei(tx_receipt))
             logger.print_bold(f"Paid {gas} AVAX in gas")
 
-            self.stats_logger.lifetime_stats["avax_gas"] += gas
+            with self.stats.user() as user:
+                user.gas_avax += gas
+
             if tx_receipt.get("status", 0) != 1:
                 logger.print_fail(f"Failed to move wynds to game!\n{tx_receipt}")
             else:
@@ -205,7 +204,8 @@ class WyndBot:
                 gas = wei_to_token(self.nft_w3.get_gas_cost_of_transaction_wei(tx_receipt))
                 logger.print_bold(f"Paid {gas} AVAX in gas")
 
-                self.stats_logger.lifetime_stats["avax_gas"] += gas
+                with self.stats.user() as user:
+                    user.gas_avax += gas
 
                 if tx_receipt.get("status", 0) != 1:
                     logger.print_warn(f"Failed to added nft access!")
@@ -222,7 +222,8 @@ class WyndBot:
                 gas = wei_to_token(self.nft_w3.get_gas_cost_of_transaction_wei(tx_receipt))
                 logger.print_bold(f"Paid {gas} AVAX in gas")
 
-                self.stats_logger.lifetime_stats["avax_gas"] += gas
+                with self.stats.user() as user:
+                    user.gas_avax += gas
 
                 if tx_receipt.get("status", 0) != 1:
                     logger.print_warn(f"Failed to move wynds out of game!")
@@ -249,7 +250,8 @@ class WyndBot:
             gas = wei_to_token(self.nft_w3.get_gas_cost_of_transaction_wei(tx_receipt))
             logger.print_bold(f"Paid {gas} AVAX in gas")
 
-            self.stats_logger.lifetime_stats["avax_gas"] += gas
+            with self.stats.user() as user:
+                user.gas_avax += gas
 
             if tx_receipt.get("status", 0) != 1:
                 logger.print_warn(f"Failed to remove nft access!")
@@ -284,9 +286,6 @@ class WyndBot:
 
         self._check_and_maybe_secure_account()
 
-        self.stats_logger.write()
-
     def end(self) -> None:
         self.config_mgr.close()
-        self.stats_logger.write()
         logger.print_normal(f"Shutting down {self.user} bot...")
