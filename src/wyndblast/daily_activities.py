@@ -216,7 +216,15 @@ class DailyActivitiesGame:
             description=f"Finished for {self.config['discord_handle'].upper()}\n",
             color=Color.red().value,
         )
-        totals: WinLossSchema = self.stats.get_win_loss()
+        totals = {
+            "wins": 0,
+            "losses": 0,
+        }
+        for stage in range(1, 4):
+            with self.stats.winloss(stage) as winloss:
+                totals["wins"] += winloss.wins
+                totals["losses"] += winloss.losses
+
         total_games = float(totals["losses"] + totals["wins"])
         if total_games > 0:
             win_percent = totals["wins"] / total_games * 100.0
