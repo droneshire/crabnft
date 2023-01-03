@@ -21,8 +21,8 @@ from utils.user import get_alias_from_user
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.chro_web3_client import ChroWeb3Client
 from wyndblast.assets import WYNDBLAST_ASSETS
-from wyndblast.game_stats import WyndblastLifetimeGameStatsLogger
 from wyndblast.game_stats import NULL_GAME_STATS
+from wyndblast.game_stats import WyndblastLifetimeGameStats
 from wyndblast import types
 from wyndblast.pve_web2_client import PveWyndblastWeb2Client
 from wyndblast.wyndblast_web3_client import WyndblastGameWeb3Client
@@ -70,7 +70,7 @@ class PveGame:
         email_accounts: T.List[Email],
         wynd_w2: PveWyndblastWeb2Client,
         wynd_w3: WyndblastGameWeb3Client,
-        stats_logger: WyndblastLifetimeGameStatsLogger,
+        stats: WyndblastLifetimeGameStats,
         stages_info: T.List[types.LevelsInformation],
         account_info: T.List[types.AccountLevels],
         human_mode: bool,
@@ -82,7 +82,7 @@ class PveGame:
         self.email_accounts = email_accounts
         self.wynd_w2 = wynd_w2
         self.wynd_w3 = wynd_w3
-        self.stats_logger = stats_logger
+        self.stats = stats
         self.human_mode = human_mode
         self.is_deactivated = False
         self.ignore_utc_time = ignore_utc_time
@@ -125,9 +125,8 @@ class PveGame:
             levels = self._get_all_levels_from_cache(exclude_difficulty=True)
             self.sorted_levels.extend([l + difficulty for l in levels])
 
-        self.completed = set(
-            self.stats_logger.lifetime_stats["pve_game"][self.address]["levels_completed"]
-        )
+        with self.stats.pve() as pve:
+            self.completed = set([p.level for p in pve.levels_completed])
 
         self.did_tutorial = len(self.completed) > 0
 
@@ -433,56 +432,13 @@ class PveGame:
         send_email(self.email_accounts, self.config["email"], "Wyndblast PVE Update", content)
 
     def _update_stats(self) -> None:
-
-        for k, v in self.current_stats.items():
-            if type(v) != type(self.stats_logger.lifetime_stats.get(k)):
-                logger.print_warn(
-                    f"Mismatched stats:\n{self.current_stats}\n{self.stats_logger.lifetime_stats}"
-                )
-                continue
-
-            if k in ["commission_chro"]:
-                continue
-
-            if isinstance(v, list):
-                new_set = set(self.stats_logger.lifetime_stats[k])
-                for i in v:
-                    new_set.add(i)
-                self.stats_logger.lifetime_stats[k] = new_set
-            elif isinstance(v, dict):
-                for i, j in self.stats_logger.lifetime_stats[k].items():
-                    if isinstance(j, dict):
-                        for l, m in j.items():
-
-                            if i not in self.current_stats[k]:
-                                continue
-
-                            if isinstance(m, list):
-                                new_stats = self.current_stats[k][i].get(l, [])
-                                total_stats = m.extend(new_stats)
-                                if not total_stats:
-                                    continue
-                                self.stats_logger.lifetime_stats[k][i][l] = list(set(total_stats))
-                            else:
-                                new_stats = self.current_stats[k][i].get(l, 0)
-                                self.stats_logger.lifetime_stats[k][i][l] += new_stats
-                    else:
-                        self.stats_logger.lifetime_stats[k][i] += self.current_stats[k][i]
-            else:
-                self.stats_logger.lifetime_stats[k] += v
-
-        self.stats_logger.lifetime_stats["commission_chro"] = self.stats_logger.lifetime_stats.get(
-            "commission_chro", {COMMISSION_WALLET_ADDRESS: 0.0}
-        )
-
         chro_rewards = self.current_stats["chro"]
+
         for address, commission_percent in self.config["commission_percent_per_mine"].items():
             commission_chro = chro_rewards * (commission_percent / 100.0)
 
-            self.stats_logger.lifetime_stats["commission_chro"][address] = (
-                self.stats_logger.lifetime_stats["commission_chro"].get(address, 0.0)
-                + commission_chro
-            )
+            with self.stats.commission(address) as commission:
+                commission.amount += commission_chro
 
             logger.print_ok(
                 f"Added {commission_chro} CHRO for {address} in commission ({commission_percent}%)!"
@@ -496,10 +452,11 @@ class PveGame:
             "claimed_chro": 0.0,
         }
 
-        logger.print_ok_blue(
-            f"Lifetime Stats for {self.user.upper()}\n"
-            f"{json.dumps(self.stats_logger.lifetime_stats, indent=4)}"
-        )
+        with self.stats.pve() as pve:
+            stats_json = PveSchema().dump(pve)
+            logger.print_ok_blue(
+                f"Lifetime Stats for {self.user.upper()}\n" f"{json.dumps(stats_json, indent=4)}"
+            )
 
     def _check_and_level_units(self, our_units: types.PveNfts) -> None:
         """
@@ -547,6 +504,9 @@ class PveGame:
                 self.current_stats["pve_game"][self.address]["account_exp"] = self.current_stats[
                     "pve_game"
                 ][self.address].get("account_exp", 0) + res.get("exp", 0)
+
+                with self.stats.pve() as pve:
+                    pve.account_exp += res.get("exp", 0)
 
                 if res.get("is_level_up", False):
                     logger.print_ok_arrow(f"Leveled up our Profile!")
@@ -683,6 +643,7 @@ class PveGame:
                     self.current_stats["pve_game"][self.address]["levels_completed"].append(
                         stage_id
                     )
+                    self.stats.add_stage(stage_id)
                     self.last_mission = stage_id
                     logger.print_normal(
                         f"Beat level {stage_id}. {self.current_stats['pve_game'][self.address]['levels_completed']}"
@@ -738,7 +699,8 @@ class PveGame:
         gas = wei_to_token(self.wynd_w3.get_gas_cost_of_transaction_wei(tx_receipt))
         logger.print_bold(f"Paid {gas} AVAX in gas")
 
-        self.stats_logger.lifetime_stats["avax_gas"] += gas
+        with self.stats.user() as user:
+            user.gas_avax += gas
 
         if tx_receipt.get("status", 0) != 1:
             logger.print_warn(f"Failed to claim CHRO!")
@@ -752,6 +714,8 @@ class PveGame:
         if chro_after > chro_before:
             delta_chro = chro_after - chro_before
             self.current_stats["chro"] += delta_chro
+            with self.stats.user() as user:
+                user.chro += delta_chro
             logger.print_ok_arrow(f"Adding {delta_chro} CHRO to stats...")
 
         return True
@@ -846,6 +810,9 @@ class PveGame:
         if chro_rewards_after:
             logger.print_ok_blue_arrow(f"Unclaimed (after): {chro_rewards_after['claimable']}")
             logger.print_ok_blue_arrow(f"Claimed (after): {chro_rewards_after['claimed']}")
+            with self.stats.pve() as pve:
+                pve.unclaimed_chro += chro_rewards_after["claimable"]
+                pve.claimed_chro += chro_rewards_after["claimed"]
 
         if chro_rewards_before and chro_rewards_after:
             self.current_stats["pve_game"][self.address]["unclaimed_chro"] = max(

@@ -22,6 +22,7 @@ from wyndblast.database.daily_activities import (
     WinLoss,
     WinLossSchema,
 )
+from wyndblast.game_stats import NULL_GAME_STATS
 from wyndblast.game_stats import WyndblastLifetimeGameStats
 from wyndblast.types import (
     Action,
@@ -256,7 +257,7 @@ class DailyActivitiesGame:
             commission_chro = chro_rewards * (commission_percent / 100.0)
 
             with self.stats.commission(address) as commission:
-                commission += commission_chro
+                commission.amount += commission_chro
 
             logger.print_ok(
                 f"Added {commission_chro} CHRO for {address} in commission ({commission_percent}%)!"
@@ -266,8 +267,8 @@ class DailyActivitiesGame:
 
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
 
-        with self.stats.user() as user:
-            stats_json = DailyActivitiesSchema().dump(user.daily_activity_stats)
+        with self.stats.daily() as da:
+            stats_json = DailyActivitiesSchema().dump(da)
             logger.print_ok_blue(
                 f"Lifetime Stats for {self.user.upper()}\n" f"{json.dumps(stats_json, indent=4)}"
             )
@@ -340,14 +341,15 @@ class DailyActivitiesGame:
             self.current_stats["wams"] += rewards["wams"]
             user.wams += rewards["wams"]
             if rewards["elemental_stones"] is not None:
-                self.current_stats["elemental_stones"][rewards["elemental_stones"]] += 1
-                setattr(
-                    user.daily_activities_stats.elemental_stones,
-                    rewards["elemental_stones"],
-                    user.daily_activities_stats.elemental_stones,
-                    rewards["elemental_stones"] + 1,
-                )
-                self.current_stats["elemental_stones"]["elemental_stones_qty"] += 1
+                with self.stats.daily() as da:
+                    self.current_stats["elemental_stones"][rewards["elemental_stones"]] += 1
+                    setattr(
+                        da.elemental_stones,
+                        rewards["elemental_stones"],
+                        da.elemental_stones,
+                        rewards["elemental_stones"] + 1,
+                    )
+                    self.current_stats["elemental_stones"]["elemental_stones_qty"] += 1
 
         outcome_emoji = "\U0001F389" if did_succeed else "\U0001F915"
 

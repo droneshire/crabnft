@@ -2,7 +2,7 @@ import getpass
 import time
 import typing as T
 
-from config_wyndblast import BETA_TEST_LIST, DAILY_ENABLED, PVE_ENABLED
+from config_wyndblast import BETA_TEST_LIST, COMMISSION_WALLET_ADDRESS, DAILY_ENABLED, PVE_ENABLED
 from utils import logger
 from utils.config_types import UserConfig
 from utils.email import Email
@@ -98,7 +98,7 @@ class WyndBot:
         )
 
         self.stats = WyndblastLifetimeGameStats(
-            user, config["address"], COMMISSION_WALLET_ADDRESS, "chro"
+            self.alias, config["address"], COMMISSION_WALLET_ADDRESS, "chro"
         )
 
         self.daily_activities: DailyActivitiesGame = DailyActivitiesGame(
