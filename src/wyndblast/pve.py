@@ -670,7 +670,7 @@ class PveGame:
                     wait(3.0)
                 elif result == "win":
                     self.completed.add(stage_id)
-                    self.current_stats["pve_game"][self.address].get("levels_completed", []).append(
+                    self.current_stats["pve_game"][self.address]["levels_completed"].append(
                         stage_id
                     )
                     self.last_mission = stage_id
