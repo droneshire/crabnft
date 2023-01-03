@@ -63,15 +63,7 @@ class DailyActivitiesGame:
         self.stats = stats
         self.is_deactivated = False
 
-        self.current_stats = DailyActivities(user=user, address=self.config["address"])
-        self.current_stats.elemental_stones = ElementalStones(
-            daily_activities_id=self.current_stats.id
-        )
-        self.current_stats.stages = []
-        for stage in range(1, 4):
-            self.current_stats.stages.append(
-                WinLoss(stage=stage, daily_activities_id=self.current_stats.id)
-            )
+        self.current_stats = copy.deepcopy(NULL_GAME_STATS)
 
         logger.print_ok_blue(f"\nStarting for user {user}...")
 
@@ -251,8 +243,7 @@ class DailyActivitiesGame:
 
     def _update_stats(self) -> None:
         chro_rewards = self.current_stats["chro"]
-        with self.stats.user() as user:
-            user.chro += chro_rewards
+
         for address, commission_percent in self.config["commission_percent_per_mine"].items():
             commission_chro = chro_rewards * (commission_percent / 100.0)
 
@@ -265,15 +256,7 @@ class DailyActivitiesGame:
 
         self._send_close_game_discord_activity_update()
 
-        self.current_stats = DailyActivities(user=user, address=self.config["address"])
-        self.current_stats.elemental_stones = ElementalStones(
-            daily_activities_id=self.current_stats.id
-        )
-        self.current_stats.stages = []
-        for stage in range(1, 4):
-            self.current_stats.stages.append(
-                WinLoss(stage=stage, daily_activities_id=self.current_stats.id)
-            )
+        self.current_stats = copy.deepcopy(NULL_GAME_STATS)
 
         with self.stats.user() as user:
             stats_json = DailyActivitiesSchema().dump(user.daily_activity_stats)
@@ -285,9 +268,8 @@ class DailyActivitiesGame:
         content = f"Activity Stats for {self.user.upper()}:\n"
         content += f"Active NFTs: {active_nfts}\n"
         for stage in range(1, 4):
-            stage_key = f"stage_{stage}"
             stage_str = f"Stage {stage}" if stage != 3 else "All Stages"
-            content += f"Completed {stage_str}: {self.current_stats[stage_key]['wins']}\n\n"
+            content += f"Completed {stage_str}: {self.current_stats[stage]['wins']}\n\n"
         content += f"REWARDS:"
         content += f"CHRO: {self.current_stats['chro']}\n"
         content += f"WAMS: {self.current_stats['wams']}\n"
@@ -344,11 +326,20 @@ class DailyActivitiesGame:
         level = int(result["stage"]["level"])
         rewards = result["stage"]["rewards"]
 
-        self.current_stats["chro"] += rewards["chro"]
-        self.current_stats["wams"] += rewards["wams"]
-        if rewards["elemental_stones"] is not None:
-            self.current_stats["elemental_stones"][rewards["elemental_stones"]] += 1
-            self.current_stats["elemental_stones"]["elemental_stones_qty"] += 1
+        with self.stats.user() as user:
+            self.current_stats["chro"] += rewards["chro"]
+            user.chro += rewards["chro"]
+            self.current_stats["wams"] += rewards["wams"]
+            user.wams += rewards["wams"]
+            if rewards["elemental_stones"] is not None:
+                self.current_stats["elemental_stones"][rewards["elemental_stones"]] += 1
+                setattr(
+                    user.daily_activities_stats.elemental_stones,
+                    rewards["elemental_stones"],
+                    user.daily_activities_stats.elemental_stones,
+                    rewards["elemental_stones"] + 1,
+                )
+                self.current_stats["elemental_stones"]["elemental_stones_qty"] += 1
 
         outcome_emoji = "\U0001F389" if did_succeed else "\U0001F915"
 
@@ -368,10 +359,13 @@ class DailyActivitiesGame:
             )
 
         stage_key = f"stage_{level}"
-        if did_succeed:
-            self.current_stats[stage_key]["wins"] += 1
-        else:
-            self.current_stats[stage_key]["losses"] += 1
+        with self.stats.winloss(level) as winloss:
+            if did_succeed:
+                self.current_stats[stage_key]["wins"] += 1
+                winloss.wins += 1
+            else:
+                self.current_stats[stage_key]["losses"] += 1
+                winloss.losses += 1
 
         return did_succeed
 
