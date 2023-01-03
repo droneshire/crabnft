@@ -103,7 +103,12 @@ class PveGame:
             ),
         )
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
-        self.current_stats["pve_game"][config["address"]] = {}
+        self.current_stats["pve_game"][self.address] = {
+            "levels_completed": [],
+            "account_exp": 0,
+            "unclaimed_chro": 0.0,
+            "claimed_chro": 0.0,
+        }
 
         self.last_level_up = 0.0
         self.last_quest_claim = 0.0
@@ -484,7 +489,12 @@ class PveGame:
             )
 
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
-        self.current_stats["pve_game"][self.address] = {}
+        self.current_stats["pve_game"][self.address] = {
+            "levels_completed": [],
+            "account_exp": 0,
+            "unclaimed_chro": 0.0,
+            "claimed_chro": 0.0,
+        }
 
         logger.print_ok_blue(
             f"Lifetime Stats for {self.user.upper()}\n"
@@ -670,6 +680,7 @@ class PveGame:
                     wait(3.0)
                 elif result == "win":
                     self.completed.add(stage_id)
+                    if "levels_completed" in
                     self.current_stats["pve_game"][self.address]["levels_completed"].append(
                         stage_id
                     )
