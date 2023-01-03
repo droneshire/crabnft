@@ -327,6 +327,7 @@ class PveGame:
         levels_completed = len(pve_stats.get("levels_completed", []))
 
         if levels_completed < 1:
+            logger.print_normal("Did not complete levels, skipping notifications")
             return
 
         user_data: types.PveUser = self.wynd_w2.get_user_profile()
@@ -669,8 +670,13 @@ class PveGame:
                     wait(3.0)
                 elif result == "win":
                     self.completed.add(stage_id)
-                    self.current_stats["pve_game"][self.address].get("levels_completed", []).append(stage_id)
+                    self.current_stats["pve_game"][self.address].get("levels_completed", []).append(
+                        stage_id
+                    )
                     self.last_mission = stage_id
+                    logger.print_normal(
+                        f"Beat level {stage_id}. {self.current_stats['pve_game'][self.address]['levels_completed']}"
+                    )
                     break
             elif attempt + 1 >= RETRY_ATTEMPTS:
                 logger.print_fail(f"Failed to submit battle")
