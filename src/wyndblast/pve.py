@@ -680,7 +680,6 @@ class PveGame:
                     wait(3.0)
                 elif result == "win":
                     self.completed.add(stage_id)
-                    if "levels_completed" in
                     self.current_stats["pve_game"][self.address]["levels_completed"].append(
                         stage_id
                     )
