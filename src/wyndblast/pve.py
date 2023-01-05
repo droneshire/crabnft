@@ -120,10 +120,7 @@ class PveGame:
         self.stages_info: T.List[types.LevelsInformation] = stages_info
         self.account_info: T.List[types.AccountLevels] = account_info
 
-        self.sorted_levels = []
-        for difficulty in LEVEL_HIERARCHY.keys():
-            levels = self._get_all_levels_from_cache(exclude_difficulty=True)
-            self.sorted_levels.extend([l + difficulty for l in levels])
+        self.sorted_levels = self._get_all_levels_from_cache()
 
         with self.stats.pve() as pve:
             self.completed = set([p.level for p in pve.levels_completed])
@@ -148,20 +145,21 @@ class PveGame:
         return INVALID_EXP
 
     def _get_all_levels_from_cache(self, exclude_difficulty: bool = False) -> T.List[str]:
-        levels = []
+        levels = set()
         for stages in self.stages_info:
             for stage in stages.get("stages", []):
                 if exclude_difficulty:
                     stage_id = stage.get("id", "")
                     if stage_id:
-                        levels.append(stage_id)
+                        levels.add(stage_id)
                 else:
                     for difficulty, stage_difficulty_info in stage.get("difficulties", {}).items():
                         stage_id = stage_difficulty_info.get("id", "")
                         if stage_id:
-                            levels.append(stage_id)
-
-        return sorted(levels)
+                            levels.add(stage_id)
+        if not levels:
+            return []
+        return sorted(list(levels))
 
     def _get_stage_info_from_cache(self, mission: str) -> types.StageDifficulty:
         stages = []
