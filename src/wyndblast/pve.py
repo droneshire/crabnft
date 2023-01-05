@@ -591,8 +591,8 @@ class PveGame:
                 # otherwise no need to play since it only helps with wynd leveling which we don't
                 # care about
                 logger.print_bold(f"We've beat the full map, but still need more exp, replaying...")
-                easy_levels = self._get_levels_at_difficulty(difficulty=Difficulty.EASY)
-                stage_id = easy_levels[random.randrange(len(easy_levels))]
+                hard_levels = self._get_levels_at_difficulty(difficulty=Difficulty.HARD)
+                stage_id = hard_levels[random.randrange(len(hard_levels))]
                 self.num_replays += 1
             elif user_data.get("exp", self._get_level_five_exp()) >= self._get_level_five_exp():
                 self.num_replays = 0
