@@ -56,7 +56,7 @@ class PveGame:
     MAX_WYNDS_PER_BATTLE = 2
     MIN_GAME_DURATION = 10
     MAX_GAME_DURATION = 29
-    MAX_REPLAYS_PER_CYCLE = 5  # based on a daily reward that is 20x battles per week
+    MAX_REPLAYS_PER_CYCLE = 100  # based on a daily reward that is 20x battles per week
     MIN_CHRO_CLAIM = 2000
 
     TIME_BETWEEN_CLAIM_QUEST = 60.0 * 60.0 * 6
