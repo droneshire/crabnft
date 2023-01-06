@@ -356,6 +356,9 @@ class PumpskinBot:
             )
 
     def _drink_potion(self, token_id: int, potn_to_level: int) -> bool:
+        if potn_to_level == 0:
+            return True
+
         num_potn_wei = token_to_wei(potn_to_level)
         if num_potn_wei <= 0.0:
             return True
@@ -398,7 +401,7 @@ class PumpskinBot:
             next_level = level + 1
             level_potn = calc_potn_from_level(next_level)
 
-            potn_to_level = level_potn - pumpskin.get("eaten_amount", 100000)
+            potn_to_level = max(level_potn - pumpskin.get("eaten_amount", 100000), 0)
 
             special_pumps = {
                 int(k): v
