@@ -14,7 +14,7 @@ from utils.config_types import UserConfig
 from utils.email import Email, send_email
 from utils.price import wei_to_token
 from wyndblast.assets import WYNDBLAST_ASSETS
-from wyndblast.database.daily_activities import (
+from wyndblast.database.models.daily_activities import (
     DailyActivities,
     DailyActivitiesSchema,
     ElementalStones,

@@ -5,9 +5,9 @@ from sqlalchemy.schema import Column
 from sqlalchemy.sql import func
 
 from database.connect import Base
-from wyndblast.database.commission import CommissionSchema
-from wyndblast.database.daily_activities import DailyActivitiesSchema
-from wyndblast.database.pve import PveSchema
+from wyndblast.database.models.commission import CommissionSchema
+from wyndblast.database.models.daily_activities import DailyActivitiesSchema
+from wyndblast.database.models.pve import PveSchema
 
 
 class WyndblastUser(Base):  # type: ignore

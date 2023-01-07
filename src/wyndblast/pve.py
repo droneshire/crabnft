@@ -21,7 +21,7 @@ from utils.user import get_alias_from_user
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.chro_web3_client import ChroWeb3Client
 from wyndblast.assets import WYNDBLAST_ASSETS
-from wyndblast.database.pve import PveSchema
+from wyndblast.database.models.pve import PveSchema
 from wyndblast.game_stats import NULL_GAME_STATS
 from wyndblast.game_stats import WyndblastLifetimeGameStats
 from wyndblast import types

@@ -19,7 +19,7 @@ from utils.security import decrypt_secret
 from wyndblast import types
 from wyndblast.cache import get_cache_info
 from wyndblast.daily_activities import DailyActivitiesGame
-from wyndblast.database.user import WyndblastUser
+from wyndblast.database.models.user import WyndblastUser
 from wyndblast.wynd_bot import WyndBot
 
 TIME_BETWEEN_PLAYERS = 5.0

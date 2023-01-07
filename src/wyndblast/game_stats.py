@@ -7,15 +7,15 @@ from sqlalchemy.sql import func
 from database.connect import ManagedSession
 from utils import logger
 from wyndblast import types
-from wyndblast.database.daily_activities import (
+from wyndblast.database.models.daily_activities import (
     DailyActivities,
     ElementalStones,
     WinLoss,
     WinLossSchema,
 )
-from wyndblast.database.commission import Commission
-from wyndblast.database.pve import Level, Pve
-from wyndblast.database.user import WyndblastUser
+from wyndblast.database.models.commission import Commission
+from wyndblast.database.models.pve import Level, Pve
+from wyndblast.database.models.user import WyndblastUser
 
 
 class PveStats(T.TypedDict):

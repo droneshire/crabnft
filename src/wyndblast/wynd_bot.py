@@ -13,7 +13,7 @@ from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from wyndblast.config_manager_wyndblast import WyndblastConfigManager
 from wyndblast.daily_activities import DailyActivitiesGame
 from wyndblast.daily_activities_web2_client import DailyActivitiesWyndblastWeb2Client
-from wyndblast.database.user import WyndblastUser, WyndblastUserSchema
+from wyndblast.database.models.user import WyndblastUser, WyndblastUserSchema
 from wyndblast.game_stats import WyndblastLifetimeGameStats
 from wyndblast.pve import PveGame
 from wyndblast.pve_web2_client import PveWyndblastWeb2Client
