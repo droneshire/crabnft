@@ -605,7 +605,7 @@ class PveGame:
             result = (
                 "win"
                 if random.randint(
-                    1, RETRY_ATTEMPTS - difficulty_adjustment if self.human_mode else 1
+                    1, 2 if self.human_mode else 1
                 )
                 == 1
                 else "lose"
