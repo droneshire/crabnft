@@ -2,7 +2,7 @@ import contextlib
 import typing as T
 
 from sqlalchemy import create_engine
-from sqlalchemy.ENGINE.base import Engine
+from sqlalchemy.engine.base import Engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.scoping import ScopedSessionMixin
