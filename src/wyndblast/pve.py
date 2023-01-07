@@ -56,7 +56,7 @@ class PveGame:
     MAX_WYNDS_PER_BATTLE = 2
     MIN_GAME_DURATION = 10
     MAX_GAME_DURATION = 29
-    MAX_REPLAYS_PER_CYCLE = 100  # based on a daily reward that is 20x battles per week
+    MAX_REPLAYS_PER_CYCLE = 5  # based on a daily reward that is 20x battles per week
     MIN_CHRO_CLAIM = 2000
 
     TIME_BETWEEN_CLAIM_QUEST = 60.0 * 60.0 * 6
@@ -120,7 +120,9 @@ class PveGame:
         self.stages_info: T.List[types.LevelsInformation] = stages_info
         self.account_info: T.List[types.AccountLevels] = account_info
 
-        self.sorted_levels = self._get_all_levels_from_cache()
+        self.sorted_levels = []
+        for level in self._get_all_levels_from_cache(exclude_difficulty=True):
+            self.sorted_levels.extend([l + d for d in [LEVEL_HIERARCHY.keys()]])
 
         self.completed = set(
             self.stats_logger.lifetime_stats["pve_game"][self.address]["levels_completed"]
