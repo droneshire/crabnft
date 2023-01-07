@@ -1,11 +1,21 @@
-import copy
-import deepdiff
-import json
+import time
 import typing as T
 
+from contextlib import contextmanager
+from sqlalchemy.sql import func
+
+from database.connect import ManagedSession
 from utils import logger
-from utils.game_stats import LifetimeGameStatsLogger
 from wyndblast import types
+from wyndblast.database.daily_activities import (
+    DailyActivities,
+    ElementalStones,
+    WinLoss,
+    WinLossSchema,
+)
+from wyndblast.database.commission import Commission
+from wyndblast.database.pve import Level, Pve
+from wyndblast.database.user import WyndblastUser
 
 
 class PveStats(T.TypedDict):
@@ -57,136 +67,209 @@ NULL_GAME_STATS = {
 }
 
 
-class WyndblastLifetimeGameStatsLogger(LifetimeGameStatsLogger):
-    def __init__(
-        self,
-        user: str,
-        log_dir: str,
-        backup_stats: T.Dict[T.Any, T.Any],
-        address: str,
-        dry_run: bool = False,
-        verbose: bool = False,
-    ):
-        super().__init__(user, NULL_GAME_STATS, log_dir, backup_stats, dry_run, verbose)
+class WyndblastLifetimeGameStats:
+    def __init__(self, user: str, address: str, commission_address: str, token: str) -> None:
+        self.alias = user
+        self.address = address
+        self._insert_user(user, commission_address, token)
+        self._add_dailies_wallet()
+        self._add_pve_wallet()
+        self.user_id = None
 
-    def delta_game_stats(
-        self,
-        user_a_stats: LifetimeStats,
-        user_b_stats: LifetimeStats,
-    ) -> LifetimeStats:
-        diff = deepdiff.DeepDiff(user_a_stats, user_b_stats)
-        if not diff:
-            return copy.deepcopy(NULL_GAME_STATS)
+        print(self.user_id, self.address)
+        with ManagedSession() as db:
+            user = db.query(WyndblastUser).filter(WyndblastUser.user == self.alias).first()
+            assert user is not None, f"User {self.alias} not in DB!"
+            self.user_id = user.id
 
-        diffed_stats = copy.deepcopy(NULL_GAME_STATS)
+    @contextmanager
+    def user(self) -> T.Iterator[WyndblastUser]:
+        with ManagedSession() as db:
+            user = db.query(WyndblastUser).filter(WyndblastUser.user == self.alias).first()
+            assert user is not None, f"User {self.alias} not in DB!"
 
-        if self.verbose:
-            logger.print_bold("Delta inputs:")
-            logger.print_ok_blue_arrow("A:")
-            logger.print_normal(json.dumps(user_a_stats, indent=4))
-            logger.print_ok_blue_arrow("B:")
-            logger.print_normal(json.dumps(user_b_stats, indent=4))
+            yield user
 
-        for item in ["avax_gas", "gas_tus", "chro", "wams"]:
-            if item not in user_a_stats and item not in user_b_stats:
-                diffed_stats[item] = 0.0
-            elif item not in user_a_stats:
-                diffed_stats[item] = user_b_stats[item]
-            elif item not in user_b_stats:
-                diffed_stats[item] = user_a_stats[item]
-            else:
-                diffed_stats[item] = user_a_stats[item] - user_b_stats[item]
+            try:
+                db.add(user)
+            except:
+                logger.print_fail("Failed to store db item!")
 
-        for item in ["commission_chro", "elemental_stones", "stage_1", "stage_2", "stage_3"]:
-            for k, v in user_a_stats[item].items():
-                diffed_stats[item][k] = v
+    @contextmanager
+    def pve(self) -> T.Iterator[Pve]:
+        with ManagedSession() as db:
+            pve = (
+                db.query(Pve)
+                .filter(Pve.user_id == self.user_id)
+                .filter(Pve.address == self.address)
+                .first()
+            )
+            yield pve
 
-            for k, v in user_b_stats[item].items():
-                diffed_stats[item][k] = diffed_stats[item].get(k, 0.0) - v
+            try:
+                db.add(pve)
+            except:
+                logger.print_fail("Failed to store db item!")
 
-        for item in ["pve_game"]:
-            for address, pve_stat in user_a_stats[item].items():
-                diffed_stats[item][address] = {}
-                for stat, value in user_a_stats[item][address].items():
-                    diffed_stats[item][address][stat] = value
+    @contextmanager
+    def daily(self) -> T.Iterator[DailyActivities]:
+        with ManagedSession() as db:
+            daily = (
+                db.query(DailyActivities)
+                .filter(DailyActivities.user_id == self.user_id)
+                .filter(DailyActivities.address == self.address)
+                .first()
+            )
+            yield daily
 
-            for address, pve_stat in user_b_stats[item].items():
-                for stat, value in user_b_stats[item][address].items():
-                    if stat == "levels_completed":
-                        levels = user_b_stats[item][address][stat]
-                        diffed_stats[item][address][stat] = [
-                            b for b in set(levels) if b not in diffed_stats[item][address][stat]
-                        ]
-                    else:
-                        diffed_stats[item][address][stat] -= value
+            try:
+                db.add(daily)
+            except:
+                logger.print_fail("Failed to store db item!")
 
-        if self.verbose:
-            logger.print_bold("Subtracting game stats:")
-            logger.print_normal(json.dumps(diffed_stats, indent=4))
-        return diffed_stats
+    @contextmanager
+    def commission(self, address: str) -> T.Iterator[Commission]:
+        with ManagedSession() as db:
+            commission = (
+                db.query(Commission)
+                .filter(Commission.user_id == self.user_id)
+                .filter(Commission.address == address)
+                .first()
+            )
+            assert commission is not None, f"{address} not in commission DB!"
 
-    def merge_game_stats(
-        self, user_a_stats: LifetimeStats, user_b_stats: LifetimeStats, log_dir: str
-    ) -> LifetimeStats:
-        diff = deepdiff.DeepDiff(user_a_stats, user_b_stats)
-        if not diff:
-            return user_a_stats
+            yield commission
 
-        merged_stats = copy.deepcopy(NULL_GAME_STATS)
+            try:
+                db.add(commission)
+            except:
+                logger.print_fail("Failed to store db item!")
 
-        if self.verbose:
-            logger.print_bold("Merge inputs:")
-            logger.print_ok_blue_arrow("A:")
-            logger.print_normal(json.dumps(user_a_stats, indent=4))
-            logger.print_ok_blue_arrow("B:")
-            logger.print_normal(json.dumps(user_b_stats, indent=4))
+    @contextmanager
+    def winloss(self, stage: int) -> T.Iterator[WinLoss]:
+        with ManagedSession() as db:
+            user = db.query(WyndblastUser).filter(WyndblastUser.user == self.alias).first()
+            assert user is not None, f"User {self.alias} not in DB!"
 
-        for item in ["avax_gas", "gas_tus", "chro", "wams"]:
-            merged_stats[item] = merged_stats.get(item, 0.0) + user_a_stats.get(item, 0.0)
-            merged_stats[item] = merged_stats.get(item, 0.0) + user_b_stats.get(item, 0.0)
+            winloss = (
+                db.query(WinLoss)
+                .filter(WinLoss.daily_activities_id == user.daily_activity_stats.id)
+                .filter(WinLoss.stage == stage)
+                .first()
+            )
+            assert winloss is not None, f"{stage} not in winloss DB!"
 
-        for item in [
-            "commission_chro",
-            "elemental_stones",
-            "stage_1",
-            "stage_2",
-            "stage_3",
-        ]:
-            for k, v in user_a_stats.get(item, {}).items():
-                merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
+            yield winloss
 
-            for k, v in user_b_stats.get(item, {}).items():
-                merged_stats[item][k] = merged_stats[item].get(k, 0.0) + v
+            try:
+                db.add(winloss)
+            except:
+                logger.print_fail("Failed to store db item!")
 
-        for item in ["pve_game"]:
-            for address, pve_stat in user_a_stats[item].items():
-                merged_stats[item][address] = {}
-                for stat, value in user_a_stats[item][address].items():
-                    if isinstance(value, list):
-                        merged_stats[item][address][stat] = list(set(value))
-                    else:
-                        merged_stats[item][address][stat] = value
+    def add_stage(self, level: str) -> None:
+        with self.pve() as pve:
+            pve_id = pve.id
 
-            for address, pve_stat in user_b_stats[item].items():
-                if address not in merged_stats[item]:
-                    merged_stats[item][address] = {}
+        with ManagedSession() as db:
+            level = Level(pve_id=pve_id, level=level)
+            try:
+                db.add(level)
+            except:
+                logger.print_fail("Failed to store stage in db!")
 
-                for stat, value in user_b_stats[item][address].items():
-                    if isinstance(value, list):
-                        if stat not in merged_stats[item][address]:
-                            merged_stats[item][address][stat] = []
+    def _insert_user(self, username: str, commission_address: str, token: str) -> None:
+        with ManagedSession() as db:
+            user = db.query(WyndblastUser).filter(WyndblastUser.user == username).first()
 
-                        value_set = set(value)
-                        merged_set = set(merged_stats[item][address][stat])
-                        if merged_set:
-                            value_set = value_set.union(merged_set)
-                        merged_stats[item][address][stat].extend(list(value_set))
-                    else:
-                        merged_stats[item][address][stat] = (
-                            merged_stats[item][address].get(stat, 0) + value
-                        )
+            if user is not None:
+                logger.print_warn(f"{username} already in the database, not creating new user")
+                return
 
-        if self.verbose:
-            logger.print_bold("Merging game stats:")
-            logger.print_normal(json.dumps(merged_stats, indent=4))
-        return merged_stats
+            user = WyndblastUser(user=username)
+
+            try:
+                logger.print_normal(f"Adding {username} to database...")
+                db.add(user)
+            except:
+                logger.print_fail(f"Failed to add db entry for {username}")
+
+            user = db.query(WyndblastUser).filter(WyndblastUser.user == username).first()
+
+            commission = Commission(address=commission_address, token=token, user_id=user.id)
+
+            try:
+                logger.print_normal(
+                    f"Adding {token} commission to {commission_address} to database..."
+                )
+                db.add(commission)
+            except:
+                logger.print_fail(f"Failed to add commission entry for {commission_address}")
+
+    def _add_dailies_wallet(self) -> None:
+        with ManagedSession() as db:
+            user = db.query(WyndblastUser).filter(WyndblastUser.user == self.alias).first()
+
+            if user is None:
+                logger.print_warn(f"{self.alias} not in the database")
+                return
+
+            daily_activity_stats = (
+                db.query(DailyActivities)
+                .filter(DailyActivities.user_id == user.id)
+                .filter(DailyActivities.address == self.address)
+                .first()
+            )
+
+            if daily_activity_stats is not None:
+                logger.print_warn(f"{self.alias} {self.address} dailies already in db")
+                return
+
+            daily_activity_stats = DailyActivities(address=self.address, user_id=user.id)
+            try:
+                db.add(daily_activity_stats)
+            except:
+                logger.print_fail(f"Failed to create daily activity")
+                return
+
+            daily = db.query(DailyActivities).filter(DailyActivities.user_id == user.id).first()
+
+            stages = []
+            for stage in range(1, 4):
+                stages.append(WinLoss(stage=stage, daily_activities_id=daily.id))
+
+            estones = ElementalStones(daily_activities_id=daily.id)
+
+            try:
+                logger.print_normal(f"Adding {self.address} to daily activity database...")
+                db.add(estones)
+                for stage in stages:
+                    db.add(stage)
+            except:
+                logger.print_fail(f"Failed to add daily activity db entry for {self.address}")
+
+    def _add_pve_wallet(self) -> None:
+        with ManagedSession() as db:
+            user = db.query(WyndblastUser).filter(WyndblastUser.user == self.alias).first()
+
+            if user is None:
+                logger.print_warn(f"{self.alias} not in the database")
+                return
+
+            pve_stats = (
+                db.query(Pve)
+                .filter(Pve.user_id == user.id)
+                .filter(Pve.address == self.address)
+                .first()
+            )
+
+            if pve_stats is not None:
+                logger.print_warn(f"{self.alias} {self.address} pve already in db")
+                return
+
+            pve_stats = Pve(address=self.address, user_id=user.id)
+
+            try:
+                logger.print_normal(f"Adding {self.address} to pve database...")
+                db.add(pve_stats)
+            except:
+                logger.print_fail(f"Failed to add pve db entry for {self.address}")

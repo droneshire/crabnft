@@ -141,3 +141,5 @@ backup/
 
 # google sheet api
 *credentials.json
+
+*.db
