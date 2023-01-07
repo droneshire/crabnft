@@ -122,7 +122,7 @@ class PveGame:
 
         self.sorted_levels = []
         for level in self._get_all_levels_from_cache(exclude_difficulty=True):
-            self.sorted_levels.extend([level + d for d in [LEVEL_HIERARCHY.keys()]])
+            self.sorted_levels.extend([level + d for d in LEVEL_HIERARCHY.keys()])
 
         self.completed = set(
             self.stats_logger.lifetime_stats["pve_game"][self.address]["levels_completed"]
