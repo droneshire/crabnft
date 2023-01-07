@@ -26,6 +26,7 @@ ADDR_TO_WYND = {}
 
 class WyndBot:
     MIN_DAILY_DOWNSAMPLE = 10
+    SUPPORT_ACCOUNT_DEACTIVATION = False
 
     def __init__(
         self,
@@ -166,6 +167,9 @@ class WyndBot:
                 logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
 
     def _check_and_maybe_secure_account(self) -> None:
+        if not self.SUPPORT_ACCOUNT_DEACTIVATION:
+            return
+
         if (
             not self.pve.is_deactivated and self.alias in PVE_ENABLED
         ) or self.alias in DAILY_ENABLED:
