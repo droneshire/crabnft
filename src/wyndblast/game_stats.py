@@ -69,22 +69,24 @@ NULL_GAME_STATS = {
 
 class WyndblastLifetimeGameStats:
     def __init__(self, user: str, address: str, commission_address: str, token: str) -> None:
-        self.user = user
+        self.alias = user
         self.address = address
         self._insert_user(user, commission_address, token)
         self._add_dailies_wallet()
         self._add_pve_wallet()
         self.user_id = None
+
+        print(self.user_id, self.address)
         with ManagedSession() as db:
-            user = db.query(WyndblastUser).filter(WyndblastUser.user == self.user).first()
-            assert user is not None, f"User {self.user} not in DB!"
+            user = db.query(WyndblastUser).filter(WyndblastUser.user == self.alias).first()
+            assert user is not None, f"User {self.alias} not in DB!"
             self.user_id = user.id
 
     @contextmanager
     def user(self) -> T.Iterator[WyndblastUser]:
         with ManagedSession() as db:
-            user = db.query(WyndblastUser).filter(WyndblastUser.user == self.user).first()
-            assert user is not None, f"User {self.user} not in DB!"
+            user = db.query(WyndblastUser).filter(WyndblastUser.user == self.alias).first()
+            assert user is not None, f"User {self.alias} not in DB!"
 
             yield user
 
@@ -146,8 +148,8 @@ class WyndblastLifetimeGameStats:
     @contextmanager
     def winloss(self, stage: int) -> T.Iterator[WinLoss]:
         with ManagedSession() as db:
-            user = db.query(WyndblastUser).filter(WyndblastUser.user == self.user).first()
-            assert user is not None, f"User {self.user} not in DB!"
+            user = db.query(WyndblastUser).filter(WyndblastUser.user == self.alias).first()
+            assert user is not None, f"User {self.alias} not in DB!"
 
             winloss = (
                 db.query(WinLoss)
@@ -183,14 +185,15 @@ class WyndblastLifetimeGameStats:
                 logger.print_warn(f"{username} already in the database, not creating new user")
                 return
 
-        user = WyndblastUser(user=username)
+            user = WyndblastUser(user=username)
 
-        with ManagedSession() as db:
             try:
                 logger.print_normal(f"Adding {username} to database...")
                 db.add(user)
             except:
                 logger.print_fail(f"Failed to add db entry for {username}")
+
+            user = db.query(WyndblastUser).filter(WyndblastUser.user == username).first()
 
             commission = Commission(address=commission_address, token=token, user_id=user.id)
 
@@ -204,10 +207,10 @@ class WyndblastLifetimeGameStats:
 
     def _add_dailies_wallet(self) -> None:
         with ManagedSession() as db:
-            user = db.query(WyndblastUser).filter(WyndblastUser.user == self.user).first()
+            user = db.query(WyndblastUser).filter(WyndblastUser.user == self.alias).first()
 
             if user is None:
-                logger.print_warn(f"{self.user} not in the database")
+                logger.print_warn(f"{self.alias} not in the database")
                 return
 
             daily_activity_stats = (
@@ -218,19 +221,26 @@ class WyndblastLifetimeGameStats:
             )
 
             if daily_activity_stats is not None:
-                logger.print_warn(f"{self.user} {self.address} dailies already in db")
+                logger.print_warn(f"{self.alias} {self.address} dailies already in db")
                 return
 
             daily_activity_stats = DailyActivities(address=self.address, user_id=user.id)
+            try:
+                db.add(daily_activity_stats)
+            except:
+                logger.print_fail(f"Failed to create daily activity")
+                return
+
+            daily = db.query(DailyActivities).filter(DailyActivities.user_id == user.id).first()
+
             stages = []
             for stage in range(1, 4):
-                stages.append(WinLoss(stage=stage, daily_activities_id=daily_activity_stats.id))
+                stages.append(WinLoss(stage=stage, daily_activities_id=daily.id))
 
-            estones = ElementalStones(daily_activities_id=daily_activity_stats.id)
+            estones = ElementalStones(daily_activities_id=daily.id)
 
             try:
                 logger.print_normal(f"Adding {self.address} to daily activity database...")
-                db.add(daily_activity_stats)
                 db.add(estones)
                 for stage in stages:
                     db.add(stage)
@@ -239,10 +249,10 @@ class WyndblastLifetimeGameStats:
 
     def _add_pve_wallet(self) -> None:
         with ManagedSession() as db:
-            user = db.query(WyndblastUser).filter(WyndblastUser.user == self.user).first()
+            user = db.query(WyndblastUser).filter(WyndblastUser.user == self.alias).first()
 
             if user is None:
-                logger.print_warn(f"{self.user} not in the database")
+                logger.print_warn(f"{self.alias} not in the database")
                 return
 
             pve_stats = (
@@ -253,7 +263,7 @@ class WyndblastLifetimeGameStats:
             )
 
             if pve_stats is not None:
-                logger.print_warn(f"{self.user} {self.address} pve already in db")
+                logger.print_warn(f"{self.alias} {self.address} pve already in db")
                 return
 
             pve_stats = Pve(address=self.address, user_id=user.id)

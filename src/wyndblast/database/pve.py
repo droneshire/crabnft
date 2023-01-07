@@ -11,7 +11,7 @@ class Level(Base):  # type: ignore
     __tablename__ = "Level"
 
     id = Column(types.Integer, primary_key=True)
-    level = Column(types.String(80), unique=True, nullable=False)
+    level = Column(types.String(80), nullable=False)
     pve_id = Column(types.Integer, ForeignKey("Pve.id"))
 
     def __repr__(self):

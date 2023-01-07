@@ -2,34 +2,34 @@ import contextlib
 import typing as T
 
 from sqlalchemy import create_engine
-from sqlalchemy.engine.base import Engine
+from sqlalchemy.ENGINE.base import Engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.orm.scoping import ScopedSessionMixin
 
-engine = None
-thread_safe_session_factory = None
+ENGINE = None
+THREAD_SAFE_SESSION_FACTORY = None
 
 Base = declarative_base()
 
 
 def init_engine(uri, **kwargs) -> Engine:
-    global engine
-    if engine is None:
-        engine = create_engine(uri, **kwargs)
-    return engine
+    global ENGINE
+    if ENGINE is None:
+        ENGINE = create_engine(uri, **kwargs)
+    return ENGINE
 
 
 def init_session_factory() -> ScopedSessionMixin:
-    """Initialize the thread_safe_session_factory."""
-    global engine, thread_safe_session_factory
-    if engine is None:
+    """Initialize the THREAD_SAFE_SESSION_FACTORY."""
+    global ENGINE, THREAD_SAFE_SESSION_FACTORY
+    if ENGINE is None:
         raise ValueError(
-            "Initialize engine by calling init_engine before calling init_session_factory!"
+            "Initialize ENGINE by calling init_engine before calling init_session_factory!"
         )
-    if thread_safe_session_factory is None:
-        thread_safe_session_factory = scoped_session(sessionmaker(bind=engine))
-    return thread_safe_session_factory
+    if THREAD_SAFE_SESSION_FACTORY is None:
+        THREAD_SAFE_SESSION_FACTORY = scoped_session(sessionmaker(bind=ENGINE))
+    return THREAD_SAFE_SESSION_FACTORY
 
 
 @contextlib.contextmanager
@@ -42,10 +42,10 @@ def ManagedSession():
         db_operations.insert(session, **kwargs)  # after the with statement, the session commits to the database.
     ```
     """
-    global thread_safe_session_factory
-    if thread_safe_session_factory is None:
+    global THREAD_SAFE_SESSION_FACTORY
+    if THREAD_SAFE_SESSION_FACTORY is None:
         raise ValueError("Call init_session_factory before using ManagedSession!")
-    session = thread_safe_session_factory()
+    session = THREAD_SAFE_SESSION_FACTORY()
     try:
         yield session
         session.commit()
@@ -58,4 +58,4 @@ def ManagedSession():
     finally:
         # source:
         # https://stackoverflow.com/questions/21078696/why-is-my-scoped-session-raising-an-attributeerror-session-object-has-no-attr
-        thread_safe_session_factory.remove()
+        THREAD_SAFE_SESSION_FACTORY.remove()
