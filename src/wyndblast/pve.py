@@ -122,7 +122,7 @@ class PveGame:
 
         self.sorted_levels = []
         for level in self._get_all_levels_from_cache(exclude_difficulty=True):
-            self.sorted_levels.extend([level + d for d in [LEVEL_HIERARCHY.keys()]])
+            self.sorted_levels.extend([level + d for d in LEVEL_HIERARCHY.keys()])
 
         with self.stats.pve() as pve:
             self.completed = set([p.level for p in pve.levels_completed])
