@@ -11,6 +11,7 @@ from yaspin import yaspin
 
 from config_admin import GMAIL, TWILIO_CONFIG
 from config_wyndblast import USERS, USER_GROUPS
+from database.account import AccountDb
 from database.connect import init_database
 from database.models.account import Account
 from health_monitor.health_monitor import HealthMonitor
@@ -79,7 +80,8 @@ def wait(wait_time) -> None:
 def run_bot() -> None:
     args = parse_args()
 
-    setup_log(args.log_level, args.log_dir, f"wynd_{'_'.join([str(i) for i in args.groups])}")
+    log_dir = os.path.join(args.log_dir, "wyndblast")
+    setup_log(args.log_level, log_dir, f"wynd_{'_'.join([str(i) for i in args.groups])}")
 
     encrypt_password = ""
     email_accounts = []
@@ -92,15 +94,19 @@ def run_bot() -> None:
 
     stages_info, account_info, _, _, _ = get_cache_info(args.log_dir)
 
-    init_database(args.log_dir, "wyndblast.db", WyndblastUser)
-    init_database(args.log_dir, "wyndblast_config.db", Account)
+    init_database(log_dir, "wyndblast.db", WyndblastUser)
+
+    db_dir = os.path.join(args.log_dir, "p2e")
+    init_database(db_dir, "user_configs.db", Account)
+
+    users = AccountDb.get_configs_for_game("wyndblast")
 
     bots = []
     for user, config in USERS.items():
         if config["group"] not in [int(i) for i in args.groups]:
             logger.print_warn(f"Skipping {user} in group {config['group']}...")
             if args.clean_non_group_user_stats:
-                clean_up_stats_for_user(args.log_dir, user)
+                clean_up_stats_for_user(log_dir, user)
             continue
 
         private_key = decrypt_secret(encrypt_password, config["private_key"])
@@ -111,7 +117,7 @@ def run_bot() -> None:
             config,
             email_accounts,
             encrypt_password,
-            args.log_dir,
+            log_dir,
             stages_info,
             account_info,
             human_mode=args.human_mode,
