@@ -5,13 +5,14 @@ import logging
 import os
 import time
 import traceback
-from sqlalchemy_utils import database_exists
+
 from twilio.rest import Client
 from yaspin import yaspin
 
 from config_admin import GMAIL, TWILIO_CONFIG
 from config_wyndblast import USERS, USER_GROUPS
-from database.connect import init_engine, init_session_factory
+from database.connect import init_database
+from database.models.account import Account
 from health_monitor.health_monitor import HealthMonitor
 from utils import discord, file_util, logger
 from utils.email import Email, get_email_accounts_from_password
@@ -70,20 +71,6 @@ def setup_log(log_level: str, log_dir: str, id_string: str) -> None:
     )
 
 
-def init_database(log_dir: str) -> None:
-    db_file = os.path.join(log_dir, "database", "wyndblast.db")
-    sql_db = "sqlite:///" + db_file
-
-    file_util.make_sure_path_exists(db_file)
-    engine = init_engine(sql_db)
-    if database_exists(engine.url):
-        logger.print_bold(f"Found existing database")
-    else:
-        logger.print_ok_blue(f"Creating new database!")
-        WyndblastUser.metadata.create_all(engine)
-    init_session_factory()
-
-
 @yaspin(text="Waiting...")
 def wait(wait_time) -> None:
     time.sleep(wait_time)
@@ -105,7 +92,8 @@ def run_bot() -> None:
 
     stages_info, account_info, _, _, _ = get_cache_info(args.log_dir)
 
-    init_database(args.log_dir)
+    init_database(args.log_dir, "wyndblast.db", WyndblastUser)
+    init_database(args.log_dir, "wyndblast_config.db", Account)
 
     bots = []
     for user, config in USERS.items():
