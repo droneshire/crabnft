@@ -603,14 +603,7 @@ class PveGame:
         difficulty_adjustment = LEVEL_HIERARCHY[stage_id[-2:]]
         for attempt in range(RETRY_ATTEMPTS):
             duration = random.randint(self.min_game_duration, self.max_game_duration)
-            result = (
-                "win"
-                if random.randint(
-                    1, RETRY_ATTEMPTS - difficulty_adjustment if self.human_mode else 1
-                )
-                == 1
-                else "lose"
-            )
+            result = "win" if random.randint(1, 2) == 1 else "lose"
             should_win = result == "win"
 
             logger.print_normal(f"Getting stamina...")
