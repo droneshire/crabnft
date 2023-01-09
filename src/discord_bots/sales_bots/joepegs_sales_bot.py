@@ -96,15 +96,15 @@ class JoePegsSalesBot:
             recent_sales.append(sale)
         return recent_sales
 
-    def _get_recent_discount_listings(self) -> T.List[T.Dict[T.Any, T.Any]]:
+    def _get_recent_discount_listings(
+        self, floors: T.Dict[Address, float]
+    ) -> T.List[T.Dict[T.Any, T.Any]]:
         new_listings = {}
-        floors = {}
         for collection in self.collections:
             new_listings[collection] = self.client.get_listings(
                 collection, params={"orderBy": "recent_listing"}
             )
-            floors[collection] = self.client.get_floor_avax(collection)
-            time.sleep(1.0)
+            time.sleep(0.3)
 
         snipe_listings = []
         for collection, listings in new_listings.items():
@@ -139,7 +139,7 @@ class JoePegsSalesBot:
 
         return embed
 
-    def _get_sales_embed(self, sale: Activity) -> discord.Embed:
+    def _get_sales_embed(self, sale: Activity, collection_floor_avax: float) -> discord.Embed:
         collection_name = sale["collectionName"]
         token_id = sale["tokenId"]
         name = sale["name"] if sale["name"] else token_id
@@ -155,9 +155,6 @@ class JoePegsSalesBot:
         embed.add_field(name=f"\U0001F4B0 Sold for", value=f"{price_avax:.2f} AVAX", inline=True)
         # TODO(ross): implement last sold
         # embed.add_field(name=f"Last sold for", value=f"{sale['price_avax']:.2f} AVAX", inline=True)
-
-        collection_address = sale["collection"]
-        collection_floor_avax = self.client.get_floor_avax(collection_address)
 
         if math.isclose(collection_floor_avax, 0.0):
             embed.add_field(
@@ -192,14 +189,19 @@ class JoePegsSalesBot:
         for sale in sales:
             timestamp_sales[sale["timestamp"]] = sale
 
+        floors = {}
+        for collection in self.collections:
+            floors[collection] = self.client.get_floor_avax(collection)
+            time.sleep(1.0)
+
         sorted_sales = sorted(timestamp_sales.keys())
         embeds = []
         for timestamp in sorted_sales:
             sale = timestamp_sales[timestamp]
-            self.posted_items[sale["collection"]]["sold"].append(sale["tokenId"])
-            embed = self._get_sales_embed(sale)
+            collection_address = sale["collection"]
+            self.posted_items[collection_address]["sold"].append(sale["tokenId"])
+            embed = self._get_sales_embed(sale, floors[collection_address])
             embeds.append(embed)
-            time.sleep(0.2)
 
         with open(self.database_file, "w") as outfile:
             json.dump(self.posted_items, outfile, indent=4)
@@ -207,8 +209,13 @@ class JoePegsSalesBot:
         return embeds
 
     def get_listing_embeds(self) -> T.List[discord.Embed]:
+        floors = {}
+        for collection in self.collections:
+            floors[collection] = self.client.get_floor_avax(collection)
+            time.sleep(1.0)
+
         embeds = []
-        for listing in self._get_recent_discount_listings():
+        for listing in self._get_recent_discount_listings(floors):
             self.posted_items[listing["collection"]]["listed"].append(listing["tokenId"])
             embed = self._get_sales_embed(listing)
             embeds.append(embed)
