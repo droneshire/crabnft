@@ -104,6 +104,7 @@ class JoePegsSalesBot:
                 collection, params={"orderBy": "recent_listing"}
             )
             floors[collection] = self.client.get_floor_avax(collection)
+            time.sleep(1.0)
 
         snipe_listings = []
         for collection, listings in new_listings.items():
@@ -198,6 +199,7 @@ class JoePegsSalesBot:
             self.posted_items[sale["collection"]]["sold"].append(sale["tokenId"])
             embed = self._get_sales_embed(sale)
             embeds.append(embed)
+            time.sleep(0.2)
 
         with open(self.database_file, "w") as outfile:
             json.dump(self.posted_items, outfile, indent=4)
