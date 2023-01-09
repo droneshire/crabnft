@@ -55,4 +55,4 @@ async def on_ready() -> None:
     client.loop.create_task(sales_loop())
 
 
-client.run(DISCORD_PUMPSKIN_SALES_BOT_TOKEN)
+client.run(DISCORD_PEON_SALES_BOT_TOKEN)
