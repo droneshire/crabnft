@@ -192,7 +192,7 @@ class JoePegsSalesBot:
         floors = {}
         for collection in self.collections:
             floors[collection] = self.client.get_floor_avax(collection)
-            time.sleep(1.0)
+            time.sleep(3.0)
 
         sorted_sales = sorted(timestamp_sales.keys())
         embeds = []
@@ -212,7 +212,7 @@ class JoePegsSalesBot:
         floors = {}
         for collection in self.collections:
             floors[collection] = self.client.get_floor_avax(collection)
-            time.sleep(1.0)
+            time.sleep(3.0)
 
         embeds = []
         for listing in self._get_recent_discount_listings(floors):
