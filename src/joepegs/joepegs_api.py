@@ -130,10 +130,13 @@ class JoePegsClient:
 
     def get_floor_avax(
         self, address: Address, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
-    ) -> str:
+    ) -> float:
         collection = self.get_collection(address, params=params)
         if not collection:
             logger.print_fail(f"Failed to get floor info")
+            return -1.0
+        if "floor" not in collection:
+            logger.print_fail(f"Failed to get floor: {collection}")
             return -1.0
         return wei_to_token(int(collection["floor"]))
 
