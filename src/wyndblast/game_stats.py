@@ -148,15 +148,16 @@ class WyndblastLifetimeGameStats:
     @contextmanager
     def winloss(self, stage: int) -> T.Iterator[WinLoss]:
         with ManagedSession() as db:
-            user = db.query(WyndblastUser).filter(WyndblastUser.user == self.alias).first()
-            assert user is not None, f"User {self.alias} not in DB!"
-
             winloss = (
                 db.query(WinLoss)
-                .filter(WinLoss.daily_activities_id == user.daily_activity_stats.id)
+                .filter(WyndblastUser.user == self.alias)
+                .join(WyndblastUser.daily_activity_stats)
+                .filter(DailyActivities.address == self.address)
+                .join(DailyActivities.stages)
                 .filter(WinLoss.stage == stage)
                 .first()
             )
+
             assert winloss is not None, f"{stage} not in winloss DB!"
 
             yield winloss
