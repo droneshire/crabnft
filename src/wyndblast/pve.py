@@ -616,7 +616,7 @@ class PveGame:
 
             did_succeed = False
 
-            if current_stamina < needed_stamina:
+            if self.human_mode and current_stamina < needed_stamina:
                 logger.print_warn("Not enough stamina not attempting battle...")
                 break
 
