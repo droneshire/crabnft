@@ -25,7 +25,7 @@ ADDR_TO_WYND = {}
 
 
 class WyndBot:
-    MIN_DAILY_DOWNSAMPLE = 10
+    MIN_DAILY_DOWNSAMPLE = -1
     SUPPORT_ACCOUNT_DEACTIVATION = False
 
     def __init__(

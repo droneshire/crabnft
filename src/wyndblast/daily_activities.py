@@ -278,7 +278,8 @@ class DailyActivitiesGame:
         content += f"Active NFTs: {active_nfts}\n"
         for stage in range(1, 4):
             stage_str = f"Stage {stage}" if stage != 3 else "All Stages"
-            content += f"Completed {stage_str}: {self.current_stats[stage]['wins']}\n\n"
+            key = f"stage_{stage}"
+            content += f"Completed {stage_str}: {self.current_stats[key]['wins']}\n\n"
         content += f"REWARDS:"
         content += f"CHRO: {self.current_stats['chro']}\n"
         content += f"WAMS: {self.current_stats['wams']}\n"
