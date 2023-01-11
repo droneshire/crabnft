@@ -76,7 +76,6 @@ class WyndblastLifetimeGameStats:
         self._add_pve_wallet()
         self.user_id = None
 
-        print(self.user_id, self.address)
         with ManagedSession() as db:
             user = db.query(WyndblastUser).filter(WyndblastUser.user == self.alias).first()
             assert user is not None, f"User {self.alias} not in DB!"
@@ -232,7 +231,9 @@ class WyndblastLifetimeGameStats:
                 logger.print_fail(f"Failed to create daily activity")
                 return
 
-            daily = db.query(DailyActivities).filter(DailyActivities.user_id == user.id).first()
+            daily = (
+                db.query(DailyActivities).filter(DailyActivities.address == self.address).first()
+            )
 
             stages = []
             for stage in range(1, 4):
