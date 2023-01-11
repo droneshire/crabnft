@@ -27,7 +27,7 @@ test:
 	$(RUN_PY) unittest discover -s test/ -p *_test.py -v
 
 wyndblast:
-	$(RUN_PY) wyndblast.executables.play_wyndblast --groups 1 2 3 4 5 --human-mode --ignore-utc --server-url http://143.198.97.119/monitor
+	$(RUN_PY) wyndblast.executables.play_wyndblast --groups 1 2 3 4 5  --ignore-utc --server-url http://143.198.97.119/monitor
 
 pat:
 	$(RUN_PY) plantatree.executables.play_pat --server-url http://143.198.97.119/monitor
