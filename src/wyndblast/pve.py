@@ -58,7 +58,7 @@ class PveGame:
     MIN_GAME_DURATION = 10
     MAX_GAME_DURATION = 29
     MAX_REPLAYS_PER_CYCLE = 5  # based on a daily reward that is 20x battles per week
-    MIN_CHRO_CLAIM = 1000
+    MIN_CHRO_CLAIM = 2000
 
     TIME_BETWEEN_CLAIM_QUEST = 60.0 * 60.0 * 6
     TIME_BETWEEN_LEVEL_UP = 60.0 * 5.0
