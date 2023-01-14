@@ -346,10 +346,12 @@ class DailyActivitiesGame:
                     self.current_stats["elemental_stones"][rewards["elemental_stones"]] += 1
                     self.current_stats["elemental_stones"]["elemental_stones_qty"] += 1
                     previous_value = getattr(
-                        da.elemental_stones, rewards["elemental_stones"].lower()
+                        da.elemental_stones[0], rewards["elemental_stones"].lower()
                     )
                     setattr(
-                        da.elemental_stones, rewards["elemental_stones"].lower(), previous_value + 1
+                        da.elemental_stones[0],
+                        rewards["elemental_stones"].lower(),
+                        previous_value + 1,
                     )
 
         outcome_emoji = "\U0001F389" if did_succeed else "\U0001F915"
