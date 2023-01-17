@@ -109,7 +109,7 @@ class WyndBot:
             self.wynd_w2,
             self.wynd_w3,
             self.stats,
-            allow_deactivate=SUPPORT_ACCOUNT_DEACTIVATION,
+            allow_deactivate=self.SUPPORT_ACCOUNT_DEACTIVATION,
         )
 
         self.pve: PveGame = PveGame(
@@ -122,7 +122,7 @@ class WyndBot:
             stages_info,
             account_info,
             human_mode,
-            allow_deactivate,
+            allow_deactivate=self.SUPPORT_ACCOUNT_DEACTIVATION,
             ignore_utc_time=ignore_utc_time,
         )
 
