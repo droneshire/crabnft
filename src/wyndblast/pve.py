@@ -75,6 +75,7 @@ class PveGame:
         stages_info: T.List[types.LevelsInformation],
         account_info: T.List[types.AccountLevels],
         human_mode: bool,
+        allow_deactivate: bool,
         ignore_utc_time: bool = False,
     ) -> None:
         self.user = user
@@ -86,6 +87,7 @@ class PveGame:
         self.stats = stats
         self.human_mode = human_mode
         self.is_deactivated = False
+        self.allow_deactivate = allow_deactivate
         self.ignore_utc_time = ignore_utc_time
 
         self.min_game_duration = self.MIN_GAME_DURATION if human_mode else self.MIN_GAME_DURATION
@@ -715,6 +717,10 @@ class PveGame:
         return True
 
     def check_and_auth_account(self) -> bool:
+        if not self.allow_deactivate:
+            self.is_deactivated = False
+            return False
+
         if self.wynd_w2.update_account():
             self.is_deactivated = False
             return self.is_deactivated
@@ -759,7 +765,7 @@ class PveGame:
 
         nft_data: types.PveNfts = self.wynd_w2.get_nft_data()
         if nft_data.get("error_code", "") == "ERR:AUTH:FORBIDDEN_ACCESS":
-            self.is_deactivated = True
+            self.is_deactivated = True and self.allow_deactivate
             logger.print_warn(f"Detected deactivated account!")
             return
 

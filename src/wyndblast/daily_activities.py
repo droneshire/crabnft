@@ -55,6 +55,7 @@ class DailyActivitiesGame:
         wynd_w2: DailyActivitiesWyndblastWeb2Client,
         wynd_w3: WyndblastGameWeb3Client,
         stats: WyndblastLifetimeGameStats,
+        allow_deactivate: bool,
     ):
         self.user = user
         self.config = config
@@ -101,6 +102,10 @@ class DailyActivitiesGame:
         return True
 
     def check_and_auth_account(self) -> bool:
+        if not self.allow_deactivate:
+            self.is_deactivated = False
+            return False
+
         if self.wynd_w2.update_account():
             self.is_deactivated = False
             return self.is_deactivated

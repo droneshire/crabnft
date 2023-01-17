@@ -103,7 +103,13 @@ class WyndBot:
         )
 
         self.daily_activities: DailyActivitiesGame = DailyActivitiesGame(
-            user, config, email_accounts, self.wynd_w2, self.wynd_w3, self.stats
+            user,
+            config,
+            email_accounts,
+            self.wynd_w2,
+            self.wynd_w3,
+            self.stats,
+            allow_deactivate=SUPPORT_ACCOUNT_DEACTIVATION,
         )
 
         self.pve: PveGame = PveGame(
@@ -116,7 +122,8 @@ class WyndBot:
             stages_info,
             account_info,
             human_mode,
-            ignore_utc_time,
+            allow_deactivate=SUPPORT_ACCOUNT_DEACTIVATION,
+            ignore_utc_time=ignore_utc_time,
         )
 
     def _check_and_submit_available_inventory(self) -> None:
