@@ -122,7 +122,7 @@ class WyndBot:
             stages_info,
             account_info,
             human_mode,
-            allow_deactivate=SUPPORT_ACCOUNT_DEACTIVATION,
+            allow_deactivate,
             ignore_utc_time=ignore_utc_time,
         )
 
