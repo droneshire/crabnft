@@ -431,7 +431,7 @@ class PumpskinBot:
                 continue
 
             logger.print_ok_blue(
-                f"Pumpskin {token_id}, Level {level} POTN needed for {next_level}: {level_potn}"
+                f"Pumpskin {token_id}, Level {level} POTN needed for {next_level}: {potn_to_level}/{level_potn}"
             )
 
             self.are_all_pumpskins_level_as_desired = False
