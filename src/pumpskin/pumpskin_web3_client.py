@@ -123,6 +123,7 @@ class PumpskinContractWeb3Client(AvalancheCWeb3Client):
         Drink potion for a pumpskin
         """
         try:
+            self.contract.functions.potionPumpkin(token_id, num_potn_wei).call()
             tx: TxParams = self.build_contract_transaction(
                 self.contract.functions.potionPumpkin(token_id, num_potn_wei)
             )
