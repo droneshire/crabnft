@@ -64,6 +64,7 @@ class DailyActivitiesGame:
         self.wynd_w3 = wynd_w3
         self.stats = stats
         self.is_deactivated = False
+        self.allow_deactivate = allow_deactivate
 
         self.current_stats = copy.deepcopy(NULL_GAME_STATS)
 
