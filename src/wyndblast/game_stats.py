@@ -4,6 +4,7 @@ import typing as T
 from contextlib import contextmanager
 from sqlalchemy.sql import func
 
+from config_admin import STATS_DB
 from database.connect import ManagedSession
 from utils import logger
 from wyndblast import types
@@ -68,22 +69,23 @@ NULL_GAME_STATS = {
 
 
 class WyndblastLifetimeGameStats:
-    def __init__(self, user: str, address: str, commission_address: str, token: str) -> None:
+    def __init__(self, user: str, address: str, commission_address: str, token: str, db_str: str = STATS_DB) -> None:
         self.alias = user
         self.address = address
         self._insert_user(user, commission_address, token)
         self._add_dailies_wallet()
         self._add_pve_wallet()
         self.user_id = None
+        self.db_str = db_str
 
-        with ManagedSession() as db:
+        with ManagedSession(self.db_str) as db:
             user = db.query(WyndblastUser).filter(WyndblastUser.user == self.alias).first()
             assert user is not None, f"User {self.alias} not in DB!"
             self.user_id = user.id
 
     @contextmanager
     def user(self) -> T.Iterator[WyndblastUser]:
-        with ManagedSession() as db:
+        with ManagedSession(self.db_str) as db:
             user = db.query(WyndblastUser).filter(WyndblastUser.user == self.alias).first()
             assert user is not None, f"User {self.alias} not in DB!"
 
@@ -96,7 +98,7 @@ class WyndblastLifetimeGameStats:
 
     @contextmanager
     def pve(self) -> T.Iterator[Pve]:
-        with ManagedSession() as db:
+        with ManagedSession(self.db_str) as db:
             pve = (
                 db.query(Pve)
                 .filter(Pve.user_id == self.user_id)
@@ -112,7 +114,7 @@ class WyndblastLifetimeGameStats:
 
     @contextmanager
     def daily(self) -> T.Iterator[DailyActivities]:
-        with ManagedSession() as db:
+        with ManagedSession(self.db_str) as db:
             daily = (
                 db.query(DailyActivities)
                 .filter(DailyActivities.user_id == self.user_id)
@@ -128,7 +130,7 @@ class WyndblastLifetimeGameStats:
 
     @contextmanager
     def commission(self, address: str) -> T.Iterator[Commission]:
-        with ManagedSession() as db:
+        with ManagedSession(self.db_str) as db:
             commission = (
                 db.query(Commission)
                 .filter(Commission.user_id == self.user_id)
@@ -146,7 +148,7 @@ class WyndblastLifetimeGameStats:
 
     @contextmanager
     def winloss(self, stage: int) -> T.Iterator[WinLoss]:
-        with ManagedSession() as db:
+        with ManagedSession(self.db_str) as db:
             winloss = (
                 db.query(WinLoss)
                 .filter(WyndblastUser.user == self.alias)
@@ -170,7 +172,7 @@ class WyndblastLifetimeGameStats:
         with self.pve() as pve:
             pve_id = pve.id
 
-        with ManagedSession() as db:
+        with ManagedSession(self.db_str) as db:
             level = Level(pve_id=pve_id, level=level)
             try:
                 db.add(level)
@@ -178,7 +180,7 @@ class WyndblastLifetimeGameStats:
                 logger.print_fail("Failed to store stage in db!")
 
     def _insert_user(self, username: str, commission_address: str, token: str) -> None:
-        with ManagedSession() as db:
+        with ManagedSession(self.db_str) as db:
             user = db.query(WyndblastUser).filter(WyndblastUser.user == username).first()
 
             if user is not None:
@@ -206,7 +208,7 @@ class WyndblastLifetimeGameStats:
                 logger.print_fail(f"Failed to add commission entry for {commission_address}")
 
     def _add_dailies_wallet(self) -> None:
-        with ManagedSession() as db:
+        with ManagedSession(self.db_str) as db:
             user = db.query(WyndblastUser).filter(WyndblastUser.user == self.alias).first()
 
             if user is None:
@@ -250,7 +252,7 @@ class WyndblastLifetimeGameStats:
                 logger.print_fail(f"Failed to add daily activity db entry for {self.address}")
 
     def _add_pve_wallet(self) -> None:
-        with ManagedSession() as db:
+        with ManagedSession(self.db_str) as db:
             user = db.query(WyndblastUser).filter(WyndblastUser.user == self.alias).first()
 
             if user is None:

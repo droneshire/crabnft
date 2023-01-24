@@ -4,6 +4,7 @@ import typing as T
 from contextlib import contextmanager
 from sqlalchemy.sql import func
 
+from config_admin import USER_CONFIGS_DB
 from database.connect import ManagedSession
 from database.models.account import Account
 from database.models.game_config import GameConfig
@@ -12,11 +13,12 @@ from utils import logger
 
 
 class AccountDb:
-    def __init__(self, owner: str) -> None:
+    def __init__(self, owner: str, db_str: str = USER_CONFIGS_DB) -> None:
         self.owner = owner
         self.wallets = []
+        self.db_str = db_str
 
-        with ManagedSession() as db:
+        with ManagedSession(self.db_str) as db:
             user = db.query(Account).filter(Account.owner == owner).first()
             assert user is not None, f"Account {self.owner} not in DB!"
             logger.print_bold(f"{user} initiated")
@@ -25,7 +27,7 @@ class AccountDb:
 
     @contextmanager
     def account(self) -> T.Iterator[Account]:
-        with ManagedSession() as db:
+        with ManagedSession(self.db_str) as db:
             user = db.query(Account).filter(Account.owner == self.owner).first()
             assert user is not None, f"User {self.owner} not in DB!"
 
@@ -38,7 +40,7 @@ class AccountDb:
 
     @contextmanager
     def wallet(self, address: str) -> T.Iterator[GameConfig]:
-        with ManagedSession() as db:
+        with ManagedSession(self.db_str) as db:
             wallet = (
                 db.query(Wallet)
                 .filter(Wallet.address == address)
@@ -56,7 +58,7 @@ class AccountDb:
 
     @contextmanager
     def game_config(self, game: str, address: str) -> T.Iterator[GameConfig]:
-        with ManagedSession() as db:
+        with ManagedSession(self.db_str) as db:
             wallet = (
                 db.query(Wallet)
                 .filter(Wallet.address == address)
@@ -82,8 +84,8 @@ class AccountDb:
                 logger.print_fail("Failed to store db item!")
 
     @staticmethod
-    def add_account(user: str, email: str, discord_handle: str) -> None:
-        with ManagedSession() as db:
+    def add_account(user: str, email: str, discord_handle: str, db_str: str = USER_CONFIGS_DB) -> None:
+        with ManagedSession(db_str) as db:
             account = db.query(Account).filter(Account.owner == user).first()
             if account is not None:
                 logger.print_warn(f"Skipping {user} add, already in db")
@@ -96,8 +98,8 @@ class AccountDb:
             db.add(account)
 
     @staticmethod
-    def add_wallet(user: str, address: str, private_key: str) -> None:
-        with ManagedSession() as db:
+    def add_wallet(user: str, address: str, private_key: str, db_str: str = USER_CONFIGS_DB) -> None:
+        with ManagedSession(db_str) as db:
             account = db.query(Account).filter(Account.owner == user).first()
             if account is None:
                 logger.print_fail(f"Failed to add wallet, user doesn't exist!")
@@ -115,9 +117,9 @@ class AccountDb:
 
     @staticmethod
     def add_game_config(
-        address: str, game: str, config_type: T.Any, email_updates: bool = True
+        address: str, game: str, config_type: T.Any, email_updates: bool = True, db_str: str = USER_CONFIGS_DB
     ) -> None:
-        with ManagedSession() as db:
+        with ManagedSession(db_str) as db:
             wallet = db.query(Wallet).filter(Wallet.address == address).first()
             if wallet is None:
                 logger.print_fail(f"Failed to add game config, wallet doesn't exist!")
@@ -134,8 +136,8 @@ class AccountDb:
             db.add(config)
 
     @staticmethod
-    def get_configs_for_game(game: str) -> T.List[Account]:
-        with ManagedSession() as db:
+    def get_configs_for_game(game: str, db_str: str = USER_CONFIGS_DB) -> T.List[Account]:
+        with ManagedSession(db_str) as db:
             accounts = (
                 db.query(Account)
                 .join(Account.wallets)
