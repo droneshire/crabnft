@@ -12,34 +12,36 @@ from sqlalchemy_utils import database_exists
 from utils import logger
 from utils.file_util import make_sure_path_exists
 
-ENGINE = None
-THREAD_SAFE_SESSION_FACTORY = None
+ENGINE = {}
+THREAD_SAFE_SESSION_FACTORY = {}
 
 AccountBase = declarative_base(name="AccountBase")
 GameBase = declarative_base(name="GameBase")
 
 
-def init_engine(uri, **kwargs) -> Engine:
+
+def init_engine(uri: str, db: str, **kwargs: T.Any) -> Engine:
     global ENGINE
-    if ENGINE is None:
-        ENGINE = create_engine(uri, **kwargs)
-    return ENGINE
+    if db not in ENGINE:
+        uri.split(".")[0]
+        ENGINE[db] = create_engine(uri, **kwargs)
+    return ENGINE[db]
 
 
-def init_session_factory() -> ScopedSessionMixin:
+def init_session_factory(db: str) -> ScopedSessionMixin:
     """Initialize the THREAD_SAFE_SESSION_FACTORY."""
     global ENGINE, THREAD_SAFE_SESSION_FACTORY
-    if ENGINE is None:
+    if db not in ENGINE:
         raise ValueError(
             "Initialize ENGINE by calling init_engine before calling init_session_factory!"
         )
-    if THREAD_SAFE_SESSION_FACTORY is None:
-        THREAD_SAFE_SESSION_FACTORY = scoped_session(sessionmaker(bind=ENGINE))
-    return THREAD_SAFE_SESSION_FACTORY
+    if db not in THREAD_SAFE_SESSION_FACTORY:
+        THREAD_SAFE_SESSION_FACTORY[db] = scoped_session(sessionmaker(bind=ENGINE[db]))
+    return THREAD_SAFE_SESSION_FACTORY[db]
 
 
 @contextlib.contextmanager
-def ManagedSession():
+def ManagedSession(db: str = None):
     """Get a session object whose lifecycle, commits and flush are managed for you.
     Expected to be used as follows:
     ```
@@ -49,9 +51,13 @@ def ManagedSession():
     ```
     """
     global THREAD_SAFE_SESSION_FACTORY
-    if THREAD_SAFE_SESSION_FACTORY is None:
+    if db is None:
+        # assume we're just using the default db
+        db = list(THREAD_SAFE_SESSION_FACTORY.keys())[0]
+
+    if db not in THREAD_SAFE_SESSION_FACTORY:
         raise ValueError("Call init_session_factory before using ManagedSession!")
-    session = THREAD_SAFE_SESSION_FACTORY()
+    session = THREAD_SAFE_SESSION_FACTORY[db]()
     try:
         yield session
         session.commit()
@@ -64,7 +70,7 @@ def ManagedSession():
     finally:
         # source:
         # https://stackoverflow.com/questions/21078696/why-is-my-scoped-session-raising-an-attributeerror-session-object-has-no-attr
-        THREAD_SAFE_SESSION_FACTORY.remove()
+        THREAD_SAFE_SESSION_FACTORY[db].remove()
 
 
 def init_database(log_dir: str, db_name: str, db_model_class: T.Any) -> None:
@@ -72,10 +78,10 @@ def init_database(log_dir: str, db_name: str, db_model_class: T.Any) -> None:
     sql_db = "sqlite:///" + db_file
 
     make_sure_path_exists(db_file)
-    engine = init_engine(sql_db)
+    engine = init_engine(sql_db, db_name)
     if database_exists(engine.url):
         logger.print_bold(f"Found existing database")
     else:
         logger.print_ok_blue(f"Creating new database!")
-        db_model_class.metadata.create_all(engine)
-    init_session_factory()
+        db_model_class.metadata.create_all(bind=engine)
+    init_session_factory(db_name)

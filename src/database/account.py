@@ -136,5 +136,11 @@ class AccountDb:
     @staticmethod
     def get_configs_for_game(game: str) -> T.List[Account]:
         with ManagedSession() as db:
-            accounts = db.query(Account).join(Account.wallets).join(Wallet.game_configs).filter(GameConfig.name == game).all()
+            accounts = (
+                db.query(Account)
+                .join(Account.wallets)
+                .join(Wallet.game_configs)
+                .filter(GameConfig.name == game)
+                .all()
+            )
             return accounts

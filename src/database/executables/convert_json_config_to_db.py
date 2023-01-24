@@ -107,7 +107,7 @@ def main() -> None:
 
     logger.setup_log(args.log_level, args.log_dir, "db_convert")
 
-    init_database(args.log_dir, "user_configs.db", Account)
+    init_database(args.log_dir, f"{config_admin.USER_CONFIGS_DB}", Account)
 
     convert_pat(args.verbose)
     convert_pumpskins(args.verbose)
