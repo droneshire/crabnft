@@ -1,7 +1,7 @@
 PYTHON ?= python3
 PY_PATH=$(PWD)/src
 RUN_PY = PYTHONPATH=$(PY_PATH) $(PYTHON) -m
-BLACK_CMD = $(RUN_PY) black --line-length 100 .
+BLACK_CMD = $(RUN_PY) black --line-length 100
 # NOTE: exclude any virtual environment subdirectories here
 PY_FIND_COMMAND = find -name '*.py' ! -path './venv/*'
 MYPY_CONFIG=$(PY_PATH)/mypy_config.ini
@@ -10,7 +10,7 @@ install:
 	pip3 install -r requirements.txt
 
 format:
-	$(BLACK_CMD)
+	$(BLACK_CMD) $(shell $(PY_FIND_COMMAND))
 
 check_format:
 	$(BLACK_CMD) --check --diff

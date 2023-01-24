@@ -351,8 +351,9 @@ PveWyndMetadata = T.TypedDict(
         "rarity": int,
         "faction": str,
         "cost": int,
-        "stats": PveItemStats,
+        "stat": PveItemStats,
         "skills": T.List[PveSkills],
+        "parts": T.Dict[str : T.Any],
     },
 )
 
@@ -371,7 +372,7 @@ PveRiderMetadata = T.TypedDict(
         "rarity": int,
         "faction": str,
         "cost": int,
-        "stats": PveItemStats,
+        "stat": PveItemStats,
         "skills": T.List[PveSkills],
     },
 )
@@ -541,3 +542,55 @@ class StaminaBuy(T.TypedDict):
     user_id: str
     redirect_url: str
     expired_at: int
+
+
+class WyndLevelStat(T.TypedDict):
+    level: float
+    health: float
+    manna: float
+    health_regen: float
+    manna_regen: float
+    armor: float
+    magic_resist: float
+    attack_damage: float
+    magic_damage: float
+    move_speed: float
+    attack_range: float
+    attack_speed: float
+    critical_damage: float
+    critical_chance: float
+    exp_to_level_up: float
+    total_exp: float
+
+
+class WyndLevelsStats(T.TypedDict):
+    vangaurd: T.List[WyndLevelStat]
+    vangaurd: T.List[WyndLevelStat]
+    vangaurd: T.List[WyndLevelStat]
+
+
+Skills = T.TypedDict(
+    "Skills",
+    {
+        "id": str,
+        "name": str,
+        "owner": str,
+        "class": str,
+        "type": str,
+        "cost": int,
+        "stack_cost": int,
+        "description": str,
+        "code": str,
+        "pseudo_code": str,
+        "_category": str,
+        "_action": str,
+        "_status": str,
+        "_condition": str,
+    },
+)
+
+
+class PveEnemy(T.TypedDict):
+    metadata: PveWyndMetadata
+    wallet_address: Address
+    product_id: str

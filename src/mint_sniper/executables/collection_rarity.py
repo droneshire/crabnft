@@ -5,7 +5,7 @@ import os
 import sys
 import time
 
-from mint_sniper import collections
+from mint_sniper import collection_select
 from utils import logger, file_util
 
 
@@ -14,7 +14,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--log-level", choices=["INFO", "DEBUG", "ERROR", "NONE"], default="INFO")
     log_dir = logger.get_logging_dir("mint_sniper")
     parser.add_argument("--log-dir", default=log_dir)
-    parser.add_argument("--collection", choices=[c.value for c in collections.Collections])
+    parser.add_argument("--collection", choices=[c.value for c in collection_select.Collections])
     parser.add_argument("--force", action="store_true")
 
     return parser.parse_args()
@@ -44,8 +44,8 @@ def setup_log(log_level: str, log_dir: str, id_string: str, subdir: str) -> None
 
 
 def get_mint_stats(collection: str, download_and_parse: bool) -> None:
-    class_name = collections.Collections(args.collection).value
-    class_obj = getattr(sys.modules[inspect.getmodule(collections).__name__], class_name)
+    class_name = collection_select.Collections(args.collection).value
+    class_obj = getattr(sys.modules[inspect.getmodule(collection_select).__name__], class_name)
 
     mint_collection = class_obj(download_and_parse)
 

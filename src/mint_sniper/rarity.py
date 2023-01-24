@@ -16,6 +16,8 @@ from utils.file_util import make_sure_path_exists
 
 class NftCollectionAnalyzerBase:
     ATTRIBUTES: T.Dict[str, T.Dict[T.Any, T.Any]] = {}
+    CUSTOM_INFO: T.Dict[str, T.Any] = {}
+    TOKEN_ID_KEY = "tokenId"
     MAX_TOTAL_SUPPLY = 0
     DISCORD_WEBHOOK = ""
     CONTRACT_ADDRESS: Address = ""
@@ -25,14 +27,17 @@ class NftCollectionAnalyzerBase:
         self,
         collection_name: str,
         force: bool,
+        try_all_mints: bool,
     ):
         self.collection_name = collection_name
         self.address = self.CONTRACT_ADDRESS
         self.discord_webhook = DISCORD_WEBHOOK_URL[self.DISCORD_WEBHOOK]
         self.pool = ThreadPoolExecutor(max_workers=20)
+        self.try_all_mints = try_all_mints
 
         this_dir = os.path.dirname(os.path.abspath(__file__))
-        collection_dir = os.path.join(this_dir, "collections", collection_name)
+        collection_dir = os.path.join(this_dir, "data", collection_name)
+        make_sure_path_exists(collection_dir)
 
         self.files = {
             "attributes": os.path.join(collection_dir, f"{collection_name}_attributes.json"),
@@ -42,13 +47,15 @@ class NftCollectionAnalyzerBase:
 
         csv_file = os.path.join(collection_dir, f"{collection_name}_rarity.csv")
 
-        if force and os.path.isfile(csv_file):
+        if os.path.isfile(csv_file):
             os.remove(csv_file)
 
         csv_header = ["NFT ID"]
         for k in self.ATTRIBUTES.keys():
             csv_header.append(f"{k} trait")
             csv_header.append(f"{k} rarity %")
+        for k in self.CUSTOM_INFO.keys():
+            csv_header.append(k)
         csv_header.append(f"Overall Rarity %")
         csv_header.append(f"Rank")
         self.csv = CsvLogger(csv_file, csv_header)
@@ -71,6 +78,7 @@ class NftCollectionAnalyzerBase:
             results.extend([r.result() for r in pool_results])
         else:
             for url in collection_urls:
+                logger.print_normal(f"Trying {url}")
                 results.append(self._get_request(url))
         return results
 
@@ -91,6 +99,9 @@ class NftCollectionAnalyzerBase:
         """
         raise NotImplementedError
 
+    def custom_nft_info(self, token_id: int) -> T.Dict[str, T.Any]:
+        raise NotImplementedError
+
     def save_nft_collection_attributes(self) -> None:
         collection_info = {}
         collection_stats = copy.deepcopy(self.ATTRIBUTES)
@@ -108,10 +119,13 @@ class NftCollectionAnalyzerBase:
             offset = index * self.MAX_PER_BATCH
             logger.print_normal(f"Range: {offset}-{offset + self.MAX_PER_BATCH}")
             for i in range(1, 6):
-                did_succeed = self.get_nft_attributes(
-                    collection_urls[offset : offset + self.MAX_PER_BATCH],
-                    collection_stats,
-                    collection_info,
+                did_succeed = (
+                    self.get_nft_attributes(
+                        collection_urls[offset : offset + self.MAX_PER_BATCH],
+                        collection_stats,
+                        collection_info,
+                    )
+                    or self.try_all_mints
                 )
                 if did_succeed:
                     break
@@ -148,18 +162,26 @@ class NftCollectionAnalyzerBase:
                 logger.print_warn(f"Skipping empty result...")
                 return False
 
-            nft = int(nft_info["tokenId"])
-            collection_info[nft] = nft_info
-            logger.print_normal(f"Processing nft {nft}...")
-            for attribute in collection_info[nft].get("attributes", []):
-                if attribute["trait_type"] not in collection_stats:
-                    logger.print_fail(f"Unknown attribute: {attribute['trait_type']}")
-                    return False
-                trait_type = attribute["trait_type"]
-                trait_value = attribute["value"]
-                collection_stats[trait_type][trait_value] = (
-                    collection_stats[trait_type].get(trait_value, 0) + 1
-                )
+            try:
+                nft = int(nft_info[self.TOKEN_ID_KEY])
+                collection_info[nft] = nft_info
+                for k, v in self.custom_nft_info(nft).items():
+                    collection_info[nft][k] = v
+                logger.print_normal(f"Processing nft {nft}...")
+                for attribute in collection_info[nft].get("attributes", []):
+                    if attribute["trait_type"] not in collection_stats:
+                        logger.print_fail(f"Unknown attribute: {attribute['trait_type']}")
+                        logger.print_fail_arrow(
+                            f"Failed on nft info\n{json.dumps(nft_info, indent=4)}"
+                        )
+                        return False
+                    trait_type = attribute["trait_type"]
+                    trait_value = attribute["value"]
+                    collection_stats[trait_type][trait_value] = (
+                        collection_stats[trait_type].get(trait_value, 0) + 1
+                    )
+            except:
+                logger.print_fail_arrow(f"Failed on nft info\n{json.dumps(nft_info, indent=4)}")
         return True
 
     def calculate_rarity(
@@ -176,6 +198,7 @@ class NftCollectionAnalyzerBase:
         nft_traits = {k: 0.0 for k in collection_stats.keys()}
 
         if "attributes" not in nft_info:
+            logger.print_warn(f"No attributes! Skipping rarity calcs for {token_id}")
             return {}
 
         for attribute in nft_info["attributes"]:
@@ -184,20 +207,26 @@ class NftCollectionAnalyzerBase:
         total_trait_count = 0
         for trait, values in collection_stats.items():
             total_count = 0
-            pumpkin_trait_count = 0
+            trait_count = 0
             for value, count in values.items():
                 total_count += count
                 if value == nft_traits[trait]:
-                    pumpkin_trait_count = count
+                    trait_count = count
                     total_trait_count += count
 
-            rarity = float(pumpkin_trait_count) / total_count
+            rarity = float(trait_count) / total_count
             nft_rarity[trait] = {"trait": nft_traits[trait], "rarity": rarity}
 
         nft_rarity["Overall"] = {
             "rank": -1,
             "rarity": float(total_trait_count) / (total_count * len(collection_stats.keys())),
         }
+
+        for k, v in self.CUSTOM_INFO.items():
+            if k not in nft_info:
+                logger.print_warn(f"Missing custom info! {token_id}")
+                continue
+            nft_rarity[k] = nft_info[k]
 
         return nft_rarity
 
@@ -238,6 +267,9 @@ class NftCollectionAnalyzerBase:
             collection_traits = json.load(infile)
 
         for nft in range(self.MAX_TOTAL_SUPPLY):
+            if str(nft) not in collection_traits:
+                logger.print_warn(f"Skipping {nft} as not in collection...")
+                continue
             collection_rarity[nft] = self.calculate_rarity(
                 nft, collection_traits[str(nft)], collection_stats
             )
@@ -267,10 +299,18 @@ class NftCollectionAnalyzerBase:
     def write_rarity_to_csv(self, collection_rarity: T.Dict[str, T.Dict[int, float]]) -> None:
         logger.print_bold(f"Writing rarity stats to {self.csv.csv_file}...")
         for token_id in range(self.MAX_TOTAL_SUPPLY):
+            if token_id not in collection_rarity:
+                continue
+
             row = {}
             row["NFT ID"] = token_id
             overall_rarity = 0.0
+
             for trait, info in collection_rarity[token_id].items():
+                if trait in self.CUSTOM_INFO:
+                    row[trait] = info
+                    continue
+
                 if trait == "Overall":
                     row["Overall Rarity %"] = info["rarity"] * 100.0
                     row["Rank"] = info["rank"]
@@ -278,5 +318,6 @@ class NftCollectionAnalyzerBase:
                 rarity_percent = info["rarity"] * 100.0
                 row[f"{trait} rarity %"] = f"{rarity_percent:.2f}"
                 row[f"{trait} trait"] = f"{info['trait']}"
+
             self.csv.write(row)
         logger.print_ok_arrow(f"SUCCESS")

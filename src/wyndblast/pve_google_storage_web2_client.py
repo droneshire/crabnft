@@ -10,7 +10,7 @@ from wyndblast.api_headers import (
     WYNDBLAST_PVE_GOOGLESTORAGE_HEADERS,
     GOOGLE_STORAGE_X_CLIENT_DATA_KEYS,
 )
-from wyndblast.types import AccountLevels, LevelsInformation, PveWynd
+from wyndblast.types import AccountLevels, LevelsInformation, PveWynd, WyndLevelsStats
 
 
 class PveGoogleStorageWeb2Client(web2_client.Web2Client):
@@ -90,6 +90,81 @@ class PveGoogleStorageWeb2Client(web2_client.Web2Client):
         return self._get_request(url, headers=headers, params=default_params, timeout=10.0)
 
     def get_level_data(self) -> T.List[LevelsInformation]:
+        try:
+            res = self._get_level_data_raw(headers=self._get_google_pve_headers())
+            return res
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to get level stats list!")
+            if res:
+                logger.print_normal(f"{res}")
+            return False
+
+    def _get_enemy_data_raw(
+        self,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
+    ) -> T.Any:
+        url = self.GOOGLE_STORAGE_URL + f"/PvE-enemy.json"
+        default_params = {
+            "v": self._get_server_time(),
+        }
+        default_params.update(params)
+
+        return self._get_request(url, headers=headers, params=default_params, timeout=10.0)
+
+    def get_enemy_data(self) -> T.Any:
+        try:
+            res = self._get_level_data_raw(headers=self._get_google_pve_headers())
+            return res
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to get level stats list!")
+            if res:
+                logger.print_normal(f"{res}")
+            return False
+
+    def _get_wynd_level_stats_data_raw(
+        self,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
+    ) -> T.Any:
+        url = self.GOOGLE_STORAGE_URL + "wynd-level-stats.json"
+        default_params = {
+            "v": self._get_server_time(),
+        }
+        default_params.update(params)
+
+        return self._get_request(url, headers=headers, params=default_params, timeout=10.0)
+
+    def get_wynd_level_stats_data(self) -> WyndLevelsStats:
+        try:
+            res = self._get_level_data_raw(headers=self._get_google_pve_headers())
+            return res
+        except KeyboardInterrupt:
+            raise
+        except:
+            logger.print_fail(f"Failed to get level stats list!")
+            if res:
+                logger.print_normal(f"{res}")
+            return False
+
+    def _get_skills_data_raw(
+        self,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
+    ) -> T.Any:
+        url = self.GOOGLE_STORAGE_URL + "skills.json"
+        default_params = {
+            "v": self._get_server_time(),
+        }
+        default_params.update(params)
+
+        return self._get_request(url, headers=headers, params=default_params, timeout=10.0)
+
+    def get_skill_data(self) -> T.List[Skills]:
         try:
             res = self._get_level_data_raw(headers=self._get_google_pve_headers())
             return res

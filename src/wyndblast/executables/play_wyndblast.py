@@ -103,7 +103,7 @@ def run_bot() -> None:
             encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
         email_accounts = get_email_accounts_from_password(encrypt_password, GMAIL)
 
-    stages_info, account_info = get_cache_info(args.log_dir)
+    stages_info, account_info, _, _, _ = get_cache_info(args.log_dir)
 
     init_database(args.log_dir)
 
