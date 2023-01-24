@@ -15,8 +15,10 @@ from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
 
 
 class PveGoogleStorageWeb2Client(WyndblastWeb2Client):
-    def __init__(self, private_key: str, user_address: Address, dry_run: bool = False) -> None:
+    def __init__(self, dry_run: bool = False) -> None:
         super().__init__(
+            "",
+            "",
             WyndblastWeb2Client.GOOGLE_STORAGE_URL,
             rate_limit_delay=0.0,
             use_proxy=False,

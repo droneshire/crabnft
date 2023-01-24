@@ -13,11 +13,7 @@ def get_cache_info(
 ) -> T.Tuple[
     T.List[LevelsInformation], T.List[AccountLevels], T.Any, WyndLevelsStats, T.List[Skills]
 ]:
-    google_w2: PveGoogleStorageWeb2Client = PveGoogleStorageWeb2Client(
-        "",
-        "",
-        dry_run=False,
-    )
+    google_w2: PveGoogleStorageWeb2Client = PveGoogleStorageWeb2Client()
 
     json_file = os.path.join(log_dir, "stages_info.json")
     if os.path.isfile(json_file):
