@@ -5,19 +5,23 @@ import typing as T
 
 from eth_typing import Address
 
-from utils import logger, web2_client
+from utils import logger
 from wyndblast.api_headers import (
     WYNDBLAST_PVE_GOOGLESTORAGE_HEADERS,
     GOOGLE_STORAGE_X_CLIENT_DATA_KEYS,
 )
 from wyndblast.types import AccountLevels, LevelsInformation, PveWynd, Skills, WyndLevelsStats
+from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
 
 
-class PveGoogleStorageWeb2Client(web2_client.Web2Client):
-    def __init__(
-        self, private_key: str, user_address: Address, base_url: str, dry_run: bool = False
-    ) -> None:
-        super().__init__(base_url, rate_limit_delay=0.0, use_proxy=False, dry_run=dry_run)
+class PveGoogleStorageWeb2Client(WyndblastWeb2Client):
+    def __init__(self, private_key: str, user_address: Address, dry_run: bool = False) -> None:
+        super().__init__(
+            WyndblastWeb2Client.GOOGLE_STORAGE_URL,
+            rate_limit_delay=0.0,
+            use_proxy=False,
+            dry_run=dry_run,
+        )
 
     def _get_google_pve_headers(
         self, x_client: str = GOOGLE_STORAGE_X_CLIENT_DATA_KEYS["pve"]

@@ -16,7 +16,6 @@ def get_cache_info(
     google_w2: PveGoogleStorageWeb2Client = PveGoogleStorageWeb2Client(
         "",
         "",
-        WyndblastWeb2Client.GOOGLE_STORAGE_URL,
         dry_run=False,
     )
 
