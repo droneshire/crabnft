@@ -30,7 +30,7 @@ TIME_BETWEEN_RUNS = 5.0
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    log_dir = logger.get_logging_dir("wyndblast")
+    log_dir = logger.get_logging_dir("")
     parser.add_argument("--dry-run", action="store_true", help="Dry run")
     parser.add_argument("--human-mode", action="store_true", help="Human mode")
     parser.add_argument("--ignore-utc", action="store_true", help="Ignore the utc time hold")
@@ -92,7 +92,7 @@ def run_bot() -> None:
             encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
         email_accounts = get_email_accounts_from_password(encrypt_password, GMAIL)
 
-    stages_info, account_info, _, _, _ = get_cache_info(args.log_dir)
+    stages_info, account_info, _, _, _ = get_cache_info(log_dir)
 
     init_database(log_dir, "wyndblast.db", WyndblastUser)
 
