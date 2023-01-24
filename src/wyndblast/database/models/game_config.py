@@ -4,11 +4,11 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.schema import Column
 from sqlalchemy.sql import func
 
-from database.connect import Base
+from database.connect import AccountBase
 from database.models.game_config import GameConfig
 
 
-class WyndblastGameConfig(GameConfig):  # type: ignore
+class WyndblastGameConfig(AccountBase):  # type: ignore
     __tablename__ = "WyndblastGameConfig"
     __mapper_args__ = {"polymorphic_identity": "WyndblastGameConfig"}
 

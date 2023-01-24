@@ -4,11 +4,11 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.schema import Column
 from sqlalchemy.sql import func
 
-from database.connect import Base
+from database.connect import AccountBase
 from database.models.game_config import GameConfig
 
 
-class SpecialPumpskins(Base):  # type: ignore
+class SpecialPumpskins(AccountBase):  # type: ignore
     __tablename__ = "SpecialPumpskins"
 
     id = Column(types.Integer, primary_key=True)
@@ -28,7 +28,7 @@ class SpecialPumpskinsSchema(Schema):  # type: ignore
         return SpecialPumpskins(**data)
 
 
-class PumpskinsGameConfig(GameConfig):  # type: ignore
+class PumpskinsGameConfig(AccountBase):  # type: ignore
     __tablename__ = "PumpskinsGameConfig"
     __mapper_args__ = {"polymorphic_identity": "PumpskinsGameConfig"}
 

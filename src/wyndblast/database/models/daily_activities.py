@@ -5,10 +5,10 @@ from sqlalchemy.schema import Column
 from sqlalchemy.sql import func
 
 
-from database.connect import Base
+from database.connect import GameBase
 
 
-class ElementalStones(Base):  # type: ignore
+class ElementalStones(GameBase):  # type: ignore
     __tablename__ = "ElementalStones"
 
     id = Column(types.Integer, primary_key=True)
@@ -39,7 +39,7 @@ class ElementalStonesSchema(Schema):  # type: ignore
         return ElementalStones(**data)
 
 
-class WinLoss(Base):  # type: ignore
+class WinLoss(GameBase):  # type: ignore
     __tablename__ = "WinLoss"
 
     id = Column(types.Integer, primary_key=True)
@@ -64,7 +64,7 @@ class WinLossSchema(Schema):  # type: ignore
         return WinLoss(**data)
 
 
-class DailyActivities(Base):  # type: ignore
+class DailyActivities(GameBase):  # type: ignore
     __tablename__ = "DailyActivities"
 
     id = Column(types.Integer, primary_key=True)

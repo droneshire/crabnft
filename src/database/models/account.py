@@ -4,11 +4,11 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.schema import Column
 from sqlalchemy.sql import func
 
-from database.connect import Base
+from database.connect import AccountBase
 from database.models.wallet import WalletSchema
 
 
-class Account(Base):  # type: ignore
+class Account(AccountBase):  # type: ignore
     __tablename__ = "Account"
 
     owner = Column(types.String(80), primary_key=True)

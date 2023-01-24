@@ -4,10 +4,10 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.schema import Column
 from sqlalchemy.sql import func
 
-from database.connect import Base
+from database.connect import AccountBase
 
 
-class CommissionPercents(Base):  # type: ignore
+class CommissionPercents(AccountBase):  # type: ignore
     __tablename__ = "CommissionPercents"
 
     id = Column(types.Integer, primary_key=True)

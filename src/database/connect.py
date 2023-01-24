@@ -15,7 +15,8 @@ from utils.file_util import make_sure_path_exists
 ENGINE = None
 THREAD_SAFE_SESSION_FACTORY = None
 
-Base = declarative_base()
+AccountBase = declarative_base(name="AccountBase")
+GameBase = declarative_base(name="GameBase")
 
 
 def init_engine(uri, **kwargs) -> Engine:

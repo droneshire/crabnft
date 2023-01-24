@@ -4,12 +4,12 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.schema import Column
 from sqlalchemy.sql import func
 
-from database.connect import Base
+from database.connect import AccountBase
 from database.models.commission_percents import CommissionPercentsSchema
 from database.models.game_config import GameConfigSchema
 
 
-class Wallet(Base):  # type: ignore
+class Wallet(AccountBase):  # type: ignore
     __tablename__ = "Wallet"
 
     address = Column(types.String(42), primary_key=True)
