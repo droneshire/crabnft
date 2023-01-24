@@ -353,7 +353,7 @@ PveWyndMetadata = T.TypedDict(
         "cost": int,
         "stat": PveItemStats,
         "skills": T.List[PveSkills],
-        "parts": T.Dict[str : T.Any],
+        "parts": T.Dict[str, T.Any],
     },
 )
 
