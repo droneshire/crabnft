@@ -31,7 +31,7 @@ class PveGoogleStorageWeb2Client(web2_client.Web2Client):
         headers: T.Dict[str, T.Any] = {},
         params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
-        url = self.GOOGLE_STORAGE_URL + f"/PvE-enemy.json"
+        url = self.base_url + f"/PvE-enemy.json"
         default_params = {
             "v": self._get_server_time(),
         }
@@ -56,7 +56,7 @@ class PveGoogleStorageWeb2Client(web2_client.Web2Client):
         headers: T.Dict[str, T.Any] = {},
         params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
-        url = self.GOOGLE_STORAGE_URL + f"/account-stats.json"
+        url = self.base_url + f"/account-stats.json"
         default_params = {
             "v": self._get_server_time(),
         }
@@ -81,7 +81,7 @@ class PveGoogleStorageWeb2Client(web2_client.Web2Client):
         headers: T.Dict[str, T.Any] = {},
         params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
-        url = self.GOOGLE_STORAGE_URL + f"/PvE-stages.json"
+        url = self.base_url + f"/PvE-stages.json"
         default_params = {
             "v": self._get_server_time(),
         }
@@ -106,7 +106,7 @@ class PveGoogleStorageWeb2Client(web2_client.Web2Client):
         headers: T.Dict[str, T.Any] = {},
         params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
-        url = self.GOOGLE_STORAGE_URL + f"/PvE-enemy.json"
+        url = self.base_url + f"/PvE-enemy.json"
         default_params = {
             "v": self._get_server_time(),
         }
@@ -131,7 +131,7 @@ class PveGoogleStorageWeb2Client(web2_client.Web2Client):
         headers: T.Dict[str, T.Any] = {},
         params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
-        url = self.GOOGLE_STORAGE_URL + "wynd-level-stats.json"
+        url = self.base_url + "wynd-level-stats.json"
         default_params = {
             "v": self._get_server_time(),
         }
@@ -156,7 +156,7 @@ class PveGoogleStorageWeb2Client(web2_client.Web2Client):
         headers: T.Dict[str, T.Any] = {},
         params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
-        url = self.GOOGLE_STORAGE_URL + "skills.json"
+        url = self.base_url + "skills.json"
         default_params = {
             "v": self._get_server_time(),
         }
