@@ -5,6 +5,7 @@ import typing as T
 
 from eth_typing import Address
 
+from config_admin import ADMIN_ADDRESS
 from utils import logger
 from wyndblast.api_headers import (
     WYNDBLAST_PVE_GOOGLESTORAGE_HEADERS,
@@ -18,7 +19,7 @@ class PveGoogleStorageWeb2Client(WyndblastWeb2Client):
     def __init__(self, dry_run: bool = False) -> None:
         super().__init__(
             "dummy",
-            "0x123456781234567812345678123456781234567812345678",
+            ADMIN_ADDRESS,
             WyndblastWeb2Client.GOOGLE_STORAGE_URL,
             rate_limit_delay=0.0,
             use_proxy=False,
