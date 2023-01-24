@@ -10,7 +10,7 @@ from wyndblast.api_headers import (
     WYNDBLAST_PVE_GOOGLESTORAGE_HEADERS,
     GOOGLE_STORAGE_X_CLIENT_DATA_KEYS,
 )
-from wyndblast.types import AccountLevels, LevelsInformation, PveWynd, WyndLevelsStats
+from wyndblast.types import AccountLevels, LevelsInformation, PveWynd, Skills, WyndLevelsStats
 
 
 class PveGoogleStorageWeb2Client(web2_client.Web2Client):
