@@ -241,7 +241,10 @@ class PumpskinTokenProfitManager:
 
         wait(10.0)
 
-        lp_amount = self._buy_and_stake_token_lp(lp_avax, lp_token)
+        lp_amount = 0.0
+
+        if lp_avax > 0.0 and lp_token > 0.0:
+            lp_amount = self._buy_and_stake_token_lp(lp_avax, lp_token)
 
         if lp_amount > 0.0 or profit_avax > 0.0:
             self._send_discord_profit_lp_purchase(profit_avax, lp_avax, lp_token, lp_amount)
