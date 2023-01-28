@@ -819,9 +819,9 @@ class PveGame:
                 0, (chro_rewards_after["claimable"] - chro_rewards_before["claimable"])
             )
             self.current_stats["pve_game"][self.address]["unclaimed_chro"] = delta
-            self.current_stats["pve_game"]["chro"] += delta
+            self.current_stats["chro"] += delta
         else:
-            self.current_stats["pve_game"][self.address]["unclaimed_chro"] = 0
+            self.current_stats[self.address]["unclaimed_chro"] = 0
 
         self.units_last_used = []
 
