@@ -815,9 +815,11 @@ class PveGame:
                 pve.claimed_chro += chro_rewards_after["claimed"]
 
         if chro_rewards_before and chro_rewards_after:
-            self.current_stats["pve_game"][self.address]["unclaimed_chro"] = max(
+            delta = max(
                 0, (chro_rewards_after["claimable"] - chro_rewards_before["claimable"])
             )
+            self.current_stats["pve_game"][self.address]["unclaimed_chro"] = delta
+            self.current_stats["pve_game"]["chro"] += delta
         else:
             self.current_stats["pve_game"][self.address]["unclaimed_chro"] = 0
 
