@@ -84,7 +84,9 @@ class AccountDb:
                 logger.print_fail("Failed to store db item!")
 
     @staticmethod
-    def add_account(user: str, email: str, discord_handle: str, db_str: str = USER_CONFIGS_DB) -> None:
+    def add_account(
+        user: str, email: str, discord_handle: str, db_str: str = USER_CONFIGS_DB
+    ) -> None:
         with ManagedSession(db_str) as db:
             account = db.query(Account).filter(Account.owner == user).first()
             if account is not None:
@@ -98,7 +100,9 @@ class AccountDb:
             db.add(account)
 
     @staticmethod
-    def add_wallet(user: str, address: str, private_key: str, db_str: str = USER_CONFIGS_DB) -> None:
+    def add_wallet(
+        user: str, address: str, private_key: str, db_str: str = USER_CONFIGS_DB
+    ) -> None:
         with ManagedSession(db_str) as db:
             account = db.query(Account).filter(Account.owner == user).first()
             if account is None:
@@ -117,7 +121,11 @@ class AccountDb:
 
     @staticmethod
     def add_game_config(
-        address: str, game: str, config_type: T.Any, email_updates: bool = True, db_str: str = USER_CONFIGS_DB
+        address: str,
+        game: str,
+        config_type: T.Any,
+        email_updates: bool = True,
+        db_str: str = USER_CONFIGS_DB,
     ) -> None:
         with ManagedSession(db_str) as db:
             wallet = db.query(Wallet).filter(Wallet.address == address).first()

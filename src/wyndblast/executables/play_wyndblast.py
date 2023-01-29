@@ -9,7 +9,7 @@ import traceback
 from twilio.rest import Client
 from yaspin import yaspin
 
-from config_admin import GMAIL, TWILIO_CONFIG
+from config_admin import GMAIL, TWILIO_CONFIG, USER_CONFIGS_DB, STATS_DB
 from config_wyndblast import USERS, USER_GROUPS
 from database.account import AccountDb
 from database.connect import init_database
@@ -94,10 +94,10 @@ def run_bot() -> None:
 
     stages_info, account_info, _, _, _ = get_cache_info(log_dir)
 
-    init_database(log_dir, "wyndblast.db", WyndblastUser)
+    init_database(log_dir, STATS_DB, WyndblastUser)
 
     db_dir = os.path.join(args.log_dir, "p2e")
-    init_database(db_dir, "user_configs.db", Account)
+    init_database(db_dir, USER_CONFIGS_DB, Account)
 
     users = AccountDb.get_configs_for_game("wyndblast")
 

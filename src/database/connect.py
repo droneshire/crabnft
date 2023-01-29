@@ -19,7 +19,6 @@ AccountBase = declarative_base(name="AccountBase")
 GameBase = declarative_base(name="GameBase")
 
 
-
 def init_engine(uri: str, db: str, **kwargs: T.Any) -> Engine:
     global ENGINE
     if db not in ENGINE:
@@ -57,6 +56,7 @@ def ManagedSession(db: str = None):
 
     if db not in THREAD_SAFE_SESSION_FACTORY:
         raise ValueError("Call init_session_factory before using ManagedSession!")
+
     session = THREAD_SAFE_SESSION_FACTORY[db]()
     try:
         yield session

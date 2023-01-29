@@ -69,14 +69,17 @@ NULL_GAME_STATS = {
 
 
 class WyndblastLifetimeGameStats:
-    def __init__(self, user: str, address: str, commission_address: str, token: str, db_str: str = STATS_DB) -> None:
+    def __init__(
+        self, user: str, address: str, commission_address: str, token: str, db_str: str = STATS_DB
+    ) -> None:
+        self.db_str = db_str  # must come first
+
         self.alias = user
         self.address = address
         self._insert_user(user, commission_address, token)
         self._add_dailies_wallet()
         self._add_pve_wallet()
         self.user_id = None
-        self.db_str = db_str
 
         with ManagedSession(self.db_str) as db:
             user = db.query(WyndblastUser).filter(WyndblastUser.user == self.alias).first()
