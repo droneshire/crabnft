@@ -102,6 +102,7 @@ class MechavaxMint(NftCollectionAnalyzerBase):
                 jp_id = None
 
                 if token_id in collection.values():
+                    logger.print_ok_blue(f"Already have {token_id}, skipping...")
                     continue
 
                 for i in range(1, 5):
@@ -115,7 +116,7 @@ class MechavaxMint(NftCollectionAnalyzerBase):
                         break
                     else:
                         logger.print_warn(f"No data for {token_id}")
-                        time.sleep(i * 3.0)
+                        time.sleep(i * 20.0)
                         continue
 
                 if item and "metadata" in item and item["metadata"] is None:
