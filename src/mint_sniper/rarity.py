@@ -224,7 +224,7 @@ class NftCollectionAnalyzerBase:
 
         for k, v in self.CUSTOM_INFO.items():
             if k not in nft_info:
-                logger.print_warn(f"Missing custom info! {token_id}")
+                logger.print_warn(f"Missing custom info {k}! {token_id}")
                 continue
             nft_rarity[k] = nft_info[k]
 

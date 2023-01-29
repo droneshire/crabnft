@@ -11,23 +11,25 @@ collection = {}
 
 JSON_FILE = "/tmp/collection_mechavax.json"
 CSV_FILE = "/tmp/collection_mechavax.csv"
-if os.path.isfile(JSON_FILE):
-    with open(JSON_FILE) as infile:
-        data = json.load(infile)
-    with open(CSV_FILE, "w") as outfile:
-        outfile.write("jp id, token id\n")
-        for k, v in data.items():
-            outfile.write(",".join([str(k), str(v)]) + "\n")
-else:
+
+def get_data(max_id: int) -> None:
+    fails = 0
     try:
-        for token_id in range(COLLECTION_SIZE):
+        for token_id in range(max_id, COLLECTION_SIZE):
+            print(token_id)
+
+            if fails > 40:
+                break
+
             item = j.get_item("0xb68f42c2c805b81dad78d2f07244917431c7f322", token_id)
             if not item:
                 print(f"No data for {token_id}")
+                fails += 1
                 continue
 
             if "metadata" not in item or "tokenId" not in item:
                 print(f"Missing metadata for {token_id}")
+                fails += 1
                 continue
 
             try:
@@ -39,3 +41,17 @@ else:
     finally:
         with open("/tmp/collection_mechavax.json", "w") as outfile:
             json.dump(collection, outfile, indent=4)
+
+data = None
+if os.path.isfile(JSON_FILE):
+    with open(JSON_FILE) as infile:
+        data = json.load(infile)
+if data:
+    get_data(max(data.values()))
+else:
+    get_data(0)
+
+with open(CSV_FILE, "w") as outfile:
+    outfile.write("jp id, token id\n")
+    for k, v in data.items():
+        outfile.write(",".join([str(k), str(v)]) + "\n")
