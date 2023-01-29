@@ -46,31 +46,6 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def setup_log(log_level: str, log_dir: str, id_string: str) -> None:
-    if log_level == "NONE":
-        return
-
-    log_name = (
-        time.strftime("%Y_%m_%d__%H_%M_%S", time.localtime(time.time()))
-        + f"_crabada_{id_string}.log"
-    )
-
-    log_dir = os.path.join(log_dir, "bot")
-
-    if not os.path.isdir(log_dir):
-        os.mkdir(log_dir)
-
-    log_file = os.path.join(log_dir, log_name)
-
-    logging.basicConfig(
-        filename=log_file,
-        level=logging.getLevelName(log_level),
-        format="[%(levelname)s][%(asctime)s][%(name)s] %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-        filemode="w",
-    )
-
-
 def get_users_teams() -> T.Tuple[int, int]:
     total_users = len(USERS.keys())
     total_teams = sum(
@@ -119,7 +94,7 @@ def run_bot() -> None:
         id_string = str(args.groups[0])
     else:
         id_string = "_".join([str(g) for g in args.groups])
-    setup_log(args.log_level, args.log_dir, id_string)
+    logger.setup_log(args.log_level, args.log_dir, id_string)
 
     sms_client = Client(TWILIO_CONFIG["account_sid"], TWILIO_CONFIG["account_auth_token"])
 

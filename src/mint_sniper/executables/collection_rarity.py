@@ -20,29 +20,6 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def setup_log(log_level: str, log_dir: str, id_string: str, subdir: str) -> None:
-    if log_level == "NONE":
-        return
-
-    log_name = (
-        time.strftime("%Y_%m_%d__%H_%M_%S", time.localtime(time.time())) + f"_{id_string}.log"
-    )
-
-    log_dir = os.path.join(log_dir, subdir)
-
-    file_util.make_sure_path_exists(log_dir)
-
-    log_file = os.path.join(log_dir, log_name)
-
-    logging.basicConfig(
-        filename=log_file,
-        level=logging.getLevelName(log_level),
-        format="[%(levelname)s][%(asctime)s][%(name)s] %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-        filemode="w",
-    )
-
-
 def get_mint_stats(collection: str, download_and_parse: bool) -> None:
     class_name = collection_select.Collections(args.collection).value
     class_obj = getattr(sys.modules[inspect.getmodule(collection_select).__name__], class_name)
@@ -71,7 +48,7 @@ def get_mint_stats(collection: str, download_and_parse: bool) -> None:
 if __name__ == "__main__":
     args = parse_args()
 
-    setup_log(
+    logger.setup_log(
         args.log_level,
         args.log_dir,
         "mint_sniper",

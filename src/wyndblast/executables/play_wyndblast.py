@@ -47,31 +47,6 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def setup_log(log_level: str, log_dir: str, id_string: str) -> None:
-    if log_level == "NONE":
-        return
-
-    log_name = (
-        time.strftime("%Y_%m_%d__%H_%M_%S", time.localtime(time.time()))
-        + f"_wyndblast_{id_string}.log"
-    )
-
-    log_dir = os.path.join(log_dir, "bot")
-
-    if not os.path.isdir(log_dir):
-        os.mkdir(log_dir)
-
-    log_file = os.path.join(log_dir, log_name)
-
-    logging.basicConfig(
-        filename=log_file,
-        level=logging.getLevelName(log_level),
-        format="[%(levelname)s][%(asctime)s][%(name)s] %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-        filemode="w",
-    )
-
-
 @yaspin(text="Waiting...")
 def wait(wait_time) -> None:
     time.sleep(wait_time)
@@ -81,7 +56,7 @@ def run_bot() -> None:
     args = parse_args()
 
     log_dir = os.path.join(args.log_dir, "wyndblast")
-    setup_log(args.log_level, log_dir, f"wynd_{'_'.join([str(i) for i in args.groups])}")
+    logger.setup_log(args.log_level, log_dir, f"wynd_{'_'.join([str(i) for i in args.groups])}")
 
     encrypt_password = ""
     email_accounts = []
