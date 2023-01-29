@@ -1,3 +1,4 @@
+import json
 import os
 import time
 import typing as T
@@ -34,6 +35,9 @@ class MechavaxWeb3Client(AvalancheCWeb3Client):
             return ""
 
     def get_mech_multiplier(self, token_id: int) -> int:
+        if token_id < 0:
+            return -1
+
         try:
             return self.contract.functions.getMechEmissionMultiple(token_id).call()
         except Exception as e:
@@ -79,6 +83,57 @@ class MechavaxMint(NftCollectionAnalyzerBase):
 
         self.collection_uri = self.w3.get_base_uri()
         self.jp_api = JoePegsClient()
+        self.collection_map = self.map_tokens_to_name()
+
+    def map_tokens_to_name(self) -> T.Dict[int, int]:
+        data = {}
+        collection_dir = os.path.dirname(self.files["rarity"])
+        filename = os.path.join(collection_dir, "token_to_name_map.json")
+        if os.path.isfile(filename):
+            with open(filename) as infile:
+                data = json.load(infile)
+        return self.get_data(data, filename)
+
+    def get_data(self, collection: T.Dict[int, int], filename: str) -> T.Dict[int, int]:
+        fails = 0
+        try:
+            for token_id in range(self.MAX_TOTAL_SUPPLY):
+
+                jp_id = None
+
+                if token_id in collection.values():
+                    continue
+
+                for i in range(1, 5):
+                    item = self.jp_api.get_item(self.CONTRACT_ADDRESS, token_id)
+
+                    if "detail" in item:
+                        logger.print_warn(f"No data for {token_id}")
+                        break
+
+                    if item and "metadata" in item:
+                        break
+                    else:
+                        logger.print_warn(f"No data for {token_id}")
+                        time.sleep(i * 3.0)
+                        continue
+
+                if item and "metadata" in item and item["metadata"] is None:
+                    continue
+
+                try:
+                    jp_id = os.path.basename(item["metadata"]["tokenUri"]).split(".")[0]
+                except:
+                    logger.print_fail(f"Failed to parse ids {item}")
+
+                if jp_id:
+                    logger.print_normal(f"Found {token_id}")
+                    collection[jp_id] = token_id
+        finally:
+            with open(filename, "w") as outfile:
+                json.dump(collection, outfile, indent=4)
+
+        return collection
 
     def get_token_uri(self, token_id: int) -> str:
         """
@@ -87,14 +142,7 @@ class MechavaxMint(NftCollectionAnalyzerBase):
         return f"{self.collection_uri}{token_id}.json"
 
     def custom_nft_info(self, token_id: int) -> T.Dict[str, T.Any]:
-        self.CUSTOM_INFO["emission_multiple"] = self.w3.get_mech_multiplier(token_id)
-        self.CUSTOM_INFO["token_id"] = -1
-
-        item = self.jp_api.get_item(self.CONTRACT_ADDRESS, token_id)
-        if item and "tokenId" in item:
-            self.CUSTOM_INFO["token_id"] = int(item.get("tokenId", -1))
-        else:
-            logger.print_warn(f"No data for {token_id}:\n{item}")
-        time.sleep(0.25)
-
+        real_token_id = self.collection_map.get(token_id, -1)
+        self.CUSTOM_INFO["emission_multiple"] = self.w3.get_mech_multiplier(real_token_id)
+        self.CUSTOM_INFO["token_id"] = real_token_id
         return self.CUSTOM_INFO
