@@ -2,7 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
-src/mint_sniper/collections/*
+src/mint_sniper/data/*
 # C extensions
 *.so
 
