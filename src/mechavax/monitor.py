@@ -171,7 +171,7 @@ class MechMonitor:
             for address, data in holders.items():
                 address = Web3.toChecksumAddress(address)
                 owner = self.address_mapping.get(address, address)
-                text = f"\t{owner}:"
+                text = f"\t**{owner}:**"
                 for nft_type, tokens in data.items():
                     text += f" {nft_type}s: {len(tokens)}"
                 message += text + "\n"
