@@ -9,6 +9,7 @@ from web3 import Web3
 
 from config_admin import ADMIN_ADDRESS
 from joepegs.joepegs_api import JoePegsClient
+from mechavax.mechavax_web3client import MechContractWeb3Client
 from mint_sniper.rarity import NftCollectionAnalyzerBase
 from utils import logger
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
@@ -26,23 +27,6 @@ class MechavaxWeb3Client(AvalancheCWeb3Client):
     module_dir = os.path.dirname(this_dir)
     abi_dir = os.path.join(os.path.dirname(module_dir), "web3_utils", "abi", "abi-mechavax.json")
     abi = Web3Client._get_contract_abi_from_file(abi_dir)
-
-    def get_base_uri(self) -> HexStr:
-        try:
-            return self.contract.functions.BASE_URI().call()
-        except Exception as e:
-            logger.print_fail(f"{e}")
-            return ""
-
-    def get_mech_multiplier(self, token_id: int) -> int:
-        if token_id < 0:
-            return -1
-
-        try:
-            return self.contract.functions.getMechEmissionMultiple(token_id).call()
-        except Exception as e:
-            logger.print_fail(f"{e}")
-            return -1
 
 
 class MechavaxMint(NftCollectionAnalyzerBase):
@@ -71,10 +55,10 @@ class MechavaxMint(NftCollectionAnalyzerBase):
 
     def __init__(self, force: bool = False):
         super().__init__("mechavax", force, try_all_mints=True)
-        self.w3: MechavaxWeb3Client = T.cast(
-            MechavaxWeb3Client,
+        self.w3: MechContractWeb3Client = T.cast(
+            MechContractWeb3Client,
             (
-                MechavaxWeb3Client()
+                MechContractWeb3Client()
                 .set_credentials(ADMIN_ADDRESS, "")
                 .set_node_uri(AvalancheCWeb3Client.NODE_URL)
                 .set_contract()

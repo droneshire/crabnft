@@ -37,6 +37,23 @@ class MechContractWeb3Client(AvalancheCWeb3Client):
     abi_dir = os.path.join(os.path.dirname(this_dir), "web3_utils", "abi", "abi-mechavax.json")
     abi = Web3Client._get_contract_abi_from_file(abi_dir)
 
+    def get_base_uri(self) -> HexStr:
+        try:
+            return self.contract.functions.BASE_URI().call()
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return ""
+
+    def get_mech_multiplier(self, token_id: int) -> int:
+        if token_id < 0:
+            return -1
+
+        try:
+            return self.contract.functions.getMechEmissionMultiple(token_id).call()
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return -1
+
     def get_minted_shk_mechs(self) -> int:
         try:
             return self.contract.functions.numMintedFromShirak().call()

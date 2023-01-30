@@ -17,7 +17,7 @@ class PumpskinSalesBot(JoePegsSalesBot):
     ):
         super().__init__(bot_name, collection_color, collections, log_dir)
 
-    def custom_filter_for_item(self) -> bool:
+    def custom_filter_for_item(self, price: float, item: T.Dict[T.Any, T.Any]) -> bool:
         pass
 
     def add_custom_embed_fields(self, embed: discord.Embed, embed_type: int) -> discord.Embed:

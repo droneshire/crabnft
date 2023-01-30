@@ -62,7 +62,7 @@ class JoePegsSalesBot:
                     logger.print_ok(f"Found new collection {collection}")
                     self.posted_items[collection] = {"sold": [], "listed": []}
 
-    def custom_filter_for_item(self) -> bool:
+    def custom_filter_for_item(self, price: float, item: T.Dict[T.Any, T.Any]) -> bool:
         # Override this in any derived class to provide a custom filter for
         # a collection and associated floor
         return False
@@ -114,9 +114,10 @@ class JoePegsSalesBot:
                     continue
                 list_price_wei = int(listing["currentAsk"]["price"])
                 price = wei_to_token(list_price_wei)
-                # TODO: filter based on previous floors
-                if price > floors[collection]:
+
+                if not self.custom_filter_for_item(price, listing):
                     continue
+
                 logger.print_normal(f"Found new listing of {listing['tokenId']}")
                 snipe_listings.append(listing)
         return snipe_listings
