@@ -38,43 +38,43 @@ class MechContractWeb3Client(AvalancheCWeb3Client):
     abi = Web3Client._get_contract_abi_from_file(abi_dir)
 
     def get_minted_shk_mechs(self) -> int:
-        # try:
-        return self.contract.functions.numMintedFromShirak().call()
-        # except Exception as e:
-        #     logger.print_fail(f"{e}")
-        #     return 0
+        try:
+            return self.contract.functions.numMintedFromShirak().call()
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return 0
 
     def get_num_mechs(self, address: Address) -> int:
         address = Web3.toChecksumAddress(address)
-        # try:
-        data: T.List[T.Any] = self.contract.functions.getUserData(address).call()
-        return data[0]
-        # except Exception as e:
-        #     logger.print_fail(f"{e}")
-        #     return 0
+        try:
+            data: T.List[T.Any] = self.contract.functions.getUserData(address).call()
+            return data[0]
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return 0
 
     def get_emmissions_multiplier(self, address: Address) -> float:
         address = Web3.toChecksumAddress(address)
-        # try:
-        data: T.List[T.Any] = self.contract.functions.getUserData(address).call()
-        return data[1] / 10.0
-        # except Exception as e:
-        #     logger.print_fail(f"{e}")
-        #     return 0.0
+        try:
+            data: T.List[T.Any] = self.contract.functions.getUserData(address).call()
+            return data[1] / 10.0
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return 0.0
 
     def get_deposited_shk(self, address: Address) -> float:
         address = Web3.toChecksumAddress(address)
-        # try:
-        shirak: TokenWei = self.contract.functions.shirakBalance(address).call()
-        return wei_to_token(shirak)
-        # except Exception as e:
-        #     logger.print_fail(f"{e}")
-        #     return 0
+        try:
+            shirak: TokenWei = self.contract.functions.shirakBalance(address).call()
+            return wei_to_token(shirak)
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return 0
 
     def get_min_mint_bid(self) -> float:
-        # try:
-        price: TokenWei = self.contract.functions.mechPrice().call()
-        return wei_to_token(price)
-        # except Exception as e:
-        #     logger.print_fail(f"{e}")
-        #     return 0.0
+        try:
+            price: TokenWei = self.contract.functions.mechPrice().call()
+            return wei_to_token(price)
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return 0.0
