@@ -45,7 +45,6 @@ class MechMonitor:
         while True:
             logger.print_normal("Checking for events...")
             for event_filter, handler in self.event_filters.items():
-                print(type(event_filter))
                 for event in event_filter.get_new_entries():
                     handler(event)
             await asyncio.sleep(interval)
@@ -58,12 +57,14 @@ class MechMonitor:
             shk_balance = self.w3.get_deposited_shk(self.address)
             min_mint_shk = self.w3.get_min_mint_bid()
 
-            message = "**Cashflow Cartel Data**\n"
-            message += f"Mechs: {our_mechs}\n"
-            message += f"SHK Deposited: {shk_balance:.2f}\m"
-            message += f"Multiplier: {multiplier:.2f}\m"
+            message = "\U0001F47E\U0001F47E**Cashflow Cartel Data**\U0001F47E\U0001F47E\n\n"
+            message += f"**Mechs**: `{our_mechs}`\n"
+            message += f"**SHK Deposited**: `{shk_balance:.2f}`\n"
+            message += f"**Multiplier**: `{multiplier:.2f}`\n"
+            message += f"**Current Mint Price**: `{min_mint_shk:.2f} $SHK`\n"
+            message += f"**SHK Minted Mechs**: `{num_minted_mechs_from_shk:.2f}`\n"
             logger.print_ok_blue(message)
-
+            self.webhook.send(message)
             await asyncio.sleep(interval)
 
     def run(self) -> None:
