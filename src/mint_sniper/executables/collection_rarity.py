@@ -35,10 +35,8 @@ def get_mint_stats(collection: str, download_and_parse: bool) -> None:
         except ValueError:
             download_and_parse = True
 
-    if download_and_parse:
-        logger.print_normal(f"Processing data from web source...")
-        mint_collection.save_nft_collection_attributes()
-        rarity = mint_collection.get_full_collection_rarity(save_to_disk=True)
+    mint_collection.save_nft_collection_attributes(download_and_parse)
+    rarity = mint_collection.get_full_collection_rarity(save_to_disk=True)
 
     logger.print_ok_arrow(f"Done!")
 
@@ -51,7 +49,6 @@ if __name__ == "__main__":
     logger.setup_log(
         args.log_level,
         args.log_dir,
-        "mint_sniper",
         "sniper",
     )
 
