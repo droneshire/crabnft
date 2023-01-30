@@ -4,13 +4,13 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.schema import Column
 from sqlalchemy.sql import func
 
-from database.connect import Base
+from database.connect import GameBase
 from wyndblast.database.models.commission import CommissionSchema
 from wyndblast.database.models.daily_activities import DailyActivitiesSchema
 from wyndblast.database.models.pve import PveSchema
 
 
-class WyndblastUser(Base):  # type: ignore
+class WyndblastUser(GameBase):  # type: ignore
     __tablename__ = "WyndblastUser"
 
     id = Column(types.Integer, primary_key=True)

@@ -4,10 +4,10 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.schema import Column
 from sqlalchemy.sql import func
 
-from database.connect import Base
+from database.connect import GameBase
 
 
-class Level(Base):  # type: ignore
+class Level(GameBase):  # type: ignore
     __tablename__ = "Level"
 
     id = Column(types.Integer, primary_key=True)
@@ -28,7 +28,7 @@ class LevelSchema(Schema):  # type: ignore
         return Level(**data)
 
 
-class Pve(Base):  # type: ignore
+class Pve(GameBase):  # type: ignore
     __tablename__ = "Pve"
 
     id = Column(types.Integer, primary_key=True)

@@ -83,15 +83,19 @@ class MechavaxMint(NftCollectionAnalyzerBase):
 
         self.collection_uri = self.w3.get_base_uri()
         self.jp_api = JoePegsClient()
-        self.collection_map = self.map_tokens_to_name()
+        self.collection_map = self.map_tokens_to_name(use_cache=not force)
 
-    def map_tokens_to_name(self) -> T.Dict[int, int]:
+    def map_tokens_to_name(self, use_cache: bool = False) -> T.Dict[int, int]:
         data = {}
         collection_dir = os.path.dirname(self.files["rarity"])
         filename = os.path.join(collection_dir, "token_to_name_map.json")
         if os.path.isfile(filename):
             with open(filename) as infile:
                 data = json.load(infile)
+
+        if use_cache:
+            return data
+
         return self.get_data(data, filename)
 
     def get_data(self, collection: T.Dict[int, int], filename: str) -> T.Dict[int, int]:
@@ -143,7 +147,7 @@ class MechavaxMint(NftCollectionAnalyzerBase):
         return f"{self.collection_uri}{token_id}.json"
 
     def custom_nft_info(self, token_id: int) -> T.Dict[str, T.Any]:
-        real_token_id = self.collection_map.get(token_id, -1)
+        real_token_id = self.collection_map.get(str(token_id), -1)
         self.CUSTOM_INFO["emission_multiple"] = self.w3.get_mech_multiplier(real_token_id)
         self.CUSTOM_INFO["token_id"] = real_token_id
         return self.CUSTOM_INFO

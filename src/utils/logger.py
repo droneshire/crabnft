@@ -1,6 +1,10 @@
+from __future__ import annotations
+
+import collections
 import logging
 import os
 import sys
+import time
 import typing as T
 
 from utils.file_util import make_sure_path_exists
@@ -28,19 +32,19 @@ class MultiHandler(logging.Handler):
     a global lock and it'd be OK to just have a per-thread or per-file lock.
     """
 
-    def __init__(self, dirname, block_list_prefixes: T.List[str] = []):
+    def __init__(self, dirname, block_list_prefixes: list[str] | None = None):
         super().__init__()
-        self.files: T.Dict[str, T.TextIO] = {}
+        self.files: dict[str, T.TextIO] = {}
         self.dirname = dirname
-        self.block_list_prefixes = block_list_prefixes
+        self.block_list_prefixes = [] if block_list_prefixes is None else block_list_prefixes
         if not os.access(dirname, os.W_OK):
             raise Exception(f"Directory {dirname} not writeable")
 
     def flush(self):
         self.acquire()
         try:
-            for fp in self.files.values():
-                fp.flush()
+            for file_pointer in self.files.values():
+                file_pointer.flush()
         finally:
             self.release()
 
@@ -50,10 +54,12 @@ class MultiHandler(logging.Handler):
         try:
             if key in self.files:
                 return self.files[key]
-            else:
-                fp = open(os.path.join(self.dirname, f"{key}.log"), "a")
-                self.files[key] = fp
-                return fp
+
+            file_pointer = open(  # pylint: disable=consider-using-with
+                os.path.join(self.dirname, f"{key}.log"), "a", encoding="utf-8"
+            )
+            self.files[key] = file_pointer
+            return file_pointer
         finally:
             self.release()
 
@@ -61,15 +67,38 @@ class MultiHandler(logging.Handler):
         # No lock here; following code for StreamHandler and FileHandler
         try:
             name = record.threadName
-            if any([n for n in self.block_list_prefixes if name.startswith(n)]):
+            if any(  # pylint: disable=use-a-generator
+                [n for n in self.block_list_prefixes if name.startswith(n)]
+            ):
                 return
-            fp = self._get_or_open(name)
+            file_pointer = self._get_or_open(name)
             msg = self.format(record)
-            fp.write(f"{msg.encode('utf-8')}\n")
+            file_pointer.write(f"{msg.encode('utf-8')}\n")
         except (KeyboardInterrupt, SystemExit):
             raise
-        except:
+        except:  # pylint: disable=bare-except
             self.handleError(record)
+
+
+def setup_log(log_level: str, log_dir: str, id_string: str) -> None:
+    if log_level == "NONE":
+        return
+
+    log_name = (
+        time.strftime("%Y_%m_%d__%H_%M_%S", time.localtime(time.time())) + f"_{id_string}.log"
+    )
+
+    log_file = os.path.join(log_dir, log_name)
+
+    make_sure_path_exists(log_dir)
+
+    logging.basicConfig(
+        filename=log_file,
+        level=logging.getLevelName(log_level),
+        format="[%(levelname)s][%(asctime)s][%(name)s] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        filemode="w",
+    )
 
 
 def get_lifetime_game_stats(log_dir: str, user: str) -> str:
@@ -96,7 +125,7 @@ def make_formatter_printer(
     log_level: int = logging.INFO,
     prefix: str = "",
     return_formatter: bool = False,
-) -> T.Callable:
+) -> collections.abc.Callable:
     game_logger = logging.getLogger(__name__)
 
     def formatter(message, *args, **kwargs):
@@ -129,8 +158,8 @@ def make_formatter_printer(
 
     if return_formatter:
         return formatter
-    else:
-        return printer
+
+    return printer
 
 
 print_ok_blue = make_formatter_printer(Colors.OKBLUE)

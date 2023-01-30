@@ -14,7 +14,6 @@ CONFIG_TEMPLATE = {
             "should_reinforce": True,
             "authorization": "",
         },
-        max_gas_price_gwei=SMALL_TEAM_GAS_LIMIT,
         commission_percent_per_mine={
             "0xBe8CFD634Ab8D91BA391D3A22D3E1D452c0A43cb": 10.0,
         },

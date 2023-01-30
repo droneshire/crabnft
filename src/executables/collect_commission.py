@@ -67,29 +67,6 @@ def send_sms_message(encrypt_password: str, to_email: str, to_number: str, messa
         logger.print_warn(f"Failed to send email message to {to_email}")
 
 
-def setup_log(log_level: str, log_dir: str) -> None:
-    if log_level == "NONE":
-        return
-
-    log_name = (
-        time.strftime("%Y_%m_%d__%H_%M_%S", time.localtime(time.time())) + "_tus_transactions.log"
-    )
-
-    log_dir = os.path.join(log_dir, "collections")
-    if not os.path.isdir(log_dir):
-        os.mkdir(log_dir)
-
-    log_file = os.path.join(log_dir, log_name)
-
-    logging.basicConfig(
-        filename=log_file,
-        level=logging.getLevelName(log_level),
-        format="[%(levelname)s][%(asctime)s][%(name)s] %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-        filemode="w",
-    )
-
-
 def send_collection_notice(
     from_users: T.Dict[str, T.Any],
     log_dir: str,
@@ -351,7 +328,7 @@ def main() -> None:
     log_dir = logger.get_logging_dir(args.game.lower())
     assert os.path.isdir(log_dir), "invalid log directory!"
 
-    setup_log(args.log_level, log_dir)
+    logger.setup_log(args.log_level, log_dir)
 
     if isinstance(args.from_users, str):
         from_users = [args.from_users]

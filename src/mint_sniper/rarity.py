@@ -102,9 +102,18 @@ class NftCollectionAnalyzerBase:
     def custom_nft_info(self, token_id: int) -> T.Dict[str, T.Any]:
         raise NotImplementedError
 
-    def save_nft_collection_attributes(self) -> None:
-        collection_info = {}
-        collection_stats = copy.deepcopy(self.ATTRIBUTES)
+    def save_nft_collection_attributes(self, download: bool = True) -> None:
+
+        if download:
+            logger.print_normal(f"Processing data from web source...")
+            collection_info = {}
+            collection_stats = copy.deepcopy(self.ATTRIBUTES)
+        else:
+            with open(self.files["attributes"], "r") as infile:
+                collection_stats = json.load(infile)
+
+            with open(self.files["collection"], "r") as infile:
+                collection_info = json.load(infile)
 
         collection_urls = [
             self.get_token_uri(token_id) for token_id in range(self.MAX_TOTAL_SUPPLY)
@@ -114,14 +123,23 @@ class NftCollectionAnalyzerBase:
 
         assert self.MAX_TOTAL_SUPPLY % self.MAX_PER_BATCH == 0, "Batch amount mismatch!"
 
+        collection_info_list = list(collection_info.values())
+
         for index in range(int(self.MAX_TOTAL_SUPPLY / self.MAX_PER_BATCH)):
             did_succeed = False
             offset = index * self.MAX_PER_BATCH
             logger.print_normal(f"Range: {offset}-{offset + self.MAX_PER_BATCH}")
             for i in range(1, 6):
+                if download:
+                    results = self._get_collection_info(
+                        collection_urls[offset : offset + self.MAX_PER_BATCH], parallelize=True
+                    )
+                else:
+                    results = collection_info_list[offset : offset + self.MAX_PER_BATCH]
+
                 did_succeed = (
                     self.get_nft_attributes(
-                        collection_urls[offset : offset + self.MAX_PER_BATCH],
+                        results,
                         collection_stats,
                         collection_info,
                     )
@@ -151,12 +169,10 @@ class NftCollectionAnalyzerBase:
 
     def get_nft_attributes(
         self,
-        collection_urls: T.List[str],
+        results: T.List[T.Dict[T.Any, T.Any]],
         collection_stats: T.Dict[str, T.Any],
         collection_info: T.Dict[T.Any, T.Any],
     ) -> bool:
-        results = self._get_collection_info(collection_urls, parallelize=True)
-
         for nft_info in results:
             if not nft_info:
                 logger.print_warn(f"Skipping empty result...")

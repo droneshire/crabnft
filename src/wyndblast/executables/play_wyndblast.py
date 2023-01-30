@@ -5,13 +5,15 @@ import logging
 import os
 import time
 import traceback
-from sqlalchemy_utils import database_exists
+
 from twilio.rest import Client
 from yaspin import yaspin
 
-from config_admin import GMAIL, TWILIO_CONFIG
+from config_admin import GMAIL, TWILIO_CONFIG, USER_CONFIGS_DB, STATS_DB
 from config_wyndblast import USERS, USER_GROUPS
-from database.connect import init_engine, init_session_factory
+from database.account import AccountDb
+from database.connect import init_database
+from database.models.account import Account
 from health_monitor.health_monitor import HealthMonitor
 from utils import discord, file_util, logger
 from utils.email import Email, get_email_accounts_from_password
@@ -28,7 +30,7 @@ TIME_BETWEEN_RUNS = 5.0
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    log_dir = logger.get_logging_dir("wyndblast")
+    log_dir = logger.get_logging_dir("")
     parser.add_argument("--dry-run", action="store_true", help="Dry run")
     parser.add_argument("--human-mode", action="store_true", help="Human mode")
     parser.add_argument("--ignore-utc", action="store_true", help="Ignore the utc time hold")
@@ -45,45 +47,6 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def setup_log(log_level: str, log_dir: str, id_string: str) -> None:
-    if log_level == "NONE":
-        return
-
-    log_name = (
-        time.strftime("%Y_%m_%d__%H_%M_%S", time.localtime(time.time()))
-        + f"_wyndblast_{id_string}.log"
-    )
-
-    log_dir = os.path.join(log_dir, "bot")
-
-    if not os.path.isdir(log_dir):
-        os.mkdir(log_dir)
-
-    log_file = os.path.join(log_dir, log_name)
-
-    logging.basicConfig(
-        filename=log_file,
-        level=logging.getLevelName(log_level),
-        format="[%(levelname)s][%(asctime)s][%(name)s] %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-        filemode="w",
-    )
-
-
-def init_database(log_dir: str) -> None:
-    db_file = os.path.join(log_dir, "database", "wyndblast.db")
-    sql_db = "sqlite:///" + db_file
-
-    file_util.make_sure_path_exists(db_file)
-    engine = init_engine(sql_db)
-    if database_exists(engine.url):
-        logger.print_bold(f"Found existing database")
-    else:
-        logger.print_ok_blue(f"Creating new database!")
-        WyndblastUser.metadata.create_all(engine)
-    init_session_factory()
-
-
 @yaspin(text="Waiting...")
 def wait(wait_time) -> None:
     time.sleep(wait_time)
@@ -92,7 +55,8 @@ def wait(wait_time) -> None:
 def run_bot() -> None:
     args = parse_args()
 
-    setup_log(args.log_level, args.log_dir, f"wynd_{'_'.join([str(i) for i in args.groups])}")
+    log_dir = os.path.join(args.log_dir, "wyndblast")
+    logger.setup_log(args.log_level, log_dir, f"wynd_{'_'.join([str(i) for i in args.groups])}")
 
     encrypt_password = ""
     email_accounts = []
@@ -103,16 +67,21 @@ def run_bot() -> None:
             encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
         email_accounts = get_email_accounts_from_password(encrypt_password, GMAIL)
 
-    stages_info, account_info, _, _, _ = get_cache_info(args.log_dir)
+    stages_info, account_info, _, _, _ = get_cache_info(log_dir)
 
-    init_database(args.log_dir)
+    init_database(log_dir, STATS_DB, WyndblastUser)
+
+    db_dir = os.path.join(args.log_dir, "p2e")
+    init_database(db_dir, USER_CONFIGS_DB, Account)
+
+    users = AccountDb.get_configs_for_game("wyndblast")
 
     bots = []
     for user, config in USERS.items():
         if config["group"] not in [int(i) for i in args.groups]:
             logger.print_warn(f"Skipping {user} in group {config['group']}...")
             if args.clean_non_group_user_stats:
-                clean_up_stats_for_user(args.log_dir, user)
+                clean_up_stats_for_user(log_dir, user)
             continue
 
         private_key = decrypt_secret(encrypt_password, config["private_key"])
@@ -123,7 +92,7 @@ def run_bot() -> None:
             config,
             email_accounts,
             encrypt_password,
-            args.log_dir,
+            log_dir,
             stages_info,
             account_info,
             human_mode=args.human_mode,
