@@ -62,6 +62,14 @@ class MechContractWeb3Client(AvalancheCWeb3Client):
             logger.print_fail(f"{e}")
             return 0.0
 
+    def get_user_emmissions_multiplier(self, address: Address) -> float:
+        address = Web3.toChecksumAddress(address)
+        try:
+            return self.contract.functions.getUserEmissionMultiple(address).call()
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return 0.0
+
     def get_deposited_shk(self, address: Address) -> float:
         address = Web3.toChecksumAddress(address)
         try:
