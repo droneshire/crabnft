@@ -109,7 +109,9 @@ class JoePegsSalesBot:
         snipe_listings = []
         for collection, listings in new_listings.items():
             for listing in listings:
-                if listing["tokenId"] in self.posted_items[listing["collection"]]["listed"]:
+                if listing.get("tokenId", "UNKNOWN") in self.posted_items.get(
+                    listing.get("collection", ""), {}
+                ).get("listed", ""):
                     logger.print_normal(f"Skipping {listing['tokenId']} since already posted...")
                     continue
                 list_price_wei = int(listing["currentAsk"]["price"])
@@ -128,7 +130,7 @@ class JoePegsSalesBot:
         collection_name = listing["collectionName"]
         token_id = listing["tokenId"]
         name = listing["metadata"]["name"] if listing["metadata"]["name"] else token_id
-        sale_name_url = f"[{name}]({JOEPEGS_ITEM_URL.format(sale['collection'], token_id)})"
+        sale_name_url = f"[{name}]({JOEPEGS_ITEM_URL.format(listing['collection'], token_id)})"
         embed = discord.Embed(
             title=f"{collection_name} Listing",
             description=f"New snipe listing on JOEPEGS - {sale_name_url}\n",
