@@ -114,6 +114,10 @@ async def guild_stats_command(interaction: discord.Interaction) -> None:
 
     holders = await SnowtraceApi().get_erc721_token_transfers(GUILD_WALLET_ADDRESS)
 
+    if not holders:
+        await interaction.followup.send("Could not obtain data. Try again later...")
+        return
+
     body = []
     totals = {"MECH": 0, "MARM": 0}
 
@@ -137,8 +141,8 @@ async def guild_stats_command(interaction: discord.Interaction) -> None:
     row.append(f"{MINT_ADDRESS[:5]}...{MINT_ADDRESS[-4:]}")
     owner = GUILD_WALLET_MAPPING.get(MINT_ADDRESS, "")
     row.append(owner)
-    marms = len(holders[MINT_ADDRESS].get("MARM", []))
-    mechs = len(holders[MINT_ADDRESS].get("MECH", []))
+    marms = len(holders.get(MINT_ADDRESS, {}).get("MARM", []))
+    mechs = len(holders.get(MINT_ADDRESS, {}).get("MECH", []))
     row.append(mechs)
     row.append(marms)
     totals["MECH"] += mechs
