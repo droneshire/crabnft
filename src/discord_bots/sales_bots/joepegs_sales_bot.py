@@ -122,14 +122,16 @@ class JoePegsSalesBot:
                 snipe_listings.append(listing)
         return snipe_listings
 
-    def _get_listing_embed(self, listing: T.Dict[T.Any, T.Any]) -> discord.Embed:
+    def _get_listing_embed(
+        self, listing: T.Dict[T.Any, T.Any], collection_floor_avax: float
+    ) -> discord.Embed:
         collection_name = listing["collectionName"]
         token_id = listing["tokenId"]
         name = listing["metadata"]["name"] if listing["metadata"]["name"] else token_id
         sale_name_url = f"[{name}]({JOEPEGS_URL.format(listing['collection']) + token_id})"
         embed = discord.Embed(
             title=f"{collection_name} Listing",
-            description=f"New listing on JOEPEGS - {sale_name_url} below floor\n",
+            description=f"New snipe listing on JOEPEGS - {sale_name_url}\n",
             color=self.collection_color.value,
         )
         price_wei = int(listing["currentAsk"]["price"])
@@ -138,7 +140,7 @@ class JoePegsSalesBot:
         embed.add_field(name=f"\U0001F4B0 Price", value=f"{price_avax:.2f} AVAX", inline=True)
         embed.set_image(url=listing["metadata"]["image"])
 
-        return embed
+        return self.add_custom_embed_fields(embed, EmbedType.Listing, listing)
 
     def _get_sales_embed(self, sale: Activity, collection_floor_avax: float) -> discord.Embed:
         collection_name = sale["collectionName"]
@@ -182,7 +184,7 @@ class JoePegsSalesBot:
         purchase_date = datetime.datetime.fromtimestamp(timestamp)
         purchase_date_string = purchase_date.strftime("%d/%b/%Y %H:%M:%S")
         embed.set_footer(text=f"Sold on {purchase_date_string} UTC")
-        return embed
+        return self.add_custom_embed_fields(embed, EmbedType.Sales, sale)
 
     def get_sales_embeds(self) -> T.List[discord.Embed]:
         sales = self._get_recent_sales()
@@ -217,8 +219,9 @@ class JoePegsSalesBot:
 
         embeds = []
         for listing in self._get_recent_discount_listings(floors):
-            self.posted_items[listing["collection"]]["listed"].append(listing["tokenId"])
-            embed = self._get_sales_embed(listing)
+            collection_address = listing["collection"]
+            self.posted_items[collection_address]["listed"].append(listing["tokenId"])
+            embed = self._get_listing_embed(listing, floors[collection_address])
             embeds.append(embed)
 
         with open(self.database_file, "w") as outfile:

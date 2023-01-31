@@ -20,5 +20,7 @@ class PeonSalesBot(JoePegsSalesBot):
     def custom_filter_for_item(self, price: float, item: T.Dict[T.Any, T.Any]) -> bool:
         pass
 
-    def add_custom_embed_fields(self, embed: discord.Embed, embed_type: int) -> discord.Embed:
+    def add_custom_embed_fields(
+        self, embed: discord.Embed, embed_type: int, item: T.Dict[T.Any, T.Any]
+    ) -> discord.Embed:
         pass
