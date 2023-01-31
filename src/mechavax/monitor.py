@@ -18,7 +18,7 @@ from web3_utils.helpers import process_w3_results
 
 class MechMonitor:
     MONITOR_INTERVAL = 5.0
-    MINT_BOT_INTERVAL = 60.0 * 10.0
+    MINT_BOT_INTERVAL = 60.0 * 5.0
     COOLDOWN_AFTER_LAST_MINT = 60.0 * 60.0 * 5.0
     SHK_SAVINGS_PERCENT = 33.0
 
@@ -101,15 +101,22 @@ class MechMonitor:
 
     def mech_minted_handler(self, event: web3.datastructures.AttributeDict) -> None:
         event_data = json.loads(Web3.toJSON(event))
+        self.last_time_mech_minted = time.time()
         try:
+            tx_hash = event_data["transactionHash"]
             user = event_data["args"]["user"]
             token_id = event_data["args"]["mechId"]
+            price_wei = event_data["args"]["price"]
+            price = wei_to_token(price_wei)
         except:
             logger.print_warn(f"Failed to process MECH minted event")
             return
 
-        logger.print_ok_blue(f"\U0001F916 MECH minted event: `{user}`, ID: `{token_id}`")
-        self.webhook.send(f"\U0001F916 MECH minted event: `{user}`, ID: `{token_id}`")
+        self.mint_cost.append(price)
+        explorer_link = f"Explorer: https://snowtrace.io/tx/{tx_hash}"
+        message = f"\U0001F916 New MECH Mint Alert!\n\tMech ID: {token_id}\n\rMinted Price: `{price:.2f} $SHK`\n\t{explorer_link}"
+        logger.print_ok_blue(message)
+        self.webhook.send(message)
 
     def arms_bonded_handler(self, event: web3.datastructures.AttributeDict) -> None:
         event_data = json.loads(Web3.toJSON(event))
@@ -154,10 +161,6 @@ class MechMonitor:
             price = wei_to_token(price_wei)
             if transaction["address"] == self.w3_arm.contract_address:
                 mint_item = "MARM"
-            elif transaction["address"] == self.w3_mech.contract_address:
-                mint_item = "MECH"
-                self.last_time_mech_minted = time.time()
-                self.mint_cost.append(price)
             else:
                 logger.print_warn(f"Non-mint shirak event...")
                 return
