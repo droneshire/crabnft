@@ -66,7 +66,7 @@ async def get_last_mint_command(interaction: discord.Interaction) -> None:
     events = []
     for i in range(500):
         events.extend(
-            self.w3_mech.contract.events.MechPurchased.getLogs(
+            w3_mech.contract.events.MechPurchased.getLogs(
                 fromBlock=latest_block - 2048, toBlock=latest_block
             )
         )
