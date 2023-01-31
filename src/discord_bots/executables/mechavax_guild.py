@@ -63,9 +63,20 @@ async def get_last_mint_command(interaction: discord.Interaction) -> None:
     )
 
     latest_block = w3_mech.w3.eth.block_number
-    events = w3_mech.contract.events.MechPurchased.getLogs(
-        fromBlock=latest_block - 2048, toBlock=latest_block
-    )
+    events = []
+    for i in range(500):
+        events.extend(
+            self.w3_mech.contract.events.MechPurchased.getLogs(
+                fromBlock=latest_block - 2048, toBlock=latest_block
+            )
+        )
+        if len(events) > 0:
+            break
+
+        latest_block -= 2048
+        if latest_block < 0:
+            break
+
     data = json.dumps(Web3.toJSON(events))
 
     price = 0.0

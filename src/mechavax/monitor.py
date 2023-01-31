@@ -52,9 +52,21 @@ class MechMonitor:
         )
 
         latest_block = self.w3_mech.w3.eth.block_number
-        events = self.w3_mech.contract.events.MechPurchased.getLogs(
-            fromBlock=latest_block - 2048, toBlock=latest_block
-        )
+
+        events = []
+        for i in range(500):
+            events.extend(
+                self.w3_mech.contract.events.MechPurchased.getLogs(
+                    fromBlock=latest_block - 2048, toBlock=latest_block
+                )
+            )
+            if len(events) > 0:
+                break
+
+            latest_block -= 2048
+            if latest_block < 0:
+                break
+
         data = json.dumps(Web3.toJSON(events))
         latest_event = 0
         for event in events:
