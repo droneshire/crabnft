@@ -19,7 +19,7 @@ from web3_utils.helpers import process_w3_results
 class MechMonitor:
     MONITOR_INTERVAL = 5.0
     MINT_BOT_INTERVAL = 60.0 * 5.0
-    COOLDOWN_AFTER_LAST_MINT = 60.0 * 60.0 * 4.5
+    COOLDOWN_AFTER_LAST_MINT = 60.0 * 60.0 * 3.75
     SHK_SAVINGS_PERCENT = 33.0
 
     def __init__(
@@ -180,8 +180,11 @@ class MechMonitor:
         while True:
             logger.print_normal("Checking for events...")
             for event_filter, handler in self.event_filters.items():
-                for event in event_filter.get_new_entries():
-                    handler(event)
+                try:
+                    for event in event_filter.get_new_entries():
+                        handler(event)
+                except:
+                    logger.print_fail(f"Failed to get entries for event_filter {event_filter}")
             await asyncio.sleep(interval)
 
     async def stats_monitor(self, interval: float) -> None:
