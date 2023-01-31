@@ -19,10 +19,14 @@ from mechavax.mechavax_web3client import MechContractWeb3Client
 from utils import general, logger
 from utils.price import wei_to_token, TokenWei
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
+from web3_utils.helpers import process_w3_results
 from web3_utils.snowtrace import SnowtraceApi
 
 bot = commands.Bot(command_prefix="/", intents=discord.Intents.all())
 
+ALLOWLIST_MINTERS = [
+    935440767646851093,  # nftcashflow
+]
 ALLOWLIST_GUILD = 986151371923410975
 ALLOWLIST_CHANNELS = [
     1032890276420800582,  # test channel in p2e auto
@@ -46,13 +50,58 @@ async def on_ready() -> None:
 
 
 @bot.tree.command(
+    name="mintmech",
+    description="Mint a mech from the guild wallet. Authorized users only",
+    guild=discord.Object(id=ALLOWLIST_GUILD),
+)
+async def mint_mech_command(interaction: discord.Interaction) -> None:
+    if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
+        await interaction.response.send_message("Invalid channel")
+        return
+
+    if not any([u for u in ALLOWLIST_MINTERS if interaction.user.id == u]):
+        await interaction.response.send_message("Insufficient permissions")
+        return
+
+    logger.print_bold(f"Received mintmech command")
+    await interaction.response.defer()
+
+    w3_mech: MechContractWeb3Client = (
+        MechContractWeb3Client()
+        .set_credentials(ADMIN_ADDRESS, "")
+        .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+        .set_contract()
+        .set_dry_run(False)
+    )
+
+    shk_balance = await w3_mech.get_deposited_shk(GUILD_WALLET_ADDRESS)
+    min_mint_shk = await w3_mech.get_min_mint_bid()
+
+    # tx_hash = await w3_mech.mint_mech_from_shk()
+    tx_hash = "0x959bb9a9148dc748fd6288bfcaf0c590bc43705ce3ee5ef484555fb0e4c6063e"
+    action_str = f"Mint MECH for {min_mint_shk:.2f} using $SHK balance of {shk_balance:.2f}"
+    _, txn_url = process_w3_results(w3_mech, action_str, tx_hash)
+    if txn_url:
+        message = f"\U0001F389 Successfully minted a new MECH!\n{txn_url}"
+        logger.print_ok_arrow(message)
+    else:
+        message = f"\U00002620 Failed to mint new MECH!"
+        logger.print_fail_arrow(message)
+
+    await interaction.followup.send(message)
+
+
+@bot.tree.command(
     name="lastmint",
     description="Get last mint",
     guild=discord.Object(id=ALLOWLIST_GUILD),
 )
 async def get_last_mint_command(interaction: discord.Interaction) -> None:
-    logger.print_normal(f"Received lastmint command")
-    await interaction.response.defer()
+    if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
+        await interaction.response.send_message("Invalid channel")
+        return
+
+    logger.print_bold(f"Received lastmint command")
 
     w3_mech: MechContractWeb3Client = (
         MechContractWeb3Client()
@@ -96,7 +145,7 @@ async def get_last_mint_command(interaction: discord.Interaction) -> None:
         f"Last mint happened `{general.get_pretty_seconds(time_since)}` ago for `{price:.2f} $SHK`"
     )
     logger.print_normal(message)
-    await interaction.followup.send(message)
+    await interaction.response.send_message(message)
 
 
 @bot.tree.command(
@@ -109,8 +158,7 @@ async def guild_stats_command(interaction: discord.Interaction) -> None:
         await interaction.response.send_message("Invalid channel", ephemeral=True)
         return
 
-    logger.print_normal(f"Received mintcost command")
-    await interaction.response.defer()
+    logger.print_bold(f"Received mintcost command")
 
     w3_mech: MechContractWeb3Client = (
         MechContractWeb3Client()
@@ -121,7 +169,7 @@ async def guild_stats_command(interaction: discord.Interaction) -> None:
     )
 
     mint_cost_shk = await w3_mech.get_min_mint_bid()
-    await interaction.followup.send(f"Next mint cost: `{mint_cost_shk:.2f} $SHK`")
+    await interaction.response.send_message(f"Next mint cost: `{mint_cost_shk:.2f} $SHK`")
 
 
 @bot.tree.command(
@@ -134,7 +182,7 @@ async def guild_stats_command(interaction: discord.Interaction) -> None:
         await interaction.response.send_message("Invalid channel", ephemeral=True)
         return
 
-    logger.print_normal(f"Received guildstats command")
+    logger.print_bold(f"Received guildstats command")
     await interaction.response.defer()
 
     holders = await SnowtraceApi().get_erc721_token_transfers(GUILD_WALLET_ADDRESS)
