@@ -53,7 +53,7 @@ class MechMonitor:
 
         latest_block = self.w3_mech.w3.eth.block_number
         events = self.w3_mech.contract.events.MechPurchased.getLogs(
-            fromBlock=latest_block - 1000, toBlock=latest_block
+            fromBlock=latest_block - 2048, toBlock=latest_block
         )
         data = json.dumps(Web3.toJSON(events))
         latest_event = 0
@@ -63,6 +63,9 @@ class MechMonitor:
                 continue
             timestamp = self.w3_mech.w3.eth.get_block(block_number).timestamp
             latest_event = max(latest_event, timestamp)
+
+        if latest_event == 0:
+            latest_event = time.time()
 
         time_since = int(time.time() - latest_event)
         logger.print_normal(f"Last mint happened {get_pretty_seconds(time_since)} ago")
@@ -190,7 +193,8 @@ class MechMonitor:
         while True:
             now = time.time()
 
-            if now - self.last_time_mech_minted < COOLDOWN_AFTER_LAST_MINT:
+            if now - self.last_time_mech_minted < self.COOLDOWN_AFTER_LAST_MINT:
+                logger.print_normal("Skipping minting since still within window")
                 await asyncio.sleep(self.MINT_BOT_INTERVAL)
                 continue
 
@@ -201,19 +205,24 @@ class MechMonitor:
             savings_margin = (shk_balance - min_mint_shk) / shk_balance
 
             if savings_margin < savings_percent:
+                logger.print_normal(
+                    f"Skipping minting since we don't have enough SHK: Have {shk_balance:.2f}, Need {min_mint_shk * 1.33:.2f}"
+                )
                 await asyncio.sleep(self.MINT_BOT_INTERVAL)
                 continue
 
             tx_hash = self.w3_mech.mint_mech_from_shk()
             action_str = f"Mint MECH for {min_mint_shk:.2f} using $SHK balance of {shk_balance:.2f}"
-            if process_w3_results(self.w3_mech, action_str, tx_hash):
-                message = f"\U0001F389 Successfully minted a new MECH!"
+            _, txn_url = process_w3_results(self.w3_mech, action_str, tx_hash)
+            if txn_url:
+                message = f"\U0001F389 Successfully minted a new MECH!\n{txn_url}"
                 logger.print_ok_arrow(message)
             else:
                 message = f"\U00002620 Failed to mint new MECH!"
                 logger.print_fail_arrow(message)
 
             self.webhook.send(message)
+            await asyncio.sleep(self.MINT_BOT_INTERVAL)
 
     def run(self) -> None:
         loop = asyncio.get_event_loop()
@@ -225,6 +234,7 @@ class MechMonitor:
                 asyncio.gather(
                     self.event_monitors(self.MONITOR_INTERVAL),
                     self.stats_monitor(self.interval),
+                    self.mint_bot(),
                 )
             )
         finally:

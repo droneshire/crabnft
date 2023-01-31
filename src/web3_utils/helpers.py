@@ -2,11 +2,12 @@ import typing as T
 from contextlib import contextmanager
 
 from utils import logger
+from utils.price import wei_to_token
 from web3_utils.web3_client import Web3Client
 
 
 def process_w3_results(
-    self, web3_client: Web3Client, action_str: str, tx_hash: str
+    web3_client: Web3Client, action_str: str, tx_hash: str
 ) -> T.Tuple[float, str]:
     logger.print_bold(f"{action_str}")
 
