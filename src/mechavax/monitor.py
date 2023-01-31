@@ -28,8 +28,6 @@ class MechMonitor:
         self.address = address
         self.address_mapping = address_mapping
 
-        self.snowtrace_api = SnowtraceApi()
-
         self.w3_mech: MechContractWeb3Client = (
             MechContractWeb3Client()
             .set_credentials(ADMIN_ADDRESS, "")
