@@ -1,3 +1,4 @@
+import asyncio
 import os
 import json
 import typing as T
@@ -37,14 +38,14 @@ class MechContractWeb3Client(AvalancheCWeb3Client):
     abi_dir = os.path.join(os.path.dirname(this_dir), "web3_utils", "abi", "abi-mechavax.json")
     abi = Web3Client._get_contract_abi_from_file(abi_dir)
 
-    def get_base_uri(self) -> HexStr:
+    async def get_base_uri(self) -> HexStr:
         try:
             return self.contract.functions.BASE_URI().call()
         except Exception as e:
             logger.print_fail(f"{e}")
             return ""
 
-    def get_mech_multiplier(self, token_id: int) -> int:
+    async def get_mech_multiplier(self, token_id: int) -> int:
         if token_id < 0:
             return -1
 
@@ -54,14 +55,14 @@ class MechContractWeb3Client(AvalancheCWeb3Client):
             logger.print_fail(f"{e}")
             return -1
 
-    def get_minted_shk_mechs(self) -> int:
+    async def get_minted_shk_mechs(self) -> int:
         try:
             return self.contract.functions.numMintedFromShirak().call()
         except Exception as e:
             logger.print_fail(f"{e}")
             return 0
 
-    def get_num_mechs(self, address: Address) -> int:
+    async def get_num_mechs(self, address: Address) -> int:
         address = Web3.toChecksumAddress(address)
         try:
             data: T.List[T.Any] = self.contract.functions.getUserData(address).call()
@@ -70,7 +71,7 @@ class MechContractWeb3Client(AvalancheCWeb3Client):
             logger.print_fail(f"{e}")
             return 0
 
-    def get_emmissions_multiplier(self, address: Address) -> float:
+    async def get_emmissions_multiplier(self, address: Address) -> float:
         address = Web3.toChecksumAddress(address)
         try:
             data: T.List[T.Any] = self.contract.functions.getUserData(address).call()
@@ -79,7 +80,7 @@ class MechContractWeb3Client(AvalancheCWeb3Client):
             logger.print_fail(f"{e}")
             return 0.0
 
-    def get_user_emmissions_multiplier(self, address: Address) -> float:
+    async def get_user_emmissions_multiplier(self, address: Address) -> float:
         address = Web3.toChecksumAddress(address)
         try:
             return self.contract.functions.getUserEmissionMultiple(address).call()
@@ -87,7 +88,7 @@ class MechContractWeb3Client(AvalancheCWeb3Client):
             logger.print_fail(f"{e}")
             return 0.0
 
-    def get_deposited_shk(self, address: Address) -> float:
+    async def get_deposited_shk(self, address: Address) -> float:
         address = Web3.toChecksumAddress(address)
         try:
             shirak: TokenWei = self.contract.functions.shirakBalance(address).call()
@@ -96,7 +97,7 @@ class MechContractWeb3Client(AvalancheCWeb3Client):
             logger.print_fail(f"{e}")
             return 0
 
-    def get_min_mint_bid(self) -> float:
+    async def get_min_mint_bid(self) -> float:
         try:
             price: TokenWei = self.contract.functions.mechPrice().call()
             return wei_to_token(price)
@@ -104,7 +105,7 @@ class MechContractWeb3Client(AvalancheCWeb3Client):
             logger.print_fail(f"{e}")
             return 0.0
 
-    def get_min_mint_bid_wei(self) -> TokenWei:
+    async def get_min_mint_bid_wei(self) -> TokenWei:
         try:
             price: TokenWei = self.contract.functions.mechPrice().call()
             return price
@@ -112,7 +113,7 @@ class MechContractWeb3Client(AvalancheCWeb3Client):
             logger.print_fail(f"{e}")
             return 0
 
-    def mint_mech_from_shk(
+    async def mint_mech_from_shk(
         self, max_price_shk: T.Optional[float] = None, use_deposit: bool = True
     ) -> HexStr:
         if max_price_shk is None:

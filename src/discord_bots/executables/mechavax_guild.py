@@ -100,6 +100,31 @@ async def get_last_mint_command(interaction: discord.Interaction) -> None:
 
 
 @bot.tree.command(
+    name="mintcost",
+    description="Get current cost in $SHK to mint MECH",
+    guild=discord.Object(id=ALLOWLIST_GUILD),
+)
+async def guild_stats_command(interaction: discord.Interaction) -> None:
+    if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
+        await interaction.response.send_message("Invalid channel", ephemeral=True)
+        return
+
+    logger.print_normal(f"Received mintcost command")
+    await interaction.response.defer()
+
+    w3_mech: MechContractWeb3Client = (
+        MechContractWeb3Client()
+        .set_credentials(ADMIN_ADDRESS, "")
+        .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+        .set_contract()
+        .set_dry_run(False)
+    )
+
+    mint_cost_shk = await w3_mech.get_min_mint_bid()
+    await interaction.followup.send(f"Next mint cost: `{mint_cost_shk:.2f} $SHK`")
+
+
+@bot.tree.command(
     name="guildstats",
     description="Get Cashflow Cartel Guild Stats",
     guild=discord.Object(id=ALLOWLIST_GUILD),
