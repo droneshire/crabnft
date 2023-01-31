@@ -103,3 +103,28 @@ class MechContractWeb3Client(AvalancheCWeb3Client):
         except Exception as e:
             logger.print_fail(f"{e}")
             return 0.0
+
+    def get_min_mint_bid_wei(self) -> TokenWei:
+        try:
+            price: TokenWei = self.contract.functions.mechPrice().call()
+            return price
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return 0
+
+    def mint_mech_from_shk(
+        self, max_price_shk: T.Optional[float] = None, use_deposit: bool = True
+    ) -> HexStr:
+        if max_price_shk is None:
+            price: TokenWei = self.get_min_mint_bid_wei()
+        else:
+            price: TokenWei = int(wei_to_token(max_price_shk))
+
+        try:
+            tx: TxParams = self.build_contract_transaction(
+                self.contract.functions.mintFromShirak(price, use_deposit)
+            )
+            return self.sign_and_send_transaction(tx)
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return ""

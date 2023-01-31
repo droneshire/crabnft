@@ -1,6 +1,7 @@
 import asyncio
 import json
 import web3
+import time
 import typing as T
 
 from eth_typing import Address
@@ -9,12 +10,16 @@ from web3 import Web3
 from config_admin import ADMIN_ADDRESS
 from mechavax.mechavax_web3client import MechContractWeb3Client, MechArmContractWeb3Client
 from utils import discord, logger
+from utils.general import get_pretty_seconds
 from utils.price import wei_to_token, TokenWei
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
-
+from web3_utils.helpers import process_w3_results
 
 class MechMonitor:
     MONITOR_INTERVAL = 5.0
+    MINT_BOT_INTERVAL = 60.0 * 10.0
+    COOLDOWN_AFTER_LAST_MINT = 60.0 * 60.0 * 5.0
+    SHK_SAVINGS_PERCENT = 33.0
 
     def __init__(
         self,
@@ -27,6 +32,8 @@ class MechMonitor:
         self.webhook = discord.get_discord_hook(discord_channel)
         self.address = address
         self.address_mapping = address_mapping
+
+        self.mint_cost: T.List[float] = []
 
         self.w3_mech: MechContractWeb3Client = (
             MechContractWeb3Client()
@@ -43,6 +50,22 @@ class MechMonitor:
             .set_dry_run(False)
         )
 
+        latest_block = self.w3_mech.w3.eth.block_number
+        events = self.w3_mech.contract.events.MechPurchased.getLogs(fromBlock=latest_block - 1000, toBlock=latest_block)
+        data = json.dumps(Web3.toJSON(events))
+        latest_event = 0
+        for event in events:
+            block_number = event.get("blockNumber", 0)
+            if block_number == 0:
+                continue
+            timestamp = self.w3_mech.w3.eth.get_block(block_number).timestamp
+            latest_event = max(latest_event, timestamp)
+
+        time_since = int(time.time() - latest_event)
+        logger.print_normal(f"Last mint happened {get_pretty_seconds(time_since)} ago")
+
+        self.last_time_mech_minted = latest_event
+
         self.event_filters: T.Dict[web3._utils.filters.LogFilter, T.Callable[[T.Any], None]] = {
             self.w3_mech.contract.events.LegendaryMechMinted.createFilter(
                 fromBlock="latest"
@@ -53,7 +76,26 @@ class MechMonitor:
             self.w3_mech.contract.events.ArmsBonded.createFilter(
                 fromBlock="latest"
             ): self.arms_bonded_handler,
+            self.w3_mech.contract.events.MechPurchased.createFilter(
+                fromBlock="latest",
+            ): self.mech_minted_handler,
         }
+
+    def mech_minted_handler(self, event: web3.datastructures.AttributeDict) -> None:
+        event_data = json.loads(Web3.toJSON(event))
+        try:
+            user = event_data["args"]["user"]
+            token_id = event_data["args"]["mechId"]
+        except:
+            logger.print_warn(f"Failed to process MECH minted event")
+            return
+
+        logger.print_ok_blue(
+            f"\U0001F916 MECH minted event: `{user}`, ID: `{token_id}`"
+        )
+        self.webhook.send(
+            f"\U0001F916 MECH minted event: `{user}`, ID: `{token_id}`"
+        )
 
     def arms_bonded_handler(self, event: web3.datastructures.AttributeDict) -> None:
         event_data = json.loads(Web3.toJSON(event))
@@ -100,6 +142,8 @@ class MechMonitor:
                 mint_item = "MARM"
             elif transaction["address"] == self.w3_mech.contract_address:
                 mint_item = "MECH"
+                self.last_time_mech_minted = time.time()
+                self.mint_cost.append(price)
             else:
                 logger.print_warn(f"Non-mint shirak event...")
                 return
@@ -142,6 +186,37 @@ class MechMonitor:
             self.webhook.send(message)
 
             await asyncio.sleep(interval)
+
+    async def mint_bot(self) -> None:
+        while True:
+            now = time.time()
+
+            if now - self.last_time_mech_minted < COOLDOWN_AFTER_LAST_MINT:
+                await asyncio.sleep(self.MINT_BOT_INTERVAL)
+                continue
+
+            shk_balance = self.w3_mech.get_deposited_shk(self.address)
+            min_mint_shk = self.w3_mech.get_min_mint_bid()
+            savings_percent = self.SHK_SAVINGS_PERCENT / 100.0
+
+            savings_margin = (shk_balance - min_mint_shk) / shk_balance
+
+            if savings_margin < savings_percent:
+                await asyncio.sleep(self.MINT_BOT_INTERVAL)
+                continue
+
+            tx_hash = self.w3_mech.mint_mech_from_shk()
+            action_str = f"Mint MECH for {min_mint_shk:.2f} using $SHK balance of {shk_balance:.2f}"
+            if process_w3_results(self.w3_mech, action_str, tx_hash):
+                message = f"\U0001F389 Successfully minted a new MECH!"
+                logger.print_ok_arrow(message)
+            else:
+                message = f"\U00002620 Failed to mint new MECH!"
+                logger.print_fail_arrow(message)
+
+            self.webhook.send(message)
+
+
 
     def run(self) -> None:
         loop = asyncio.get_event_loop()
