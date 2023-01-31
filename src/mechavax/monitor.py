@@ -128,20 +128,23 @@ class MechMonitor:
 
     def shirak_mint_handler(self, event: web3.datastructures.AttributeDict) -> None:
         event_data = json.loads(Web3.toJSON(event))
-        # try:
-        tx_hash = event_data["transactionHash"]
-        tx_receipt = self.w3_mech.get_transaction_receipt(tx_hash)
-        transaction = tx_receipt["logs"][1]
-        price_wei = int(transaction["data"], 16)
-        price = wei_to_token(price_wei)
-        mint_item = "MARM" if transaction["address"] == self.w3_arm.contract_address else "MECH"
-        # except:
-        #     logger.print_warn(f"Failed to process shirak mint event\n{event_data}")
-        #     return
+        try:
+            tx_hash = event_data["transactionHash"]
+            tx_receipt = self.w3_mech.get_transaction_receipt(tx_hash)
+            transaction = tx_receipt["logs"][1]
+            price_wei = int(transaction["data"], 16)
+            price = wei_to_token(price_wei)
+            mint_item = "MARM" if transaction["address"] == self.w3_arm.contract_address else "MECH"
+        except:
+            logger.print_warn(f"Failed to process shirak mint event\n{event_data}")
+            return
 
-        logger.print_ok_blue(f"Shirak {mint_item} mint event!\nPrice paid: {price:.2f} $SHK")
+        explorer_link = f"Explorer: https://snowtrace.io/tx/{tx_hash}"
+        logger.print_ok_blue(
+            f"Shirak {mint_item} mint event!\nPrice paid: {price:.2f} $SHK\\{explorer_link}"
+        )
         self.webhook.send(
-            f"\U0001F916 New {mint_item} Mint Alert!\n\tMinted Price: `{price:.2f} $SHK`"
+            f"\U0001F916 New {mint_item} Mint Alert!\n\tMinted Price: `{price:.2f} $SHK`\n{explorer_link}"
         )
 
     async def event_monitors(self, interval: float) -> None:
