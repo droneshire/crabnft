@@ -33,18 +33,18 @@ class SnowtraceApi(Web2Client):
             "sort": "asc",
         }
         tokens = {}
-        # try:
-        response = self._get_request(url, params=params)
-        for token in response["result"]:
-            address = token["from"]
-            token_id = token["tokenID"]
-            nft_type = token["tokenSymbol"]
-            if address not in tokens:
-                tokens[address] = {}
-            tokens[address][nft_type] = tokens[address].get(nft_type, []) + [token_id]
-            logger.print_normal(f"Found {nft_type} {token_id} from {address}")
-        # except:
-        #     logger.print_fail(f"Failed to get token transfers")
+        try:
+            response = self._get_request(url, params=params)
+            for token in response["result"]:
+                address = token["from"]
+                token_id = token["tokenID"]
+                nft_type = token["tokenSymbol"]
+                if address not in tokens:
+                    tokens[address] = {}
+                tokens[address][nft_type] = tokens[address].get(nft_type, []) + [token_id]
+                logger.print_normal(f"Found {nft_type} {token_id} from {address}")
+        except:
+            logger.print_fail(f"Failed to get token transfers")
 
         return tokens
 
