@@ -77,8 +77,7 @@ async def mint_mech_command(interaction: discord.Interaction) -> None:
     shk_balance = await w3_mech.get_deposited_shk(GUILD_WALLET_ADDRESS)
     min_mint_shk = await w3_mech.get_min_mint_bid()
 
-    # tx_hash = await w3_mech.mint_mech_from_shk()
-    tx_hash = "0x959bb9a9148dc748fd6288bfcaf0c590bc43705ce3ee5ef484555fb0e4c6063e"
+    tx_hash = await w3_mech.mint_mech_from_shk()
     action_str = f"Mint MECH for {min_mint_shk:.2f} using $SHK balance of {shk_balance:.2f}"
     _, txn_url = process_w3_results(w3_mech, action_str, tx_hash)
     if txn_url:
