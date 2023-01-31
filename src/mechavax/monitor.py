@@ -15,6 +15,7 @@ from utils.price import wei_to_token, TokenWei
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.helpers import process_w3_results
 
+
 class MechMonitor:
     MONITOR_INTERVAL = 5.0
     MINT_BOT_INTERVAL = 60.0 * 10.0
@@ -51,7 +52,9 @@ class MechMonitor:
         )
 
         latest_block = self.w3_mech.w3.eth.block_number
-        events = self.w3_mech.contract.events.MechPurchased.getLogs(fromBlock=latest_block - 1000, toBlock=latest_block)
+        events = self.w3_mech.contract.events.MechPurchased.getLogs(
+            fromBlock=latest_block - 1000, toBlock=latest_block
+        )
         data = json.dumps(Web3.toJSON(events))
         latest_event = 0
         for event in events:
@@ -90,12 +93,8 @@ class MechMonitor:
             logger.print_warn(f"Failed to process MECH minted event")
             return
 
-        logger.print_ok_blue(
-            f"\U0001F916 MECH minted event: `{user}`, ID: `{token_id}`"
-        )
-        self.webhook.send(
-            f"\U0001F916 MECH minted event: `{user}`, ID: `{token_id}`"
-        )
+        logger.print_ok_blue(f"\U0001F916 MECH minted event: `{user}`, ID: `{token_id}`")
+        self.webhook.send(f"\U0001F916 MECH minted event: `{user}`, ID: `{token_id}`")
 
     def arms_bonded_handler(self, event: web3.datastructures.AttributeDict) -> None:
         event_data = json.loads(Web3.toJSON(event))
@@ -215,8 +214,6 @@ class MechMonitor:
                 logger.print_fail_arrow(message)
 
             self.webhook.send(message)
-
-
 
     def run(self) -> None:
         loop = asyncio.get_event_loop()

@@ -1,6 +1,6 @@
 import typing as T
 
-from discord import Webhook, RequestsWebhookAdapter
+from discord import SyncWebhook
 
 DISCORD_WEBHOOK_URL = {
     "CRABADA_HOLDERS": "https://discord.com/api/webhooks/988288028143403008/kG9V_OHQEA9Cj6n_OaqFrp48Y7NllBkKZs8c58r6uUYSZlqIPtPm3n18jzCpwNpZjfl5",
@@ -23,5 +23,5 @@ DISCORD_WEBHOOK_URL = {
 }
 
 
-def get_discord_hook(discord: str) -> Webhook:
-    return Webhook.from_url(DISCORD_WEBHOOK_URL[discord], adapter=RequestsWebhookAdapter())
+def get_discord_hook(discord: str) -> SyncWebhook:
+    return SyncWebhook.from_url(DISCORD_WEBHOOK_URL[discord])

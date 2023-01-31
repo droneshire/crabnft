@@ -1,20 +1,24 @@
 import asyncio
 import discord
+import json
 import os
 import table2ascii
+import time
 import typing as T
 
-from discord import app_commands
 from discord.ext import commands
 from web3 import Web3
 
 from config_admin import (
+    ADMIN_ADDRESS,
     DISCORD_MECHAVAX_SALES_BOT_TOKEN,
     GUILD_WALLET_ADDRESS,
     GUILD_WALLET_MAPPING,
 )
 from mechavax.mechavax_web3client import MechContractWeb3Client
-from utils import logger
+from utils import general, logger
+from utils.price import wei_to_token, TokenWei
+from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.snowtrace import SnowtraceApi
 
 bot = commands.Bot(command_prefix="/", intents=discord.Intents.all())
@@ -39,6 +43,49 @@ async def on_ready() -> None:
         logger.print_normal(f"{len(synced)} command(s)")
     except Exception as e:
         logger.print_fail(f"{e}")
+
+
+@bot.tree.command(
+    name="lastmint",
+    description="Get last mint",
+    guild=discord.Object(id=ALLOWLIST_GUILD),
+)
+async def get_last_mint_command(interaction: discord.Interaction) -> None:
+    logger.print_normal(f"Received lastmint command")
+    await interaction.response.defer()
+
+    w3_mech: MechContractWeb3Client = (
+        MechContractWeb3Client()
+        .set_credentials(ADMIN_ADDRESS, "")
+        .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+        .set_contract()
+        .set_dry_run(False)
+    )
+
+    latest_block = w3_mech.w3.eth.block_number
+    events = w3_mech.contract.events.MechPurchased.getLogs(
+        fromBlock=latest_block - 2048, toBlock=latest_block
+    )
+    data = json.dumps(Web3.toJSON(events))
+
+    price = 0.0
+    latest_event = 0
+    for event in events:
+        block_number = event.get("blockNumber", 0)
+        if block_number == 0:
+            continue
+        price_wei = event.get("args", {}).get("price", 0.0)
+        price = wei_to_token(price_wei)
+        timestamp = w3_mech.w3.eth.get_block(block_number).timestamp
+        latest_event = max(latest_event, timestamp)
+
+    time_since = int(time.time() - latest_event)
+
+    message = (
+        f"Last mint happened `{general.get_pretty_seconds(time_since)}` ago for `{price:.2f} $SHK`"
+    )
+    logger.print_normal(message)
+    await interaction.followup.send(message)
 
 
 @bot.tree.command(
