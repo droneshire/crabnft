@@ -22,6 +22,7 @@ HEADERS = {
 
 
 JOEPEGS_URL = "https://joepegs.com/item/{}/"
+JOEPEGS_ITEM_URL = "https://joepegs.com/item/avalanche/{}/{}"
 JOEPEGS_ICON_URL = "https://drive.google.com/uc?export=view&id=1mLBMY7-XPtLbSZrWRpCujFCc6cIJ_VIE"
 
 

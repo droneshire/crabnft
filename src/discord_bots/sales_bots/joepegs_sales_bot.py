@@ -8,7 +8,7 @@ import typing as T
 
 from web3.types import Address
 
-from joepegs.joepegs_api import JOEPEGS_URL, JoePegsClient
+from joepegs.joepegs_api import JOEPEGS_ITEM_URL, JoePegsClient
 from joepegs.types import Activity
 from utils import logger
 from utils.price import wei_to_token
@@ -128,7 +128,7 @@ class JoePegsSalesBot:
         collection_name = listing["collectionName"]
         token_id = listing["tokenId"]
         name = listing["metadata"]["name"] if listing["metadata"]["name"] else token_id
-        sale_name_url = f"[{name}]({JOEPEGS_URL.format(listing['collection']) + token_id})"
+        sale_name_url = f"[{name}]({JOEPEGS_ITEM_URL.format(sale['collection'], token_id)})"
         embed = discord.Embed(
             title=f"{collection_name} Listing",
             description=f"New snipe listing on JOEPEGS - {sale_name_url}\n",
@@ -146,7 +146,7 @@ class JoePegsSalesBot:
         collection_name = sale["collectionName"]
         token_id = sale["tokenId"]
         name = sale["name"] if sale["name"] else token_id
-        sale_name_url = f"[{name}]({JOEPEGS_URL.format(sale['collection']) + token_id})"
+        sale_name_url = f"[{name}]({JOEPEGS_ITEM_URL.format(sale['collection'], token_id)})"
         embed = discord.Embed(
             title=f"{collection_name} Sale",
             description=f"New sale on JOEPEGS - {sale_name_url} sold\n",
