@@ -134,7 +134,13 @@ class MechMonitor:
             transaction = tx_receipt["logs"][1]
             price_wei = int(transaction["data"], 16)
             price = wei_to_token(price_wei)
-            mint_item = "MARM" if transaction["address"] == self.w3_arm.contract_address else "MECH"
+            if transaction["address"] == self.w3_arm.contract_address:
+                mint_item = "MARM"
+            elif transaction["address"] == self.w3_mech.contract_address:
+                mint_item = "MECH"
+            else:
+                logger.print_warn(f"Non-mint shirak event...")
+                return
         except:
             logger.print_warn(f"Failed to process shirak mint event\n{event_data}")
             return
