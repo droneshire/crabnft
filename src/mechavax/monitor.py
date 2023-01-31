@@ -186,7 +186,7 @@ class MechMonitor:
 
     async def stats_monitor(self, interval: float) -> None:
         while True:
-            num_minted_mechs_from_shk = self.w3_mech.get_minted_shk_mechs()
+            num_minted_mechs_from_shk = await self.w3_mech.get_minted_shk_mechs()
             our_mechs = await self.w3_mech.get_num_mechs(self.address)
             multiplier = await self.w3_mech.get_emmissions_multiplier(self.address)
             shk_balance = await self.w3_mech.get_deposited_shk(self.address)
