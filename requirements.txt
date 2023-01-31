@@ -19,7 +19,7 @@ deepdiff==5.8.0
 dill==0.3.4
 discord==1.7.3
 discord-webhook==0.15.0
-discord.py==1.7.3
+discord.py @ git+https://github.com/Rapptz/discord.py@aa02d55e2703ace6fdd2ef714c5cb3241037f8d0
 eth-abi==2.1.1
 eth-account==0.5.7
 eth-hash==0.3.2
@@ -103,6 +103,7 @@ six==1.16.0
 SQLAlchemy==1.4.45
 SQLAlchemy-Utils==0.39.0
 stem==1.8.0
+table2ascii==1.1.0
 termcolor==1.1.0
 tomli==2.0.1
 toolz==0.11.2
@@ -117,6 +118,7 @@ typing_extensions==4.1.1
 uritemplate==4.1.1
 urllib3==1.26.8
 varint==1.0.2
+wcwidth==0.2.6
 web3==5.28.0
 websockets==9.1
 Werkzeug==2.2.2
