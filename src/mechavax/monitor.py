@@ -19,7 +19,7 @@ from web3_utils.helpers import process_w3_results
 class MechMonitor:
     MONITOR_INTERVAL = 5.0
     MINT_BOT_INTERVAL = 60.0 * 5.0
-    COOLDOWN_AFTER_LAST_MINT = 60.0 * 60.0 * 5.0
+    COOLDOWN_AFTER_LAST_MINT = 60.0 * 60.0 * 4.5
     SHK_SAVINGS_PERCENT = 33.0
 
     def __init__(
