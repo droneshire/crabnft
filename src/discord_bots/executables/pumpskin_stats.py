@@ -2,7 +2,7 @@ import asyncio
 import discord
 import os
 
-from config_admin import DISCORD_BOT_SERVER, DISCORD_BOT_TOKEN
+from config_admin import DISCORD_PUMPSKIN_BOT_TOKEN
 from utils import logger
 from discord_bots.command_bots import default, pumpskin
 from pumpskin.bot import PumpskinBot
@@ -69,4 +69,4 @@ async def on_message(message: discord.message.Message) -> None:
                 await message.channel.send(response)
 
 
-client.run(DISCORD_BOT_TOKEN)
+client.run(DISCORD_PUMPSKIN_BOT_TOKEN)
