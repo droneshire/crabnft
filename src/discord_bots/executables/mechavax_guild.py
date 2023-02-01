@@ -260,8 +260,8 @@ async def guild_stats_command(interaction: discord.Interaction) -> None:
     multiplier = await async_func_wrapper(w3_mech.get_emmissions_multiplier, GUILD_WALLET_ADDRESS)
     shk_balance = await async_func_wrapper(w3_mech.get_deposited_shk, GUILD_WALLET_ADDRESS)
 
-    message += f"**SHK Deposited**: `{shk_balance:.2f}`\n"
-    message += f"**Multiplier**: `{multiplier:.2f}`\n\n"
+    message += f"**SHK Deposited**: `{shk_balance:.2f}` | "
+    message += f"**Multiplier**: `{multiplier:.2f}`\n"
 
     logger.print_ok_blue(message)
 
