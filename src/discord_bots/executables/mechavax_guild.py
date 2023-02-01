@@ -1,5 +1,6 @@
 import asyncio
 import discord
+import getpass
 import json
 import os
 import table2ascii
