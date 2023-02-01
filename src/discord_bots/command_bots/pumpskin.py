@@ -89,7 +89,7 @@ class GetPumpkinLevel(OnMessage):
             return ""
 
         text = message.content.lower().strip()
-        print(text)
+        print("here", text)
         if not text.startswith(cls.HOTKEY):
             return ""
 
