@@ -6,7 +6,7 @@ import time
 
 from config_admin import GUILD_WALLET_ADDRESS, GUILD_WALLET_MAPPING
 from health_monitor.health_monitor import HealthMonitor
-from mechavax.monitor import MechMonitor
+from mechavax.bot import MechBot
 from utils import logger
 
 STATS_INTERVAL = 60.0 * 60.0
@@ -34,7 +34,7 @@ def run_bot() -> None:
         daemon=True
     )
 
-    monitor = MechMonitor(args.address, GUILD_WALLET_MAPPING, "MECHAVAX_BOT", STATS_INTERVAL)
+    monitor = MechBot(args.address, GUILD_WALLET_MAPPING, "MECHAVAX_BOT", STATS_INTERVAL)
     monitor.run()
 
 
