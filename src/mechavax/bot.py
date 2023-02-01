@@ -189,13 +189,13 @@ class MechBot:
 
     async def stats_monitor(self, interval: float) -> None:
         while True:
-            num_minted_mechs_from_shk = await asyncio.coroutine(self.w3_mech.get_minted_shk_mechs())
-            our_mechs = await asyncio.coroutine(self.w3_mech.get_num_mechs(self.address))
-            multiplier = await asyncio.coroutine(
-                self.w3_mech.get_emmissions_multiplier(self.address)
+            num_minted_mechs_from_shk = await async_func_wrapper(self.w3_mech.get_minted_shk_mechs)
+            our_mechs = await async_func_wrapper(self.w3_mech.get_num_mechs, self.address)
+            multiplier = await async_func_wrapper(
+                self.w3_mech.get_emmissions_multiplier, self.address
             )
-            shk_balance = await asyncio.coroutine(self.w3_mech.get_deposited_shk(self.address))
-            min_mint_shk = await asyncio.coroutine(self.w3_mech.get_min_mint_bid())
+            shk_balance = await async_func_wrapper(self.w3_mech.get_deposited_shk, self.address)
+            min_mint_shk = await async_func_wrapper(self.w3_mech.get_min_mint_bid)
 
             message = "\U0001F47E\U0001F47E**Cashflow Cartel Data**\U0001F47E\U0001F47E\n\n"
             message += f"**Mechs**: `{our_mechs}`\n"
@@ -218,8 +218,8 @@ class MechBot:
                 await asyncio.sleep(self.MINT_BOT_INTERVAL)
                 continue
 
-            shk_balance = await asyncio.coroutine(self.w3_mech.get_deposited_shk(self.address))
-            min_mint_shk = await asyncio.coroutine(self.w3_mech.get_min_mint_bid())
+            shk_balance = await async_func_wrapper(self.w3_mech.get_deposited_shk, self.address)
+            min_mint_shk = await async_func_wrapper(self.w3_mech.get_min_mint_bid)
             savings_percent = self.SHK_SAVINGS_PERCENT / 100.0
 
             savings_margin = (shk_balance - min_mint_shk) / shk_balance
@@ -231,7 +231,7 @@ class MechBot:
                 await asyncio.sleep(self.MINT_BOT_INTERVAL)
                 continue
 
-            tx_hash = await asyncio.coroutine(self.w3_mech.mint_mech_from_shk())
+            tx_hash = await async_func_wrapper(self.w3_mech.mint_mech_from_shk)
             action_str = f"Mint MECH for {min_mint_shk:.2f} using $SHK balance of {shk_balance:.2f}"
             _, txn_url = process_w3_results(self.w3_mech, action_str, tx_hash)
             if txn_url:
