@@ -2,7 +2,7 @@ import asyncio
 import discord
 import os
 
-from config_admin import DISCORD_PUMPSKIN_LISTING_BOT_TOKEN
+from config_admin import DISCORD_PUMPSKIN_MINT_SNIPER_BOT_TOKEN
 from utils import logger
 from pumpskin.mint_snipes import PumpskinListingSniper
 
@@ -43,4 +43,4 @@ async def on_ready() -> None:
     client.loop.create_task(sales_loop())
 
 
-client.run(DISCORD_PUMPSKIN_LISTING_BOT_TOKEN)
+client.run(DISCORD_PUMPSKIN_MINT_SNIPER_BOT_TOKEN)
