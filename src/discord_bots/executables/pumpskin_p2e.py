@@ -10,6 +10,7 @@ from discord_bots.command_bots import default, p2e_pumpskin
 intents: discord.Intents = discord.Intents.default()
 intents.typing = False
 intents.presences = False
+intents.message_content = True
 client = discord.Client(intents=intents)
 
 BOT_RESPONSES: default.OnMessage = [

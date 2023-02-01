@@ -11,6 +11,7 @@ from pumpskin.utils import get_mint_stats
 intents: discord.Intents = discord.Intents.default()
 intents.typing = False
 intents.presences = False
+intents.message_content = True
 client = discord.Client(intents=intents)
 
 BOT_RESPONSES: default.OnMessage = [
