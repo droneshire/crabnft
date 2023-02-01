@@ -88,9 +88,8 @@ class GetPumpkinLevel(OnMessage):
         if not any([c for c in cls.ALLOWLIST_CHANNELS if message.channel.id == c]):
             return ""
 
-        logger.print_bold("plvl command")
-
         text = message.content.lower().strip()
+        print(text)
         if not text.startswith(cls.HOTKEY):
             return ""
 
