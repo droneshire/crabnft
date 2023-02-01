@@ -90,10 +90,7 @@ class ManageAccounts(OnMessage):
             logger.print_normal(f"Unauthorized access")
             return f"Unathorized access"
 
-        # if "pumpskin botter" not in [y.name.lower() for y in message.author.roles]:
-        #     message.author.add_roles("Pumpskin Botter")
-
-        pfp = message.author.avatar_url
+        pfp = message.author.avatar
 
         collection_w3: PumpskinCollectionWeb3Client = (
             PumpskinCollectionWeb3Client()
