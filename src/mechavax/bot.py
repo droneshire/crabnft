@@ -20,7 +20,7 @@ class MechBot:
     MONITOR_INTERVAL = 5.0
     MINT_BOT_INTERVAL = 60.0 * 5.0
     COOLDOWN_AFTER_LAST_MINT = 60.0 * 60.0 * 5.0
-    SHK_SAVINGS_PERCENT = 200.0
+    SHK_SAVINGS_MULT = 2.5
 
     def __init__(
         self,
@@ -221,16 +221,15 @@ class MechBot:
 
             shk_balance = await async_func_wrapper(self.w3_mech.get_deposited_shk, self.address)
             min_mint_shk = await async_func_wrapper(self.w3_mech.get_min_mint_bid)
-            savings_percent = self.SHK_SAVINGS_PERCENT / 100.0
 
             savings_margin = shk_balance / (shk_balance - min_mint_shk)
 
-            if savings_margin < savings_percent:
+            if savings_margin < self.SHK_SAVINGS_MULT:
                 logger.print_normal(
-                    f"Skipping minting since we don't have enough SHK: {savings_margin * 100.0:.2f}%"
+                    f"Skipping minting since we don't have enough SHK: {savings_margin:.2f}%"
                 )
                 logger.print_normal(
-                    f"Have {shk_balance:.2f}, Need {min_mint_shk * (1 + savings_percent):.2f}"
+                    f"Have {shk_balance:.2f}, Need {min_mint_shk * self.SHK_SAVINGS_MULT:.2f}"
                 )
                 await asyncio.sleep(self.MINT_BOT_INTERVAL)
                 continue
