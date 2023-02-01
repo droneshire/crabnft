@@ -17,6 +17,7 @@ from config_admin import (
 )
 from mechavax.mechavax_web3client import MechContractWeb3Client
 from utils import general, logger
+from utils.async_utils import async_func_wrapper
 from utils.price import wei_to_token, TokenWei
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.helpers import process_w3_results

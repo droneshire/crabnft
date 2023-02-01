@@ -11,6 +11,7 @@ from config_admin import ADMIN_ADDRESS
 from mechavax.mechavax_web3client import MechContractWeb3Client, MechArmContractWeb3Client
 from utils import discord, logger
 from utils.general import get_pretty_seconds
+from utils.async_utils import async_func_wrapper
 from utils.price import wei_to_token, TokenWei
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.helpers import process_w3_results
