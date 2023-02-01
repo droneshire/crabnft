@@ -26,12 +26,10 @@ from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 
 class GetPumpkinLevel(OnMessage):
     HOTKEY = f"?plvl"
-    ALLOWLIST_GUILDS = [986151371923410975, 1020800321569697792]
+    ALLOWLIST_GUILDS = [986151371923410975]
     ALLOWLIST_CHANNELS = [
         1027614935523532900,  # pumpskin main channel p2e auto
         1032890276420800582,  # test channel in p2e auto
-        # 1032276350045798441, # farmers market in pumpskin
-        1033839826182619228,  # pumpskin bot channel
         1035266046480896141,  # p2e auto bot command pumskin channel
     ]
 
@@ -45,6 +43,7 @@ class GetPumpkinLevel(OnMessage):
             color=discord.Color.orange().value,
         )
 
+        logger.print_bold("plvl command")
         embed.add_field(name=f"Pumpskin", value=f"{token_id}", inline=True)
         embed.add_field(name=f"Cooldown", value=f"{cooldown_time}", inline=False)
         ppie_per_day = calc_ppie_per_day_from_level(level)
