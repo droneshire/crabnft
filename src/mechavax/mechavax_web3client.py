@@ -117,14 +117,14 @@ class MechContractWeb3Client(AvalancheCWeb3Client):
         self, max_price_shk: T.Optional[float] = None, use_deposit: bool = True
     ) -> HexStr:
         if max_price_shk is None:
-            price: TokenWei = self.get_min_mint_bid_wei()
+            price_shk_wei: TokenWei = self.get_min_mint_bid_wei()
         else:
-            price: TokenWei = token_to_wei(max_price_shk)
+            price_shk_wei: TokenWei = token_to_wei(max_price_shk)
 
         # try:
-        print(price, use_deposit)
+        print(price_shk_wei + 1000, use_deposit)
         tx: TxParams = self.build_contract_transaction(
-            self.contract.functions.mintFromShirak(price, use_deposit)
+            self.contract.functions.mintFromShirak(price_shk_wei, use_deposit)
         )
         return self.sign_and_send_transaction(tx)
         # except Exception as e:
