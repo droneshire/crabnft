@@ -223,7 +223,7 @@ class MechBot:
             min_mint_shk = await async_func_wrapper(self.w3_mech.get_min_mint_bid)
             savings_percent = self.SHK_SAVINGS_PERCENT / 100.0
 
-            savings_margin = (shk_balance - min_mint_shk) / shk_balance
+            savings_margin = shk_balance / (shk_balance - min_mint_shk)
 
             if savings_margin < savings_percent:
                 logger.print_normal(
