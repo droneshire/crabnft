@@ -38,7 +38,7 @@ ALLOWLIST_CHANNELS = [
 MINT_ADDRESS = "0x0000000000000000000000000000000000000000"
 
 
-async def get_credentials() -> T.Tuple[str, str]:
+def get_credentials() -> T.Tuple[str, str]:
     encrypt_password = ""
 
     if not args.dry_run:
@@ -48,6 +48,9 @@ async def get_credentials() -> T.Tuple[str, str]:
 
     private_key = decrypt_secret(encrypt_password, GUILD_WALLET_PRIVATE_KEY)
     return GUILD_WALLET_ADDRESS, private_key
+
+
+ADDRESS, PRIVATE_KEY = get_credentials()
 
 
 @bot.event
@@ -81,10 +84,9 @@ async def mint_mech_command(interaction: discord.Interaction) -> None:
     logger.print_bold(f"Received mintmech command")
     await interaction.response.defer()
 
-    address, private_key = await get_credentials()
     w3_mech: MechContractWeb3Client = (
         MechContractWeb3Client()
-        .set_credentials(address, private_key)
+        .set_credentials(ADDRESS, PRIVATE_KEY)
         .set_node_uri(AvalancheCWeb3Client.NODE_URL)
         .set_contract()
         .set_dry_run(False)
