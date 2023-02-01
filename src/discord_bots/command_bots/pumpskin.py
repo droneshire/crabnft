@@ -43,7 +43,6 @@ class GetPumpkinLevel(OnMessage):
             color=discord.Color.orange().value,
         )
 
-        logger.print_bold("plvl command")
         embed.add_field(name=f"Pumpskin", value=f"{token_id}", inline=True)
         embed.add_field(name=f"Cooldown", value=f"{cooldown_time}", inline=False)
         ppie_per_day = calc_ppie_per_day_from_level(level)
@@ -82,6 +81,8 @@ class GetPumpkinLevel(OnMessage):
 
     @classmethod
     def response(cls, message: discord.message.Message) -> T.Union[str, discord.Embed]:
+        logger.print_bold("plvl command")
+
         if not any([g for g in cls.ALLOWLIST_GUILDS if message.guild.id == g]):
             return ""
 
