@@ -121,11 +121,11 @@ class MechContractWeb3Client(AvalancheCWeb3Client):
         else:
             price: TokenWei = wei_to_token(max_price_shk)
 
-        try:
-            tx: TxParams = self.build_contract_transaction(
-                self.contract.functions.mintFromShirak(price, use_deposit)
-            )
-            return self.sign_and_send_transaction(tx)
-        except Exception as e:
-            logger.print_fail(f"{e}")
-            return ""
+        # try:
+        tx: TxParams = self.build_contract_transaction(
+            self.contract.functions.mintFromShirak(price, use_deposit)
+        )
+        return self.sign_and_send_transaction(tx)
+        # except Exception as e:
+        #     logger.print_fail(f"{e}")
+        #     return ""
