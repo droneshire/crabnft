@@ -9,7 +9,7 @@ from web3 import Web3
 from web3.types import TxParams, Wei
 
 from utils import logger
-from utils.price import wei_to_token, TokenWei
+from utils.price import token_to_wei, wei_to_token, TokenWei
 from web3_utils.web3_client import Web3Client
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from pumpskin.types import StakedPumpskin
@@ -119,9 +119,10 @@ class MechContractWeb3Client(AvalancheCWeb3Client):
         if max_price_shk is None:
             price: TokenWei = self.get_min_mint_bid_wei()
         else:
-            price: TokenWei = wei_to_token(max_price_shk)
+            price: TokenWei = token_to_wei(max_price_shk)
 
         # try:
+        print(price, use_deposit)
         tx: TxParams = self.build_contract_transaction(
             self.contract.functions.mintFromShirak(price, use_deposit)
         )
