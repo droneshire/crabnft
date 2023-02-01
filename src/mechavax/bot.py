@@ -21,7 +21,7 @@ class MechBot:
     MONITOR_INTERVAL = 5.0
     MINT_BOT_INTERVAL = 60.0 * 5.0
     COOLDOWN_AFTER_LAST_MINT = 60.0 * 60.0 * 3.75
-    SHK_SAVINGS_PERCENT = 50.0
+    SHK_SAVINGS_PERCENT = 100.0
 
     def __init__(
         self,
