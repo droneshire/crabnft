@@ -74,10 +74,10 @@ async def mint_mech_command(interaction: discord.Interaction) -> None:
         .set_dry_run(False)
     )
 
-    shk_balance = await w3_mech.get_deposited_shk(GUILD_WALLET_ADDRESS)
-    min_mint_shk = await w3_mech.get_min_mint_bid()
+    shk_balance = await asyncio.coroutine(w3_mech.get_deposited_shk(GUILD_WALLET_ADDRESS))
+    min_mint_shk = await asyncio.coroutine(w3_mech.get_min_mint_bid())
 
-    tx_hash = await w3_mech.mint_mech_from_shk()
+    tx_hash = await asyncio.coroutine(w3_mech.mint_mech_from_shk())
     action_str = f"Mint MECH for {min_mint_shk:.2f} using $SHK balance of {shk_balance:.2f}"
     _, txn_url = process_w3_results(w3_mech, action_str, tx_hash)
     if txn_url:
@@ -167,7 +167,7 @@ async def guild_stats_command(interaction: discord.Interaction) -> None:
         .set_dry_run(False)
     )
 
-    mint_cost_shk = await w3_mech.get_min_mint_bid()
+    mint_cost_shk = await asyncio.coroutine(w3_mech.get_min_mint_bid())
     await interaction.response.send_message(f"Next mint cost: `{mint_cost_shk:.2f} $SHK`")
 
 
