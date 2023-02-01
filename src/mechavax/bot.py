@@ -227,7 +227,7 @@ class MechBot:
 
             if savings_margin < savings_percent:
                 logger.print_normal(
-                    f"Skipping minting since we don't have enough SHK: Have {shk_balance:.2f}, Need {min_mint_shk * 1.33:.2f}"
+                    f"Skipping minting since we don't have enough SHK: Have {shk_balance:.2f}, Need {min_mint_shk * (1 + savings_percent):.2f}"
                 )
                 await asyncio.sleep(self.MINT_BOT_INTERVAL)
                 continue
