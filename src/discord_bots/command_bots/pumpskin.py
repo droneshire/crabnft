@@ -84,15 +84,12 @@ class GetPumpkinLevel(OnMessage):
         if not any([g for g in cls.ALLOWLIST_GUILDS if message.guild.id == g]):
             return ""
 
-
         if not any([c for c in cls.ALLOWLIST_CHANNELS if message.channel.id == c]):
             return ""
 
         text = message.content.lower().strip()
         if not text.startswith(cls.HOTKEY):
             return ""
-
-        logger.print_bold("command")
 
         try:
             token_id = int(text.strip().split(cls.HOTKEY)[1])
