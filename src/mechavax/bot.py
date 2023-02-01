@@ -7,7 +7,6 @@ import typing as T
 from eth_typing import Address
 from web3 import Web3
 
-from config_admin import ADMIN_ADDRESS
 from mechavax.mechavax_web3client import MechContractWeb3Client, MechArmContractWeb3Client
 from utils import discord, logger
 from utils.general import get_pretty_seconds
@@ -26,6 +25,7 @@ class MechBot:
     def __init__(
         self,
         address: Address,
+        private_key: str,
         address_mapping: T.Dict[Address, str],
         discord_channel: str,
         interval: float,
@@ -39,14 +39,14 @@ class MechBot:
 
         self.w3_mech: MechContractWeb3Client = (
             MechContractWeb3Client()
-            .set_credentials(ADMIN_ADDRESS, "")
+            .set_credentials(address, private_key)
             .set_node_uri(AvalancheCWeb3Client.NODE_URL)
             .set_contract()
             .set_dry_run(False)
         )
         self.w3_arm: MechArmContractWeb3Client = (
             MechArmContractWeb3Client()
-            .set_credentials(ADMIN_ADDRESS, "")
+            .set_credentials(address, private_key)
             .set_node_uri(AvalancheCWeb3Client.NODE_URL)
             .set_contract()
             .set_dry_run(False)

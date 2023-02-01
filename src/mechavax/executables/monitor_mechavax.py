@@ -4,10 +4,11 @@ import logging
 import os
 import time
 
-from config_admin import GUILD_WALLET_ADDRESS, GUILD_WALLET_MAPPING
+from config_admin import GUILD_WALLET_ADDRESS, GUILD_WALLET_MAPPING, GUILD_WALLET_PRIVATE_KEY
 from health_monitor.health_monitor import HealthMonitor
 from mechavax.bot import MechBot
 from utils import logger
+from utils.security import decrypt_secret
 
 STATS_INTERVAL = 60.0 * 60.0
 
@@ -34,7 +35,18 @@ def run_bot() -> None:
         daemon=True
     )
 
-    monitor = MechBot(args.address, GUILD_WALLET_MAPPING, "MECHAVAX_BOT", STATS_INTERVAL)
+    encrypt_password = ""
+
+    if not args.dry_run:
+        encrypt_password = os.getenv("NFT_PWD")
+        if not encrypt_password:
+            encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
+
+    private_key = decrypt_secret(encrypt_password, GUILD_WALLET_PRIVATE_KEY)
+
+    monitor = MechBot(
+        args.address, private_key, GUILD_WALLET_MAPPING, "MECHAVAX_BOT", STATS_INTERVAL
+    )
     monitor.run()
 
 

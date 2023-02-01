@@ -14,11 +14,13 @@ from config_admin import (
     DISCORD_MECHAVAX_SALES_BOT_TOKEN,
     GUILD_WALLET_ADDRESS,
     GUILD_WALLET_MAPPING,
+    GUILD_WALLET_PRIVATE_KEY,
 )
 from mechavax.mechavax_web3client import MechContractWeb3Client
 from utils import general, logger
 from utils.async_utils import async_func_wrapper
 from utils.price import wei_to_token, TokenWei
+from utils.security import decrypt_secret
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.helpers import process_w3_results
 from web3_utils.snowtrace import SnowtraceApi
@@ -34,6 +36,18 @@ ALLOWLIST_CHANNELS = [
     1067902019379142671,  # p2e mechavax channel
 ]
 MINT_ADDRESS = "0x0000000000000000000000000000000000000000"
+
+
+async def get_credentials() -> T.Tuple[str, str]:
+    encrypt_password = ""
+
+    if not args.dry_run:
+        encrypt_password = os.getenv("NFT_PWD")
+        if not encrypt_password:
+            encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
+
+    private_key = decrypt_secret(encrypt_password, GUILD_WALLET_PRIVATE_KEY)
+    return GUILD_WALLET_ADDRESS, private_key
 
 
 @bot.event
@@ -67,9 +81,10 @@ async def mint_mech_command(interaction: discord.Interaction) -> None:
     logger.print_bold(f"Received mintmech command")
     await interaction.response.defer()
 
+    address, private_key = await get_credentials()
     w3_mech: MechContractWeb3Client = (
         MechContractWeb3Client()
-        .set_credentials(ADMIN_ADDRESS, "")
+        .set_credentials(address, private_key)
         .set_node_uri(AvalancheCWeb3Client.NODE_URL)
         .set_contract()
         .set_dry_run(False)
@@ -82,10 +97,12 @@ async def mint_mech_command(interaction: discord.Interaction) -> None:
     action_str = f"Mint MECH for {min_mint_shk:.2f} using $SHK balance of {shk_balance:.2f}"
     _, txn_url = process_w3_results(w3_mech, action_str, tx_hash)
     if txn_url:
-        message = f"\U0001F389 Successfully minted a new MECH!\n{txn_url}"
+        message = (
+            f"\U0001F389\U0001F389 Successfully minted a new MECH!\U0001F389\U0001F389\n{txn_url}"
+        )
         logger.print_ok_arrow(message)
     else:
-        message = f"\U00002620 Failed to mint new MECH!"
+        message = f"\U00002620\U00002620 Failed to mint new MECH!\U00002620\U00002620"
         logger.print_fail_arrow(message)
 
     await interaction.followup.send(message)
@@ -185,7 +202,9 @@ async def guild_stats_command(interaction: discord.Interaction) -> None:
     logger.print_bold(f"Received guildstats command")
     await interaction.response.defer()
 
-    holders = await SnowtraceApi().get_erc721_token_transfers(GUILD_WALLET_ADDRESS)
+    holders = await async_func_wrapper(
+        SnowtraceApi().get_erc721_token_transfers, GUILD_WALLET_ADDRESS
+    )
 
     if not holders:
         await interaction.followup.send("Could not obtain data. Try again later...")

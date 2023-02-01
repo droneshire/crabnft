@@ -12,7 +12,7 @@ class SnowtraceApi(Web2Client):
     def __init__(self) -> None:
         super().__init__(self.SNOWTRACE_API_URL, rate_limit_delay=0.0)
 
-    async def get_erc721_token_transfers(
+    def get_erc721_token_transfers(
         self, target_address: Address
     ) -> T.Dict[Address, T.Dict[str, T.List[int]]]:
         url = self.SNOWTRACE_API_URL
