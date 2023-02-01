@@ -248,6 +248,21 @@ async def guild_stats_command(interaction: discord.Interaction) -> None:
         footer=["Totals", "", totals["MECH"], totals["MARM"]],
     )
     message += f"```\n{table_text}\n```"
+
+    w3_mech: MechContractWeb3Client = (
+        MechContractWeb3Client()
+        .set_credentials(ADMIN_ADDRESS, "")
+        .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+        .set_contract()
+        .set_dry_run(False)
+    )
+
+    multiplier = await async_func_wrapper(w3_mech.get_emmissions_multiplier, GUILD_WALLET_ADDRESS)
+    shk_balance = await async_func_wrapper(w3_mech.get_deposited_shk, GUILD_WALLET_ADDRESS)
+
+    message += f"**SHK Deposited**: `{shk_balance:.2f}`\n"
+    message += f"**Multiplier**: `{multiplier:.2f}`\n\n"
+
     logger.print_ok_blue(message)
 
     await interaction.followup.send(message)

@@ -206,8 +206,6 @@ class MechBot:
             message += f"**SHK Minted Mechs**: `{num_minted_mechs_from_shk:.2f}`\n\n"
 
             logger.print_ok_blue(message)
-            self.webhook.send(message)
-
             await asyncio.sleep(interval)
 
     async def mint_bot(self) -> None:
