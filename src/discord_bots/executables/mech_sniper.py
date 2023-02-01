@@ -30,8 +30,9 @@ sales_bot = MechavaxListingBot(BOT_NAME, discord.Color.dark_blue(), COLLECTIONS,
 async def listings_loop():
     sales_channel = client.get_channel(SALES_CHANNEL_ID)
     while True:
-        logger.print_ok_blue(f"Checking for new sales...")
+        logger.print_ok_blue(f"Checking for new listings...")
         embeds = sales_bot.get_listing_embeds()
+        logger.print_bold(f"Found {len(embeds)} listings")
         for embed in embeds:
             await sales_channel.send(embed=embed)
             await asyncio.sleep(TIME_BETWEEN_POSTS)
