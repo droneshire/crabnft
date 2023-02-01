@@ -39,12 +39,9 @@ MINT_ADDRESS = "0x0000000000000000000000000000000000000000"
 
 
 def get_credentials() -> T.Tuple[str, str]:
-    encrypt_password = ""
-
-    if not args.dry_run:
-        encrypt_password = os.getenv("NFT_PWD")
-        if not encrypt_password:
-            encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
+    encrypt_password = os.getenv("NFT_PWD")
+    if not encrypt_password:
+        encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
 
     private_key = decrypt_secret(encrypt_password, GUILD_WALLET_PRIVATE_KEY)
     return GUILD_WALLET_ADDRESS, private_key
