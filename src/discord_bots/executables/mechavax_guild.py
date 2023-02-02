@@ -17,7 +17,7 @@ from config_admin import (
     GUILD_WALLET_MAPPING,
     GUILD_WALLET_PRIVATE_KEY,
 )
-from joepegs.joepegs_api import JOEPEGS_ITEM_URL
+from joepegs.joepegs_api import JOEPEGS_ITEM_URL, JoePegsClient
 from mechavax.mechavax_web3client import MechContractWeb3Client
 from utils import general, logger
 from utils.async_utils import async_func_wrapper
@@ -86,9 +86,12 @@ async def mint_mech_command(interaction: discord.Interaction, mech_id: int) -> N
         .set_dry_run(False)
     )
 
+    jp_api = JoePegsClient()
+    item = jp_api.get_item(w3_mech.contract_address, mech_id)
+    name = item.get("metadata", {}).get("name", "UNKNONWN")
     emission_multiplier = w3_mech.get_mech_multiplier(mech_id)
     url = JOEPEGS_ITEM_URL.format(w3_mech.contract_address, mech_id)
-    message = f"[MECH {mech_id}]({url}) emissions: {emission_multiplier / 10.0}"
+    message = f"[MECH {mech_id}]({url}) [{name.upper()}]emissions: {emission_multiplier / 10.0}"
 
     await interaction.response.send_message(message)
 
