@@ -91,7 +91,9 @@ async def mint_mech_command(interaction: discord.Interaction, mech_id: int) -> N
     name = item.get("metadata", {}).get("name", "UNKNONWN")
     emission_multiplier = w3_mech.get_mech_multiplier(mech_id)
     url = JOEPEGS_ITEM_URL.format(w3_mech.contract_address, mech_id)
-    message = f"[MECH {mech_id}]({url}) [{name.upper()}]emissions: {emission_multiplier / 10.0}"
+    message = (
+        f"[**MECH {mech_id}**]({url}) [{name.upper()}] emissions: `{emission_multiplier / 10.0}`"
+    )
 
     await interaction.response.send_message(message)
 
