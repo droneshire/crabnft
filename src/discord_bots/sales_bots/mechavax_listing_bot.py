@@ -52,7 +52,7 @@ class MechavaxListingBot(JoePegsSalesBot):
         multiplier = self.w3.get_mech_multiplier(token_id)
         with open(self.rarity.files["rarity"]) as infile:
             data = json.load(infile)
-            rarity = data[str(token_id)]["Overall"]["rarity"] * 100.0
+            rarity = data.get(str(token_id), {}).get("Overall", {}).get("rarity", -0.01) * 100.0
         embed.add_field(
             name=f"\U0001F522 Emissions Multiplier", value=f"{multiplier}", inline=False
         )
