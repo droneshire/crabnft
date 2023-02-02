@@ -66,6 +66,31 @@ async def on_ready() -> None:
 
 
 @bot.tree.command(
+    name="getemission",
+    description="Get emissions for a given mech id",
+    guild=discord.Object(id=ALLOWLIST_GUILD),
+)
+async def mint_mech_command(interaction: discord.Interaction, mech_id: int) -> None:
+    if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
+        await interaction.response.send_message("Invalid channel")
+        return
+
+    logger.print_bold(f"Received mint emissions command")
+
+    w3_mech: MechContractWeb3Client = (
+        MechContractWeb3Client()
+        .set_credentials(ADMIN_ADDRESS, "")
+        .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+        .set_contract()
+        .set_dry_run(False)
+    )
+
+    emission_multiplier = w3_mech.get_mech_multiplier(token_id)
+    message = f"MECH {mech_id} emissions: {emission_multiplier}"
+    await interaction.response.send_message(message)
+
+
+@bot.tree.command(
     name="mintmech",
     description="Mint a mech from the guild wallet. Authorized users only",
     guild=discord.Object(id=ALLOWLIST_GUILD),
