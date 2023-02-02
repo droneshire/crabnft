@@ -86,7 +86,7 @@ async def mint_mech_command(interaction: discord.Interaction, mech_id: int) -> N
     )
 
     emission_multiplier = w3_mech.get_mech_multiplier(mech_id)
-    message = f"MECH {mech_id} emissions: {emission_multiplier}"
+    message = f"MECH {mech_id} emissions: {emission_multiplier / 10.0}"
     await interaction.response.send_message(message)
 
 
