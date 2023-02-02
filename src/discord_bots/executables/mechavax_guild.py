@@ -77,6 +77,7 @@ async def mint_mech_command(interaction: discord.Interaction, mech_id: int) -> N
         return
 
     logger.print_bold(f"Received mint emissions command")
+    await interaction.response.defer()
 
     w3_mech: MechContractWeb3Client = (
         MechContractWeb3Client()
@@ -95,7 +96,7 @@ async def mint_mech_command(interaction: discord.Interaction, mech_id: int) -> N
         f"[**MECH {mech_id}**]({url}) [{name.upper()}] emissions: `{emission_multiplier / 10.0}`"
     )
 
-    await interaction.response.send_message(message)
+    await interaction.followup.send(message)
 
 
 @bot.tree.command(
