@@ -109,6 +109,8 @@ class JoePegsSalesBot:
         snipe_listings = []
         for collection, listings in new_listings.items():
             for listing in listings:
+                if not isinstance(listing, dict):
+                    continue
                 if listing.get("tokenId", "UNKNOWN") in self.posted_items.get(
                     listing.get("collection", ""), {}
                 ).get("listed", ""):

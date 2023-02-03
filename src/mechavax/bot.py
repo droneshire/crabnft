@@ -220,7 +220,7 @@ class MechBot:
             shk_balance = await async_func_wrapper(self.w3_mech.get_deposited_shk, self.address)
             min_mint_shk = await async_func_wrapper(self.w3_mech.get_min_mint_bid)
 
-            savings_margin = shk_balance / (shk_balance - min_mint_shk)
+            savings_margin = shk_balance / min_mint_shk
 
             if savings_margin < self.SHK_SAVINGS_MULT:
                 logger.print_normal(
@@ -232,6 +232,8 @@ class MechBot:
                 await asyncio.sleep(self.MINT_BOT_INTERVAL)
                 continue
 
+
+            logger.print_normal(f"Margin = {savings_margin}")
             tx_hash = await async_func_wrapper(self.w3_mech.mint_mech_from_shk)
             action_str = f"Mint MECH for {min_mint_shk:.2f} using $SHK balance of {shk_balance:.2f}"
             _, txn_url = process_w3_results(self.w3_mech, action_str, tx_hash)
