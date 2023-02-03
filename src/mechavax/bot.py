@@ -210,9 +210,12 @@ class MechBot:
     async def mint_bot(self) -> None:
         while True:
             now = time.time()
+            time_since_last_mint = now - self.last_time_mech_minted
 
-            if now - self.last_time_mech_minted < self.COOLDOWN_AFTER_LAST_MINT:
-                logger.print_normal("Skipping minting since still within window")
+            if time_since_last_mint < self.COOLDOWN_AFTER_LAST_MINT:
+                logger.print_normal(
+                    f"Skipping minting since still within window: {get_pretty_seconds(int(time_since_last_mint))}"
+                )
                 await asyncio.sleep(self.MINT_BOT_INTERVAL)
                 continue
 
@@ -245,6 +248,49 @@ class MechBot:
 
             self.webhook.send(message)
             await asyncio.sleep(self.MINT_BOT_INTERVAL)
+
+    async def send_discord_mint_embed(self) -> None:
+        webhook = DiscordWebhook(
+            url=discord.DISCORD_WEBHOOK_URL["WYNDBLAST_PVE_ACTIVITY"], rate_limit_retry=True
+        )
+        embed = DiscordEmbed(
+            title=f"PVE ACTIVITIES",
+            description=f"Finished for {self.config['discord_handle'].upper()}\n",
+            color=Color.purple().value,
+        )
+
+        tx_hash = await async_func_wrapper(self.w3_mech.mint_mech_from_shk)
+
+        embed.add_embed_field(name=f"Max Level", value=f"{max_level}", inline=True)
+        embed.add_embed_field(name=f"Levels Won", value=f"{levels_completed}", inline=True)
+        embed.add_embed_field(name=f"Account Exp", value=f"{account_exp}", inline=True)
+        embed.add_embed_field(name=f"Account Level", value=f"{account_level}", inline=True)
+        embed.add_embed_field(
+            name=f"Total Chro (unclaimed)", value=f"{unclaimed_chro_earned:.2f}", inline=False
+        )
+        embed.add_embed_field(
+            name=f"Total Chro (claimed)", value=f"{claimed_chro_earned:.2f}", inline=False
+        )
+
+        try:
+            wynds: T.List[T.Any] = self.wynd_w2.get_nft_data()["wynd"]
+
+            text = ""
+            for wynd in wynds:
+                token_id = int(wynd["product_id"].split(":")[1])
+                level = wynd["metadata"]["stats"]["level"]
+                if level > 1:
+                    text += f"Wynd {token_id}: Level {level} {wynd['metadata']['faction']}\n"
+            embed.add_embed_field(name=f"Wynds", value=text, inline=False)
+
+            item = wynds[0]
+            url = item["metadata"]["image_url"]
+            embed.set_image(url=url)
+        except:
+            embed.set_thumbnail(url=WYNDBLAST_ASSETS["wynd"], height=100, width=100)
+
+        webhook.add_embed(embed)
+        webhook.execute()
 
     def run(self) -> None:
         loop = asyncio.get_event_loop()
