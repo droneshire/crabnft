@@ -20,7 +20,7 @@ class MechBot:
     MONITOR_INTERVAL = 5.0
     MINT_BOT_INTERVAL = 60.0 * 5.0
     COOLDOWN_AFTER_LAST_MINT = 60.0 * 60.0 * 5.0
-    SHK_SAVINGS_MULT = 2.5
+    SHK_SAVINGS_MULT = 3
 
     def __init__(
         self,
@@ -179,7 +179,6 @@ class MechBot:
 
     async def event_monitors(self, interval: float) -> None:
         while True:
-            logger.print_normal("Checking for events...")
             for event_filter, handler in self.event_filters.items():
                 try:
                     for event in event_filter.get_new_entries():
@@ -222,16 +221,16 @@ class MechBot:
 
             savings_margin = shk_balance / min_mint_shk
 
+            logger.print_normal(
+                f"Ask {min_mint_shk:.2f}, Have {shk_balance:.2f}, Need {min_mint_shk * self.SHK_SAVINGS_MULT:.2f}"
+            )
+
             if savings_margin < self.SHK_SAVINGS_MULT:
                 logger.print_normal(
-                    f"Skipping minting since we don't have enough SHK ({self.SHK_SAVINGS_MULT}): {savings_margin:.2f}%"
-                )
-                logger.print_normal(
-                    f"Have {shk_balance:.2f}, Need {min_mint_shk * self.SHK_SAVINGS_MULT:.2f}"
+                    f"Skipping minting since we don't have enough SHK ({self.SHK_SAVINGS_MULT}): {savings_margin:.2f}"
                 )
                 await asyncio.sleep(self.MINT_BOT_INTERVAL)
                 continue
-
 
             logger.print_normal(f"Margin = {savings_margin}")
             tx_hash = await async_func_wrapper(self.w3_mech.mint_mech_from_shk)
