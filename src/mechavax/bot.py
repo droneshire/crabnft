@@ -224,7 +224,7 @@ class MechBot:
 
             if savings_margin < self.SHK_SAVINGS_MULT:
                 logger.print_normal(
-                    f"Skipping minting since we don't have enough SHK: {savings_margin:.2f}%"
+                    f"Skipping minting since we don't have enough SHK ({self.SHK_SAVINGS_MULT}): {savings_margin:.2f}%"
                 )
                 logger.print_normal(
                     f"Have {shk_balance:.2f}, Need {min_mint_shk * self.SHK_SAVINGS_MULT:.2f}"
