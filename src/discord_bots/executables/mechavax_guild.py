@@ -271,7 +271,7 @@ async def get_guild_table_row(
     description="Get Cashflow Cartel Guild Stats",
     guild=discord.Object(id=ALLOWLIST_GUILD),
 )
-async def guild_stats_command(interaction: discord.Interaction, emissions: bool) -> None:
+async def guild_stats_command(interaction: discord.Interaction, with_emissions: bool) -> None:
     if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
         await interaction.response.send_message("Invalid channel", ephemeral=True)
         return
@@ -292,7 +292,7 @@ async def guild_stats_command(interaction: discord.Interaction, emissions: bool)
 
     body = []
     totals = {"MECH": 0, "MARM": 0, "SHK": 0}
-    if emissions:
+    if with_emissions:
         totals["Emissions"] = 0
 
     for address, data in holders.items():
@@ -300,7 +300,7 @@ async def guild_stats_command(interaction: discord.Interaction, emissions: bool)
         if address == MINT_ADDRESS:
             continue
         row = await get_guild_table_row(
-            totals, address, data, shk_holders.get(address, {}), emissions
+            totals, address, data, shk_holders.get(address, {}), with_emissions
         )
         body.append(row)
 
@@ -319,7 +319,7 @@ async def guild_stats_command(interaction: discord.Interaction, emissions: bool)
         f"{int(totals['SHK'])}",
     ]
 
-    if emissions:
+    if with_emissions:
         header.append("Emissions")
         footer.append(f"{totals['Emissions']:.1f}")
 
