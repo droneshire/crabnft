@@ -305,7 +305,7 @@ async def guild_stats_command(interaction: discord.Interaction, with_emissions: 
         body.append(row)
 
     row = await get_guild_table_row(
-        totals, address, holders.get(address, {}), shk_holders.get(address, {})
+        totals, address, holders.get(address, {}), shk_holders.get(address, {}), with_emissions
     )
     body.append(row)
 
