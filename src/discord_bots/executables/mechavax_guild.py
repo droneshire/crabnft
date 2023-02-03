@@ -223,12 +223,55 @@ async def guild_stats_command(interaction: discord.Interaction) -> None:
     await interaction.response.send_message(f"Next mint cost: `{mint_cost_shk:.2f} $SHK`")
 
 
+async def get_guild_table_row(
+    totals: T.Dict[str, int],
+    address: str,
+    nft_data: T.Dict[str, T.Dict[str, T.Any]],
+    token_data: T.Dict[str, T.Dict[str, T.Any]],
+    emissions: bool,
+) -> T.List[T.Any]:
+    row = []
+
+    w3_mech: MechContractWeb3Client = (
+        MechContractWeb3Client()
+        .set_credentials(ADMIN_ADDRESS, "")
+        .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+        .set_contract()
+        .set_dry_run(False)
+    )
+
+    address = Web3.toChecksumAddress(address)
+    row.append(f"{address[:5]}...{address[-4:]}")
+    owner = GUILD_WALLET_MAPPING.get(address, "").split("#")[0]
+    row.append(owner)
+    marms = nft_data.get("MARM", [])
+    mechs = nft_data.get("MECH", [])
+    multiplier = 0
+    if emissions:
+        for mech in mechs:
+            multiplier += await async_func_wrapper(w3_mech.get_mech_multiplier, int(mech))
+    shk = token_data.get("SHK", 0)
+    row.append(len(mechs))
+    row.append(len(marms))
+    row.append(int(shk))
+    totals["MECH"] += len(mechs)
+    totals["MARM"] += len(marms)
+    totals["SHK"] += shk
+
+    if emissions:
+        multiplier /= 10.0
+        row.append(f"{multiplier:.1f}")
+        totals["Emissions"] += multiplier
+
+    return row
+
+
 @bot.tree.command(
     name="guildstats",
     description="Get Cashflow Cartel Guild Stats",
     guild=discord.Object(id=ALLOWLIST_GUILD),
 )
-async def guild_stats_command(interaction: discord.Interaction) -> None:
+async def guild_stats_command(interaction: discord.Interaction, emissions: bool) -> None:
     if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
         await interaction.response.send_message("Invalid channel", ephemeral=True)
         return
@@ -249,44 +292,41 @@ async def guild_stats_command(interaction: discord.Interaction) -> None:
 
     body = []
     totals = {"MECH": 0, "MARM": 0, "SHK": 0}
+    if emissions:
+        totals["Emissions"] = 0
 
     for address, data in holders.items():
-        row = []
         address = Web3.toChecksumAddress(address)
         if address == MINT_ADDRESS:
             continue
-        row.append(f"{address[:5]}...{address[-4:]}")
-        owner = GUILD_WALLET_MAPPING.get(address, "")
-        row.append(owner)
-        marms = len(data.get("MARM", []))
-        mechs = len(data.get("MECH", []))
-        shk = shk_holders.get("address", {}).get("SHK", 0)
-        row.append(mechs)
-        row.append(marms)
-        row.append(shk)
-        totals["MECH"] += mechs
-        totals["MARM"] += marms
-        totals["SHK"] += shk
+        row = await get_guild_table_row(
+            totals, address, data, shk_holders.get(address, {}), emissions
+        )
         body.append(row)
 
-    row = []
-    row.append(f"{MINT_ADDRESS[:5]}...{MINT_ADDRESS[-4:]}")
-    owner = GUILD_WALLET_MAPPING.get(MINT_ADDRESS, "")
-    row.append(owner)
-    marms = len(holders.get(MINT_ADDRESS, {}).get("MARM", []))
-    mechs = len(holders.get(MINT_ADDRESS, {}).get("MECH", []))
-    row.append(mechs)
-    row.append(marms)
-    row.append(0)
-    totals["MECH"] += mechs
-    totals["MARM"] += marms
+    row = await get_guild_table_row(
+        totals, address, holders.get(address, {}), shk_holders.get(address, {})
+    )
     body.append(row)
 
     message = "**Guild Distribution**\n"
+    header = ["Address", "Owner", "MECH", "MARM", "SHK"]
+    footer = [
+        "Totals",
+        "",
+        totals["MECH"],
+        totals["MARM"],
+        f"{int(totals['SHK'])}",
+    ]
+
+    if emissions:
+        header.append("Emissions")
+        footer.append(f"{totals['Emissions']:.1f}")
+
     table_text = table2ascii.table2ascii(
-        header=["Address", "Owner", "MECH", "MARM", "SHK"],
+        header=header,
         body=body,
-        footer=["Totals", "", totals["MECH"], totals["MARM"], totals["SHK"]],
+        footer=footer,
     )
     message += f"```\n{table_text}\n```"
 
