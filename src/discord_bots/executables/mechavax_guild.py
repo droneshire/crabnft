@@ -239,13 +239,16 @@ async def guild_stats_command(interaction: discord.Interaction) -> None:
     holders = await async_func_wrapper(
         SnowtraceApi().get_erc721_token_transfers, GUILD_WALLET_ADDRESS
     )
+    shk_holders = await async_func_wrapper(
+        SnowtraceApi().get_erc20_token_transfers, GUILD_WALLET_ADDRESS
+    )
 
     if not holders:
         await interaction.followup.send("Could not obtain data. Try again later...")
         return
 
     body = []
-    totals = {"MECH": 0, "MARM": 0}
+    totals = {"MECH": 0, "MARM": 0, "SHK": 0}
 
     for address, data in holders.items():
         row = []
@@ -257,10 +260,13 @@ async def guild_stats_command(interaction: discord.Interaction) -> None:
         row.append(owner)
         marms = len(data.get("MARM", []))
         mechs = len(data.get("MECH", []))
+        shk = shk_holders.get("address", {}).get("SHK", 0)
         row.append(mechs)
         row.append(marms)
+        row.append(shk)
         totals["MECH"] += mechs
         totals["MARM"] += marms
+        totals["SHK"] += shk
         body.append(row)
 
     row = []
@@ -271,15 +277,16 @@ async def guild_stats_command(interaction: discord.Interaction) -> None:
     mechs = len(holders.get(MINT_ADDRESS, {}).get("MECH", []))
     row.append(mechs)
     row.append(marms)
+    row.append(0)
     totals["MECH"] += mechs
     totals["MARM"] += marms
     body.append(row)
 
     message = "**Guild Distribution**\n"
     table_text = table2ascii.table2ascii(
-        header=["Address", "Owner", "MECH", "MARM"],
+        header=["Address", "Owner", "MECH", "MARM", "SHK"],
         body=body,
-        footer=["Totals", "", totals["MECH"], totals["MARM"]],
+        footer=["Totals", "", totals["MECH"], totals["MARM"], totals["SHK"]],
     )
     message += f"```\n{table_text}\n```"
 
