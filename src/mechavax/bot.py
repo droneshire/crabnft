@@ -21,6 +21,7 @@ class MechBot:
     MINT_BOT_INTERVAL = 60.0 * 5.0
     COOLDOWN_AFTER_LAST_MINT = 60.0 * 60.0 * 5.0
     SHK_SAVINGS_MULT = 3
+    ENABLE_AUTO_MINT = False
 
     def __init__(
         self,
@@ -208,6 +209,9 @@ class MechBot:
             await asyncio.sleep(interval)
 
     async def mint_bot(self) -> None:
+        if not self.ENABLE_AUTO_MINT:
+            return
+
         while True:
             now = time.time()
             time_since_last_mint = now - self.last_time_mech_minted
