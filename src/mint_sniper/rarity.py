@@ -31,7 +31,7 @@ class NftCollectionAnalyzerBase:
     ):
         self.collection_name = collection_name
         self.address = self.CONTRACT_ADDRESS
-        self.discord_webhook = DISCORD_WEBHOOK_URL[self.DISCORD_WEBHOOK]
+        self.discord_webhook = DISCORD_WEBHOOK_URL.get(self.DISCORD_WEBHOOK, None)
         self.pool = ThreadPoolExecutor(max_workers=20)
         self.try_all_mints = try_all_mints
 
@@ -179,6 +179,9 @@ class NftCollectionAnalyzerBase:
                 return False
 
             try:
+                if self.TOKEN_ID_KEY not in nft_info:
+                    logger.print_warn(f"Missing {self.TOKEN_ID_KEY}:\n{nft_info}")
+                    continue
                 nft = int(nft_info[self.TOKEN_ID_KEY])
                 collection_info[nft] = nft_info
                 for k, v in self.custom_nft_info(nft).items():
@@ -229,8 +232,10 @@ class NftCollectionAnalyzerBase:
                 if value == nft_traits[trait]:
                     trait_count = count
                     total_trait_count += count
-
-            rarity = float(trait_count) / total_count
+            if total_count > 0:
+                rarity = float(trait_count) / total_count
+            else:
+                rarity = 1000.0
             nft_rarity[trait] = {"trait": nft_traits[trait], "rarity": rarity}
 
         nft_rarity["Overall"] = {

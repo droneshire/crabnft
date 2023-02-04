@@ -2,6 +2,7 @@ import asyncio
 import discord
 import getpass
 import json
+import math
 import os
 import table2ascii
 import time
@@ -13,6 +14,8 @@ from web3 import Web3
 from config_admin import (
     ADMIN_ADDRESS,
     DISCORD_MECHAVAX_SALES_BOT_TOKEN,
+    GUILD_MANAGEMENT_FEE,
+    GUILD_MULTIPLIERS,
     GUILD_WALLET_ADDRESS,
     GUILD_WALLET_MAPPING,
     GUILD_WALLET_PRIVATE_KEY,
@@ -38,6 +41,7 @@ ALLOWLIST_CHANNELS = [
     1067902019379142671,  # p2e mechavax channel
 ]
 MINT_ADDRESS = "0x0000000000000000000000000000000000000000"
+IGNORE_ADDRESSES = [MINT_ADDRESS, "0xB6C5a50c28805ABB41f79F7945Bf3F9DfeF4C8B0"]
 
 
 def get_credentials() -> T.Tuple[str, str]:
@@ -229,7 +233,7 @@ async def get_guild_table_row(
     nft_data: T.Dict[str, T.Dict[str, T.Any]],
     token_data: T.Dict[str, T.Dict[str, T.Any]],
     emissions: bool,
-) -> T.List[T.Any]:
+) -> T.Tuple[T.List[T.Any], float]:
     row = []
 
     w3_mech: MechContractWeb3Client = (
@@ -263,7 +267,14 @@ async def get_guild_table_row(
         row.append(f"{multiplier:.1f}")
         totals["Emissions"] += multiplier
 
-    return row
+    ownership_points = 0
+    ownership_points += len(mechs) * GUILD_MULTIPLIERS["MECH"]
+    ownership_points += len(marms) * GUILD_MULTIPLIERS["MARM"]
+    ownership_points += shk * GUILD_MULTIPLIERS["SHK"]
+    if emissions:
+        ownership_points += multiplier * GUILD_MULTIPLIERS["Emissions"]
+
+    return row, ownership_points
 
 
 @bot.tree.command(
@@ -290,24 +301,51 @@ async def guild_stats_command(interaction: discord.Interaction, with_emissions: 
         await interaction.followup.send("Could not obtain data. Try again later...")
         return
 
-    body = []
     totals = {"MECH": 0, "MARM": 0, "SHK": 0}
     if with_emissions:
         totals["Emissions"] = 0
 
+    info = {}
     for address, data in holders.items():
         address = Web3.toChecksumAddress(address)
-        if address == MINT_ADDRESS:
-            continue
-        row = await get_guild_table_row(
+        row, points = await get_guild_table_row(
             totals, address, data, shk_holders.get(address, {}), with_emissions
         )
+        if address in IGNORE_ADDRESSES:
+            points = 0
+
+        info[address] = (row, points)
+
+    total_guild_management_percents = sum([f for f in GUILD_MANAGEMENT_FEE.values()])
+    total_ownership_points = sum([points for _, points in info.values()])
+    total_ownership_points_after_fees = total_ownership_points / (
+        1 - total_guild_management_percents
+    )
+
+    rows = []
+    total_ownership_percent = 0.0
+    for address, data in info.items():
+        row, points = data
+        fee_percent = GUILD_MANAGEMENT_FEE.get(address, 0.0) / total_guild_management_percents
+        fee_points = fee_percent * (total_ownership_points_after_fees - total_ownership_points)
+        ownership_percent = points + fee_points
+        ownership_percent /= total_ownership_points_after_fees
+        ownership_percent *= 100.0
+        total_ownership_percent += ownership_percent
+        row.append(ownership_percent)
+        rows.append(row)
+
+    body = []
+    rows.sort(key=lambda x: x[-1])
+    rows.reverse()
+
+    for row in rows:
+        row[-1] = f"{row[-1]:.1f}%"
         body.append(row)
 
-    row = await get_guild_table_row(
-        totals, address, holders.get(address, {}), shk_holders.get(address, {}), with_emissions
-    )
-    body.append(row)
+    assert math.isclose(
+        total_ownership_percent, 100.0, abs_tol=0.0001
+    ), f"ownership doesn't equal 100%! {total_ownership_percent}"
 
     message = "**Guild Distribution**\n"
     header = ["Address", "Owner", "MECH", "MARM", "SHK"]
@@ -322,6 +360,9 @@ async def guild_stats_command(interaction: discord.Interaction, with_emissions: 
     if with_emissions:
         header.append("Emissions")
         footer.append(f"{totals['Emissions']:.1f}")
+
+    header.append("Ownership")
+    footer.append("100%")
 
     table_text = table2ascii.table2ascii(
         header=header,
@@ -343,6 +384,9 @@ async def guild_stats_command(interaction: discord.Interaction, with_emissions: 
 
     message += f"**SHK Deposited**: `{shk_balance:.2f}` | "
     message += f"**Multiplier**: `{multiplier:.2f}`\n"
+    weights = " ".join([f"**{k}:** `{v}x`, " for k, v in GUILD_MULTIPLIERS.items()])
+    message += f"**Ownership Weights:**\n{weights}\n\n"
+    message += f"**Ownership % includes management fee\n"
 
     logger.print_ok_blue(message)
 

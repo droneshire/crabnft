@@ -16,19 +16,6 @@ from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.web3_client import Web3Client
 
 
-class MechavaxWeb3Client(AvalancheCWeb3Client):
-    """
-    Interact with a smart contract of the Mechavax collection
-    https://snowtrace.io/address/0xB68f42c2c805b81DaD78d2f07244917431c7F322
-    """
-
-    contract_address = T.cast(Address, "0xB68f42c2c805b81DaD78d2f07244917431c7F322")
-    this_dir = os.path.dirname(os.path.realpath(__file__))
-    module_dir = os.path.dirname(this_dir)
-    abi_dir = os.path.join(os.path.dirname(module_dir), "web3_utils", "abi", "abi-mechavax.json")
-    abi = Web3Client._get_contract_abi_from_file(abi_dir)
-
-
 class MechavaxMint(NftCollectionAnalyzerBase):
     ATTRIBUTES: T.Dict[str, T.Dict[T.Any, T.Any]] = {
         "Background": {},
