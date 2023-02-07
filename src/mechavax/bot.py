@@ -345,7 +345,9 @@ class MechBot:
             if minter == self.address:
                 num_mints += 1
 
-        logger.print_bold(f"We've minted {nft_type}s {num_mints} in past 24 hours")
+        logger.print_bold(
+            f"We've minted {nft_type}s {num_mints} in past 24 hours out of {len(mints_within_past_day)} mints"
+        )
 
         if num_mints >= self.MINTING_INFO[nft_type]["max"]:
             logger.print_warn(f"Skipping mint of {nft_type} since we've max minted today!")
