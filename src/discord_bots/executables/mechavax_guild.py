@@ -21,7 +21,11 @@ from config_admin import (
     GUILD_WALLET_PRIVATE_KEY,
 )
 from joepegs.joepegs_api import JOEPEGS_ITEM_URL, JoePegsClient
-from mechavax.mechavax_web3client import MechArmContractWeb3Client, MechContractWeb3Client
+from mechavax.mechavax_web3client import (
+    MechArmContractWeb3Client,
+    MechContractWeb3Client,
+    ShirakContractWeb3Client,
+)
 from utils import general, logger
 from utils.async_utils import async_func_wrapper
 from utils.price import wei_to_token, TokenWei
@@ -54,6 +58,19 @@ def get_credentials() -> T.Tuple[str, str]:
 
 
 ADDRESS, PRIVATE_KEY = get_credentials()
+
+
+async def get_events(w3: AvalancheCWeb3Client, event_function: T.Any) -> T.List[T.Any]:
+    BLOCK_CHUNKS = 2048
+    latest_block = w3.w3.eth.block_number
+    num_blocks = int((latest_block + BLOCK_CHUNKS - 1) / BLOCK_CHUNKS)
+    logger.print_normal(f"Searching through {num_blocks} blocks...")
+    events = []
+    for block in range(num_blocks - 20000, num_blocks):
+        events.extend(event_function.getLogs(fromBlock=block, toBlock=block + BLOCK_CHUNKS))
+        await asyncio.sleep(0.1)
+
+    return events
 
 
 @bot.event
@@ -101,6 +118,36 @@ async def mint_mech_command(interaction: discord.Interaction, mech_id: int) -> N
     )
 
     await interaction.followup.send(message)
+
+
+@bot.tree.command(
+    name="shkholders",
+    description="Get top 10 SHK holders",
+    guild=discord.Object(id=ALLOWLIST_GUILD),
+)
+async def mint_mech_command(interaction: discord.Interaction) -> None:
+    if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
+        await interaction.response.send_message("Invalid channel")
+        return
+
+    logger.print_bold(f"Received shk holders command")
+    await interaction.response.defer()
+
+    w3_shk: ShirakContractWeb3Client = (
+        ShirakContractWeb3Client()
+        .set_credentials(ADMIN_ADDRESS, "")
+        .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+        .set_contract()
+        .set_dry_run(False)
+    )
+
+    shk_events = await get_events(w3_shk, w3_shk.contract.events.Transfer)
+
+    holder_map = {}
+    for event in shk_events:
+        print(event)
+
+    await interaction.followup.send(f"Found {len(shk_events)} events")
 
 
 @bot.tree.command(

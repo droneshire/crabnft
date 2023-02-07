@@ -85,7 +85,7 @@ class MechBot:
             ): self.mech_minted_handler,
         }
 
-    def get_events(self, event_function: T.Any) -> T.List[T.Any]:
+    def get_events(self, event_function: T.Any, latest_only: bool = True) -> T.List[T.Any]:
         latest_block = self.w3_mech.w3.eth.block_number
 
         events = []
@@ -93,7 +93,7 @@ class MechBot:
             events.extend(
                 event_function.getLogs(fromBlock=latest_block - 2048, toBlock=latest_block)
             )
-            if len(events) > 0:
+            if len(events) > 0 and latest_only:
                 break
 
             latest_block -= 2048
@@ -103,7 +103,7 @@ class MechBot:
         return events
 
     def get_events_within(self, event_function: T.Any, time_window: float) -> T.List[T.Any]:
-        events = self.get_events(event_function)
+        events = self.get_events(event_function, latest_only=False)
 
         now = time.time()
         events_within_time = []
@@ -122,7 +122,7 @@ class MechBot:
         return events_within_time
 
     def get_last_mech_mint(self) -> float:
-        events = self.get_events(self.w3_mech.contract.events.MechPurchased)
+        events = self.get_events(self.w3_mech.contract.events.MechPurchased, latest_only=True)
 
         latest_event = 0
         for event in events:
@@ -140,7 +140,9 @@ class MechBot:
         return latest_event
 
     def get_last_marm_mint(self) -> float:
-        events = self.get_events(self.w3_mech.contract.events.ShirakBalanceUpdated)
+        events = self.get_events(
+            self.w3_mech.contract.events.ShirakBalanceUpdated, latest_only=True
+        )
 
         latest_event = 0
         for event in events:
