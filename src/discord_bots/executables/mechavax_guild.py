@@ -21,7 +21,7 @@ from config_admin import (
     GUILD_WALLET_PRIVATE_KEY,
 )
 from joepegs.joepegs_api import JOEPEGS_ITEM_URL, JoePegsClient
-from mechavax.mechavax_web3client import MechContractWeb3Client
+from mechavax.mechavax_web3client import MechArmContractWeb3Client, MechContractWeb3Client
 from utils import general, logger
 from utils.async_utils import async_func_wrapper
 from utils.price import wei_to_token, TokenWei
@@ -151,7 +151,9 @@ async def mint_mech_command(interaction: discord.Interaction) -> None:
     description="Get last mint",
     guild=discord.Object(id=ALLOWLIST_GUILD),
 )
-async def get_last_mint_command(interaction: discord.Interaction) -> None:
+async def get_last_mint_command(
+    interaction: discord.Interaction, nft_type: T.Literal["MECH", "MARM"]
+) -> None:
     if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
         await interaction.response.send_message("Invalid channel")
         return
@@ -166,14 +168,27 @@ async def get_last_mint_command(interaction: discord.Interaction) -> None:
         .set_dry_run(False)
     )
 
+    w3_arm: MechArmContractWeb3Client = (
+        MechArmContractWeb3Client()
+        .set_credentials(ADMIN_ADDRESS, "")
+        .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+        .set_contract()
+        .set_dry_run(False)
+    )
+
     latest_block = w3_mech.w3.eth.block_number
+    if nft_type == "MECH":
+        event_function = w3_mech.contract.events.MechPurchased
+    elif nft_type == "MARM":
+        event_function = w3_mech.contract.events.ShirakBalanceUpdated
+    else:
+        logger.print_fail(f"Invalid parameters {nft_type}")
+        await interaction.response.send_message("Invalid parameters")
+        return
+
     events = []
     for i in range(500):
-        events.extend(
-            w3_mech.contract.events.MechPurchased.getLogs(
-                fromBlock=latest_block - 2048, toBlock=latest_block
-            )
-        )
+        events.extend(event_function.getLogs(fromBlock=latest_block - 2048, toBlock=latest_block))
         if len(events) > 0:
             break
 
@@ -189,9 +204,22 @@ async def get_last_mint_command(interaction: discord.Interaction) -> None:
         block_number = event.get("blockNumber", 0)
         if block_number == 0:
             continue
-        price_wei = event.get("args", {}).get("price", 0.0)
-        price = wei_to_token(price_wei)
-        timestamp = w3_mech.w3.eth.get_block(block_number).timestamp
+
+        if nft_type == "MECH":
+            price_wei = event.get("args", {}).get("price", 0.0)
+            price = wei_to_token(price_wei)
+            timestamp = w3_mech.w3.eth.get_block(block_number).timestamp
+        elif nft_type == "MARM":
+            tx_hash = event["transactionHash"]
+            tx_receipt = w3_arm.get_transaction_receipt(tx_hash)
+            transaction = tx_receipt["logs"][1]
+            if transaction["address"] != w3_arm.contract_address:
+                continue
+
+            price_wei = int(transaction["data"], 16)
+            price = wei_to_token(price_wei)
+            timestamp = w3_arm.w3.eth.get_block(block_number).timestamp
+
         latest_event = max(latest_event, timestamp)
 
     time_since = int(time.time() - latest_event)

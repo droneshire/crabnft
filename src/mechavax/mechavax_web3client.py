@@ -38,6 +38,39 @@ class MechArmContractWeb3Client(AvalancheCWeb3Client):
     )
     abi = Web3Client._get_contract_abi_from_file(abi_dir)
 
+    def get_min_mint_bid(self) -> float:
+        try:
+            price: TokenWei = self.contract.functions.armPrice().call()
+            return wei_to_token(price)
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return 0.0
+
+    def get_min_mint_bid_wei(self) -> TokenWei:
+        try:
+            price: TokenWei = self.contract.functions.armPrice().call()
+            return price
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return 0
+
+    def mint_marm_from_shk(
+        self, max_price_shk: T.Optional[float] = None, use_deposit: bool = True
+    ) -> HexStr:
+        if max_price_shk is None:
+            price_shk_wei: TokenWei = self.get_min_mint_bid_wei()
+        else:
+            price_shk_wei: TokenWei = token_to_wei(max_price_shk)
+
+        try:
+            tx: TxParams = self.build_contract_transaction(
+                self.contract.functions.mintFromShirak(price_shk_wei, use_deposit)
+            )
+            return self.sign_and_send_transaction(tx)
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return ""
+
 
 class MechContractWeb3Client(AvalancheCWeb3Client):
     """

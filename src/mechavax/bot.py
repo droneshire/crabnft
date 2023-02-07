@@ -53,6 +53,25 @@ class MechBot:
             .set_dry_run(False)
         )
 
+        self.last_time_mech_minted = self.get_last_mech_mint()
+        self.last_time_marm_minted = self.get_last_marm_mint()
+
+        self.event_filters: T.Dict[web3._utils.filters.LogFilter, T.Callable[[T.Any], None]] = {
+            self.w3_mech.contract.events.LegendaryMechMinted.createFilter(
+                fromBlock="latest"
+            ): self.legendary_minted_handler,
+            self.w3_mech.contract.events.ShirakBalanceUpdated.createFilter(
+                fromBlock="latest"
+            ): self.shirak_mint_handler,
+            self.w3_mech.contract.events.ArmsBonded.createFilter(
+                fromBlock="latest"
+            ): self.arms_bonded_handler,
+            self.w3_mech.contract.events.MechPurchased.createFilter(
+                fromBlock="latest",
+            ): self.mech_minted_handler,
+        }
+
+    def get_last_mech_mint(self) -> float:
         latest_block = self.w3_mech.w3.eth.block_number
 
         events = []
@@ -82,24 +101,47 @@ class MechBot:
             latest_event = time.time()
 
         time_since = int(time.time() - latest_event)
-        logger.print_normal(f"Last mint happened {get_pretty_seconds(time_since)} ago")
+        logger.print_normal(f"Last MECH mint happened {get_pretty_seconds(time_since)} ago")
+        return latest_event
 
-        self.last_time_mech_minted = latest_event
+    def get_last_marm_mint(self) -> float:
+        latest_block = self.w3_arm.w3.eth.block_number
 
-        self.event_filters: T.Dict[web3._utils.filters.LogFilter, T.Callable[[T.Any], None]] = {
-            self.w3_mech.contract.events.LegendaryMechMinted.createFilter(
-                fromBlock="latest"
-            ): self.legendary_minted_handler,
-            self.w3_mech.contract.events.ShirakBalanceUpdated.createFilter(
-                fromBlock="latest"
-            ): self.shirak_mint_handler,
-            self.w3_mech.contract.events.ArmsBonded.createFilter(
-                fromBlock="latest"
-            ): self.arms_bonded_handler,
-            self.w3_mech.contract.events.MechPurchased.createFilter(
-                fromBlock="latest",
-            ): self.mech_minted_handler,
-        }
+        events = []
+        for i in range(500):
+            events.extend(
+                self.w3_mech.contract.events.ShirakBalanceUpdated.getLogs(
+                    fromBlock=latest_block - 2048, toBlock=latest_block
+                )
+            )
+            if len(events) > 0:
+                break
+
+            latest_block -= 2048
+            if latest_block < 0:
+                break
+
+        data = json.dumps(Web3.toJSON(events))
+        latest_event = 0
+        for event in events:
+            block_number = event.get("blockNumber", 0)
+            if block_number == 0:
+                continue
+            tx_hash = event["transactionHash"]
+            tx_receipt = self.w3_arm.get_transaction_receipt(tx_hash)
+            transaction = tx_receipt["logs"][1]
+            if transaction["address"] != self.w3_arm.contract_address:
+                continue
+
+            timestamp = self.w3_arm.w3.eth.get_block(block_number).timestamp
+            latest_event = max(latest_event, timestamp)
+
+        if latest_event == 0:
+            latest_event = time.time()
+
+        time_since = int(time.time() - latest_event)
+        logger.print_normal(f"Last MARM mint happened {get_pretty_seconds(time_since)} ago")
+        return latest_event
 
     def mech_minted_handler(self, event: web3.datastructures.AttributeDict) -> None:
         event_data = json.loads(Web3.toJSON(event))
@@ -208,7 +250,52 @@ class MechBot:
             logger.print_ok_blue(message)
             await asyncio.sleep(interval)
 
-    async def mint_bot(self) -> None:
+    async def mint_marms(self) -> None:
+        if not self.ENABLE_AUTO_MINT:
+            return
+
+        while True:
+            now = time.time()
+            time_since_last_mint = now - self.last_time_marm_minted
+
+            if time_since_last_mint < self.COOLDOWN_AFTER_LAST_MINT:
+                logger.print_normal(
+                    f"Skipping minting since still within window: {get_pretty_seconds(int(time_since_last_mint))}"
+                )
+                await asyncio.sleep(self.MINT_BOT_INTERVAL)
+                continue
+
+            shk_balance = await async_func_wrapper(self.w3_mech.get_deposited_shk, self.address)
+            min_mint_shk = await async_func_wrapper(self.w3_mech.get_min_mint_bid)
+
+            savings_margin = shk_balance / min_mint_shk
+
+            logger.print_normal(
+                f"Ask {min_mint_shk:.2f}, Have {shk_balance:.2f}, Need {min_mint_shk * self.SHK_SAVINGS_MULT:.2f}"
+            )
+
+            if savings_margin < self.SHK_SAVINGS_MULT:
+                logger.print_normal(
+                    f"Skipping minting since we don't have enough SHK ({self.SHK_SAVINGS_MULT}): {savings_margin:.2f}"
+                )
+                await asyncio.sleep(self.MINT_BOT_INTERVAL)
+                continue
+
+            logger.print_normal(f"Margin = {savings_margin}")
+            tx_hash = await async_func_wrapper(self.w3_mech.mint_mech_from_shk)
+            action_str = f"Mint MECH for {min_mint_shk:.2f} using $SHK balance of {shk_balance:.2f}"
+            _, txn_url = process_w3_results(self.w3_mech, action_str, tx_hash)
+            if txn_url:
+                message = f"\U0001F389 Successfully minted a new MECH!\n{txn_url}"
+                logger.print_ok_arrow(message)
+            else:
+                message = f"\U00002620 Failed to mint new MECH!"
+                logger.print_fail_arrow(message)
+
+            self.webhook.send(message)
+            await asyncio.sleep(self.MINT_BOT_INTERVAL)
+
+    async def mint_mechs(self) -> None:
         if not self.ENABLE_AUTO_MINT:
             return
 
@@ -306,7 +393,8 @@ class MechBot:
                 asyncio.gather(
                     self.event_monitors(self.MONITOR_INTERVAL),
                     self.stats_monitor(self.interval),
-                    self.mint_bot(),
+                    self.mint_mechs(),
+                    self.mint_marms(),
                 )
             )
         finally:
