@@ -54,7 +54,7 @@ class MechArmContractWeb3Client(AvalancheCWeb3Client):
             logger.print_fail(f"{e}")
             return 0
 
-    def mint_marm_from_shk(
+    def mint_from_shk(
         self, max_price_shk: T.Optional[float] = None, use_deposit: bool = True
     ) -> HexStr:
         if max_price_shk is None:
@@ -157,7 +157,7 @@ class MechContractWeb3Client(AvalancheCWeb3Client):
             logger.print_fail(f"{e}")
             return 0
 
-    def mint_mech_from_shk(
+    def mint_from_shk(
         self, max_price_shk: T.Optional[float] = None, use_deposit: bool = True
     ) -> HexStr:
         if max_price_shk is None:

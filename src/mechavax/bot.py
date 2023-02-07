@@ -19,7 +19,18 @@ from web3_utils.helpers import process_w3_results
 class MechBot:
     MONITOR_INTERVAL = 5.0
     MINT_BOT_INTERVAL = 60.0 * 5.0
-    COOLDOWN_AFTER_LAST_MINT = 60.0 * 60.0 * 5.0
+    MINTING_INFO = {
+        "MECH": {
+            "cooldown": 60.0 * 60.0 * 5.0,
+            "max": 3,
+            "multiplier": 2,
+        },
+        "MARM": {
+            "cooldown": 60.0 * 30.0,
+            "max": 3,
+            "multiplier": 100,
+        },
+    }
     SHK_SAVINGS_MULT = 3
     ENABLE_AUTO_MINT = False
 
@@ -63,6 +74,9 @@ class MechBot:
             self.w3_mech.contract.events.ShirakBalanceUpdated.createFilter(
                 fromBlock="latest"
             ): self.shirak_mint_handler,
+            self.w3_arm.contract.events.PagePurchased.createFilter(
+                fromBlock="latest"
+            ): self.marm_minted_handler,
             self.w3_mech.contract.events.ArmsBonded.createFilter(
                 fromBlock="latest"
             ): self.arms_bonded_handler,
@@ -71,15 +85,13 @@ class MechBot:
             ): self.mech_minted_handler,
         }
 
-    def get_last_mech_mint(self) -> float:
+    def get_events(self, event_function: T.Any) -> T.List[T.Any]:
         latest_block = self.w3_mech.w3.eth.block_number
 
         events = []
         for i in range(500):
             events.extend(
-                self.w3_mech.contract.events.MechPurchased.getLogs(
-                    fromBlock=latest_block - 2048, toBlock=latest_block
-                )
+                event_function.getLogs(fromBlock=latest_block - 2048, toBlock=latest_block)
             )
             if len(events) > 0:
                 break
@@ -88,7 +100,30 @@ class MechBot:
             if latest_block < 0:
                 break
 
-        data = json.dumps(Web3.toJSON(events))
+        return events
+
+    def get_events_within(self, event_function: T.Any, time_window: float) -> T.List[T.Any]:
+        events = self.get_events(event_function)
+
+        now = time.time()
+        events_within_time = []
+
+        for event in events:
+            block_number = event.get("blockNumber", 0)
+            if block_number == 0:
+                continue
+            timestamp = self.w3_mech.w3.eth.get_block(block_number).timestamp
+
+            if now - timestamp > time_window:
+                continue
+
+            events_within_time.append(event)
+
+        return events_within_time
+
+    def get_last_mech_mint(self) -> float:
+        events = self.get_events(self.w3_mech.contract.events.MechPurchased)
+
         latest_event = 0
         for event in events:
             block_number = event.get("blockNumber", 0)
@@ -105,23 +140,8 @@ class MechBot:
         return latest_event
 
     def get_last_marm_mint(self) -> float:
-        latest_block = self.w3_arm.w3.eth.block_number
+        events = self.get_events(self.w3_mech.contract.events.ShirakBalanceUpdated)
 
-        events = []
-        for i in range(500):
-            events.extend(
-                self.w3_mech.contract.events.ShirakBalanceUpdated.getLogs(
-                    fromBlock=latest_block - 2048, toBlock=latest_block
-                )
-            )
-            if len(events) > 0:
-                break
-
-            latest_block -= 2048
-            if latest_block < 0:
-                break
-
-        data = json.dumps(Web3.toJSON(events))
         latest_event = 0
         for event in events:
             block_number = event.get("blockNumber", 0)
@@ -159,6 +179,25 @@ class MechBot:
         self.mint_cost.append(price)
         explorer_link = f"Explorer: https://snowtrace.io/tx/{tx_hash}"
         message = f"\U0001F916 New MECH Mint Alert!\n\tMech ID: {token_id}\n\rMinted Price: `{price:.2f} $SHK`\n\t{explorer_link}"
+        logger.print_ok_blue(message)
+        self.webhook.send(message)
+
+    def marm_minted_handler(self, event: web3.datastructures.AttributeDict) -> None:
+        event_data = json.loads(Web3.toJSON(event))
+        self.last_time_marm_minted = time.time()
+        try:
+            tx_hash = event_data["transactionHash"]
+            user = event_data["args"]["user"]
+            token_id = event_data["args"]["armId"]
+            price_wei = event_data["args"]["price"]
+            price = wei_to_token(price_wei)
+        except:
+            logger.print_warn(f"Failed to process MARM minted event")
+            return
+
+        self.mint_cost.append(price)
+        explorer_link = f"Explorer: https://snowtrace.io/tx/{tx_hash}"
+        message = f"\U0001F916 New MARM Mint Alert!\n\tArm ID: {token_id}\n\rMinted Price: `{price:.2f} $SHK`\n\t{explorer_link}"
         logger.print_ok_blue(message)
         self.webhook.send(message)
 
@@ -203,22 +242,19 @@ class MechBot:
             transaction = tx_receipt["logs"][1]
             price_wei = int(transaction["data"], 16)
             price = wei_to_token(price_wei)
-            if transaction["address"] == self.w3_arm.contract_address:
-                mint_item = "MARM"
-            else:
-                logger.print_warn(f"Non-mint shirak event...")
+            if (
+                transaction["address"] == self.w3_arm.contract_address
+                or transaction["address"] == self.w3_mech.contract_address
+            ):
                 return
+            logger.print_warn(f"Non-mint shirak event...")
         except:
-            logger.print_warn(f"Failed to process shirak mint event\n{event_data}")
+            logger.print_warn(f"Failed to process shirak transfer event\n{event_data}")
             return
 
         explorer_link = f"Explorer: https://snowtrace.io/tx/{tx_hash}"
-        logger.print_ok_blue(
-            f"Shirak {mint_item} mint event!\nPrice paid: {price:.2f} $SHK\\{explorer_link}"
-        )
-        self.webhook.send(
-            f"\U0001F916 New {mint_item} Mint Alert!\n\tMinted Price: `{price:.2f} $SHK`\n\t{explorer_link}"
-        )
+        logger.print_ok_blue(f"SHK event!\nAmount moved: {price:.2f} $SHK\n{explorer_link}")
+        self.webhook.send(f"\U0001F916 SHK event!\nAmount: {price:.2f} $SHK\n{explorer_link}")
 
     async def event_monitors(self, interval: float) -> None:
         while True:
@@ -250,138 +286,86 @@ class MechBot:
             logger.print_ok_blue(message)
             await asyncio.sleep(interval)
 
-    async def mint_marms(self) -> None:
+    async def mint_bot(self) -> None:
         if not self.ENABLE_AUTO_MINT:
             return
 
         while True:
-            now = time.time()
-            time_since_last_mint = now - self.last_time_marm_minted
-
-            if time_since_last_mint < self.COOLDOWN_AFTER_LAST_MINT:
-                logger.print_normal(
-                    f"Skipping minting since still within window: {get_pretty_seconds(int(time_since_last_mint))}"
-                )
-                await asyncio.sleep(self.MINT_BOT_INTERVAL)
-                continue
-
-            shk_balance = await async_func_wrapper(self.w3_mech.get_deposited_shk, self.address)
-            min_mint_shk = await async_func_wrapper(self.w3_mech.get_min_mint_bid)
-
-            savings_margin = shk_balance / min_mint_shk
-
-            logger.print_normal(
-                f"Ask {min_mint_shk:.2f}, Have {shk_balance:.2f}, Need {min_mint_shk * self.SHK_SAVINGS_MULT:.2f}"
+            await self.try_to_mint(
+                self.w3_mech,
+                self.w3_mech.contract.events.MechPurchased,
+                "MECH",
+                self.last_time_mech_minted,
             )
-
-            if savings_margin < self.SHK_SAVINGS_MULT:
-                logger.print_normal(
-                    f"Skipping minting since we don't have enough SHK ({self.SHK_SAVINGS_MULT}): {savings_margin:.2f}"
-                )
-                await asyncio.sleep(self.MINT_BOT_INTERVAL)
-                continue
-
-            logger.print_normal(f"Margin = {savings_margin}")
-            tx_hash = await async_func_wrapper(self.w3_mech.mint_mech_from_shk)
-            action_str = f"Mint MECH for {min_mint_shk:.2f} using $SHK balance of {shk_balance:.2f}"
-            _, txn_url = process_w3_results(self.w3_mech, action_str, tx_hash)
-            if txn_url:
-                message = f"\U0001F389 Successfully minted a new MECH!\n{txn_url}"
-                logger.print_ok_arrow(message)
-            else:
-                message = f"\U00002620 Failed to mint new MECH!"
-                logger.print_fail_arrow(message)
-
-            self.webhook.send(message)
+            await self.try_to_mint(
+                self.w3_arm,
+                self.w3_arm.contract.events.PagePurchased,
+                "MARM",
+                self.last_time_marm_minted,
+            )
             await asyncio.sleep(self.MINT_BOT_INTERVAL)
 
-    async def mint_mechs(self) -> None:
-        if not self.ENABLE_AUTO_MINT:
+    async def try_to_mint(
+        self,
+        w3: AvalancheCWeb3Client,
+        event_function: T.Any,
+        nft_type: T.Literal["MECH", "MARM"],
+        last_time_minted: float,
+    ) -> None:
+        now = time.time()
+        time_since_last_mint = now - last_time_minted
+
+        if time_since_last_mint < self.MINTING_INFO[nft_type]["cooldown"]:
+            logger.print_normal(
+                f"Skipping minting {nft_type} since still within window: {get_pretty_seconds(int(time_since_last_mint))}"
+            )
             return
 
-        while True:
-            now = time.time()
-            time_since_last_mint = now - self.last_time_mech_minted
+        shk_balance = await async_func_wrapper(self.w3_mech.get_deposited_shk, self.address)
+        min_mint_shk = await async_func_wrapper(w3.get_min_mint_bid)
 
-            if time_since_last_mint < self.COOLDOWN_AFTER_LAST_MINT:
-                logger.print_normal(
-                    f"Skipping minting since still within window: {get_pretty_seconds(int(time_since_last_mint))}"
-                )
-                await asyncio.sleep(self.MINT_BOT_INTERVAL)
-                continue
+        savings_margin = shk_balance / min_mint_shk
+        savings_mult = self.MINTING_INFO[nft_type]["multiplier"]
 
-            shk_balance = await async_func_wrapper(self.w3_mech.get_deposited_shk, self.address)
-            min_mint_shk = await async_func_wrapper(self.w3_mech.get_min_mint_bid)
+        logger.print_normal(
+            f"{nft_type}: Ask {min_mint_shk:.2f}, Have {shk_balance:.2f}, Need {min_mint_shk * savings_mult:.2f}"
+        )
 
-            savings_margin = shk_balance / min_mint_shk
-
+        if savings_margin < savings_mult:
             logger.print_normal(
-                f"Ask {min_mint_shk:.2f}, Have {shk_balance:.2f}, Need {min_mint_shk * self.SHK_SAVINGS_MULT:.2f}"
+                f"Skipping minting {nft_type} since we don't have enough SHK ({savings_mult}): {savings_margin:.2f}"
             )
+            return
 
-            if savings_margin < self.SHK_SAVINGS_MULT:
-                logger.print_normal(
-                    f"Skipping minting since we don't have enough SHK ({self.SHK_SAVINGS_MULT}): {savings_margin:.2f}"
-                )
-                await asyncio.sleep(self.MINT_BOT_INTERVAL)
-                continue
+        mints_within_past_day = self.get_events_within(event_function, 60.0 * 60.0 * 24.0)
 
-            logger.print_normal(f"Margin = {savings_margin}")
-            tx_hash = await async_func_wrapper(self.w3_mech.mint_mech_from_shk)
-            action_str = f"Mint MECH for {min_mint_shk:.2f} using $SHK balance of {shk_balance:.2f}"
-            _, txn_url = process_w3_results(self.w3_mech, action_str, tx_hash)
-            if txn_url:
-                message = f"\U0001F389 Successfully minted a new MECH!\n{txn_url}"
-                logger.print_ok_arrow(message)
-            else:
-                message = f"\U00002620 Failed to mint new MECH!"
-                logger.print_fail_arrow(message)
+        num_mints = 0
+        for mint in mints_within_past_day:
+            minter = mint["args"]["user"]
+            if minter == self.address:
+                num_mints += 1
 
-            self.webhook.send(message)
-            await asyncio.sleep(self.MINT_BOT_INTERVAL)
+        logger.print_bold(f"We've minted {nft_type}s {num_mints} in past 24 hours")
 
-    async def send_discord_mint_embed(self) -> None:
-        webhook = DiscordWebhook(
-            url=discord.DISCORD_WEBHOOK_URL["WYNDBLAST_PVE_ACTIVITY"], rate_limit_retry=True
+        if num_mints >= self.MINTING_INFO[nft_type]["max"]:
+            logger.print_warn(f"Skipping mint of {nft_type} since we've max minted today!")
+            return
+
+        logger.print_normal(f"Margin = {savings_margin}")
+        tx_hash = await async_func_wrapper(w3.mint_from_shk)
+        action_str = (
+            f"Mint {nft_type} for {min_mint_shk:.2f} using $SHK balance of {shk_balance:.2f}"
         )
-        embed = DiscordEmbed(
-            title=f"PVE ACTIVITIES",
-            description=f"Finished for {self.config['discord_handle'].upper()}\n",
-            color=Color.purple().value,
-        )
+        _, txn_url = process_w3_results(w3, action_str, tx_hash)
+        if txn_url:
+            message = f"\U0001F389 Successfully minted a new {nft_type}!\n{txn_url}"
+            logger.print_ok_arrow(message)
+        else:
+            message = f"\U00002620 Failed to mint new {nft_type}!"
+            logger.print_fail_arrow(message)
 
-        tx_hash = await async_func_wrapper(self.w3_mech.mint_mech_from_shk)
-
-        embed.add_embed_field(name=f"Max Level", value=f"{max_level}", inline=True)
-        embed.add_embed_field(name=f"Levels Won", value=f"{levels_completed}", inline=True)
-        embed.add_embed_field(name=f"Account Exp", value=f"{account_exp}", inline=True)
-        embed.add_embed_field(name=f"Account Level", value=f"{account_level}", inline=True)
-        embed.add_embed_field(
-            name=f"Total Chro (unclaimed)", value=f"{unclaimed_chro_earned:.2f}", inline=False
-        )
-        embed.add_embed_field(
-            name=f"Total Chro (claimed)", value=f"{claimed_chro_earned:.2f}", inline=False
-        )
-
-        try:
-            wynds: T.List[T.Any] = self.wynd_w2.get_nft_data()["wynd"]
-
-            text = ""
-            for wynd in wynds:
-                token_id = int(wynd["product_id"].split(":")[1])
-                level = wynd["metadata"]["stats"]["level"]
-                if level > 1:
-                    text += f"Wynd {token_id}: Level {level} {wynd['metadata']['faction']}\n"
-            embed.add_embed_field(name=f"Wynds", value=text, inline=False)
-
-            item = wynds[0]
-            url = item["metadata"]["image_url"]
-            embed.set_image(url=url)
-        except:
-            embed.set_thumbnail(url=WYNDBLAST_ASSETS["wynd"], height=100, width=100)
-
-        webhook.add_embed(embed)
-        webhook.execute()
+        self.webhook.send(message)
+        await asyncio.sleep(self.MINT_BOT_INTERVAL)
 
     def run(self) -> None:
         loop = asyncio.get_event_loop()
@@ -393,8 +377,7 @@ class MechBot:
                 asyncio.gather(
                     self.event_monitors(self.MONITOR_INTERVAL),
                     self.stats_monitor(self.interval),
-                    self.mint_mechs(),
-                    self.mint_marms(),
+                    self.mint_bot(),
                 )
             )
         finally:
