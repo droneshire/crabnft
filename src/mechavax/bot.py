@@ -5,6 +5,7 @@ import time
 import typing as T
 
 from eth_typing import Address
+from rich.progress import track
 from web3 import Web3
 
 from mechavax.mechavax_web3client import MechContractWeb3Client, MechArmContractWeb3Client
@@ -23,7 +24,7 @@ class MechBot:
         "MECH": {
             "cooldown": 60.0 * 60.0 * 5.0,
             "max": 3,
-            "multiplier": 2,
+            "multiplier": 10,
         },
         "MARM": {
             "cooldown": 60.0 * 30.0,
@@ -32,7 +33,7 @@ class MechBot:
         },
     }
     SHK_SAVINGS_MULT = 3
-    ENABLE_AUTO_MINT = False
+    ENABLE_AUTO_MINT = True
 
     def __init__(
         self,
@@ -85,47 +86,55 @@ class MechBot:
             ): self.mech_minted_handler,
         }
 
-    def get_events(self, event_function: T.Any, latest_only: bool = True) -> T.List[T.Any]:
+    def get_events(
+        self, event_function: T.Any, cadence: int = 1, latest_only: bool = True
+    ) -> T.List[T.Any]:
+        NUM_CHUNKS = int(100 / cadence)
         latest_block = self.w3_mech.w3.eth.block_number
 
         events = []
-        for i in range(500):
+        for i in track(range(NUM_CHUNKS), description=f"{event_function}"):
             events.extend(
                 event_function.getLogs(fromBlock=latest_block - 2048, toBlock=latest_block)
             )
             if len(events) > 0 and latest_only:
                 break
 
-            latest_block -= 2048
+            latest_block -= 2048 * cadence
             if latest_block < 0:
                 break
 
         return events
 
     def get_events_within(self, event_function: T.Any, time_window: float) -> T.List[T.Any]:
-        events = self.get_events(event_function, latest_only=False)
+        events = self.get_events(event_function, cadence=1, latest_only=False)
 
         now = time.time()
-        events_within_time = []
+        inx_within_time = 0
 
-        for event in events:
-            block_number = event.get("blockNumber", 0)
+        while inx_within_time < len(events):
+            block_number = events[inx_within_time].get("blockNumber", 0)
             if block_number == 0:
                 continue
             timestamp = self.w3_mech.w3.eth.get_block(block_number).timestamp
-
             if now - timestamp > time_window:
-                continue
+                break
 
-            events_within_time.append(event)
+            if inx_within_time == 0:
+                inx_within_time += 1
+            else:
+                inx_within_time = inx_within_time * 2
 
-        return events_within_time
+            inx_within_time = min(len(events) - 1, inx_within_time)
+        return events[:inx_within_time]
 
     def get_last_mech_mint(self) -> float:
-        events = self.get_events(self.w3_mech.contract.events.MechPurchased, latest_only=True)
+        events = self.get_events(
+            self.w3_mech.contract.events.MechPurchased, cadence=1, latest_only=True
+        )
 
         latest_event = 0
-        for event in events:
+        for event in track(events, description="Mech Purchase Time"):
             block_number = event.get("blockNumber", 0)
             if block_number == 0:
                 continue
@@ -141,11 +150,11 @@ class MechBot:
 
     def get_last_marm_mint(self) -> float:
         events = self.get_events(
-            self.w3_mech.contract.events.ShirakBalanceUpdated, latest_only=True
+            self.w3_mech.contract.events.ShirakBalanceUpdated, cadence=1, latest_only=True
         )
 
         latest_event = 0
-        for event in events:
+        for event in track(events, description="Marm Purchase Time"):
             block_number = event.get("blockNumber", 0)
             if block_number == 0:
                 continue
@@ -159,6 +168,7 @@ class MechBot:
             latest_event = max(latest_event, timestamp)
 
         if latest_event == 0:
+            logger.print_warn(f"Failed to find block timestamp, defaulting to now")
             latest_event = time.time()
 
         time_since = int(time.time() - latest_event)
