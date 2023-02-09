@@ -1,4 +1,5 @@
 import asyncio
+import contextvars
 import discord
 import functools
 import getpass
@@ -78,15 +79,22 @@ async def get_events(w3: AvalancheCWeb3Client, event_function: T.Any) -> T.List[
     return events
 
 
-def to_thread(func: T.Callable) -> T.Coroutine:
+async def to_thread(func, /, *args, **kwargs):
+    loop = asyncio.get_running_loop()
+    ctx = contextvars.copy_context()
+    func_call = functools.partial(ctx.run, func, *args, **kwargs)
+    return await loop.run_in_executor(None, func_call)
+
+
+def local_to_thread(func: T.Callable) -> T.Coroutine:
     @functools.wraps(func)
     async def wrapper(*args, **kwargs):
-        return await asyncio.to_thread(func, *args, **kwargs)
+        return await to_thread(func, *args, **kwargs)
 
     return wrapper
 
 
-@to_thread
+@local_to_thread
 def parse_stats() -> None:
     shk_balances = {}
 
