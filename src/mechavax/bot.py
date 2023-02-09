@@ -69,6 +69,8 @@ class MechBot:
         self.last_time_mech_minted = self.get_last_mech_mint()
         self.last_time_marm_minted = self.get_last_marm_mint()
 
+        self.lock = asyncio.Lock()
+
         self.event_filters: T.Dict[web3._utils.filters.LogFilter, T.Callable[[T.Any], None]] = {
             self.w3_mech.contract.events.LegendaryMechMinted.createFilter(
                 fromBlock="latest"

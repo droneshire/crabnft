@@ -1,5 +1,6 @@
 import asyncio
 import discord
+import functools
 import getpass
 import json
 import math
@@ -8,7 +9,9 @@ import table2ascii
 import time
 import typing as T
 
+from avvy import AvvyClient
 from discord.ext import commands
+from rich.progress import track
 from web3 import Web3
 
 from config_admin import (
@@ -44,8 +47,10 @@ ALLOWLIST_CHANNELS = [
     1032890276420800582,  # test channel in p2e auto
     1067902019379142671,  # p2e mechavax channel
 ]
+MAX_SUPPLY = 2250
 MINT_ADDRESS = "0x0000000000000000000000000000000000000000"
 IGNORE_ADDRESSES = [MINT_ADDRESS, "0xB6C5a50c28805ABB41f79F7945Bf3F9DfeF4C8B0"]
+MECH_STATS_CACHE_FILE = os.path.join(logger.get_logging_dir("mechavax"), "shk_balances.json")
 
 
 def get_credentials() -> T.Tuple[str, str]:
@@ -73,6 +78,58 @@ async def get_events(w3: AvalancheCWeb3Client, event_function: T.Any) -> T.List[
     return events
 
 
+def to_thread(func: T.Callable) -> T.Coroutine:
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        return await asyncio.to_thread(func, *args, **kwargs)
+
+    return wrapper
+
+
+@to_thread
+def parse_stats() -> None:
+    shk_balances = {}
+
+    w3_mech: MechContractWeb3Client = (
+        MechContractWeb3Client()
+        .set_credentials(ADMIN_ADDRESS, "")
+        .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+        .set_contract()
+        .set_dry_run(False)
+    )
+    avvy = AvvyClient(w3_mech.w3)
+
+    while True:
+        for nft_id in range(MAX_SUPPLY):
+            owner = w3_mech.get_owner_of(nft_id)
+            if not owner:
+                continue
+
+            address = owner
+
+            hash_name = avvy.reverse(avvy.RECORDS.EVM, owner)
+            if hash_name:
+                name = hash_name.lookup()
+                if name:
+                    address = name.name
+
+            if address in shk_balances:
+                continue
+
+            shk_balances[address] = {}
+            shk_balances[address]["shk"] = w3_mech.get_deposited_shk(owner)
+            shk_balances[address]["mechs"] = w3_mech.get_num_mechs(owner)
+            logger.print_normal(
+                f"Found {address} with {shk_balances[address]['shk']}, {shk_balances[address]['mechs']} mechs"
+            )
+
+        with open(MECH_STATS_CACHE_FILE, "w") as outfile:
+            json.dump(shk_balances, outfile, indent=4)
+
+        logger.print_bold("Updated cache file!")
+        time.sleep(60.0 * 60.0 * 10.0)
+
+
 @bot.event
 async def on_ready() -> None:
     for guild in bot.guilds:
@@ -85,6 +142,8 @@ async def on_ready() -> None:
         logger.print_normal(f"{len(synced)} command(s)")
     except Exception as e:
         logger.print_fail(f"{e}")
+
+    bot.loop.create_task(parse_stats())
 
 
 @bot.tree.command(
@@ -125,29 +184,72 @@ async def mint_mech_command(interaction: discord.Interaction, mech_id: int) -> N
     description="Get top 10 SHK holders",
     guild=discord.Object(id=ALLOWLIST_GUILD),
 )
-async def mint_mech_command(interaction: discord.Interaction) -> None:
+async def shk_holders_command(interaction: discord.Interaction) -> None:
     if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
         await interaction.response.send_message("Invalid channel")
         return
 
     logger.print_bold(f"Received shk holders command")
-    await interaction.response.defer()
 
-    w3_shk: ShirakContractWeb3Client = (
-        ShirakContractWeb3Client()
-        .set_credentials(ADMIN_ADDRESS, "")
-        .set_node_uri(AvalancheCWeb3Client.NODE_URL)
-        .set_contract()
-        .set_dry_run(False)
+    if not os.path.isfile(MECH_STATS_CACHE_FILE):
+        await interaction.response.send_message("Missing data")
+        return
+
+    with open(MECH_STATS_CACHE_FILE, "r") as infile:
+        shk_balances = json.load(infile)
+
+    sorted_balances = sorted(shk_balances.items(), key=lambda x: -x[1]["shk"])
+
+    body = []
+    for address, totals in sorted_balances[:10]:
+        row = [address, f"{totals['shk']:.2f}"]
+        body.append(row)
+
+    table_text = table2ascii.table2ascii(
+        header=["Owner", "$SHK"],
+        body=body,
+        footer=[],
+        alignments=[table2ascii.Alignment.LEFT, table2ascii.Alignment.CENTER],
     )
 
-    shk_events = await get_events(w3_shk, w3_shk.contract.events.Transfer)
+    message = f"```\n{table_text}\n```"
+    await interaction.response.send_message(message)
 
-    holder_map = {}
-    for event in shk_events:
-        print(event)
 
-    await interaction.followup.send(f"Found {len(shk_events)} events")
+@bot.tree.command(
+    name="mechholders",
+    description="Get top 10 MECH holders",
+    guild=discord.Object(id=ALLOWLIST_GUILD),
+)
+async def shk_holders_command(interaction: discord.Interaction) -> None:
+    if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
+        await interaction.response.send_message("Invalid channel")
+        return
+
+    logger.print_bold(f"Received mech holders command")
+
+    if not os.path.isfile(MECH_STATS_CACHE_FILE):
+        await interaction.response.send_message("Missing data")
+        return
+
+    with open(MECH_STATS_CACHE_FILE, "r") as infile:
+        shk_balances = json.load(infile)
+
+    sorted_balances = sorted(shk_balances.items(), key=lambda x: -x[1]["mechs"])
+
+    body = []
+    for address, totals in sorted_balances[:10]:
+        row = [address, totals["mechs"]]
+        body.append(row)
+
+    table_text = table2ascii.table2ascii(
+        header=["Owner", "MECHS"],
+        body=body,
+        footer=[],
+        alignments=[table2ascii.Alignment.LEFT, table2ascii.Alignment.CENTER],
+    )
+    message = f"```\n{table_text}\n```"
+    await interaction.response.send_message(message)
 
 
 @bot.tree.command(

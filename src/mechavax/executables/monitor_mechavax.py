@@ -29,7 +29,7 @@ def parse_args() -> argparse.Namespace:
 def run_bot() -> None:
     args = parse_args()
 
-    log_dir = os.path.join(args.log_dir, "wyndblast")
+    log_dir = os.path.join(args.log_dir, "mechavax")
     logger.setup_log(args.log_level, log_dir, "mechavax_monitor")
 
     health_monitor = HealthMonitor(args.server_url, "mechavax", ["Cashflow Cartel Guild"]).run(
