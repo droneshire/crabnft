@@ -23,17 +23,18 @@ class MechBot:
     MINTING_INFO = {
         "MECH": {
             "cooldown": 60.0 * 60.0 * 5.0,
-            "max": 3,
+            "max": 1,
             "multiplier": 10,
+            "enable": False,
         },
         "MARM": {
             "cooldown": 60.0 * 30.0,
             "max": 3,
             "multiplier": 100,
+            "enable": True,
         },
     }
     SHK_SAVINGS_MULT = 3
-    ENABLE_AUTO_MINT = True
 
     def __init__(
         self,
@@ -110,23 +111,28 @@ class MechBot:
         events = self.get_events(event_function, cadence=1, latest_only=False)
 
         now = time.time()
-        inx_within_time = 0
+        inx_min = 0
+        inx_max = len(events) - 1
+        inx = 0
 
-        while inx_within_time < len(events):
-            block_number = events[inx_within_time].get("blockNumber", 0)
+        while (inx_max - inx_min) > 1:
+            block_number = events[inx].get("blockNumber", 0)
+
             if block_number == 0:
-                continue
+                return []
+
             timestamp = self.w3_mech.w3.eth.get_block(block_number).timestamp
+
             if now - timestamp > time_window:
-                break
-
-            if inx_within_time == 0:
-                inx_within_time += 1
+                inx_max = inx
             else:
-                inx_within_time = inx_within_time * 2
+                inx_min = inx
 
-            inx_within_time = min(len(events) - 1, inx_within_time)
-        return events[:inx_within_time]
+            avg = inx_max + inx_min
+            avg /= 2
+            inx = int(avg)
+
+        return events[:inx]
 
     def get_last_mech_mint(self) -> float:
         events = self.get_events(
@@ -299,22 +305,21 @@ class MechBot:
             await asyncio.sleep(interval)
 
     async def mint_bot(self) -> None:
-        if not self.ENABLE_AUTO_MINT:
-            return
-
         while True:
-            await self.try_to_mint(
-                self.w3_mech,
-                self.w3_mech.contract.events.MechPurchased,
-                "MECH",
-                self.last_time_mech_minted,
-            )
-            await self.try_to_mint(
-                self.w3_arm,
-                self.w3_arm.contract.events.PagePurchased,
-                "MARM",
-                self.last_time_marm_minted,
-            )
+            if self.MINTING_INFO["MECH"]["enable"]:
+                await self.try_to_mint(
+                    self.w3_mech,
+                    self.w3_mech.contract.events.MechPurchased,
+                    "MECH",
+                    self.last_time_mech_minted,
+                )
+            if self.MINTING_INFO["MARM"]["enable"]:
+                await self.try_to_mint(
+                    self.w3_arm,
+                    self.w3_arm.contract.events.PagePurchased,
+                    "MARM",
+                    self.last_time_marm_minted,
+                )
             await asyncio.sleep(self.MINT_BOT_INTERVAL)
 
     async def try_to_mint(
