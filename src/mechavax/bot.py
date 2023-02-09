@@ -332,6 +332,18 @@ class MechBot:
         now = time.time()
         time_since_last_mint = now - last_time_minted
 
+        mints_within_past_day = self.get_events_within(event_function, 60.0 * 60.0 * 24.0)
+
+        num_mints = 0
+        for mint in mints_within_past_day:
+            minter = mint["args"]["user"]
+            if minter == self.address:
+                num_mints += 1
+
+        logger.print_bold(
+            f"We've minted {nft_type}s {num_mints} in past 24 hours out of {len(mints_within_past_day)} mints"
+        )
+
         if time_since_last_mint < self.MINTING_INFO[nft_type]["cooldown"]:
             logger.print_normal(
                 f"Skipping minting {nft_type} since still within window: {get_pretty_seconds(int(time_since_last_mint))}"
@@ -353,18 +365,6 @@ class MechBot:
                 f"Skipping minting {nft_type} since we don't have enough SHK ({savings_mult}): {savings_margin:.2f}"
             )
             return
-
-        mints_within_past_day = self.get_events_within(event_function, 60.0 * 60.0 * 24.0)
-
-        num_mints = 0
-        for mint in mints_within_past_day:
-            minter = mint["args"]["user"]
-            if minter == self.address:
-                num_mints += 1
-
-        logger.print_bold(
-            f"We've minted {nft_type}s {num_mints} in past 24 hours out of {len(mints_within_past_day)} mints"
-        )
 
         if num_mints >= self.MINTING_INFO[nft_type]["max"]:
             logger.print_warn(f"Skipping mint of {nft_type} since we've max minted today!")
