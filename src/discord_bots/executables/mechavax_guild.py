@@ -96,7 +96,6 @@ def local_to_thread(func: T.Callable) -> T.Coroutine:
 
 @local_to_thread
 def parse_stats() -> None:
-    shk_balances = {}
 
     w3_mech: MechContractWeb3Client = (
         MechContractWeb3Client()
@@ -108,6 +107,7 @@ def parse_stats() -> None:
     avvy = AvvyClient(w3_mech.w3)
 
     while True:
+        shk_balances = {}
         for nft_id in range(MAX_SUPPLY):
             owner = w3_mech.get_owner_of(nft_id)
             if not owner:
