@@ -135,7 +135,7 @@ def parse_stats() -> None:
             json.dump(shk_balances, outfile, indent=4)
 
         logger.print_bold("Updated cache file!")
-        time.sleep(60.0 * 60.0 * 10.0)
+        time.sleep(10.0)
 
 
 @bot.event
