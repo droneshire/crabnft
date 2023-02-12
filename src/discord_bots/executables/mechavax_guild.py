@@ -120,6 +120,12 @@ def parse_stats_iteration(avvy: AvvyClient, w3_mech: MechContractWeb3Client) -> 
             f"Found {address} with {shk_balances[address]['shk']}, {shk_balances[address]['mechs']} mechs"
         )
 
+    shk_balances = sorted(shk_balances.items(), key=lambda x: -x[1]["shk"])
+
+    total_shk = 0.0
+    for address, totals in shk_balances.items():
+        total_shk += totals["shk"]
+
     with open(MECH_STATS_CACHE_FILE, "w") as outfile:
         json.dump(shk_balances, outfile, indent=4)
 
@@ -127,7 +133,12 @@ def parse_stats_iteration(avvy: AvvyClient, w3_mech: MechContractWeb3Client) -> 
         with open(MECH_STATS_HISTORY_FILE, "r") as infile:
             data = json.load(infile)
     else:
-        data = {"data": []}
+        data = {
+            "Holders": list(shk_balances.keys()),
+            "$SHK": [s["shk"] for s in shk_balances.values()],
+            "% SHK Supply": [v["shk"] / total_shk * 100.0 for v in shk_balances.values()],
+            "MECHs": [m["mechs"] for m in shk_balances.values()],
+        }
 
     with open(MECH_STATS_HISTORY_FILE, "w") as outfile:
         data["data"].append(shk_balances)
