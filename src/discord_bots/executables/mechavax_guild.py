@@ -139,7 +139,7 @@ def parse_stats_iteration(w3_mech: AvalancheCWeb3Client) -> None:
     shk_balances = sorted(shk_balances.items(), key=lambda x: -x[1]["shk"])
 
     total_shk = 0.0
-    for address, totals in shk_balances.items():
+    for address, totals in shk_balances:
         total_shk += totals["shk"]
 
     with open(MECH_STATS_CACHE_FILE, "w") as outfile:
@@ -152,7 +152,7 @@ def parse_stats_iteration(w3_mech: AvalancheCWeb3Client) -> None:
         data = {}
 
     with open(MECH_STATS_HISTORY_FILE, "w") as outfile:
-        for address, stats in shk_balances.items():
+        for address, stats in shk_balances:
             if address not in data:
                 data[address] = {}
 
