@@ -224,10 +224,14 @@ async def shk_holders_command(interaction: discord.Interaction) -> None:
         body.append(row)
 
     table_text = table2ascii.table2ascii(
-        header=["Owner", "$SHK"],
+        header=["Owner", "$SHK", "% Supply"],
         body=body,
         footer=[],
-        alignments=[table2ascii.Alignment.LEFT, table2ascii.Alignment.CENTER],
+        alignments=[
+            table2ascii.Alignment.LEFT,
+            table2ascii.Alignment.CENTER,
+            table2ascii.Alignment.CENTER,
+        ],
     )
 
     message = f"```\n{table_text}\n```"
