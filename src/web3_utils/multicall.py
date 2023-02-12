@@ -34,7 +34,7 @@ class Network(IntEnum):
 
 
 class FunctionInput(object):
-    def __init__(self, name: str, value: any, solidity_type: str):
+    def __init__(self, name: str, value: T.Any, solidity_type: str):
         self.name = name
         self.value = value
         self.solidity_type = solidity_type
@@ -46,7 +46,7 @@ class FunctionResult(object):
         contract_address: str,
         function_name: str,
         inputs: T.List[FunctionInput],
-        results: T.List[any],
+        results: T.List[T.Any],
     ):
         self.contract_address = contract_address
         self.function_name = function_name
