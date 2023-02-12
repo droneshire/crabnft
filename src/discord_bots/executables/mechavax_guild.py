@@ -103,20 +103,28 @@ def local_to_thread(func: T.Callable) -> T.Coroutine:
     return wrapper
 
 
-def parse_stats_iteration(avvy: AvvyClient, w3_mech: MechContractWeb3Client) -> None:
+def resolve_address_to_avvy(w3: AvalancheCWeb3Client, address: str) -> str:
+    avvy = AvvyClient(w3)
+    resolved_address = address
+    # try:
+    hash_name = avvy.reverse(avvy.RECORDS.EVM, address)
+    if hash_name:
+        name = hash_name.lookup()
+        if name:
+            resolved_address = name.name
+    # except:
+    #     logger.print_fail(f"Failed to resolve avvy name")
+    return resolved_address
+
+
+def parse_stats_iteration(w3_mech: AvalancheCWeb3Client) -> None:
     shk_balances = {}
     for nft_id in range(MAX_SUPPLY):
         owner = w3_mech.get_owner_of(nft_id)
         if not owner:
             continue
 
-        address = owner
-
-        hash_name = avvy.reverse(avvy.RECORDS.EVM, owner)
-        if hash_name:
-            name = hash_name.lookup()
-            if name:
-                address = name.name
+        address = resolve_address_to_avvy(w3_mech.w3, owner)
 
         if address in shk_balances:
             continue
@@ -167,11 +175,10 @@ def parse_stats() -> None:
         .set_contract()
         .set_dry_run(False)
     )
-    avvy = AvvyClient(w3_mech.w3)
 
     while True:
         try:
-            parse_stats_iteration(avvy, w3_mech)
+            parse_stats_iteration(w3_mech)
         except:
             logger.print_fail(f"Failed to parse stats...")
 
@@ -310,7 +317,7 @@ async def shk_total_command(interaction: discord.Interaction) -> None:
     description=f"Plot of SHK held for top {TOP_N} holders",
     guild=discord.Object(id=ALLOWLIST_GUILD),
 )
-async def shk_plots_command(interaction: discord.Interaction) -> None:
+async def shk_plots_command(interaction: discord.Interaction, address: str = "") -> None:
     if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
         await interaction.response.send_message("Invalid channel")
         return
@@ -327,11 +334,26 @@ async def shk_plots_command(interaction: discord.Interaction) -> None:
     sorted_balances = sorted(shk_balances.items(), key=lambda x: -x[1]["mechs"])
 
     top_holders = []
-    for stats in sorted_balances[:TOP_N]:
-        address = stats[0]
-        if Web3.isChecksumAddress(address):
-            address = await shortened_address_str(stats[0])
-        top_holders.append(address)
+
+    w3_mech: MechContractWeb3Client = (
+        MechContractWeb3Client()
+        .set_credentials(ADMIN_ADDRESS, "")
+        .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+        .set_contract()
+        .set_dry_run(False)
+    )
+
+    if address:
+        resolved_address = await async_func_wrapper(resolve_address_to_avvy, w3_mech.w3, address)
+        if Web3.isChecksumAddress(resolved_address):
+            resolved_address = await shortened_address_str(resolved_address)
+        top_holders.append(resolved_address)
+    else:
+        for stats in sorted_balances[:TOP_N]:
+            address = stats[0]
+            if Web3.isChecksumAddress(address):
+                address = await shortened_address_str(stats[0])
+            top_holders.append(address)
 
     with open(MECH_STATS_HISTORY_FILE, "r") as infile:
         data = json.load(infile)
