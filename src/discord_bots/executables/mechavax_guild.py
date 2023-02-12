@@ -52,6 +52,7 @@ MAX_SUPPLY = 2250
 MINT_ADDRESS = "0x0000000000000000000000000000000000000000"
 IGNORE_ADDRESSES = [MINT_ADDRESS, "0xB6C5a50c28805ABB41f79F7945Bf3F9DfeF4C8B0"]
 MECH_STATS_CACHE_FILE = os.path.join(logger.get_logging_dir("mechavax"), "shk_balances.json")
+MECH_STATS_HISTORY_FILE = os.path.join(logger.get_logging_dir("mechavax"), "data.json")
 
 
 def get_credentials() -> T.Tuple[str, str]:
@@ -122,6 +123,16 @@ def parse_stats_iteration(avvy: AvvyClient, w3_mech: MechContractWeb3Client) -> 
     with open(MECH_STATS_CACHE_FILE, "w") as outfile:
         json.dump(shk_balances, outfile, indent=4)
 
+    if os.path.isfile(MECH_STATS_HISTORY_FILE):
+        with open(MECH_STATS_HISTORY_FILE, "r") as infile:
+            data = json.load(infile)
+    else:
+        data = {"data": []}
+
+    with open(MECH_STATS_HISTORY_FILE, "w") as outfile:
+        data["data"].append(shk_balances)
+        json.dump(data, outfile, indent=4)
+
     logger.print_bold("Updated cache file!")
 
 
@@ -138,10 +149,10 @@ def parse_stats() -> None:
     avvy = AvvyClient(w3_mech.w3)
 
     while True:
-        try:
-            parse_stats_iteration(avvy, w3_mech)
-        except:
-            logger.print_fail(f"Failed to parse stats...")
+        parse_stats_iteration(avvy, w3_mech)
+        # try:
+        # except:
+        #     logger.print_fail(f"Failed to parse stats...")
 
 
 @bot.event
@@ -219,16 +230,24 @@ async def shk_holders_command(interaction: discord.Interaction) -> None:
     sorted_balances = sorted(shk_balances.items(), key=lambda x: -x[1]["shk"])
 
     body = []
+    leader_shk = None
     for address, totals in sorted_balances[:10]:
-        row = [address, f"{totals['shk']:,.2f}", f"{totals['shk']/total_shk * 100.0:.2f}%"]
+        shk = totals["shk"]
+        row = [address, f"{shk:,.2f}", f"{shk/total_shk * 100.0:.2f}%"]
+        if leader_shk is None:
+            leader_shk = shk
+            row.append("n/a")
+        else:
+            row.append(f"{shk/leader_shk:.1f}")
         body.append(row)
 
     table_text = table2ascii.table2ascii(
-        header=["Owner", "$SHK", "% Supply"],
+        header=["Owner", "$SHK", "% Supply", "Holding/Leader"],
         body=body,
         footer=[],
         alignments=[
             table2ascii.Alignment.LEFT,
+            table2ascii.Alignment.CENTER,
             table2ascii.Alignment.CENTER,
             table2ascii.Alignment.CENTER,
         ],
