@@ -94,6 +94,37 @@ def local_to_thread(func: T.Callable) -> T.Coroutine:
     return wrapper
 
 
+def parse_stats_iteration(avvy: AvvyClient, w3_mech: MechContractWeb3Client) -> None:
+    shk_balances = {}
+    for nft_id in range(MAX_SUPPLY):
+        owner = w3_mech.get_owner_of(nft_id)
+        if not owner:
+            continue
+
+        address = owner
+
+        hash_name = avvy.reverse(avvy.RECORDS.EVM, owner)
+        if hash_name:
+            name = hash_name.lookup()
+            if name:
+                address = name.name
+
+        if address in shk_balances:
+            continue
+
+        shk_balances[address] = {}
+        shk_balances[address]["shk"] = w3_mech.get_deposited_shk(owner)
+        shk_balances[address]["mechs"] = w3_mech.get_num_mechs(owner)
+        logger.print_normal(
+            f"Found {address} with {shk_balances[address]['shk']}, {shk_balances[address]['mechs']} mechs"
+        )
+
+    with open(MECH_STATS_CACHE_FILE, "w") as outfile:
+        json.dump(shk_balances, outfile, indent=4)
+
+    logger.print_bold("Updated cache file!")
+
+
 @local_to_thread
 def parse_stats() -> None:
 
@@ -107,34 +138,10 @@ def parse_stats() -> None:
     avvy = AvvyClient(w3_mech.w3)
 
     while True:
-        shk_balances = {}
-        for nft_id in range(MAX_SUPPLY):
-            owner = w3_mech.get_owner_of(nft_id)
-            if not owner:
-                continue
-
-            address = owner
-
-            hash_name = avvy.reverse(avvy.RECORDS.EVM, owner)
-            if hash_name:
-                name = hash_name.lookup()
-                if name:
-                    address = name.name
-
-            if address in shk_balances:
-                continue
-
-            shk_balances[address] = {}
-            shk_balances[address]["shk"] = w3_mech.get_deposited_shk(owner)
-            shk_balances[address]["mechs"] = w3_mech.get_num_mechs(owner)
-            logger.print_normal(
-                f"Found {address} with {shk_balances[address]['shk']}, {shk_balances[address]['mechs']} mechs"
-            )
-
-        with open(MECH_STATS_CACHE_FILE, "w") as outfile:
-            json.dump(shk_balances, outfile, indent=4)
-
-        logger.print_bold("Updated cache file!")
+        try:
+            parse_stats_iteration(avvy, w3_mech)
+        except:
+            logger.print_fail(f"Failed to parse stats...")
 
 
 @bot.event
@@ -205,11 +212,15 @@ async def shk_holders_command(interaction: discord.Interaction) -> None:
     with open(MECH_STATS_CACHE_FILE, "r") as infile:
         shk_balances = json.load(infile)
 
+    total_shk = 0.0
+    for address, totals in shk_balances.items():
+        total_shk += totals["shk"]
+
     sorted_balances = sorted(shk_balances.items(), key=lambda x: -x[1]["shk"])
 
     body = []
     for address, totals in sorted_balances[:10]:
-        row = [address, f"{totals['shk']:.2f}"]
+        row = [address, f"{totals['shk']:.2f}", f"{totals['shk']/total_shk:.2f}%"]
         body.append(row)
 
     table_text = table2ascii.table2ascii(
@@ -220,6 +231,33 @@ async def shk_holders_command(interaction: discord.Interaction) -> None:
     )
 
     message = f"```\n{table_text}\n```"
+    await interaction.response.send_message(message)
+
+
+@bot.tree.command(
+    name="shktotal",
+    description="Total SHK held",
+    guild=discord.Object(id=ALLOWLIST_GUILD),
+)
+async def shk_holders_command(interaction: discord.Interaction) -> None:
+    if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
+        await interaction.response.send_message("Invalid channel")
+        return
+
+    logger.print_bold(f"Received shk total command")
+
+    if not os.path.isfile(MECH_STATS_CACHE_FILE):
+        await interaction.response.send_message("Missing data")
+        return
+
+    with open(MECH_STATS_CACHE_FILE, "r") as infile:
+        shk_balances = json.load(infile)
+
+    total_shk = 0.0
+    for address, totals in shk_balances.items():
+        total_shk += totals["shk"]
+
+    message = f"**SHK Held:** `{total_shk:,.2f} $SHK`"
     await interaction.response.send_message(message)
 
 
