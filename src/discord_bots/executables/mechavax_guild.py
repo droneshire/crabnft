@@ -119,7 +119,7 @@ def resolve_address_to_avvy(w3: AvalancheCWeb3Client, address: str) -> str:
 
 def parse_stats_iteration(w3_mech: AvalancheCWeb3Client) -> None:
     shk_balances = {}
-    for nft_id in range(MAX_SUPPLY):
+    for nft_id in range(1, MAX_SUPPLY + 1):
         owner = w3_mech.get_owner_of(nft_id)
         if not owner:
             continue
@@ -310,6 +310,31 @@ async def shk_total_command(interaction: discord.Interaction) -> None:
         total_shk += totals["shk"]
 
     message = f"**SHK Held:** `{total_shk:,.2f} $SHK`"
+    await interaction.response.send_message(message)
+
+
+@bot.tree.command(
+    name="holdercount",
+    description="Total wallets with mech(s)",
+    guild=discord.Object(id=ALLOWLIST_GUILD),
+)
+async def holders_total_command(interaction: discord.Interaction) -> None:
+    if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
+        await interaction.response.send_message("Invalid channel")
+        return
+
+    logger.print_bold(f"Received holder total command")
+
+    if not os.path.isfile(MECH_STATS_CACHE_FILE):
+        await interaction.response.send_message("Missing data")
+        return
+
+    with open(MECH_STATS_CACHE_FILE, "r") as infile:
+        shk_balances = json.load(infile)
+
+    total = len(shk_balances.keys())
+
+    message = f"**Unique holders:** `{total}`"
     await interaction.response.send_message(message)
 
 
