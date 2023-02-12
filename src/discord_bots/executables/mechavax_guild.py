@@ -369,6 +369,10 @@ async def shk_plots_command(interaction: discord.Interaction, address: str = "")
         await interaction.response.send_message("Missing data")
         return
 
+    if not os.path.isfile(MECH_STATS_CACHE_FILE):
+        await interaction.response.send_message("Missing data")
+        return
+
     with open(MECH_STATS_CACHE_FILE, "r") as infile:
         shk_balances = json.load(infile)
 
