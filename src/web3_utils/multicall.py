@@ -121,7 +121,7 @@ class Function:
     def data(self) -> str:
         return self.__signature.encode_data(self.__function.args)
 
-    def decode_output(self, output) -> list[any]:
+    def decode_output(self, output) -> T.List[T.Any]:
         return self.__signature.decode_data(output)
 
 

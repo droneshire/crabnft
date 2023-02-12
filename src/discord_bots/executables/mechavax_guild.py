@@ -119,7 +119,7 @@ def resolve_address_to_avvy(w3: AvalancheCWeb3Client, address: str) -> str:
     return resolved_address
 
 
-def do_multicall(inputs: list, fn: T.Callable) -> list[T.Tuple]:
+def do_multicall(inputs: T.List[T.Any], fn: T.Callable) -> T.List[T.Tuple]:
     input_chunks = np.array_split(inputs, len(inputs) / 50)
 
     results = []
