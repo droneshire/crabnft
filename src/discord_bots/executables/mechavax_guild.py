@@ -10,11 +10,13 @@ import table2ascii
 import time
 import typing as T
 
+import matplotlib.pyplot as plt
+import pandas as pd
+
 from avvy import AvvyClient
 from discord.ext import commands
 from rich.progress import track
 from web3 import Web3
-
 from config_admin import (
     ADMIN_ADDRESS,
     DISCORD_MECHAVAX_SALES_BOT_TOKEN,
@@ -40,6 +42,7 @@ from web3_utils.snowtrace import SnowtraceApi
 
 bot = commands.Bot(command_prefix="/", intents=discord.Intents.all())
 
+TOP_N = 5
 ALLOWLIST_MINTERS = [
     935440767646851093,  # nftcashflow
 ]
@@ -53,6 +56,7 @@ MINT_ADDRESS = "0x0000000000000000000000000000000000000000"
 IGNORE_ADDRESSES = [MINT_ADDRESS, "0xB6C5a50c28805ABB41f79F7945Bf3F9DfeF4C8B0"]
 MECH_STATS_CACHE_FILE = os.path.join(logger.get_logging_dir("mechavax"), "shk_balances.json")
 MECH_STATS_HISTORY_FILE = os.path.join(logger.get_logging_dir("mechavax"), "data.json")
+MECH_STATS_PLOT = os.path.join(logger.get_logging_dir("mechavax"), "holder_stats.jpg")
 
 
 def get_credentials() -> T.Tuple[str, str]:
@@ -65,6 +69,10 @@ def get_credentials() -> T.Tuple[str, str]:
 
 
 ADDRESS, PRIVATE_KEY = get_credentials()
+
+
+async def shortened_address_str(address: str) -> str:
+    return f"{address[:5]}...{address[-4:]}"
 
 
 async def get_events(w3: AvalancheCWeb3Client, event_function: T.Any) -> T.List[T.Any]:
@@ -219,7 +227,7 @@ async def mint_mech_command(interaction: discord.Interaction, mech_id: int) -> N
 
 @bot.tree.command(
     name="shkholders",
-    description="Get top 10 SHK holders",
+    description=f"Get top {TOP_N} SHK holders",
     guild=discord.Object(id=ALLOWLIST_GUILD),
 )
 async def shk_holders_command(interaction: discord.Interaction) -> None:
@@ -244,7 +252,7 @@ async def shk_holders_command(interaction: discord.Interaction) -> None:
 
     body = []
     leader_shk = None
-    for address, totals in sorted_balances[:10]:
+    for address, totals in sorted_balances[:TOP_N]:
         shk = totals["shk"]
         row = [address, f"{shk:,.2f}", f"{shk/total_shk * 100.0:.2f}%"]
         if leader_shk is None:
@@ -297,36 +305,71 @@ async def shk_total_command(interaction: discord.Interaction) -> None:
     await interaction.response.send_message(message)
 
 
-# @bot.tree.command(
-#     name="shkplots",
-#     description="Plot of SHK held for top 10 holders",
-#     guild=discord.Object(id=ALLOWLIST_GUILD),
-# )
-# async def shk_plots_command(interaction: discord.Interaction) -> None:
-#     if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
-#         await interaction.response.send_message("Invalid channel")
-#         return
+@bot.tree.command(
+    name="shkplots",
+    description=f"Plot of SHK held for top {TOP_N} holders",
+    guild=discord.Object(id=ALLOWLIST_GUILD),
+)
+async def shk_plots_command(interaction: discord.Interaction) -> None:
+    if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
+        await interaction.response.send_message("Invalid channel")
+        return
 
-#     logger.print_bold(f"Received shk plots command")
+    logger.print_bold(f"Received shk plots command")
 
-#     if not os.path.isfile(MECH_STATS_HISTORY_FILE):
-#         await interaction.response.send_message("Missing data")
-#         return
+    if not os.path.isfile(MECH_STATS_HISTORY_FILE):
+        await interaction.response.send_message("Missing data")
+        return
 
-#     with open(MECH_STATS_HISTORY_FILE, "r") as infile:
-#         data = json.load(infile)
+    with open(MECH_STATS_CACHE_FILE, "r") as infile:
+        shk_balances = json.load(infile)
 
+    sorted_balances = sorted(shk_balances.items(), key=lambda x: -x[1]["mechs"])
 
-#     plot = data["data"][-1].keys()
-#     for data_point in data["data"]:
-#         for address, stats in data_point.items():
-#             rows.
-#     await interaction.response.send_message(message)
+    top_holders = []
+    for stats in sorted_balances[:TOP_N]:
+        address = stats[0]
+        if Web3.isChecksumAddress(address):
+            address = await shortened_address_str(stats[0])
+        top_holders.append(address)
+
+    with open(MECH_STATS_HISTORY_FILE, "r") as infile:
+        data = json.load(infile)
+
+    plot = []
+    row_label = []
+    row_length = 0
+    for address, stats in data.items():
+        if Web3.isChecksumAddress(address):
+            address = await shortened_address_str(address)
+
+        if address not in top_holders:
+            continue
+
+        row_label.append(address)
+        row = stats["shk"]
+        plot.append(row)
+        row_length = max(row_length, len(row))
+
+    row_label.append("sample")
+    plot.append(list(range(row_length)))
+
+    dataframe = pd.DataFrame(plot, index=row_label).T
+    logger.print_normal(f"{dataframe}")
+
+    dataframe.plot(x="sample", y=top_holders, kind="line", title="SHK Over Time")
+    plt.legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0)
+    await async_func_wrapper(plt.savefig, MECH_STATS_PLOT, bbox_inches="tight", dpi=100)
+
+    embed = discord.Embed()
+    attachment = discord.File(MECH_STATS_PLOT)
+    embed.set_image(url=f"attachment://{os.path.basename(MECH_STATS_PLOT)}")
+    await interaction.response.send_message(embed=embed, file=attachment)
 
 
 @bot.tree.command(
     name="mechholders",
-    description="Get top 10 MECH holders",
+    description=f"Get top {TOP_N} MECH holders",
     guild=discord.Object(id=ALLOWLIST_GUILD),
 )
 async def mech_holders_command(interaction: discord.Interaction) -> None:
@@ -346,7 +389,7 @@ async def mech_holders_command(interaction: discord.Interaction) -> None:
     sorted_balances = sorted(shk_balances.items(), key=lambda x: -x[1]["mechs"])
 
     body = []
-    for address, totals in sorted_balances[:10]:
+    for address, totals in sorted_balances[:TOP_N]:
         row = [address, totals["mechs"]]
         body.append(row)
 
@@ -530,7 +573,8 @@ async def get_guild_table_row(
     )
 
     address = Web3.toChecksumAddress(address)
-    row.append(f"{address[:5]}...{address[-4:]}")
+    shortened_address = await shortened_address_str(address)
+    row.append(shortened_address)
     owner = GUILD_WALLET_MAPPING.get(address, "").split("#")[0]
     row.append(owner)
     marms = nft_data.get("MARM", [])
