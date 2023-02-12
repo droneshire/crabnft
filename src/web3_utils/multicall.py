@@ -45,8 +45,8 @@ class FunctionResult(object):
         self,
         contract_address: str,
         function_name: str,
-        inputs: list[FunctionInput],
-        results: list[any],
+        inputs: T.List[FunctionInput],
+        results: T.List[any],
     ):
         self.contract_address = contract_address
         self.function_name = function_name
