@@ -108,14 +108,14 @@ def local_to_thread(func: T.Callable) -> T.Coroutine:
 def resolve_address_to_avvy(w3: AvalancheCWeb3Client, address: str) -> str:
     avvy = AvvyClient(w3)
     resolved_address = address
-    # try:
-    hash_name = avvy.reverse(avvy.RECORDS.EVM, address)
-    if hash_name:
-        name = hash_name.lookup()
-        if name:
-            resolved_address = name.name
-    # except:
-    #     logger.print_fail(f"Failed to resolve avvy name")
+    try:
+        hash_name = avvy.reverse(avvy.RECORDS.EVM, address)
+        if hash_name:
+            name = hash_name.lookup()
+            if name:
+                resolved_address = name.name
+    except:
+        logger.print_fail(f"Failed to resolve avvy name")
     return resolved_address
 
 
@@ -192,9 +192,8 @@ def parse_stats() -> None:
     )
 
     while True:
-        parse_stats_iteration(w3_mech)
         try:
-            pass
+            parse_stats_iteration(w3_mech)
         except:
             logger.print_fail(f"Failed to parse stats...")
 
