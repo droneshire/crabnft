@@ -103,11 +103,11 @@ class Function:
         return self.__function.function_identifier
 
     @property
-    def arguments(self) -> List[any]:
+    def arguments(self) -> T.List[T.Any]:
         return list(self.__function.arguments)
 
     @property
-    def inputs(self) -> List[FunctionInput]:
+    def inputs(self) -> T.List[FunctionInput]:
         return [
             FunctionInput(name=_input["name"], value=argument, solidity_type=_input["type"])
             for _input, argument in zip(self.__signature.inputs, self.__function.arguments)
@@ -199,13 +199,13 @@ abi = [
 
 
 class Multicall(object):
-    def __init__(self, eth: Eth, address: Optional[str] = None):
+    def __init__(self, eth: Eth, address: T.Optional[str] = None):
         self.eth = eth
         self.address = address or Network(eth.chain_id).multicall_adddress
         self.abi = abi
         self.contract = self.eth.contract(address=self.address, abi=self.abi)
 
-    def aggregate(self, calls: List[ContractFunction]) -> AggregateResult:
+    def aggregate(self, calls: T.List[ContractFunction]) -> AggregateResult:
         funcs = [Function(call) for call in calls]
 
         block_number, outputs = self.contract.functions.aggregate(
