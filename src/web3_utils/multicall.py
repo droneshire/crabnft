@@ -1,5 +1,5 @@
 from enum import IntEnum
-from typing import Optional, List
+import typing as T
 
 from eth_abi import encode_single, decode_single
 from eth_utils import function_signature_to_4byte_selector
@@ -55,7 +55,7 @@ class FunctionResult(object):
 
 
 class AggregateResult(object):
-    def __init__(self, block_number: int, results: list[FunctionResult]):
+    def __init__(self, block_number: int, results: T.List[FunctionResult]):
         self.block_number = block_number
         self.results = results
 
