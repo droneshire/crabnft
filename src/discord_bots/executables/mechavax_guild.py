@@ -11,6 +11,7 @@ import time
 import typing as T
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
 from avvy import AvvyClient
@@ -36,6 +37,7 @@ from utils import general, logger
 from utils.async_utils import async_func_wrapper
 from utils.price import wei_to_token, TokenWei
 from utils.security import decrypt_secret
+from web3_utils import multicall
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.helpers import process_w3_results
 from web3_utils.snowtrace import SnowtraceApi
@@ -117,9 +119,22 @@ def resolve_address_to_avvy(w3: AvalancheCWeb3Client, address: str) -> str:
     return resolved_address
 
 
+def do_multicall(inputs: list, fn: T.Callable) -> list[T.Tuple]:
+    input_chunks = np.array_split(inputs, len(inputs) / 50)
+
+    results = []
+    for chunk in input_chunks:
+        multicall_result = multicall.aggregate([fn(item) for item in chunk])
+        for idx in range(len(chunk)):
+            item = chunk[idx]
+            result = multicall_result.results[idx].results[0]
+            results.append((item, result))
+    return results
+
+
 def parse_stats_iteration(w3_mech: AvalancheCWeb3Client) -> None:
     shk_balances = {}
-    for nft_id in range(1, MAX_SUPPLY + 1):
+    for nft_id in range(1, 2 + 1):
         owner = w3_mech.get_owner_of(nft_id)
         if not owner:
             continue
@@ -136,14 +151,14 @@ def parse_stats_iteration(w3_mech: AvalancheCWeb3Client) -> None:
             f"Found {address} with {shk_balances[address]['shk']}, {shk_balances[address]['mechs']} mechs"
         )
 
-    shk_balances = sorted(shk_balances.items(), key=lambda x: -x[1]["shk"])
+    sorted_stats = {k: v for k, v in sorted(shk_balances.items(), key=lambda x: -x[1]["shk"])}
 
     total_shk = 0.0
-    for address, totals in shk_balances:
+    for address, totals in sorted_stats.items():
         total_shk += totals["shk"]
 
     with open(MECH_STATS_CACHE_FILE, "w") as outfile:
-        json.dump(shk_balances, outfile, indent=4)
+        json.dump(sorted_stats, outfile, indent=4)
 
     if os.path.isfile(MECH_STATS_HISTORY_FILE):
         with open(MECH_STATS_HISTORY_FILE, "r") as infile:
@@ -152,7 +167,7 @@ def parse_stats_iteration(w3_mech: AvalancheCWeb3Client) -> None:
         data = {}
 
     with open(MECH_STATS_HISTORY_FILE, "w") as outfile:
-        for address, stats in shk_balances:
+        for address, stats in shk_balances.items():
             if address not in data:
                 data[address] = {}
 
