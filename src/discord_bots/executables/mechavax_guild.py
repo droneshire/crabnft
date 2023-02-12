@@ -177,8 +177,9 @@ def parse_stats() -> None:
     )
 
     while True:
+        parse_stats_iteration(w3_mech)
         try:
-            parse_stats_iteration(w3_mech)
+            pass
         except:
             logger.print_fail(f"Failed to parse stats...")
 
