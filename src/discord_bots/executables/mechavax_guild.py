@@ -134,7 +134,7 @@ def do_multicall(inputs: list, fn: T.Callable) -> list[T.Tuple]:
 
 def parse_stats_iteration(w3_mech: AvalancheCWeb3Client) -> None:
     shk_balances = {}
-    for nft_id in range(1, 2 + 1):
+    for nft_id in range(1, MAX_SUPPLY + 1):
         owner = w3_mech.get_owner_of(nft_id)
         if not owner:
             continue
