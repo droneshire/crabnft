@@ -133,15 +133,17 @@ def parse_stats_iteration(avvy: AvvyClient, w3_mech: MechContractWeb3Client) -> 
         with open(MECH_STATS_HISTORY_FILE, "r") as infile:
             data = json.load(infile)
     else:
-        data = {
-            "Holders": list(shk_balances.keys()),
-            "$SHK": [s["shk"] for s in shk_balances.values()],
-            "% SHK Supply": [v["shk"] / total_shk * 100.0 for v in shk_balances.values()],
-            "MECHs": [m["mechs"] for m in shk_balances.values()],
-        }
+        data = {}
 
     with open(MECH_STATS_HISTORY_FILE, "w") as outfile:
-        data["data"].append(shk_balances)
+        for address, stats in shk_balances.items():
+            if address not in data:
+                data[address] = {}
+
+            for k, v in stats.items():
+                if k not in data[address]:
+                    data[address][k] = []
+                data[address][k].append(v)
         json.dump(data, outfile, indent=4)
 
     logger.print_bold("Updated cache file!")
@@ -160,10 +162,10 @@ def parse_stats() -> None:
     avvy = AvvyClient(w3_mech.w3)
 
     while True:
-        parse_stats_iteration(avvy, w3_mech)
-        # try:
-        # except:
-        #     logger.print_fail(f"Failed to parse stats...")
+        try:
+            parse_stats_iteration(avvy, w3_mech)
+        except:
+            logger.print_fail(f"Failed to parse stats...")
 
 
 @bot.event
@@ -273,7 +275,7 @@ async def shk_holders_command(interaction: discord.Interaction) -> None:
     description="Total SHK held",
     guild=discord.Object(id=ALLOWLIST_GUILD),
 )
-async def shk_holders_command(interaction: discord.Interaction) -> None:
+async def shk_total_command(interaction: discord.Interaction) -> None:
     if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
         await interaction.response.send_message("Invalid channel")
         return
@@ -295,12 +297,39 @@ async def shk_holders_command(interaction: discord.Interaction) -> None:
     await interaction.response.send_message(message)
 
 
+# @bot.tree.command(
+#     name="shkplots",
+#     description="Plot of SHK held for top 10 holders",
+#     guild=discord.Object(id=ALLOWLIST_GUILD),
+# )
+# async def shk_plots_command(interaction: discord.Interaction) -> None:
+#     if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
+#         await interaction.response.send_message("Invalid channel")
+#         return
+
+#     logger.print_bold(f"Received shk plots command")
+
+#     if not os.path.isfile(MECH_STATS_HISTORY_FILE):
+#         await interaction.response.send_message("Missing data")
+#         return
+
+#     with open(MECH_STATS_HISTORY_FILE, "r") as infile:
+#         data = json.load(infile)
+
+
+#     plot = data["data"][-1].keys()
+#     for data_point in data["data"]:
+#         for address, stats in data_point.items():
+#             rows.
+#     await interaction.response.send_message(message)
+
+
 @bot.tree.command(
     name="mechholders",
     description="Get top 10 MECH holders",
     guild=discord.Object(id=ALLOWLIST_GUILD),
 )
-async def shk_holders_command(interaction: discord.Interaction) -> None:
+async def mech_holders_command(interaction: discord.Interaction) -> None:
     if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
         await interaction.response.send_message("Invalid channel")
         return

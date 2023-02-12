@@ -24,7 +24,7 @@ class SnowtraceApi(Web2Client):
             "action": "tokennfttx",
             "address": target_address,
             "startblock": 0,
-            "endblock": 999999999,
+            "endblock": 9999999999,
             "sort": "asc",
         }
         tokens = {}
@@ -55,7 +55,7 @@ class SnowtraceApi(Web2Client):
             "action": "tokentx",
             "address": target_address,
             "startblock": 0,
-            "endblock": 999999999,
+            "endblock": 9999999999,
             "sort": "asc",
             "apikey": SNOWTRACE_API_KEY,
         }
