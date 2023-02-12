@@ -238,11 +238,11 @@ async def shk_holders_command(interaction: discord.Interaction) -> None:
             leader_shk = shk
             row.append("n/a")
         else:
-            row.append(f"{shk/leader_shk:.1f}")
+            row.append(f"{shk/leader_shk * 100.0:.1f}%")
         body.append(row)
 
     table_text = table2ascii.table2ascii(
-        header=["Owner", "$SHK", "% Supply", "Holding/Leader"],
+        header=["Owner", "$SHK", "% Supply", "% Leader"],
         body=body,
         footer=[],
         alignments=[
