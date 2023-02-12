@@ -220,7 +220,7 @@ async def shk_holders_command(interaction: discord.Interaction) -> None:
 
     body = []
     for address, totals in sorted_balances[:10]:
-        row = [address, f"{totals['shk']:.2f}", f"{totals['shk']/total_shk:.2f}%"]
+        row = [address, f"{totals['shk']:,.2f}", f"{totals['shk']/total_shk * 100.0:.2f}%"]
         body.append(row)
 
     table_text = table2ascii.table2ascii(
