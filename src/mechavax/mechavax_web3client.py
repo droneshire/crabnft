@@ -181,3 +181,13 @@ class MechContractWeb3Client(AvalancheCWeb3Client):
         except Exception as e:
             logger.print_fail(f"{e}")
             return ""
+
+    def add_shirak(self, shk_amount_wei: int) -> HexStr:
+        try:
+            tx: TxParams = self.build_contract_transaction(
+                self.contract.functions.addShirak(shk_amount_wei)
+            )
+            return self.sign_and_send_transaction(tx)
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return ""

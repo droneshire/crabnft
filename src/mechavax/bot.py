@@ -8,11 +8,15 @@ from eth_typing import Address
 from rich.progress import track
 from web3 import Web3
 
-from mechavax.mechavax_web3client import MechContractWeb3Client, MechArmContractWeb3Client
+from mechavax.mechavax_web3client import (
+    MechContractWeb3Client,
+    MechArmContractWeb3Client,
+    ShirakContractWeb3Client,
+)
 from utils import discord, logger
 from utils.general import get_pretty_seconds
 from utils.async_utils import async_func_wrapper
-from utils.price import wei_to_token, TokenWei
+from utils.price import wei_to_token, token_to_wei, TokenWei
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from web3_utils.helpers import process_w3_results
 
@@ -60,6 +64,13 @@ class MechBot:
         )
         self.w3_arm: MechArmContractWeb3Client = (
             MechArmContractWeb3Client()
+            .set_credentials(address, private_key)
+            .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+            .set_contract()
+            .set_dry_run(False)
+        )
+        self.w3_shk: ShirakContractWeb3Client = (
+            ShirakContractWeb3Client()
             .set_credentials(address, private_key)
             .set_node_uri(AvalancheCWeb3Client.NODE_URL)
             .set_contract()
@@ -323,6 +334,34 @@ class MechBot:
                     self.last_time_marm_minted,
                 )
             await asyncio.sleep(self.MINT_BOT_INTERVAL)
+
+    async def try_to_deposit_shk(self) -> None:
+        while True:
+            total_shk = w3_shk.get_balance()
+
+            if total_shk > 0.0:
+                logger.print_ok_arrow(f"Found {total_shk:.2f} in wallet")
+
+            if not self.AUTO_DEPOSIT:
+                asyncio.sleep(60.0)
+                continue
+
+            if total_shk <= 0.0:
+                asyncio.sleep(60.0)
+                continue
+
+            total_shk_wei = token_to_wei(total_shk)
+            logger.print_bold(f"Found {total_shk:.2f} SHK in account...")
+            tx_hash = await async_func_wrapper(self.w3_mech.add_shirak, total_shk_wei)
+
+            action_str = f"Deposit {total_shk:.2f} SHK to account"
+            _, txn_url = process_w3_results(self.w3_mech, action_str, tx_hash)
+            if txn_url:
+                message = f"\U0001F389 Successfully minted a new {nft_type}!\n{txn_url}"
+                logger.print_ok_arrow(message)
+            else:
+                message = f"\U00002620 Failed to mint new {nft_type}!"
+                logger.print_fail_arrow(message)
 
     async def try_to_mint(
         self,
