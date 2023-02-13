@@ -39,6 +39,7 @@ class MechBot:
         },
     }
     SHK_SAVINGS_MULT = 3
+    AUTO_DEPOSIT = True
 
     def __init__(
         self,
@@ -337,31 +338,32 @@ class MechBot:
 
     async def try_to_deposit_shk(self) -> None:
         while True:
-            total_shk = w3_shk.get_balance()
+            total_shk = self.w3_shk.get_balance()
 
             if total_shk > 0.0:
-                logger.print_ok_arrow(f"Found {total_shk:.2f} in wallet")
+                logger.print_ok_arrow(f"Found {total_shk:.2f} SHK in wallet")
 
             if not self.AUTO_DEPOSIT:
-                asyncio.sleep(60.0)
+                await asyncio.sleep(60.0 * 60.0)
                 continue
 
             if total_shk <= 0.0:
-                asyncio.sleep(60.0)
+                await asyncio.sleep(60.0 * 60.0)
                 continue
 
             total_shk_wei = token_to_wei(total_shk)
-            logger.print_bold(f"Found {total_shk:.2f} SHK in account...")
+            logger.print_bold(f"Depositing {total_shk:.2f} SHK in account...")
             tx_hash = await async_func_wrapper(self.w3_mech.add_shirak, total_shk_wei)
 
             action_str = f"Deposit {total_shk:.2f} SHK to account"
             _, txn_url = process_w3_results(self.w3_mech, action_str, tx_hash)
             if txn_url:
-                message = f"\U0001F389 Successfully minted a new {nft_type}!\n{txn_url}"
+                message = f"\U0001F389 Successfully minted a new {total_shk:.2f}!\n{txn_url}"
                 logger.print_ok_arrow(message)
             else:
-                message = f"\U00002620 Failed to mint new {nft_type}!"
+                message = f"\U00002620 Failed to mint new {total_shk:.2f}!"
                 logger.print_fail_arrow(message)
+                await asyncio.sleep(60.0 * 60.0)
 
     async def try_to_mint(
         self,
@@ -418,7 +420,7 @@ class MechBot:
         )
         _, txn_url = process_w3_results(w3, action_str, tx_hash)
         if txn_url:
-            message = f"\U0001F389 Successfully minted a new {nft_type}!\n{txn_url}"
+            message = f"\U0001F389 Successfully minted {nft_type}!\n{txn_url}"
             logger.print_ok_arrow(message)
         else:
             message = f"\U00002620 Failed to mint new {nft_type}!"
@@ -435,6 +437,7 @@ class MechBot:
         try:
             loop.run_until_complete(
                 asyncio.gather(
+                    self.try_to_deposit_shk(),
                     self.event_monitors(self.MONITOR_INTERVAL),
                     self.stats_monitor(self.interval),
                     self.mint_bot(),
