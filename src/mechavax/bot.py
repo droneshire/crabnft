@@ -484,9 +484,8 @@ class MechBot:
 
     async def parse_stats(self) -> None:
         while True:
-            await self.parse_stats_iteration()
             try:
-                pass
+                await self.parse_stats_iteration()
             except KeyboardInterrupt:
                 raise KeyboardInterrupt
             except:
