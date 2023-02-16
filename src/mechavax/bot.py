@@ -342,14 +342,14 @@ class MechBot:
         while True:
             total_shk = self.w3_shk.get_balance()
 
-            if total_shk > 0.0:
+            if total_shk > 5.0:
                 logger.print_ok_arrow(f"Found {total_shk:.2f} SHK in wallet")
 
             if not self.AUTO_DEPOSIT:
                 await asyncio.sleep(60.0 * 60.0)
                 continue
 
-            if total_shk <= 0.0:
+            if total_shk <= 5.0:
                 await asyncio.sleep(60.0 * 60.0)
                 continue
 
@@ -360,10 +360,10 @@ class MechBot:
             action_str = f"Deposit {total_shk:.2f} SHK to account"
             _, txn_url = process_w3_results(self.w3_mech, action_str, tx_hash)
             if txn_url:
-                message = f"\U0001F389 Successfully minted a new {total_shk:.2f}!\n{txn_url}"
+                message = f"\U0001F389 Successfully deposited {total_shk:.2f}!\n{txn_url}"
                 logger.print_ok_arrow(message)
             else:
-                message = f"\U00002620 Failed to mint new {total_shk:.2f}!"
+                message = f"\U00002620 Failed to deposit {total_shk:.2f}!"
                 logger.print_fail_arrow(message)
                 await asyncio.sleep(60.0 * 60.0)
 
@@ -433,19 +433,23 @@ class MechBot:
 
     async def parse_stats_iteration(self) -> None:
         shk_balances = {}
-        for nft_id in track(range(1, self.MAX_SUPPLY + 1), description="Stats"):
-            owner = self.w3_mech.get_owner_of(nft_id)
+        for nft_id in range(1, self.MAX_SUPPLY + 1):
+            owner = await async_func_wrapper(self.w3_mech.get_owner_of, nft_id)
             if not owner:
                 continue
 
-            address = resolve_address_to_avvy(self.w3_mech.w3, owner)
+            address = await async_func_wrapper(resolve_address_to_avvy, self.w3_mech.w3, owner)
 
             if address in shk_balances:
                 continue
 
             shk_balances[address] = {}
-            shk_balances[address]["shk"] = self.w3_mech.get_deposited_shk(owner)
-            shk_balances[address]["mechs"] = self.w3_mech.get_num_mechs(owner)
+            shk_balances[address]["shk"] = await async_func_wrapper(
+                self.w3_mech.get_deposited_shk, owner
+            )
+            shk_balances[address]["mechs"] = await async_func_wrapper(
+                self.w3_mech.get_num_mechs, owner
+            )
             logger.print_normal(
                 f"Found {address} with {shk_balances[address]['shk']}, {shk_balances[address]['mechs']} mechs"
             )
@@ -480,8 +484,9 @@ class MechBot:
 
     async def parse_stats(self) -> None:
         while True:
+            await self.parse_stats_iteration()
             try:
-                await self.parse_stats_iteration()
+                pass
             except KeyboardInterrupt:
                 raise KeyboardInterrupt
             except:
@@ -495,11 +500,11 @@ class MechBot:
         try:
             loop.run_until_complete(
                 asyncio.gather(
+                    self.parse_stats(),
                     self.try_to_deposit_shk(),
                     self.event_monitors(self.MONITOR_INTERVAL),
                     self.stats_monitor(self.interval),
                     self.mint_bot(),
-                    self.parse_stats(),
                 )
             )
         finally:
