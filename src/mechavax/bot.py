@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 import web3
 import time
 import typing as T
@@ -104,6 +105,9 @@ class MechBot:
             ): self.mech_minted_handler,
         }
 
+        self.resolved_address = resolve_address_to_avvy(self.w3_mech.w3, address)
+        logger.print_bold(f"We are {self.resolved_address}")
+
     def get_events(
         self, event_function: T.Any, cadence: int = 1, latest_only: bool = True
     ) -> T.List[T.Any]:
@@ -173,7 +177,7 @@ class MechBot:
 
     def get_last_marm_mint(self) -> float:
         events = self.get_events(
-            self.w3_mech.contract.events.ShirakBalanceUpdated, cadence=1, latest_only=True
+            self.w3_arm.contract.events.PagePurchased, cadence=1, latest_only=True
         )
 
         latest_event = 0
@@ -181,12 +185,6 @@ class MechBot:
             block_number = event.get("blockNumber", 0)
             if block_number == 0:
                 continue
-            tx_hash = event["transactionHash"]
-            tx_receipt = self.w3_arm.get_transaction_receipt(tx_hash)
-            transaction = tx_receipt["logs"][1]
-            if transaction["address"] != self.w3_arm.contract_address:
-                continue
-
             timestamp = self.w3_arm.w3.eth.get_block(block_number).timestamp
             latest_event = max(latest_event, timestamp)
 
@@ -396,9 +394,6 @@ class MechBot:
             )
             return
 
-        shk_balance = await async_func_wrapper(self.w3_mech.get_deposited_shk, self.address)
-        min_mint_shk = await async_func_wrapper(w3.get_min_mint_bid)
-
         if not os.path.isfile(MECH_STATS_CACHE_FILE):
             logger.print_warn(f"Missing {MECH_STATS_CACHE_FILE}")
             return
@@ -407,17 +402,27 @@ class MechBot:
             shk_balances = json.load(infile)
 
         total_shk = 0.0
-        for address, totals in shk_balances.items():
+        for _, totals in shk_balances.items():
             total_shk += totals["shk"]
 
-        shk_ownership_percent = shk_balances.get(self.address, 0.0) / total_shk * 100.0
+        our_shk = shk_balances.get(self.resolved_address, {}).get("shk", 0.0)
+
+        logger.print_normal(f"Total supply SHK: {total_shk:.2f}, ours: {our_shk:.2f}")
+
+        if total_shk <= 0.0:
+            return
+
+        shk_ownership_percent = our_shk / total_shk * 100.0
         desired_shk_ownership_percent = self.MINTING_INFO[nft_type]["percent_shk"]
 
         if shk_ownership_percent < desired_shk_ownership_percent:
             logger.print_warn(
-                f"Don't own large enough pool of SHK: have {shk_ownership_percent:.2f} need {desired_shk_ownership_percent:.2f}"
+                f"Don't own large enough pool of SHK: have {shk_ownership_percent:.2f}% need {desired_shk_ownership_percent:.2f}%"
             )
             return
+
+        shk_balance = await async_func_wrapper(self.w3_mech.get_deposited_shk, self.address)
+        min_mint_shk = await async_func_wrapper(w3.get_min_mint_bid)
 
         savings_margin = shk_balance / min_mint_shk
         savings_mult = self.MINTING_INFO[nft_type]["multiplier"]

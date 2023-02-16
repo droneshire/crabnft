@@ -54,5 +54,5 @@ def resolve_address_to_avvy(w3: AvalancheCWeb3Client, address: str) -> str:
             if name:
                 resolved_address = name.name
     except:
-        logger.print_fail(f"Failed to resolve avvy name")
+        logger.print_fail(f"Failed to resolve avvy name for {address}")
     return resolved_address
