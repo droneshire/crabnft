@@ -28,19 +28,20 @@ class MechBot:
     MAX_SUPPLY = 2250
     MINTING_INFO = {
         "MECH": {
-            "cooldown": 60.0 * 60.0 * 5.0,
+            "cooldown": 60.0 * 60.0 * 6.0,
             "max": 1,
-            "multiplier": 10,
-            "enable": False,
+            "multiplier": 5,
+            "enable": True,
+            "percent_shk": 10.0,
         },
         "MARM": {
             "cooldown": 60.0 * 30.0,
-            "max": 3,
+            "max": 10,
             "multiplier": 100,
             "enable": True,
+            "percent_shk": 0.0,
         },
     }
-    SHK_SAVINGS_MULT = 3
     AUTO_DEPOSIT = True
 
     def __init__(
@@ -398,6 +399,26 @@ class MechBot:
         shk_balance = await async_func_wrapper(self.w3_mech.get_deposited_shk, self.address)
         min_mint_shk = await async_func_wrapper(w3.get_min_mint_bid)
 
+        if not os.path.isfile(MECH_STATS_CACHE_FILE):
+            logger.print_warn(f"Missing {MECH_STATS_CACHE_FILE}")
+            return
+
+        with open(MECH_STATS_CACHE_FILE, "r") as infile:
+            shk_balances = json.load(infile)
+
+        total_shk = 0.0
+        for address, totals in shk_balances.items():
+            total_shk += totals["shk"]
+
+        shk_ownership_percent = shk_balances.get(self.address, 0.0) / total_shk * 100.0
+        desired_shk_ownership_percent = self.MINTING_INFO[nft_type]["percent_shk"]
+
+        if shk_ownership_percent < desired_shk_ownership_percent:
+            logger.print_warn(
+                f"Don't own large enough pool of SHK: have {shk_ownership_percent:.2f} need {desired_shk_ownership_percent:.2f}"
+            )
+            return
+
         savings_margin = shk_balance / min_mint_shk
         savings_mult = self.MINTING_INFO[nft_type]["multiplier"]
 
@@ -431,25 +452,21 @@ class MechBot:
         self.webhook.send(message)
         await asyncio.sleep(self.MINT_BOT_INTERVAL)
 
-    async def parse_stats_iteration(self) -> None:
+    def parse_stats_iteration(self) -> None:
         shk_balances = {}
         for nft_id in range(1, self.MAX_SUPPLY + 1):
-            owner = await async_func_wrapper(self.w3_mech.get_owner_of, nft_id)
+            owner = self.w3_mech.get_owner_of(nft_id)
             if not owner:
                 continue
 
-            address = await async_func_wrapper(resolve_address_to_avvy, self.w3_mech.w3, owner)
+            address = resolve_address_to_avvy(self.w3_mech.w3, owner)
 
             if address in shk_balances:
                 continue
 
             shk_balances[address] = {}
-            shk_balances[address]["shk"] = await async_func_wrapper(
-                self.w3_mech.get_deposited_shk, owner
-            )
-            shk_balances[address]["mechs"] = await async_func_wrapper(
-                self.w3_mech.get_num_mechs, owner
-            )
+            shk_balances[address]["shk"] = self.w3_mech.get_deposited_shk(owner)
+            shk_balances[address]["mechs"] = self.w3_mech.get_num_mechs(owner)
             logger.print_normal(
                 f"Found {address} with {shk_balances[address]['shk']}, {shk_balances[address]['mechs']} mechs"
             )
@@ -481,11 +498,12 @@ class MechBot:
             json.dump(data, outfile, indent=4)
 
         logger.print_bold("Updated cache file!")
+        time.sleep(10.0)
 
-    async def parse_stats(self) -> None:
+    def parse_stats(self) -> None:
         while True:
             try:
-                await self.parse_stats_iteration()
+                self.parse_stats_iteration()
             except KeyboardInterrupt:
                 raise KeyboardInterrupt
             except:
@@ -493,13 +511,12 @@ class MechBot:
 
     def run(self) -> None:
         loop = asyncio.get_event_loop()
-
         logger.print_bold("Starting monitor...")
 
         try:
             loop.run_until_complete(
                 asyncio.gather(
-                    self.parse_stats(),
+                    asyncio.to_thread(self.parse_stats()),
                     self.try_to_deposit_shk(),
                     self.event_monitors(self.MONITOR_INTERVAL),
                     self.stats_monitor(self.interval),
