@@ -8,6 +8,7 @@ from eth_typing import Address
 from rich.progress import track
 from web3 import Web3
 
+from config_admin import MECH_STATS_HISTORY_FILE, MECH_STATS_CACHE_FILE
 from mechavax.mechavax_web3client import (
     MechContractWeb3Client,
     MechArmContractWeb3Client,
@@ -18,12 +19,13 @@ from utils.general import get_pretty_seconds
 from utils.async_utils import async_func_wrapper
 from utils.price import wei_to_token, token_to_wei, TokenWei
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
-from web3_utils.helpers import process_w3_results
+from web3_utils.helpers import process_w3_results, resolve_address_to_avvy
 
 
 class MechBot:
     MONITOR_INTERVAL = 5.0
     MINT_BOT_INTERVAL = 60.0 * 5.0
+    MAX_SUPPLY = 2250
     MINTING_INFO = {
         "MECH": {
             "cooldown": 60.0 * 60.0 * 5.0,
@@ -87,9 +89,9 @@ class MechBot:
             self.w3_mech.contract.events.LegendaryMechMinted.createFilter(
                 fromBlock="latest"
             ): self.legendary_minted_handler,
-            self.w3_mech.contract.events.ShirakBalanceUpdated.createFilter(
-                fromBlock="latest"
-            ): self.shirak_mint_handler,
+            # self.w3_mech.contract.events.ShirakBalanceUpdated.createFilter(
+            #     fromBlock="latest"
+            # ): self.shirak_mint_handler,
             self.w3_arm.contract.events.PagePurchased.createFilter(
                 fromBlock="latest"
             ): self.marm_minted_handler,
@@ -429,6 +431,62 @@ class MechBot:
         self.webhook.send(message)
         await asyncio.sleep(self.MINT_BOT_INTERVAL)
 
+    async def parse_stats_iteration(self) -> None:
+        shk_balances = {}
+        for nft_id in track(range(1, self.MAX_SUPPLY + 1), description="Stats"):
+            owner = self.w3_mech.get_owner_of(nft_id)
+            if not owner:
+                continue
+
+            address = resolve_address_to_avvy(self.w3_mech.w3, owner)
+
+            if address in shk_balances:
+                continue
+
+            shk_balances[address] = {}
+            shk_balances[address]["shk"] = self.w3_mech.get_deposited_shk(owner)
+            shk_balances[address]["mechs"] = self.w3_mech.get_num_mechs(owner)
+            logger.print_normal(
+                f"Found {address} with {shk_balances[address]['shk']}, {shk_balances[address]['mechs']} mechs"
+            )
+
+        sorted_stats = {k: v for k, v in sorted(shk_balances.items(), key=lambda x: -x[1]["shk"])}
+
+        total_shk = 0.0
+        for address, totals in sorted_stats.items():
+            total_shk += totals["shk"]
+
+        with open(MECH_STATS_CACHE_FILE, "w") as outfile:
+            json.dump(sorted_stats, outfile, indent=4)
+
+        if os.path.isfile(MECH_STATS_HISTORY_FILE):
+            with open(MECH_STATS_HISTORY_FILE, "r") as infile:
+                data = json.load(infile)
+        else:
+            data = {}
+
+        with open(MECH_STATS_HISTORY_FILE, "w") as outfile:
+            for address, stats in shk_balances.items():
+                if address not in data:
+                    data[address] = {}
+
+                for k, v in stats.items():
+                    if k not in data[address]:
+                        data[address][k] = []
+                    data[address][k].append(v)
+            json.dump(data, outfile, indent=4)
+
+        logger.print_bold("Updated cache file!")
+
+    async def parse_stats(self) -> None:
+        while True:
+            try:
+                await self.parse_stats_iteration()
+            except KeyboardInterrupt:
+                raise KeyboardInterrupt
+            except:
+                logger.print_fail(f"Failed to parse stats...")
+
     def run(self) -> None:
         loop = asyncio.get_event_loop()
 
@@ -441,6 +499,7 @@ class MechBot:
                     self.event_monitors(self.MONITOR_INTERVAL),
                     self.stats_monitor(self.interval),
                     self.mint_bot(),
+                    self.parse_stats(),
                 )
             )
         finally:

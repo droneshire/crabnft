@@ -14,7 +14,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from avvy import AvvyClient
 from discord.ext import commands
 from rich.progress import track
 from web3 import Web3
@@ -26,6 +25,9 @@ from config_admin import (
     GUILD_WALLET_ADDRESS,
     GUILD_WALLET_MAPPING,
     GUILD_WALLET_PRIVATE_KEY,
+    MECH_STATS_CACHE_FILE,
+    MECH_STATS_HISTORY_FILE,
+    MECH_STATS_PLOT,
 )
 from joepegs.joepegs_api import JOEPEGS_ITEM_URL, JoePegsClient
 from mechavax.mechavax_web3client import (
@@ -39,7 +41,7 @@ from utils.price import wei_to_token, TokenWei
 from utils.security import decrypt_secret
 from web3_utils import multicall
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
-from web3_utils.helpers import process_w3_results
+from web3_utils.helpers import process_w3_results, shortened_address_str, resolve_address_to_avvy
 from web3_utils.snowtrace import SnowtraceApi
 
 bot = commands.Bot(command_prefix="/", intents=discord.Intents.all())
@@ -53,12 +55,8 @@ ALLOWLIST_CHANNELS = [
     1032890276420800582,  # test channel in p2e auto
     1067902019379142671,  # p2e mechavax channel
 ]
-MAX_SUPPLY = 2250
 MINT_ADDRESS = "0x0000000000000000000000000000000000000000"
 IGNORE_ADDRESSES = [MINT_ADDRESS, "0xB6C5a50c28805ABB41f79F7945Bf3F9DfeF4C8B0"]
-MECH_STATS_CACHE_FILE = os.path.join(logger.get_logging_dir("mechavax"), "shk_balances.json")
-MECH_STATS_HISTORY_FILE = os.path.join(logger.get_logging_dir("mechavax"), "data.json")
-MECH_STATS_PLOT = os.path.join(logger.get_logging_dir("mechavax"), "holder_stats.jpg")
 
 
 def get_credentials() -> T.Tuple[str, str]:
@@ -73,52 +71,6 @@ def get_credentials() -> T.Tuple[str, str]:
 ADDRESS, PRIVATE_KEY = get_credentials()
 
 
-async def shortened_address_str(address: str) -> str:
-    return f"{address[:5]}...{address[-4:]}"
-
-
-async def get_events(w3: AvalancheCWeb3Client, event_function: T.Any) -> T.List[T.Any]:
-    BLOCK_CHUNKS = 2048
-    latest_block = w3.w3.eth.block_number
-    num_blocks = int((latest_block + BLOCK_CHUNKS - 1) / BLOCK_CHUNKS)
-    logger.print_normal(f"Searching through {num_blocks} blocks...")
-    events = []
-    for block in range(num_blocks - 20000, num_blocks):
-        events.extend(event_function.getLogs(fromBlock=block, toBlock=block + BLOCK_CHUNKS))
-        await asyncio.sleep(0.1)
-
-    return events
-
-
-async def to_thread(func, /, *args, **kwargs):
-    loop = asyncio.get_running_loop()
-    ctx = contextvars.copy_context()
-    func_call = functools.partial(ctx.run, func, *args, **kwargs)
-    return await loop.run_in_executor(None, func_call)
-
-
-def local_to_thread(func: T.Callable) -> T.Coroutine:
-    @functools.wraps(func)
-    async def wrapper(*args, **kwargs):
-        return await to_thread(func, *args, **kwargs)
-
-    return wrapper
-
-
-def resolve_address_to_avvy(w3: AvalancheCWeb3Client, address: str) -> str:
-    avvy = AvvyClient(w3)
-    resolved_address = address
-    try:
-        hash_name = avvy.reverse(avvy.RECORDS.EVM, address)
-        if hash_name:
-            name = hash_name.lookup()
-            if name:
-                resolved_address = name.name
-    except:
-        logger.print_fail(f"Failed to resolve avvy name")
-    return resolved_address
-
-
 def do_multicall(inputs: T.List[T.Any], fn: T.Callable) -> T.List[T.Tuple]:
     input_chunks = np.array_split(inputs, len(inputs) / 50)
 
@@ -130,72 +82,6 @@ def do_multicall(inputs: T.List[T.Any], fn: T.Callable) -> T.List[T.Tuple]:
             result = multicall_result.results[idx].results[0]
             results.append((item, result))
     return results
-
-
-def parse_stats_iteration(w3_mech: AvalancheCWeb3Client) -> None:
-    shk_balances = {}
-    for nft_id in range(1, MAX_SUPPLY + 1):
-        owner = w3_mech.get_owner_of(nft_id)
-        if not owner:
-            continue
-
-        address = resolve_address_to_avvy(w3_mech.w3, owner)
-
-        if address in shk_balances:
-            continue
-
-        shk_balances[address] = {}
-        shk_balances[address]["shk"] = w3_mech.get_deposited_shk(owner)
-        shk_balances[address]["mechs"] = w3_mech.get_num_mechs(owner)
-        logger.print_normal(
-            f"Found {address} with {shk_balances[address]['shk']}, {shk_balances[address]['mechs']} mechs"
-        )
-
-    sorted_stats = {k: v for k, v in sorted(shk_balances.items(), key=lambda x: -x[1]["shk"])}
-
-    total_shk = 0.0
-    for address, totals in sorted_stats.items():
-        total_shk += totals["shk"]
-
-    with open(MECH_STATS_CACHE_FILE, "w") as outfile:
-        json.dump(sorted_stats, outfile, indent=4)
-
-    if os.path.isfile(MECH_STATS_HISTORY_FILE):
-        with open(MECH_STATS_HISTORY_FILE, "r") as infile:
-            data = json.load(infile)
-    else:
-        data = {}
-
-    with open(MECH_STATS_HISTORY_FILE, "w") as outfile:
-        for address, stats in shk_balances.items():
-            if address not in data:
-                data[address] = {}
-
-            for k, v in stats.items():
-                if k not in data[address]:
-                    data[address][k] = []
-                data[address][k].append(v)
-        json.dump(data, outfile, indent=4)
-
-    logger.print_bold("Updated cache file!")
-
-
-@local_to_thread
-def parse_stats() -> None:
-
-    w3_mech: MechContractWeb3Client = (
-        MechContractWeb3Client()
-        .set_credentials(ADMIN_ADDRESS, "")
-        .set_node_uri(AvalancheCWeb3Client.NODE_URL)
-        .set_contract()
-        .set_dry_run(False)
-    )
-
-    while True:
-        try:
-            parse_stats_iteration(w3_mech)
-        except:
-            logger.print_fail(f"Failed to parse stats...")
 
 
 @bot.event
@@ -390,13 +276,13 @@ async def shk_plots_command(interaction: discord.Interaction, address: str = "")
     if address:
         resolved_address = await async_func_wrapper(resolve_address_to_avvy, w3_mech.w3, address)
         if Web3.isChecksumAddress(resolved_address):
-            resolved_address = await shortened_address_str(resolved_address)
+            resolved_address = await async_func_wrapper(shortened_address_str, resolved_address)
         top_holders.append(resolved_address)
     else:
         for stats in sorted_balances[:TOP_N]:
             address = stats[0]
             if Web3.isChecksumAddress(address):
-                address = await shortened_address_str(stats[0])
+                address = await async_func_wrapper(shortened_address_str, stats[0])
             top_holders.append(address)
 
     with open(MECH_STATS_HISTORY_FILE, "r") as infile:
@@ -407,7 +293,7 @@ async def shk_plots_command(interaction: discord.Interaction, address: str = "")
     row_length = 0
     for address, stats in data.items():
         if Web3.isChecksumAddress(address):
-            address = await shortened_address_str(address)
+            address = await async_func_wrapper(shortened_address_str, address)
 
         if address not in top_holders:
             continue
@@ -647,7 +533,7 @@ async def get_guild_table_row(
     )
 
     address = Web3.toChecksumAddress(address)
-    shortened_address = await shortened_address_str(address)
+    shortened_address = await async_func_wrapper(shortened_address_str, address)
     row.append(shortened_address)
     owner = GUILD_WALLET_MAPPING.get(address, "").split("#")[0]
     row.append(owner)
