@@ -97,8 +97,6 @@ async def on_ready() -> None:
     except Exception as e:
         logger.print_fail(f"{e}")
 
-    bot.loop.create_task(parse_stats())
-
 
 @bot.tree.command(
     name="getemission",
