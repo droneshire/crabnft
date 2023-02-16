@@ -454,16 +454,24 @@ async def mech_holders_command(interaction: discord.Interaction) -> None:
 
     sorted_balances = sorted(shk_balances.items(), key=lambda x: -x[1]["mechs"])
 
+    total_mechs = 0
+    for _, totals in sorted_balances:
+        total_mechs += totals.get("mechs", 0)
+
     body = []
     for address, totals in sorted_balances[:TOP_N]:
-        row = [address, totals["mechs"]]
+        row = [address, totals["mechs"], f"{float(totals['mechs']) / total_mechs * 100.0:.2f}%"]
         body.append(row)
 
     table_text = table2ascii.table2ascii(
-        header=["Owner", "MECHS"],
+        header=["Owner", "MECHS", "% Total Supply"],
         body=body,
         footer=[],
-        alignments=[table2ascii.Alignment.LEFT, table2ascii.Alignment.CENTER],
+        alignments=[
+            table2ascii.Alignment.LEFT,
+            table2ascii.Alignment.CENTER,
+            table2ascii.Alignment.CENTER,
+        ],
     )
     message = f"```\n{table_text}\n```"
     await interaction.response.send_message(message)
