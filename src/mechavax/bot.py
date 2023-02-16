@@ -452,21 +452,26 @@ class MechBot:
         self.webhook.send(message)
         await asyncio.sleep(self.MINT_BOT_INTERVAL)
 
-    def parse_stats_iteration(self) -> None:
+    async def parse_stats_iteration(self) -> None:
         shk_balances = {}
         for nft_id in range(1, self.MAX_SUPPLY + 1):
-            owner = self.w3_mech.get_owner_of(nft_id)
+            owner = await async_func_wrapper(self.w3_mech.get_owner_of, nft_id)
             if not owner:
                 continue
 
-            address = resolve_address_to_avvy(self.w3_mech.w3, owner)
+            await asyncio.sleep(0.05)
+            address = await async_func_wrapper(resolve_address_to_avvy, self.w3_mech.w3, owner)
 
             if address in shk_balances:
                 continue
 
             shk_balances[address] = {}
-            shk_balances[address]["shk"] = self.w3_mech.get_deposited_shk(owner)
-            shk_balances[address]["mechs"] = self.w3_mech.get_num_mechs(owner)
+            shk_balances[address]["shk"] = await async_func_wrapper(
+                self.w3_mech.get_deposited_shk, owner
+            )
+            shk_balances[address]["mechs"] = await async_func_wrapper(
+                self.w3_mech.get_num_mechs, owner
+            )
             logger.print_normal(
                 f"Found {address} with {shk_balances[address]['shk']}, {shk_balances[address]['mechs']} mechs"
             )
@@ -498,12 +503,12 @@ class MechBot:
             json.dump(data, outfile, indent=4)
 
         logger.print_bold("Updated cache file!")
-        time.sleep(10.0)
+        await asyncio.sleep(10.0)
 
-    def parse_stats(self) -> None:
+    async def parse_stats(self) -> None:
         while True:
             try:
-                self.parse_stats_iteration()
+                await self.parse_stats_iteration()
             except KeyboardInterrupt:
                 raise KeyboardInterrupt
             except:
@@ -516,11 +521,11 @@ class MechBot:
         try:
             loop.run_until_complete(
                 asyncio.gather(
-                    asyncio.to_thread(self.parse_stats()),
                     self.try_to_deposit_shk(),
                     self.event_monitors(self.MONITOR_INTERVAL),
                     self.stats_monitor(self.interval),
                     self.mint_bot(),
+                    self.parse_stats(),
                 )
             )
         finally:
