@@ -245,7 +245,7 @@ async def shk_plots_command(
     interaction: discord.Interaction,
     nft_type: T.Literal["MECHS", "SHK"],
     address: str = "",
-    top_n_holders: int = 5,
+    top_n_holders: int = TOP_N,
     delta: bool = False,
 ) -> None:
     if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
@@ -269,6 +269,9 @@ async def shk_plots_command(
 
     top_holders = []
 
+    if address and top_n_holders:
+        top_n_holders = 1
+
     if address:
         w3: MechContractWeb3Client = (
             MechContractWeb3Client()
@@ -282,7 +285,7 @@ async def shk_plots_command(
             resolved_address = await async_func_wrapper(shortened_address_str, resolved_address)
         top_holders.append(resolved_address)
     else:
-        for stats in sorted_balances[:TOP_N]:
+        for stats in sorted_balances[:top_n_holders]:
             address = stats[0]
             if Web3.isChecksumAddress(address):
                 address = await async_func_wrapper(shortened_address_str, stats[0])
