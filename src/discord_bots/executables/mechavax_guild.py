@@ -47,6 +47,7 @@ from web3_utils.snowtrace import SnowtraceApi
 bot = commands.Bot(command_prefix="/", intents=discord.Intents.all())
 
 TOP_N = 5
+MAX_DELTA = 1000
 ALLOWLIST_MINTERS = [
     935440767646851093,  # nftcashflow
 ]
@@ -247,6 +248,7 @@ async def shk_plots_command(
     address: str = "",
     top_n_holders: int = TOP_N,
     delta: bool = False,
+    max_delta: int = MAX_DELTA,
 ) -> None:
     if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
         await interaction.response.send_message("Invalid channel")
@@ -306,8 +308,7 @@ async def shk_plots_command(
 
         row_label.append(address)
         if delta:
-            MAX_DELTA = 100
-            row = [min(v, MAX_DELTA) for v in np.diff(stats[nft_type.lower()])]
+            row = [min(v, max_delta) for v in np.diff(stats[nft_type.lower()])]
         else:
             row = stats[nft_type.lower()]
         plot.append(row)
