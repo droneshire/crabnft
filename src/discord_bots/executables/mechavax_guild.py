@@ -311,7 +311,11 @@ async def shk_plots_command(
     dataframe = pd.DataFrame(plot, index=row_label).T
     logger.print_normal(f"{dataframe}")
 
-    dataframe.plot(x="sample", y=top_holders, kind="line", title=f"{nft_type.upper()} Over Time")
+    if delta:
+        title = f"{nft_type.upper()} Rate Change"
+    else:
+        title = f"{nft_type.upper()} Over Time"
+    dataframe.plot(x="sample", y=top_holders, kind="line", title=title)
     plt.legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0)
     await async_func_wrapper(plt.savefig, MECH_STATS_PLOT, bbox_inches="tight", dpi=100)
 
