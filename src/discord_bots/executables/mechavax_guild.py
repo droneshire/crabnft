@@ -306,7 +306,8 @@ async def shk_plots_command(
 
         row_label.append(address)
         if delta:
-            row = np.diff(stats[nft_type.lower()])
+            MAX_DELTA = 100
+            row = [min(v, MAX_DELTA) for v in np.diff(stats[nft_type.lower()])]
         else:
             row = stats[nft_type.lower()]
         plot.append(row)
