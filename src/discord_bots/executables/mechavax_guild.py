@@ -242,7 +242,11 @@ async def holders_total_command(interaction: discord.Interaction) -> None:
     guild=discord.Object(id=ALLOWLIST_GUILD),
 )
 async def shk_plots_command(
-    interaction: discord.Interaction, nft_type: T.Literal["MECHS", "SHK"], address: str = "", top_n_holders: int = 5, delta: bool = False
+    interaction: discord.Interaction,
+    nft_type: T.Literal["MECHS", "SHK"],
+    address: str = "",
+    top_n_holders: int = 5,
+    delta: bool = False,
 ) -> None:
     if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
         await interaction.response.send_message("Invalid channel")
