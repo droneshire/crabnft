@@ -237,16 +237,18 @@ async def holders_total_command(interaction: discord.Interaction) -> None:
 
 
 @bot.tree.command(
-    name="shkplots",
+    name="plots",
     description=f"Plot of SHK held for top {TOP_N} holders",
     guild=discord.Object(id=ALLOWLIST_GUILD),
 )
-async def shk_plots_command(interaction: discord.Interaction, address: str = "") -> None:
+async def shk_plots_command(
+    interaction: discord.Interaction, nft_type: T.Literal["MECHS", "SHK"], address: str = ""
+) -> None:
     if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
         await interaction.response.send_message("Invalid channel")
         return
 
-    logger.print_bold(f"Received shk plots command")
+    logger.print_bold(f"Received plots command")
 
     if not os.path.isfile(MECH_STATS_HISTORY_FILE):
         await interaction.response.send_message("Missing data")
@@ -259,20 +261,19 @@ async def shk_plots_command(interaction: discord.Interaction, address: str = "")
     with open(MECH_STATS_CACHE_FILE, "r") as infile:
         shk_balances = json.load(infile)
 
-    sorted_balances = sorted(shk_balances.items(), key=lambda x: -x[1]["mechs"])
+    sorted_balances = sorted(shk_balances.items(), key=lambda x: -x[1][nft_type.lower()])
 
     top_holders = []
 
-    w3_mech: MechContractWeb3Client = (
-        MechContractWeb3Client()
-        .set_credentials(ADMIN_ADDRESS, "")
-        .set_node_uri(AvalancheCWeb3Client.NODE_URL)
-        .set_contract()
-        .set_dry_run(False)
-    )
-
     if address:
-        resolved_address = await async_func_wrapper(resolve_address_to_avvy, w3_mech.w3, address)
+        w3: MechContractWeb3Client = (
+            MechContractWeb3Client()
+            .set_credentials(ADMIN_ADDRESS, "")
+            .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+            .set_contract()
+            .set_dry_run(False)
+        )
+        resolved_address = await async_func_wrapper(resolve_address_to_avvy, w3.w3, address)
         if Web3.isChecksumAddress(resolved_address):
             resolved_address = await async_func_wrapper(shortened_address_str, resolved_address)
         top_holders.append(resolved_address)
@@ -297,7 +298,7 @@ async def shk_plots_command(interaction: discord.Interaction, address: str = "")
             continue
 
         row_label.append(address)
-        row = stats["shk"]
+        row = stats[nft_type.lower()]
         plot.append(row)
         row_length = max(row_length, len(row))
 
@@ -307,7 +308,7 @@ async def shk_plots_command(interaction: discord.Interaction, address: str = "")
     dataframe = pd.DataFrame(plot, index=row_label).T
     logger.print_normal(f"{dataframe}")
 
-    dataframe.plot(x="sample", y=top_holders, kind="line", title="SHK Over Time")
+    dataframe.plot(x="sample", y=top_holders, kind="line", title=f"{nft_type.upper()} Over Time")
     plt.legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0)
     await async_func_wrapper(plt.savefig, MECH_STATS_PLOT, bbox_inches="tight", dpi=100)
 
