@@ -399,7 +399,7 @@ class PumpskinBot:
             # check to see how much POTN needed to level up
             level = pumpskin.get("kg", 10000) / 100
             next_level = level + 1
-            level_potn = calc_potn_from_level(next_level)
+            level_potn = calc_potn_from_level(level)
 
             potn_to_level = max(level_potn - pumpskin.get("eaten_amount", 100000), 0)
 
