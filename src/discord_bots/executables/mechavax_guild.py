@@ -157,19 +157,30 @@ async def shk_holders_command(interaction: discord.Interaction) -> None:
         return
 
     with open(MECH_STATS_CACHE_FILE, "r") as infile:
-        shk_balances = json.load(infile)
+        current_balances = json.load(infile)
 
     total_shk = 0.0
-    for address, totals in shk_balances.items():
+    for _, totals in current_balances.items():
         total_shk += totals["shk"]
 
-    sorted_balances = sorted(shk_balances.items(), key=lambda x: -x[1]["shk"])
+    sorted_balances = sorted(current_balances.items(), key=lambda x: -x[1]["shk"])
+
+    w3: MechContractWeb3Client = (
+        MechContractWeb3Client()
+        .set_credentials(ADMIN_ADDRESS, "")
+        .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+        .set_contract()
+        .set_dry_run(False)
+    )
 
     body = []
     leader_shk = None
     for address, totals in sorted_balances[:TOP_N]:
         shk = totals["shk"]
-        row = [address, f"{shk:,.2f}", f"{shk/total_shk * 100.0:.2f}%"]
+        resolved_address = await async_func_wrapper(resolve_address_to_avvy, w3.w3, address)
+        if Web3.isChecksumAddress(resolved_address):
+            resolved_address = await async_func_wrapper(shortened_address_str, resolved_address)
+        row = [resolved_address, f"{shk:,.2f}", f"{shk/total_shk * 100.0:.2f}%"]
         if leader_shk is None:
             leader_shk = shk
             row.append("n/a")
@@ -210,10 +221,10 @@ async def shk_total_command(interaction: discord.Interaction) -> None:
         return
 
     with open(MECH_STATS_CACHE_FILE, "r") as infile:
-        shk_balances = json.load(infile)
+        current_balances = json.load(infile)
 
     total_shk = 0.0
-    for address, totals in shk_balances.items():
+    for address, totals in current_balances.items():
         total_shk += totals["shk"]
 
     message = f"**SHK Held:** `{total_shk:,.2f} $SHK`"
@@ -237,9 +248,9 @@ async def holders_total_command(interaction: discord.Interaction) -> None:
         return
 
     with open(MECH_STATS_CACHE_FILE, "r") as infile:
-        shk_balances = json.load(infile)
+        current_balances = json.load(infile)
 
-    total = len(shk_balances.keys())
+    total = len(current_balances.keys())
 
     message = f"**Unique holders:** `{total}`"
     await interaction.response.send_message(message)
@@ -273,47 +284,45 @@ async def shk_plots_command(
         return
 
     with open(MECH_STATS_CACHE_FILE, "r") as infile:
-        shk_balances = json.load(infile)
+        current_balances = json.load(infile)
 
-    sorted_balances = sorted(shk_balances.items(), key=lambda x: -x[1][nft_type.lower()])
+    sorted_balances = sorted(current_balances.items(), key=lambda x: -x[1][nft_type.lower()])
 
     top_holders = []
 
     if address and top_n_holders:
         top_n_holders = 1
 
+    w3: MechContractWeb3Client = (
+        MechContractWeb3Client()
+        .set_credentials(ADMIN_ADDRESS, "")
+        .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+        .set_contract()
+        .set_dry_run(False)
+    )
+
     if address:
-        w3: MechContractWeb3Client = (
-            MechContractWeb3Client()
-            .set_credentials(ADMIN_ADDRESS, "")
-            .set_node_uri(AvalancheCWeb3Client.NODE_URL)
-            .set_contract()
-            .set_dry_run(False)
-        )
-        resolved_address = await async_func_wrapper(resolve_address_to_avvy, w3.w3, address)
-        if Web3.isChecksumAddress(resolved_address):
-            resolved_address = await async_func_wrapper(shortened_address_str, resolved_address)
-        top_holders.append(resolved_address)
+        top_holders.append(address)
     else:
         for stats in sorted_balances[:top_n_holders]:
             address = stats[0]
-            if Web3.isChecksumAddress(address):
-                address = await async_func_wrapper(shortened_address_str, stats[0])
             top_holders.append(address)
 
     with open(MECH_STATS_HISTORY_FILE, "r") as infile:
         data = json.load(infile)
 
     plot = []
+    legend_labels = []
     row_label = []
     row_length = 0
     for address, stats in data.items():
-        if Web3.isChecksumAddress(address):
-            address = await async_func_wrapper(shortened_address_str, address)
-
         if address not in top_holders:
             continue
 
+        resolved_address = await async_func_wrapper(resolve_address_to_avvy, w3.w3, address)
+        if Web3.isChecksumAddress(resolved_address):
+            resolved_address = await async_func_wrapper(shortened_address_str, resolved_address)
+        legend_labels.append(resolved_address)
         row_label.append(address)
         if delta:
             row = [min(v, max_delta) for v in np.diff(stats[nft_type.lower()])]
@@ -333,7 +342,10 @@ async def shk_plots_command(
     else:
         title = f"{nft_type.upper()} Over Time"
     dataframe.plot(x="sample", y=top_holders, kind="line", title=title)
-    plt.legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0)
+    legend = plt.legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0)
+    legend_txts = legend.get_texts()
+    for i in range(len(legend_txts)):
+        legend.get_texts()[i].set_text(legend_labels[i])
     await async_func_wrapper(plt.savefig, MECH_STATS_PLOT, bbox_inches="tight", dpi=100)
 
     embed = discord.Embed()
@@ -359,17 +371,32 @@ async def mech_holders_command(interaction: discord.Interaction) -> None:
         return
 
     with open(MECH_STATS_CACHE_FILE, "r") as infile:
-        shk_balances = json.load(infile)
+        current_balances = json.load(infile)
 
-    sorted_balances = sorted(shk_balances.items(), key=lambda x: -x[1]["mechs"])
+    sorted_balances = sorted(current_balances.items(), key=lambda x: -x[1]["mechs"])
 
     total_mechs = 0
     for _, totals in sorted_balances:
         total_mechs += totals.get("mechs", 0)
 
+    w3: MechContractWeb3Client = (
+        MechContractWeb3Client()
+        .set_credentials(ADMIN_ADDRESS, "")
+        .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+        .set_contract()
+        .set_dry_run(False)
+    )
+
     body = []
     for address, totals in sorted_balances[:TOP_N]:
-        row = [address, totals["mechs"], f"{float(totals['mechs']) / total_mechs * 100.0:.2f}%"]
+        resolved_address = await async_func_wrapper(resolve_address_to_avvy, w3.w3, address)
+        if Web3.isChecksumAddress(resolved_address):
+            resolved_address = await async_func_wrapper(shortened_address_str, resolved_address)
+        row = [
+            resolved_address,
+            totals["mechs"],
+            f"{float(totals['mechs']) / total_mechs * 100.0:.2f}%",
+        ]
         body.append(row)
 
     table_text = table2ascii.table2ascii(

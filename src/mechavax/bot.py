@@ -400,13 +400,13 @@ class MechBot:
             return
 
         with open(MECH_STATS_CACHE_FILE, "r") as infile:
-            shk_balances = json.load(infile)
+            current_balances = json.load(infile)
 
         total_shk = 0.0
-        for _, totals in shk_balances.items():
+        for _, totals in current_balances.items():
             total_shk += totals["shk"]
 
-        our_shk = shk_balances.get(self.resolved_address, {}).get("shk", 0.0)
+        our_shk = current_balances.get(self.resolved_address, {}).get("shk", 0.0)
 
         logger.print_normal(f"Total supply SHK: {total_shk:.2f}, ours: {our_shk:.2f}")
 
@@ -459,30 +459,31 @@ class MechBot:
         await asyncio.sleep(self.MINT_BOT_INTERVAL)
 
     async def parse_stats_iteration(self) -> None:
-        shk_balances = {}
+        current_balances = {}
         for nft_id in range(1, self.MAX_SUPPLY + 1):
-            owner = await async_func_wrapper(self.w3_mech.get_owner_of, nft_id)
-            if not owner:
+            address = await async_func_wrapper(self.w3_mech.get_owner_of, nft_id)
+            if not address:
                 continue
 
             await asyncio.sleep(0.05)
-            address = await async_func_wrapper(resolve_address_to_avvy, self.w3_mech.w3, owner)
 
-            if address in shk_balances:
+            if address in current_balances:
                 continue
 
-            shk_balances[address] = {}
-            shk_balances[address]["shk"] = await async_func_wrapper(
-                self.w3_mech.get_deposited_shk, owner
+            current_balances[address] = {}
+            current_balances[address]["shk"] = await async_func_wrapper(
+                self.w3_mech.get_deposited_shk, address
             )
-            shk_balances[address]["mechs"] = await async_func_wrapper(
-                self.w3_mech.get_num_mechs, owner
+            current_balances[address]["mechs"] = await async_func_wrapper(
+                self.w3_mech.get_num_mechs, address
             )
             logger.print_normal(
-                f"Found {address} with {shk_balances[address]['shk']}, {shk_balances[address]['mechs']} mechs"
+                f"Found {address} with {current_balances[address]['shk']}, {current_balances[address]['mechs']} mechs"
             )
 
-        sorted_stats = {k: v for k, v in sorted(shk_balances.items(), key=lambda x: -x[1]["shk"])}
+        sorted_stats = {
+            k: v for k, v in sorted(current_balances.items(), key=lambda x: -x[1]["shk"])
+        }
 
         total_shk = 0.0
         for address, totals in sorted_stats.items():
@@ -498,7 +499,7 @@ class MechBot:
             data = {}
 
         with open(MECH_STATS_HISTORY_FILE, "w") as outfile:
-            for address, stats in shk_balances.items():
+            for address, stats in current_balances.items():
                 if address not in data:
                     data[address] = {}
 
@@ -506,6 +507,14 @@ class MechBot:
                     if k not in data[address]:
                         data[address][k] = []
                     data[address][k].append(v)
+
+                resolved_address = await async_func_wrapper(
+                    resolve_address_to_avvy, self.w3_mech.w3, address
+                )
+                if resolved_address in data and resolved_address != address:
+                    data[address] = data[resolved_address]
+                    del data[resolved_address]
+                    logger.print_normal(f"Converting {resolved_address} -> {address}")
             json.dump(data, outfile, indent=4)
 
         logger.print_bold("Updated cache file!")
@@ -563,8 +572,9 @@ class MechBot:
         await asyncio.sleep(60.0 * 60.0 * 10.0)
 
     async def parse_stats(self) -> None:
+        await self.parse_stats_iteration()
         try:
-            await self.parse_stats_iteration()
+            pass
         except KeyboardInterrupt:
             raise KeyboardInterrupt
         except:
