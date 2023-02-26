@@ -579,6 +579,24 @@ async def get_guild_table_row(
 
 
 @bot.tree.command(
+    name="guildweights",
+    description="Get Cashflow Cartel Guild Ownership Weights",
+    guild=discord.Object(id=ALLOWLIST_GUILD),
+)
+async def guild_stats_command(interaction: discord.Interaction) -> None:
+    if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
+        await interaction.response.send_message("Invalid channel", ephemeral=True)
+        return
+
+    logger.print_bold(f"Received guildweights command")
+
+    weights = " ".join([f"**{k}:** `{v}x`, " for k, v in GUILD_MULTIPLIERS.items()])
+    message = f"**Ownership Weights:**\n{weights}\n\n"
+    message += f"**Ownership % includes management fee\n"
+    await interaction.response.send_message(message)
+
+
+@bot.tree.command(
     name="guildstats",
     description="Get Cashflow Cartel Guild Stats",
     guild=discord.Object(id=ALLOWLIST_GUILD),
@@ -675,9 +693,6 @@ async def guild_stats_command(interaction: discord.Interaction) -> None:
 
     message += f"**SHK Deposited**: `{shk_balance:.2f}` | "
     message += f"**Multiplier**: `{multiplier:.2f}`\n"
-    weights = " ".join([f"**{k}:** `{v}x`, " for k, v in GUILD_MULTIPLIERS.items()])
-    message += f"**Ownership Weights:**\n{weights}\n\n"
-    message += f"**Ownership % includes management fee\n"
 
     logger.print_ok_blue(message)
 
