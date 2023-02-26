@@ -546,6 +546,7 @@ class MechBot:
                 guild_stats[address]["MARM"] = []
 
             marms = nft_data.get("MARM", [])
+            guild_stats[address]["MARM"] = marms
 
             if "MECH" not in guild_stats[address]:
                 guild_stats[address]["MECH"] = {}
