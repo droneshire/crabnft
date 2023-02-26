@@ -3,6 +3,7 @@
 scp root@bot:/home/crabada/crabnft/logs/wyndblast/stats/* logs/wyndblast/stats/
 scp root@bot:/home/crabada/crabnft/logs/pumpskin/stats/* logs/pumpskin/stats/
 scp root@bot:/home/crabada/crabnft/logs/pat/stats/* logs/pat/stats/
+scp root@bot:/home/crabada/crabnft/logs/mechavax/* logs/mechavax/
 
 scp root@bot:/home/crabada/crabnft/logs/wyndblast/database/* logs/wyndblast/database/
 scp root@bot:/home/crabada/crabnft/logs/pumpskin/database/* logs/pumpskin/database/
