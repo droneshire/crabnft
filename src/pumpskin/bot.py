@@ -543,6 +543,9 @@ class PumpskinBot:
             self.allocator[Tokens.POTN].maybe_add(potn_to_claim)
 
     def _check_for_low_gas(self, num_pumpskins: int) -> None:
+        if not self.config_mgr.config["get_email_updates"]:
+            return
+
         avax_w3: AvaxCWeb3Client = T.cast(
             AvaxCWeb3Client,
             (
