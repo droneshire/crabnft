@@ -5,7 +5,7 @@ import logging
 import os
 import time
 
-from config_admin import GUILD_WALLET_ADDRESS, GUILD_WALLET_MAPPING, GUILD_WALLET_PRIVATE_KEY
+from config_mechavax import GUILD_WALLET_ADDRESS, GUILD_WALLET_MAPPING, GUILD_WALLET_PRIVATE_KEY
 from health_monitor.health_monitor import HealthMonitor
 from mechavax.bot import MechBot
 from utils import logger

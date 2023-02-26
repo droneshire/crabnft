@@ -9,7 +9,13 @@ from eth_typing import Address
 from rich.progress import track
 from web3 import Web3
 
-from config_admin import MECH_STATS_HISTORY_FILE, MECH_STATS_CACHE_FILE
+from config_mechavax import (
+    GUILD_WALLET_ADDRESS,
+    GUILD_WALLET_MAPPING,
+    MECH_STATS_HISTORY_FILE,
+    MECH_STATS_CACHE_FILE,
+    MECH_GUILD_STATS_FILE,
+)
 from mechavax.mechavax_web3client import (
     MechContractWeb3Client,
     MechArmContractWeb3Client,
@@ -20,7 +26,8 @@ from utils.general import get_pretty_seconds
 from utils.async_utils import async_func_wrapper
 from utils.price import wei_to_token, token_to_wei, TokenWei
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
-from web3_utils.helpers import process_w3_results, resolve_address_to_avvy
+from web3_utils.helpers import process_w3_results, resolve_address_to_avvy, shortened_address_str
+from web3_utils.snowtrace import SnowtraceApi
 
 
 class MechBot:
@@ -290,81 +297,75 @@ class MechBot:
         self.webhook.send(f"\U0001F916 SHK event!\nAmount: {price:.2f} $SHK\n{explorer_link}")
 
     async def event_monitors(self, interval: float) -> None:
-        while True:
-            for event_filter, handler in self.event_filters.items():
-                try:
-                    for event in event_filter.get_new_entries():
-                        handler(event)
-                except:
-                    logger.print_fail(f"Failed to get entries for event_filter {event_filter}")
-            await asyncio.sleep(interval)
+        for event_filter, handler in self.event_filters.items():
+            try:
+                for event in event_filter.get_new_entries():
+                    handler(event)
+            except:
+                logger.print_fail(f"Failed to get entries for event_filter {event_filter}")
+        await asyncio.sleep(interval)
 
     async def stats_monitor(self, interval: float) -> None:
-        while True:
-            num_minted_mechs_from_shk = await async_func_wrapper(self.w3_mech.get_minted_shk_mechs)
-            our_mechs = await async_func_wrapper(self.w3_mech.get_num_mechs, self.address)
-            multiplier = await async_func_wrapper(
-                self.w3_mech.get_emmissions_multiplier, self.address
-            )
-            shk_balance = await async_func_wrapper(self.w3_mech.get_deposited_shk, self.address)
-            min_mint_shk = await async_func_wrapper(self.w3_mech.get_min_mint_bid)
+        num_minted_mechs_from_shk = await async_func_wrapper(self.w3_mech.get_minted_shk_mechs)
+        our_mechs = await async_func_wrapper(self.w3_mech.get_num_mechs, self.address)
+        multiplier = await async_func_wrapper(self.w3_mech.get_emmissions_multiplier, self.address)
+        shk_balance = await async_func_wrapper(self.w3_mech.get_deposited_shk, self.address)
+        min_mint_shk = await async_func_wrapper(self.w3_mech.get_min_mint_bid)
 
-            message = "\U0001F47E\U0001F47E**Cashflow Cartel Data**\U0001F47E\U0001F47E\n\n"
-            message += f"**Mechs**: `{our_mechs}`\n"
-            message += f"**SHK Deposited**: `{shk_balance:.2f}`\n"
-            message += f"**Multiplier**: `{multiplier:.2f}`\n\n"
-            message += f"**Current Mint Price**: `{min_mint_shk:.2f} $SHK`\n"
-            message += f"**SHK Minted Mechs**: `{num_minted_mechs_from_shk:.2f}`\n\n"
+        message = "\U0001F47E\U0001F47E**Cashflow Cartel Data**\U0001F47E\U0001F47E\n\n"
+        message += f"**Mechs**: `{our_mechs}`\n"
+        message += f"**SHK Deposited**: `{shk_balance:.2f}`\n"
+        message += f"**Multiplier**: `{multiplier:.2f}`\n\n"
+        message += f"**Current Mint Price**: `{min_mint_shk:.2f} $SHK`\n"
+        message += f"**SHK Minted Mechs**: `{num_minted_mechs_from_shk:.2f}`\n\n"
 
-            logger.print_ok_blue(message)
-            await asyncio.sleep(interval)
+        logger.print_ok_blue(message)
+        await asyncio.sleep(interval)
 
     async def mint_bot(self) -> None:
-        while True:
-            if self.MINTING_INFO["MECH"]["enable"]:
-                await self.try_to_mint(
-                    self.w3_mech,
-                    self.w3_mech.contract.events.MechPurchased,
-                    "MECH",
-                    self.last_time_mech_minted,
-                )
-            if self.MINTING_INFO["MARM"]["enable"]:
-                await self.try_to_mint(
-                    self.w3_arm,
-                    self.w3_arm.contract.events.PagePurchased,
-                    "MARM",
-                    self.last_time_marm_minted,
-                )
-            await asyncio.sleep(self.MINT_BOT_INTERVAL)
+        if self.MINTING_INFO["MECH"]["enable"]:
+            await self.try_to_mint(
+                self.w3_mech,
+                self.w3_mech.contract.events.MechPurchased,
+                "MECH",
+                self.last_time_mech_minted,
+            )
+        if self.MINTING_INFO["MARM"]["enable"]:
+            await self.try_to_mint(
+                self.w3_arm,
+                self.w3_arm.contract.events.PagePurchased,
+                "MARM",
+                self.last_time_marm_minted,
+            )
+        await asyncio.sleep(self.MINT_BOT_INTERVAL)
 
     async def try_to_deposit_shk(self) -> None:
-        while True:
-            total_shk = self.w3_shk.get_balance()
+        total_shk = self.w3_shk.get_balance()
 
-            if total_shk > 5.0:
-                logger.print_ok_arrow(f"Found {total_shk:.2f} SHK in wallet")
+        if total_shk > 5.0:
+            logger.print_ok_arrow(f"Found {total_shk:.2f} SHK in wallet")
 
-            if not self.AUTO_DEPOSIT:
-                await asyncio.sleep(60.0 * 60.0)
-                continue
+        if not self.AUTO_DEPOSIT:
+            await asyncio.sleep(60.0 * 60.0)
+            return
 
-            if total_shk <= 5.0:
-                await asyncio.sleep(60.0 * 60.0)
-                continue
+        if total_shk <= 5.0:
+            await asyncio.sleep(60.0 * 60.0)
+            return
 
-            total_shk_wei = token_to_wei(total_shk)
-            logger.print_bold(f"Depositing {total_shk:.2f} SHK in account...")
-            tx_hash = await async_func_wrapper(self.w3_mech.add_shirak, total_shk_wei)
+        total_shk_wei = token_to_wei(total_shk)
+        logger.print_bold(f"Depositing {total_shk:.2f} SHK in account...")
+        tx_hash = await async_func_wrapper(self.w3_mech.add_shirak, total_shk_wei)
 
-            action_str = f"Deposit {total_shk:.2f} SHK to account"
-            _, txn_url = process_w3_results(self.w3_mech, action_str, tx_hash)
-            if txn_url:
-                message = f"\U0001F389 Successfully deposited {total_shk:.2f}!\n{txn_url}"
-                logger.print_ok_arrow(message)
-            else:
-                message = f"\U00002620 Failed to deposit {total_shk:.2f}!"
-                logger.print_fail_arrow(message)
-                await asyncio.sleep(60.0 * 60.0)
+        action_str = f"Deposit {total_shk:.2f} SHK to account"
+        _, txn_url = process_w3_results(self.w3_mech, action_str, tx_hash)
+        if txn_url:
+            message = f"\U0001F389 Successfully deposited {total_shk:.2f}!\n{txn_url}"
+            logger.print_ok_arrow(message)
+        else:
+            message = f"\U00002620 Failed to deposit {total_shk:.2f}!"
+            logger.print_fail_arrow(message)
+            await asyncio.sleep(60.0 * 60.0)
 
     async def try_to_mint(
         self,
@@ -510,28 +511,80 @@ class MechBot:
         logger.print_bold("Updated cache file!")
         await asyncio.sleep(10.0)
 
+    async def update_guild_stats(self) -> None:
+        if os.path.isfile(MECH_GUILD_STATS_FILE):
+            with open(MECH_GUILD_STATS_FILE, "r") as infile:
+                guild_stats = json.load(infile)
+        else:
+            guild_stats = {}
+
+        holders = await async_func_wrapper(
+            SnowtraceApi().get_erc721_token_transfers, GUILD_WALLET_ADDRESS
+        )
+        shk_holders = await async_func_wrapper(
+            SnowtraceApi().get_erc20_token_transfers, GUILD_WALLET_ADDRESS
+        )
+
+        for address, nft_data in holders.items():
+            address = Web3.toChecksumAddress(address)
+            if address not in guild_stats:
+                guild_stats[address] = {}
+
+            shortened_address = await async_func_wrapper(shortened_address_str, address)
+            guild_stats[address]["owner"] = GUILD_WALLET_MAPPING.get(address, "").split("#")[0]
+
+            if "MARM" not in guild_stats[address]:
+                guild_stats[address]["MARM"] = []
+
+            marms = nft_data.get("MARM", [])
+
+            if "MECH" not in guild_stats[address]:
+                guild_stats[address]["MECH"] = {}
+
+            mechs = nft_data.get("MECH", [])
+            multiplier = 0.0
+            for mech in track(mechs, description=f"Getting Mech Data {shortened_address}"):
+                if mech in guild_stats[address]["MECH"]:
+                    multiplier += guild_stats[address]["MECH"][mech]
+                    continue
+                mech_emission = await async_func_wrapper(
+                    self.w3_mech.get_mech_multiplier, int(mech)
+                )
+                guild_stats[address]["MECH"][mech] = mech_emission
+                multiplier += mech_emission
+
+            guild_stats[address]["SHK"] = shk_holders.get(address, {}).get("SHK", 0)
+            multiplier /= 10.0
+
+        logger.print_bold(f"Updated {MECH_GUILD_STATS_FILE}")
+        with open(MECH_GUILD_STATS_FILE, "w") as outfile:
+            json.dump(guild_stats, outfile, indent=4)
+
+        await asyncio.sleep(60.0 * 60.0 * 10.0)
+
     async def parse_stats(self) -> None:
-        while True:
-            try:
-                await self.parse_stats_iteration()
-            except KeyboardInterrupt:
-                raise KeyboardInterrupt
-            except:
-                logger.print_fail(f"Failed to parse stats...")
+        try:
+            await self.parse_stats_iteration()
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt
+        except:
+            logger.print_fail(f"Failed to parse stats...")
 
     def run(self) -> None:
         loop = asyncio.get_event_loop()
         logger.print_bold("Starting monitor...")
 
         try:
-            loop.run_until_complete(
-                asyncio.gather(
-                    self.try_to_deposit_shk(),
-                    self.event_monitors(self.MONITOR_INTERVAL),
-                    self.stats_monitor(self.interval),
-                    self.mint_bot(),
-                    self.parse_stats(),
+            while True:
+                loop.run_until_complete(
+                    asyncio.gather(
+                        self.update_guild_stats(),
+                        self.try_to_deposit_shk(),
+                        self.event_monitors(self.MONITOR_INTERVAL),
+                        self.stats_monitor(self.interval),
+                        self.mint_bot(),
+                        self.parse_stats(),
+                    )
                 )
-            )
         finally:
             loop.close()

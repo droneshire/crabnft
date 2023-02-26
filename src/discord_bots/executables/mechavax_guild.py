@@ -20,11 +20,14 @@ from web3 import Web3
 from config_admin import (
     ADMIN_ADDRESS,
     DISCORD_MECHAVAX_SALES_BOT_TOKEN,
+)
+from config_mechavax import (
     GUILD_MANAGEMENT_FEE,
     GUILD_MULTIPLIERS,
     GUILD_WALLET_ADDRESS,
     GUILD_WALLET_MAPPING,
     GUILD_WALLET_PRIVATE_KEY,
+    MECH_GUILD_STATS_FILE,
     MECH_STATS_CACHE_FILE,
     MECH_STATS_HISTORY_FILE,
     MECH_STATS_PLOT,
@@ -46,6 +49,7 @@ from web3_utils.snowtrace import SnowtraceApi
 
 bot = commands.Bot(command_prefix="/", intents=discord.Intents.all())
 
+ENABLE_MINTING = False
 TOP_N = 5
 MAX_DELTA = 1000
 ALLOWLIST_MINTERS = [
@@ -69,7 +73,11 @@ def get_credentials() -> T.Tuple[str, str]:
     return GUILD_WALLET_ADDRESS, private_key
 
 
-ADDRESS, PRIVATE_KEY = get_credentials()
+if ENABLE_MINTING:
+    ADDRESS, PRIVATE_KEY = get_credentials()
+else:
+    ADDRESS = GUILD_WALLET_ADDRESS
+    PRIVATE_KEY = ""
 
 
 def do_multicall(inputs: T.List[T.Any], fn: T.Callable) -> T.List[T.Tuple]:
@@ -392,6 +400,10 @@ async def mint_mech_command(interaction: discord.Interaction) -> None:
         await interaction.response.send_message("Insufficient permissions")
         return
 
+    if not ENABLE_MINTING:
+        await interaction.response.send_message("Insufficient permissions")
+        return
+
     logger.print_bold(f"Received mintmech command")
     await interaction.response.defer()
 
@@ -531,52 +543,37 @@ async def guild_stats_command(interaction: discord.Interaction) -> None:
 
 
 async def get_guild_table_row(
-    totals: T.Dict[str, int],
-    address: str,
-    nft_data: T.Dict[str, T.Dict[str, T.Any]],
-    token_data: T.Dict[str, T.Dict[str, T.Any]],
-    emissions: bool,
+    totals: T.Dict[str, int], address: str, owner_data: T.Dict[str, T.Any]
 ) -> T.Tuple[T.List[T.Any], float]:
     row = []
-
-    w3_mech: MechContractWeb3Client = (
-        MechContractWeb3Client()
-        .set_credentials(ADMIN_ADDRESS, "")
-        .set_node_uri(AvalancheCWeb3Client.NODE_URL)
-        .set_contract()
-        .set_dry_run(False)
-    )
 
     address = Web3.toChecksumAddress(address)
     shortened_address = await async_func_wrapper(shortened_address_str, address)
     row.append(shortened_address)
     owner = GUILD_WALLET_MAPPING.get(address, "").split("#")[0]
     row.append(owner)
-    marms = nft_data.get("MARM", [])
-    mechs = nft_data.get("MECH", [])
+    marms = owner_data.get("MARM", [])
+    mechs = owner_data.get("MECH", {})
     multiplier = 0
-    if emissions:
-        for mech in mechs:
-            multiplier += await async_func_wrapper(w3_mech.get_mech_multiplier, int(mech))
-    shk = token_data.get("SHK", 0)
-    row.append(len(mechs))
+    for emission in mechs.values():
+        multiplier += emission
+    shk = owner_data.get("SHK", 0)
+    row.append(len(mechs.keys()))
     row.append(len(marms))
     row.append(int(shk))
     totals["MECH"] += len(mechs)
     totals["MARM"] += len(marms)
     totals["SHK"] += shk
 
-    if emissions:
-        multiplier /= 10.0
-        row.append(f"{multiplier:.1f}")
-        totals["Emissions"] += multiplier
+    multiplier /= 10.0
+    row.append(f"{multiplier:.1f}")
+    totals["Emissions"] += multiplier
 
     ownership_points = 0
     ownership_points += len(mechs) * GUILD_MULTIPLIERS["MECH"]
     ownership_points += len(marms) * GUILD_MULTIPLIERS["MARM"]
     ownership_points += shk * GUILD_MULTIPLIERS["SHK"]
-    if emissions:
-        ownership_points += multiplier * GUILD_MULTIPLIERS["Emissions"]
+    ownership_points += multiplier * GUILD_MULTIPLIERS["Emissions"]
 
     return row, ownership_points
 
@@ -586,7 +583,7 @@ async def get_guild_table_row(
     description="Get Cashflow Cartel Guild Stats",
     guild=discord.Object(id=ALLOWLIST_GUILD),
 )
-async def guild_stats_command(interaction: discord.Interaction, with_emissions: bool) -> None:
+async def guild_stats_command(interaction: discord.Interaction) -> None:
     if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
         await interaction.response.send_message("Invalid channel", ephemeral=True)
         return
@@ -594,27 +591,18 @@ async def guild_stats_command(interaction: discord.Interaction, with_emissions: 
     logger.print_bold(f"Received guildstats command")
     await interaction.response.defer()
 
-    holders = await async_func_wrapper(
-        SnowtraceApi().get_erc721_token_transfers, GUILD_WALLET_ADDRESS
-    )
-    shk_holders = await async_func_wrapper(
-        SnowtraceApi().get_erc20_token_transfers, GUILD_WALLET_ADDRESS
-    )
+    totals = {"MECH": 0, "MARM": 0, "SHK": 0, "Emissions": 0}
 
-    if not holders:
+    with open(MECH_GUILD_STATS_FILE, "r") as infile:
+        guild_stats = json.load(infile)
+
+    if not guild_stats:
         await interaction.followup.send("Could not obtain data. Try again later...")
         return
 
-    totals = {"MECH": 0, "MARM": 0, "SHK": 0}
-    if with_emissions:
-        totals["Emissions"] = 0
-
     info = {}
-    for address, data in holders.items():
-        address = Web3.toChecksumAddress(address)
-        row, points = await get_guild_table_row(
-            totals, address, data, shk_holders.get(address, {}), with_emissions
-        )
+    for address, data in guild_stats.items():
+        row, points = await get_guild_table_row(totals, address, data)
         if address in IGNORE_ADDRESSES:
             points = 0
 
@@ -661,9 +649,8 @@ async def guild_stats_command(interaction: discord.Interaction, with_emissions: 
         f"{int(totals['SHK'])}",
     ]
 
-    if with_emissions:
-        header.append("Emissions")
-        footer.append(f"{totals['Emissions']:.1f}")
+    header.append("Emissions")
+    footer.append(f"{totals['Emissions']:.1f}")
 
     header.append("Ownership")
     footer.append("100%")
