@@ -312,7 +312,7 @@ async def shk_plots_command(
         data = json.load(infile)
 
     plot = []
-    legend_labels = []
+    legend_labels = {}
     row_label = []
     row_length = 0
     for address, stats in data.items():
@@ -322,7 +322,7 @@ async def shk_plots_command(
         resolved_address = await async_func_wrapper(resolve_address_to_avvy, w3.w3, address)
         if Web3.isChecksumAddress(resolved_address):
             resolved_address = await async_func_wrapper(shortened_address_str, resolved_address)
-        legend_labels.append(resolved_address)
+        legend_labels[address] = resolved_address
         row_label.append(address)
         if delta:
             row = [min(v, max_delta) for v in np.diff(stats[nft_type.lower()])]
@@ -345,7 +345,8 @@ async def shk_plots_command(
     legend = plt.legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0)
     legend_txts = legend.get_texts()
     for i in range(len(legend_txts)):
-        legend.get_texts()[i].set_text(legend_labels[i])
+        legend_text = legend.get_texts()[i]
+        legend_text.set_text(legend_labels[legend_text])
     await async_func_wrapper(plt.savefig, MECH_STATS_PLOT, bbox_inches="tight", dpi=100)
 
     embed = discord.Embed()
