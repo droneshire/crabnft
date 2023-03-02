@@ -346,7 +346,8 @@ async def shk_plots_command(
     legend_txts = legend.get_texts()
     for i in range(len(legend_txts)):
         legend_text = legend.get_texts()[i]
-        legend_text.set_text(legend_labels[legend_text])
+        address = legend_text.get_text()
+        legend_text.set_text(legend_labels[address])
     await async_func_wrapper(plt.savefig, MECH_STATS_PLOT, bbox_inches="tight", dpi=100)
 
     embed = discord.Embed()
