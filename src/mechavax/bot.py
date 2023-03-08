@@ -36,11 +36,11 @@ class MechBot:
     MAX_SUPPLY = 2250
     MINTING_INFO = {
         "MECH": {
-            "cooldown": 60.0 * 60.0 * 6.0,
+            "cooldown": 60.0 * 60.0 * 5.0,
             "max": 1,
             "multiplier": 5,
             "enable": True,
-            "percent_shk": 9.5,
+            "percent_shk": 0.0,
         },
         "MARM": {
             "cooldown": 60.0 * 60.0,
