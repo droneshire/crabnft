@@ -74,7 +74,7 @@ def run_bot() -> None:
     db_dir = os.path.join(args.log_dir, "p2e")
     init_database(db_dir, USER_CONFIGS_DB, Account)
 
-    users = AccountDb.get_configs_for_game("wyndblast")
+    users_db = AccountDb.get_configs_for_game("wyndblast")
 
     bots = []
     for user, config in USERS.items():
@@ -104,8 +104,8 @@ def run_bot() -> None:
 
     alerts_enabled = not args.quiet and not args.dry_run
 
-    users = [b.user for b in bots]
-    health_monitor = HealthMonitor(args.server_url, "wyndblast", users).run(daemon=True)
+    usernames = [b.user for b in bots]
+    health_monitor = HealthMonitor(args.server_url, "wyndblast", usernames).run(daemon=True)
 
     try:
         while True:
