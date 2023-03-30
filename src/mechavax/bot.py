@@ -43,8 +43,8 @@ class MechBot:
             "percent_shk": 0.0,
         },
         "MARM": {
-            "cooldown": 60.0 * 40.0,
-            "max": 24,
+            "cooldown": 60.0 * 30.0,
+            "max": 30,
             "multiplier": 100,
             "enable": True,
             "percent_shk": 0.0,
