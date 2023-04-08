@@ -38,13 +38,15 @@ class MechBot:
         "MECH": {
             "cooldown": 60.0 * 60.0 * 5.0,
             "max": 1,
+            "period": 60.0 * 60.0 * 48.0,
             "multiplier": 5,
             "enable": True,
             "percent_shk": 0.0,
         },
         "MARM": {
-            "cooldown": 60.0 * 25.0,
-            "max": 40,
+            "cooldown": 60.0 * 30.0,
+            "max": 50,
+            "period": 60.0 * 60.0 * 24.0,
             "multiplier": 100,
             "enable": True,
             "percent_shk": 0.0,
@@ -376,8 +378,9 @@ class MechBot:
     ) -> None:
         now = time.time()
         time_since_last_mint = now - last_time_minted
+        time_window = self.MINTING_INFO[nft_type]["period"]
 
-        mints_within_past_day = self.get_events_within(event_function, 60.0 * 60.0 * 24.0)
+        mints_within_past_day = self.get_events_within(event_function, time_window)
 
         num_mints = 0
         for mint in mints_within_past_day:
@@ -386,7 +389,7 @@ class MechBot:
                 num_mints += 1
 
         logger.print_bold(
-            f"We've minted {nft_type}s {num_mints} in past 24 hours out of {len(mints_within_past_day)} mints"
+            f"We've minted {nft_type}s {num_mints} in past {time_window} hours out of {len(mints_within_past_day)} mints"
         )
 
         if time_since_last_mint < self.MINTING_INFO[nft_type]["cooldown"]:
