@@ -668,6 +668,8 @@ async def guild_stats_command(interaction: discord.Interaction) -> None:
     rows = []
     total_ownership_percent = 0.0
     for address, data in info.items():
+        if address in GUILD_WALLET_ADDRESS:
+            continue
         row, points = data
         fee_percent = GUILD_MANAGEMENT_FEE.get(address, 0.0) / total_guild_management_percents
         fee_points = fee_percent * (total_ownership_points_after_fees - total_ownership_points)
