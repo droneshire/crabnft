@@ -26,7 +26,11 @@ from utils.general import get_pretty_seconds
 from utils.async_utils import async_func_wrapper
 from utils.price import wei_to_token, token_to_wei, TokenWei
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
-from web3_utils.helpers import process_w3_results, resolve_address_to_avvy, shortened_address_str
+from web3_utils.helpers import (
+    process_w3_results,
+    resolve_address_to_avvy,
+    shortened_address_str,
+)
 from web3_utils.snowtrace import SnowtraceApi
 
 
@@ -44,8 +48,8 @@ class MechBot:
             "percent_shk": 0.0,
         },
         "MARM": {
-            "cooldown": 60.0 * 30.0,
-            "max": 50,
+            "cooldown": 60.0 * 1.0,
+            "max": 24 * 2,
             "period": 60.0 * 60.0 * 24.0,
             "multiplier": 100,
             "enable": True,
