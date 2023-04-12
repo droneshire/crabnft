@@ -5,13 +5,17 @@ import logging
 import os
 import time
 
-from config_mechavax import GUILD_WALLET_ADDRESS, GUILD_WALLET_MAPPING, GUILD_WALLET_PRIVATE_KEY
+from config_mechavax import (
+    GUILD_WALLET_ADDRESS,
+    GUILD_WALLET_MAPPING,
+    GUILD_WALLET_PRIVATE_KEY,
+)
 from health_monitor.health_monitor import HealthMonitor
 from mechavax.bot import MechBot
 from utils import logger
 from utils.security import decrypt_secret
 
-STATS_INTERVAL = 60.0 * 60.0
+STATS_INTERVAL = 1.0
 
 
 def parse_args() -> argparse.Namespace:
@@ -19,7 +23,9 @@ def parse_args() -> argparse.Namespace:
     log_dir = logger.get_logging_dir("mechavax")
     parser.add_argument("--dry-run", action="store_true", help="Dry run")
     parser.add_argument("--quiet", action="store_true", help="Disable alerts")
-    parser.add_argument("--log-level", choices=["INFO", "DEBUG", "ERROR", "NONE"], default="INFO")
+    parser.add_argument(
+        "--log-level", choices=["INFO", "DEBUG", "ERROR", "NONE"], default="INFO"
+    )
     parser.add_argument("--log-dir", default=log_dir)
     parser.add_argument("--address", default=GUILD_WALLET_ADDRESS)
     parser.add_argument("--server-url", default="http://localhost:8080/monitor")
@@ -32,9 +38,9 @@ def run_bot() -> None:
     log_dir = os.path.join(args.log_dir, "mechavax")
     logger.setup_log(args.log_level, log_dir, "mechavax_monitor")
 
-    health_monitor = HealthMonitor(args.server_url, "mechavax", ["Cashflow Cartel Guild"]).run(
-        daemon=True
-    )
+    health_monitor = HealthMonitor(
+        args.server_url, "mechavax", ["Cashflow Cartel Guild"]
+    ).run(daemon=True)
 
     encrypt_password = ""
 
