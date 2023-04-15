@@ -510,8 +510,6 @@ class MechBot:
             if not address:
                 continue
 
-            await asyncio.sleep(0.05)
-
             if address in current_balances:
                 continue
 
