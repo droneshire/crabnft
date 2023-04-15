@@ -506,7 +506,7 @@ class MechBot:
     def parse_stats_iteration(self) -> None:
         current_balances = {}
         for nft_id in range(1, self.MAX_SUPPLY + 1):
-            address = await async_func_wrapper(self.w3_mech.get_owner_of, nft_id)
+            address = self.w3_mech.get_owner_of(nft_id)
             if not address:
                 continue
 
