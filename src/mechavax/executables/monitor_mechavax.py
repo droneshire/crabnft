@@ -15,8 +15,6 @@ from mechavax.bot import MechBot
 from utils import logger
 from utils.security import decrypt_secret
 
-STATS_INTERVAL = 1.0
-
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -58,7 +56,6 @@ def run_bot() -> None:
         private_key,
         GUILD_WALLET_MAPPING,
         "MECHAVAX_BOT",
-        STATS_INTERVAL,
     )
     monitor.run()
 
