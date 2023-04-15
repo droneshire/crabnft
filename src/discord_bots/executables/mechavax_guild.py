@@ -339,6 +339,11 @@ async def shk_plots_command(
         plot.append(row)
         row_length = max(row_length, len(row))
 
+    for i in range(len(plot)):
+        row = plot[i]
+        if len(row) < row_length:
+            plot[i] = row + [0] * (row_length - len(row))
+
     row_label.append("sample")
     plot.append(list(range(row_length)))
 

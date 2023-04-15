@@ -138,12 +138,19 @@ def make_formatter_printer(
             formatted_text = prefix + "\t" + formatted_text
 
         if is_color_supported():
-            return (
-                str(color + formatted_text + Colors.ENDC)
-                .encode("utf-8")
-                .decode(sys.stdout.encoding, errors="ignore")
-            )
-        return formatted_text.encode("utf-8").decode(sys.stdout.encoding, errors="ignore")
+            try:
+                return (
+                    str(color + formatted_text + Colors.ENDC)
+                    .encode("utf-8")
+                    .decode(sys.stdout.encoding, errors="ignore")
+                )
+            except UnicodeEncodeError:
+                return formatted_text
+
+        try:
+            return formatted_text.encode("utf-8").decode(sys.stdout.encoding, errors="ignore")
+        except TypeError:
+            return formatted_text
 
     def printer(message, *args, **kwargs):
         if log_level == logging.DEBUG:
