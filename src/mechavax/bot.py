@@ -98,7 +98,9 @@ class MechBot:
 
         self.lock = asyncio.Lock()
 
-        self.event_filters: T.Dict[web3._utils.filters.LogFilter, T.Callable[[T.Any], None]] = {
+        self.event_filters: T.Dict[
+            web3._utils.filters.LogFilter, T.Callable[[T.Any], None]
+        ] = {
             self.w3_mech.contract.events.LegendaryMechMinted.createFilter(
                 fromBlock="latest"
             ): self.legendary_minted_handler,
@@ -128,7 +130,9 @@ class MechBot:
         events = []
         for i in track(range(NUM_CHUNKS), description=f"{event_function}"):
             events.extend(
-                event_function.getLogs(fromBlock=latest_block - 2048, toBlock=latest_block)
+                event_function.getLogs(
+                    fromBlock=latest_block - 2048, toBlock=latest_block
+                )
             )
             if len(events) > 0 and latest_only:
                 break
@@ -139,7 +143,9 @@ class MechBot:
 
         return events
 
-    def get_events_within(self, event_function: T.Any, time_window: float) -> T.List[T.Any]:
+    def get_events_within(
+        self, event_function: T.Any, time_window: float
+    ) -> T.List[T.Any]:
         events = self.get_events(event_function, cadence=1, latest_only=False)
 
         now = time.time()
@@ -185,7 +191,9 @@ class MechBot:
             latest_event = time.time()
 
         time_since = int(time.time() - latest_event)
-        logger.print_normal(f"Last MECH mint happened {get_pretty_seconds(time_since)} ago")
+        logger.print_normal(
+            f"Last MECH mint happened {get_pretty_seconds(time_since)} ago"
+        )
         return latest_event
 
     def get_last_marm_mint(self) -> float:
@@ -208,7 +216,9 @@ class MechBot:
             latest_event = time.time()
 
         time_since = int(time.time() - latest_event)
-        logger.print_normal(f"Last MARM mint happened {get_pretty_seconds(time_since)} ago")
+        logger.print_normal(
+            f"Last MARM mint happened {get_pretty_seconds(time_since)} ago"
+        )
         return latest_event
 
     def mech_minted_handler(self, event: web3.datastructures.AttributeDict) -> None:
@@ -267,7 +277,9 @@ class MechBot:
             f"\U0001F916 Arms bonded event: `{user}`, ID: `{token_id}`\nNFT: `{nft}` ID: `{arm_id}`"
         )
 
-    def legendary_minted_handler(self, event: web3.datastructures.AttributeDict) -> None:
+    def legendary_minted_handler(
+        self, event: web3.datastructures.AttributeDict
+    ) -> None:
         event_data = json.loads(Web3.toJSON(event))
         try:
             user = event_data["args"]["user"]
@@ -301,8 +313,12 @@ class MechBot:
             return
 
         explorer_link = f"Explorer: https://snowtrace.io/tx/{tx_hash}"
-        logger.print_ok_blue(f"SHK event!\nAmount moved: {price:.2f} $SHK\n{explorer_link}")
-        self.webhook.send(f"\U0001F916 SHK event!\nAmount: {price:.2f} $SHK\n{explorer_link}")
+        logger.print_ok_blue(
+            f"SHK event!\nAmount moved: {price:.2f} $SHK\n{explorer_link}"
+        )
+        self.webhook.send(
+            f"\U0001F916 SHK event!\nAmount: {price:.2f} $SHK\n{explorer_link}"
+        )
 
     async def event_monitors(self) -> None:
         for event_filter, handler in self.event_filters.items():
@@ -310,13 +326,21 @@ class MechBot:
                 for event in event_filter.get_new_entries():
                     handler(event)
             except:
-                logger.print_fail(f"Failed to get entries for event_filter {event_filter}")
+                logger.print_fail(
+                    f"Failed to get entries for event_filter {event_filter}"
+                )
 
     async def stats_monitor(self) -> None:
-        num_minted_mechs_from_shk = await async_func_wrapper(self.w3_mech.get_minted_shk_mechs)
+        num_minted_mechs_from_shk = await async_func_wrapper(
+            self.w3_mech.get_minted_shk_mechs
+        )
         our_mechs = await async_func_wrapper(self.w3_mech.get_num_mechs, self.address)
-        multiplier = await async_func_wrapper(self.w3_mech.get_emmissions_multiplier, self.address)
-        shk_balance = await async_func_wrapper(self.w3_mech.get_deposited_shk, self.address)
+        multiplier = await async_func_wrapper(
+            self.w3_mech.get_emmissions_multiplier, self.address
+        )
+        shk_balance = await async_func_wrapper(
+            self.w3_mech.get_deposited_shk, self.address
+        )
         min_mint_shk = await async_func_wrapper(self.w3_mech.get_min_mint_bid)
 
         message = "\U0001F47E\U0001F47E**Cashflow Cartel Data**\U0001F47E\U0001F47E\n\n"
@@ -432,7 +456,9 @@ class MechBot:
             )
             return
 
-        shk_balance = await async_func_wrapper(self.w3_mech.get_deposited_shk, self.address)
+        shk_balance = await async_func_wrapper(
+            self.w3_mech.get_deposited_shk, self.address
+        )
         min_mint_shk = await async_func_wrapper(w3.get_min_mint_bid)
 
         savings_margin = shk_balance / min_mint_shk
@@ -449,14 +475,14 @@ class MechBot:
             return
 
         if num_mints >= self.MINTING_INFO[nft_type]["max"]:
-            logger.print_warn(f"Skipping mint of {nft_type} since we've max minted today!")
+            logger.print_warn(
+                f"Skipping mint of {nft_type} since we've max minted today!"
+            )
             return
 
         logger.print_normal(f"Margin = {savings_margin}")
         tx_hash = await async_func_wrapper(w3.mint_from_shk)
-        action_str = (
-            f"Mint {nft_type} for {min_mint_shk:.2f} using $SHK balance of {shk_balance:.2f}"
-        )
+        action_str = f"Mint {nft_type} for {min_mint_shk:.2f} using $SHK balance of {shk_balance:.2f}"
         _, txn_url = process_w3_results(w3, action_str, tx_hash)
         if txn_url:
             message = f"\U0001F389 Successfully minted {nft_type}!\n{txn_url}"
@@ -485,7 +511,8 @@ class MechBot:
             )
 
         sorted_stats = {
-            k: v for k, v in sorted(current_balances.items(), key=lambda x: -x[1]["shk"])
+            k: v
+            for k, v in sorted(current_balances.items(), key=lambda x: -x[1]["shk"])
         }
 
         total_shk = 0.0
@@ -541,7 +568,9 @@ class MechBot:
                 guild_stats[address] = {}
 
             shortened_address = await async_func_wrapper(shortened_address_str, address)
-            guild_stats[address]["owner"] = GUILD_WALLET_MAPPING.get(address, "").split("#")[0]
+            guild_stats[address]["owner"] = GUILD_WALLET_MAPPING.get(address, "").split(
+                "#"
+            )[0]
 
             if "MARM" not in guild_stats[address]:
                 guild_stats[address]["MARM"] = []
@@ -554,7 +583,9 @@ class MechBot:
 
             mechs = nft_data.get("MECH", [])
             multiplier = 0.0
-            for mech in track(mechs, description=f"Getting Mech Data {shortened_address}"):
+            for mech in track(
+                mechs, description=f"Getting Mech Data {shortened_address}"
+            ):
                 if mech in guild_stats[address]["MECH"]:
                     multiplier += guild_stats[address]["MECH"][mech]
                     continue
@@ -584,8 +615,10 @@ class MechBot:
         loop = asyncio.get_event_loop()
         logger.print_bold("Starting monitor...")
 
-        # thread = threading.Thread(target=self.parse_stats, name="inventory", daemon=True)
-        # thread.start()
+        thread = threading.Thread(
+            target=self.parse_stats, name="inventory", daemon=True
+        )
+        thread.start()
 
         try:
             while True:
