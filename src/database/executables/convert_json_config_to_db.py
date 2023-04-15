@@ -52,7 +52,9 @@ def convert_pat(verbose: bool = False) -> None:
                 wallet.commission_percents.append(commission)
 
         with db.game_config(config["game"], address) as game_config:
-            game_config.time_between_plants = config["game_specific_configs"]["time_between_plants"]
+            game_config.time_between_plants = config["game_specific_configs"][
+                "time_between_plants"
+            ]
 
         with db.account() as account:
             account_json = AccountSchema().dump(account)
@@ -79,7 +81,9 @@ def convert_pumpskins(verbose: bool = False) -> None:
                 if k == "special_pumps":
                     game_config.special_pumps = []
                     for pump, level in v.items():
-                        special = SpecialPumpskins(max_level=level, pumpkin_id=pump)
+                        special = SpecialPumpskins(
+                            max_level=level, pumpkin_id=pump
+                        )
                         game_config.special_pumps.append(special)
                 else:
                     setattr(game_config, k, v)
@@ -101,7 +105,9 @@ def convert_wyndblast(verbose: bool = False) -> None:
         with db.wallet(address) as wallet:
             wallet.commission_percents = []
             for k, v in config["commission_percent_per_mine"].items():
-                commission = CommissionPercents(address=k, percent=v, wallet_id=wallet.address)
+                commission = CommissionPercents(
+                    address=k, percent=v, wallet_id=wallet.address
+                )
                 wallet.commission_percents.append(commission)
 
         with db.account() as account:

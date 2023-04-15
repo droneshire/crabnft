@@ -14,7 +14,9 @@ class CommissionPercents(AccountBase):  # type: ignore
     address = Column(types.String(42), nullable=False)
     percent = Column(types.Float, nullable=False, default=10.0)
     wallet_id = Column(types.String, ForeignKey("Wallet.address"))
-    created_at = Column(types.DateTime(timezone=True), server_default=func.now())
+    created_at = Column(
+        types.DateTime(timezone=True), server_default=func.now()
+    )
 
 
 class CommissionPercentsSchema(Schema):  # type: ignore

@@ -41,7 +41,9 @@ class WyndblastWeb2Client(web2_client.Web2Client):
     """Access api endpoints of Wyndblast Game"""
 
     DAILY_ACTIVITY_BASE_URL = "https://api.wyndblast.com/daily-activity"
-    GOOGLE_STORAGE_URL = "https://storage.googleapis.com/wyndblast-dev.appspot.com/public/json"
+    GOOGLE_STORAGE_URL = (
+        "https://storage.googleapis.com/wyndblast-dev.appspot.com/public/json"
+    )
     MORALIS_BASE_URL = "https://qheky5jm92sj.usemoralis.com:2053/server/"
     PVE_BASE_URL = "https://wyndblast-pve-api-26nte4kk3a-ey.a.run.app"
 
@@ -63,7 +65,9 @@ class WyndblastWeb2Client(web2_client.Web2Client):
         },
     }
 
-    WYNDBLAST_NFT_CONTRACT_ADDRESS = "0x4B3903952A25961B9E66216186Efd9B21903AEd3"
+    WYNDBLAST_NFT_CONTRACT_ADDRESS = (
+        "0x4B3903952A25961B9E66216186Efd9B21903AEd3"
+    )
 
     def __init__(
         self,
@@ -82,7 +86,9 @@ class WyndblastWeb2Client(web2_client.Web2Client):
         )
 
         self.private_key = private_key
-        self.user_address = Web3.toChecksumAddress(user_address) if user_address else ""
+        self.user_address = (
+            Web3.toChecksumAddress(user_address) if user_address else ""
+        )
 
         assert self.private_key and self.user_address, "Missing keys!!!"
 
@@ -106,7 +112,9 @@ class WyndblastWeb2Client(web2_client.Web2Client):
         payload.update(self.MORALIS_AUTH_PAYLOAD)
         payload["authData"]["moralisEth"]["id"] = self.user_address.lower()
         payload["authData"]["moralisEth"]["signature"] = signature
-        payload["authData"]["moralisEth"]["data"] = self.TO_SIGN.format(timestamp)
+        payload["authData"]["moralisEth"]["data"] = self.TO_SIGN.format(
+            timestamp
+        )
         return json.loads(json.dumps(payload))
 
     def _get_moralis_logout_payload(self) -> T.Dict[str, T.Any]:
@@ -133,7 +141,9 @@ class WyndblastWeb2Client(web2_client.Web2Client):
             logger.print_warn("Cannot use moralis, no key pairs provided")
             return "", 0
         server_time = self._get_server_time()
-        signable = messages.encode_defunct(text=self.TO_SIGN.format(server_time))
+        signable = messages.encode_defunct(
+            text=self.TO_SIGN.format(server_time)
+        )
         signed = Account.sign_message(signable, private_key=self.private_key)
         return signed.signature.hex(), server_time
 
@@ -142,11 +152,15 @@ class WyndblastWeb2Client(web2_client.Web2Client):
     ) -> T.Any:
         url = self.MORALIS_BASE_URL + "/functions/getServerTime"
         payload = self._get_moralis_base_payload()
-        return self._post_request(url, json_data=payload, headers=headers, params=params)
+        return self._post_request(
+            url, json_data=payload, headers=headers, params=params
+        )
 
     def _get_server_time(self, params: T.Dict[str, T.Any] = {}) -> int:
         try:
-            res = self._get_server_time_raw(headers=self._get_moralis_headers(), params=params)
+            res = self._get_server_time_raw(
+                headers=self._get_moralis_headers(), params=params
+            )
             return int(res["result"]["dateTime"])
         except KeyboardInterrupt:
             raise
@@ -162,7 +176,9 @@ class WyndblastWeb2Client(web2_client.Web2Client):
         url = self.MORALIS_BASE_URL + "/users"
 
         payload = self._get_moralis_auth_payload()
-        return self._post_request(url, json_data=payload, headers=headers, params=params)
+        return self._post_request(
+            url, json_data=payload, headers=headers, params=params
+        )
 
     def _logout_user_raw(
         self, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
@@ -170,12 +186,16 @@ class WyndblastWeb2Client(web2_client.Web2Client):
         url = self.MORALIS_BASE_URL + "/logout"
 
         payload = self._get_moralis_logout_payload()
-        return self._post_request(url, json_data=payload, headers=headers, params=params)
+        return self._post_request(
+            url, json_data=payload, headers=headers, params=params
+        )
 
     def logout_user(self) -> None:
         try:
             res = self._logout_user_raw(headers=self._get_moralis_headers())
-            logger.print_bold(f"Successfully logged out user {self.user_address}")
+            logger.print_bold(
+                f"Successfully logged out user {self.user_address}"
+            )
         except KeyboardInterrupt:
             raise
         except:
@@ -213,14 +233,18 @@ class WyndblastWeb2Client(web2_client.Web2Client):
         url = self.MORALIS_BASE_URL + f"/classes/_User/{self.object_id}"
 
         payload = self._get_moralis_login_payload()
-        return self._post_request(url, json_data=payload, headers=headers, params=params)
+        return self._post_request(
+            url, json_data=payload, headers=headers, params=params
+        )
 
     def update_account(self) -> bool:
         if self.session_token is None:
             return False
         try:
             res = self._update_account_raw(headers=self._get_moralis_headers())
-            logger.print_normal(f"Successful update for {self.user_address} at {res['updatedAt']}")
+            logger.print_normal(
+                f"Successful update for {self.user_address} at {res['updatedAt']}"
+            )
             return True
         except KeyboardInterrupt:
             raise

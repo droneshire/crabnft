@@ -17,7 +17,9 @@ class Wallet(AccountBase):  # type: ignore
     commission_percents = relationship("CommissionPercents", backref="Wallet")
     game_configs = relationship("GameConfig", backref="Wallet")
     account_id = Column(types.String, ForeignKey("Account.owner"))
-    created_at = Column(types.DateTime(timezone=True), server_default=func.now())
+    created_at = Column(
+        types.DateTime(timezone=True), server_default=func.now()
+    )
 
     def __repr__(self):
         return f"<Wallet {self.address}:{self.account_id} {len(self.game_configs)} games>"

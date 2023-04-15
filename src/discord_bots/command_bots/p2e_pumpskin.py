@@ -37,9 +37,15 @@ class ManageAccounts(OnMessage):
             color=discord.Color.orange().value,
         )
 
-        embed.add_field(name="POTN/Day", value=f"{potn_per_day:.2f}", inline=True)
-        embed.add_field(name="PPIE/Day", value=f"{ppie_per_day:.2f}", inline=True)
-        embed.add_field(name=f"\U0000200b", value=f"**Current Config**", inline=False)
+        embed.add_field(
+            name="POTN/Day", value=f"{potn_per_day:.2f}", inline=True
+        )
+        embed.add_field(
+            name="PPIE/Day", value=f"{ppie_per_day:.2f}", inline=True
+        )
+        embed.add_field(
+            name=f"\U0000200b", value=f"**Current Config**", inline=False
+        )
 
         for config, setting in config.items():
             text = " ".join([c[0].upper() + c[1:] for c in config.split("_")])
@@ -68,11 +74,15 @@ class ManageAccounts(OnMessage):
         return embed
 
     @classmethod
-    def response(cls, message: discord.message.Message) -> T.Union[str, discord.Embed]:
+    def response(
+        cls, message: discord.message.Message
+    ) -> T.Union[str, discord.Embed]:
         if not any([g for g in cls.ALLOWLIST_GUILDS if message.guild.id == g]):
             return ""
 
-        if not any([c for c in cls.ALLOWLIST_CHANNELS if message.channel.id == c]):
+        if not any(
+            [c for c in cls.ALLOWLIST_CHANNELS if message.channel.id == c]
+        ):
             return ""
 
         text = message.content.lower().strip()
@@ -110,17 +120,26 @@ class ManageAccounts(OnMessage):
             .set_dry_run(False)
         )
 
-        pumpskin_ids = {k: "" for k in collection_w3.get_staked_pumpskins(user_config["address"])}
+        pumpskin_ids = {
+            k: ""
+            for k in collection_w3.get_staked_pumpskins(user_config["address"])
+        }
 
         pumpskins = {}
         for token_id in pumpskin_ids:
-            pumpskin: StakedPumpskin = collection_w3.get_staked_pumpskin_info(token_id)
+            pumpskin: StakedPumpskin = collection_w3.get_staked_pumpskin_info(
+                token_id
+            )
             pumpskins[token_id] = pumpskin
 
-        ppie_staked = wei_to_token(contract_w3.get_ppie_staked(user_config["address"]))
+        ppie_staked = wei_to_token(
+            contract_w3.get_ppie_staked(user_config["address"])
+        )
         potn_per_day = ppie_staked * 3.0
         ppie_per_day = calc_ppie_earned_per_day(pumpskins)
-        logger.print_normal(f"{user} -> PPIE/Day: {ppie_per_day} POTN/Day: {potn_per_day}")
+        logger.print_normal(
+            f"{user} -> PPIE/Day: {ppie_per_day} POTN/Day: {potn_per_day}"
+        )
 
         try:
             return cls._get_config_stats(

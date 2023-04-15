@@ -43,9 +43,9 @@ class DailyActivitiesWyndblastWeb2Client(WyndblastWeb2Client):
 
     def _get_daily_activity_headers(self) -> T.Dict[str, str]:
         headers = copy.deepcopy(WYNDBLAST_DAILY_ACTIVITIES_HEADERS)
-        headers["authorization"] = WYNDBLAST_AUTHORIZATION_HEADER_KEY_FORMAT.format(
-            self.session_token
-        )
+        headers[
+            "authorization"
+        ] = WYNDBLAST_AUTHORIZATION_HEADER_KEY_FORMAT.format(self.session_token)
         return headers
 
     def _get_account_overview_raw(
@@ -62,7 +62,9 @@ class DailyActivitiesWyndblastWeb2Client(WyndblastWeb2Client):
 
     def get_account_overview(self) -> AccountOverview:
         try:
-            res = self._get_account_overview_raw(headers=self._get_daily_activity_headers())
+            res = self._get_account_overview_raw(
+                headers=self._get_daily_activity_headers()
+            )
             return res["result"]
         except KeyboardInterrupt:
             raise
@@ -81,9 +83,13 @@ class DailyActivitiesWyndblastWeb2Client(WyndblastWeb2Client):
         default_params.update(params)
         return self._get_request(url, headers=headers, params=default_params)
 
-    def get_all_wynds_activity(self, params: T.Dict[str, T.Any] = {}) -> T.List[WyndStatus]:
+    def get_all_wynds_activity(
+        self, params: T.Dict[str, T.Any] = {}
+    ) -> T.List[WyndStatus]:
         try:
-            res = self._get_nft_raw(headers=self._get_daily_activity_headers(), params=params)
+            res = self._get_nft_raw(
+                headers=self._get_daily_activity_headers(), params=params
+            )
             return res["result"]
         except KeyboardInterrupt:
             raise
@@ -101,7 +107,9 @@ class DailyActivitiesWyndblastWeb2Client(WyndblastWeb2Client):
         json_data = {"product_ids": [self._get_product_id(nft_id)]}
         headers = self._get_daily_activity_headers()
 
-        return self._post_request(url, json_data=json_data, headers=headers, params=params)
+        return self._post_request(
+            url, json_data=json_data, headers=headers, params=params
+        )
 
     def get_activity_selection(self, nft_id: int) -> DailyActivitySelection:
         try:
@@ -112,7 +120,9 @@ class DailyActivitiesWyndblastWeb2Client(WyndblastWeb2Client):
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed to get activity options\n{res if res else ''}")
+            logger.print_fail(
+                f"Failed to get activity options\n{res if res else ''}"
+            )
             return {}
 
     def _new_raw(
@@ -124,11 +134,15 @@ class DailyActivitiesWyndblastWeb2Client(WyndblastWeb2Client):
         url = self.DAILY_ACTIVITY_BASE_URL + "/new"
         json_data = json.loads(json.dumps(selection))
 
-        return self._post_request(url, json_data=json_data, headers=headers, params=params)
+        return self._post_request(
+            url, json_data=json_data, headers=headers, params=params
+        )
 
     def do_activity(self, selection: ActivitySelection) -> ActivityResult:
         try:
-            res = self._new_raw(selection=selection, headers=self._get_daily_activity_headers())
+            res = self._new_raw(
+                selection=selection, headers=self._get_daily_activity_headers()
+            )
             return res["result"][0]
         except KeyboardInterrupt:
             raise
@@ -147,7 +161,9 @@ class DailyActivitiesWyndblastWeb2Client(WyndblastWeb2Client):
 
     def get_unclaimed_balances(self) -> Rewards:
         try:
-            res = self._get_balances_raw(headers=self._get_daily_activity_headers())
+            res = self._get_balances_raw(
+                headers=self._get_daily_activity_headers()
+            )
             return res["result"]["total_rewards"]
         except KeyboardInterrupt:
             raise
@@ -172,7 +188,9 @@ class DailyActivitiesWyndblastWeb2Client(WyndblastWeb2Client):
 
     def get_wynd_status(self) -> T.List[WyndNft]:
         try:
-            res = self._get_wynd_status_raw(headers=self._get_daily_activity_headers())
+            res = self._get_wynd_status_raw(
+                headers=self._get_daily_activity_headers()
+            )
             return res["result"]["result"]
         except KeyboardInterrupt:
             raise
@@ -191,7 +209,9 @@ class DailyActivitiesWyndblastWeb2Client(WyndblastWeb2Client):
 
     def get_last_claim(self) -> T.Optional[datetime.datetime]:
         try:
-            res = self._get_last_claim_raw(headers=self._get_daily_activity_headers())
+            res = self._get_last_claim_raw(
+                headers=self._get_daily_activity_headers()
+            )
             last_claim = res["result"]["last_claim_datetime"]
             if last_claim is None:
                 return None

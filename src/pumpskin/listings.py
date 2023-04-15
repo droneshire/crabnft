@@ -14,7 +14,9 @@ from utils.price import wei_to_token
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 
 
-def post_rarist_listings(max_rarity: float, max_price: float, quiet: bool = True) -> None:
+def post_rarist_listings(
+    max_rarity: float, max_price: float, quiet: bool = True
+) -> None:
     joepegs = JoePegsClient()
     listings = joepegs.get_listings(
         PumpskinNftWeb3Client.contract_address,
@@ -51,7 +53,10 @@ def post_rarist_listings(max_rarity: float, max_price: float, quiet: bool = True
     for listing in sorted_listings:
         if listing[0] > max_price:
             continue
-        url = JOEPEGS_URL.format(PumpskinNftWeb3Client.contract_address) + listing[2]
+        url = (
+            JOEPEGS_URL.format(PumpskinNftWeb3Client.contract_address)
+            + listing[2]
+        )
         text += f"**{listing[2]}** [ML {listing[3]}]: {listing[1]:.2f}% - {listing[0]:.2f} $AVAX | {url}\n"
         if len(text) > 1500:
             logger.print_bold(text)

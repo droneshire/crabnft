@@ -39,7 +39,9 @@ class MiningDelayReinforcementStrategy(MiningStrategy):
         if super().have_reinforced_at_least_once(mine):
             return True
 
-        time_since_last_action = self.crabada_w2.get_time_since_last_action(mine)
+        time_since_last_action = self.crabada_w2.get_time_since_last_action(
+            mine
+        )
         if time_since_last_action > self.DELAY_BEFORE_REINFORCING:
             return True
 
@@ -71,7 +73,9 @@ class PreferOtherMpCrabsAndDelayReinforcement(MiningDelayReinforcementStrategy):
         self, team: Team, mine: IdleGame, reinforcement_search_backoff: int = 0
     ) -> T.Optional[TeamMember]:
         self.reinforcement_search_backoff = reinforcement_search_backoff
-        return super()._get_best_mine_reinforcement(team, mine, use_own_crabs=False)
+        return super()._get_best_mine_reinforcement(
+            team, mine, use_own_crabs=False
+        )
 
 
 class PreferOwnMpCrabsAndDelayReinforcement(MiningDelayReinforcementStrategy):
@@ -93,4 +97,6 @@ class PreferOwnMpCrabsAndDelayReinforcement(MiningDelayReinforcementStrategy):
         self, team: Team, mine: IdleGame, reinforcement_search_backoff: int = 0
     ) -> T.Optional[TeamMember]:
         self.reinforcement_search_backoff = reinforcement_search_backoff
-        return super()._get_best_mine_reinforcement(team, mine, use_own_crabs=True)
+        return super()._get_best_mine_reinforcement(
+            team, mine, use_own_crabs=True
+        )

@@ -42,14 +42,20 @@ class LootingDelayReinforcementStrategy(LootingStrategy):
         if super().have_reinforced_at_least_once(mine):
             return True
 
-        time_since_last_action = self.crabada_w2.get_time_since_last_action(mine)
+        time_since_last_action = self.crabada_w2.get_time_since_last_action(
+            mine
+        )
         if time_since_last_action > self.DELAY_BEFORE_REINFORCING:
             return True
 
-        time_till_action = self.DELAY_BEFORE_REINFORCING - time_since_last_action
+        time_till_action = (
+            self.DELAY_BEFORE_REINFORCING - time_since_last_action
+        )
         time_till_end_loot = self.crabada_w2.get_remaining_loot_time(mine)
 
-        time_left_pretty = get_pretty_seconds(int(min(time_till_action, time_till_end_loot)))
+        time_left_pretty = get_pretty_seconds(
+            int(min(time_till_action, time_till_end_loot))
+        )
 
         logger.print_warn(
             f"Loot[{mine['game_id']}]:Not reinforcing for {time_left_pretty} due to delay strategy"
@@ -57,7 +63,9 @@ class LootingDelayReinforcementStrategy(LootingStrategy):
         return False
 
 
-class PreferOtherBpCrabsAndDelayReinforcement(LootingDelayReinforcementStrategy):
+class PreferOtherBpCrabsAndDelayReinforcement(
+    LootingDelayReinforcementStrategy
+):
     def __init__(
         self,
         address: Address,
@@ -76,7 +84,9 @@ class PreferOtherBpCrabsAndDelayReinforcement(LootingDelayReinforcementStrategy)
         self, team: Team, mine: IdleGame, reinforcement_search_backoff: int = 0
     ) -> T.Optional[TeamMember]:
         self.reinforcement_search_backoff = reinforcement_search_backoff
-        return super()._get_best_mine_reinforcement(team, mine, use_own_crabs=False)
+        return super()._get_best_mine_reinforcement(
+            team, mine, use_own_crabs=False
+        )
 
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:
         return super().should_reinforce(mine)
@@ -101,7 +111,9 @@ class PreferOwnBpCrabsAndDelayReinforcement(LootingDelayReinforcementStrategy):
         self, team: Team, mine: IdleGame, reinforcement_search_backoff: int = 0
     ) -> T.Optional[TeamMember]:
         self.reinforcement_search_backoff = reinforcement_search_backoff
-        return super()._get_best_mine_reinforcement(team, mine, use_own_crabs=True)
+        return super()._get_best_mine_reinforcement(
+            team, mine, use_own_crabs=True
+        )
 
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:
         return super().should_reinforce(mine)

@@ -24,7 +24,9 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=STATIC_WIN_PERCENTAGES[MineOption.MINE],
     )
-    parser.add_argument("--user", choices=list(USERS.keys()) + ["ALL"], required=False)
+    parser.add_argument(
+        "--user", choices=list(USERS.keys()) + ["ALL"], required=False
+    )
     parser.add_argument(
         "--mine-win-percent",
         type=float,
@@ -44,8 +46,12 @@ def calc_profits() -> None:
 
     prices = Prices(
         get_avax_price_usd(IEX_API_TOKEN, dry_run=args.dry_run),
-        get_token_price_usd(COINMARKETCAP_API_TOKEN, "TUS", dry_run=args.dry_run),
-        get_token_price_usd(COINMARKETCAP_API_TOKEN, "CRA", dry_run=args.dry_run),
+        get_token_price_usd(
+            COINMARKETCAP_API_TOKEN, "TUS", dry_run=args.dry_run
+        ),
+        get_token_price_usd(
+            COINMARKETCAP_API_TOKEN, "CRA", dry_run=args.dry_run
+        ),
     )
 
     users = []
@@ -86,7 +92,9 @@ def calc_profits() -> None:
             MineOption.LOOT: stats[MineOption.LOOT]["game_win_percent"],
         }
 
-        commission_percent = dict_sum(USERS[user]["commission_percent_per_mine"])
+        commission_percent = dict_sum(
+            USERS[user]["commission_percent_per_mine"]
+        )
 
         get_profitability_message(
             prices,

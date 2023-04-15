@@ -57,7 +57,9 @@ class PveGame:
     MAX_WYNDS_PER_BATTLE = 2
     MIN_GAME_DURATION = 10
     MAX_GAME_DURATION = 29
-    MAX_REPLAYS_PER_CYCLE = 5  # based on a daily reward that is 20x battles per week
+    MAX_REPLAYS_PER_CYCLE = (
+        5  # based on a daily reward that is 20x battles per week
+    )
     MIN_CHRO_CLAIM = 3000
 
     TIME_BETWEEN_CLAIM_QUEST = 60.0 * 60.0 * 6
@@ -90,7 +92,9 @@ class PveGame:
         self.allow_deactivate = allow_deactivate
         self.ignore_utc_time = ignore_utc_time
 
-        self.min_game_duration = self.MIN_GAME_DURATION if human_mode else self.MIN_GAME_DURATION
+        self.min_game_duration = (
+            self.MIN_GAME_DURATION if human_mode else self.MIN_GAME_DURATION
+        )
         self.max_game_duration = (
             self.MAX_GAME_DURATION * 3 if human_mode else self.MAX_GAME_DURATION
         )
@@ -125,7 +129,9 @@ class PveGame:
 
         self.sorted_levels = []
         for level in self._get_all_levels_from_cache(exclude_difficulty=True):
-            self.sorted_levels.extend([level + d for d in LEVEL_HIERARCHY.keys()])
+            self.sorted_levels.extend(
+                [level + d for d in LEVEL_HIERARCHY.keys()]
+            )
 
         with self.stats.pve() as pve:
             self.completed = set([p.level for p in pve.levels_completed])
@@ -149,7 +155,9 @@ class PveGame:
                 return level.get("total_exp", INVALID_EXP)
         return INVALID_EXP
 
-    def _get_all_levels_from_cache(self, exclude_difficulty: bool = False) -> T.List[str]:
+    def _get_all_levels_from_cache(
+        self, exclude_difficulty: bool = False
+    ) -> T.List[str]:
         levels = set()
         for stages in self.stages_info:
             for stage in stages.get("stages", []):
@@ -158,7 +166,9 @@ class PveGame:
                     if stage_id:
                         levels.add(stage_id)
                 else:
-                    for difficulty, stage_difficulty_info in stage.get("difficulties", {}).items():
+                    for difficulty, stage_difficulty_info in stage.get(
+                        "difficulties", {}
+                    ).items():
                         stage_id = stage_difficulty_info.get("id", "")
                         if stage_id:
                             levels.add(stage_id)
@@ -180,7 +190,9 @@ class PveGame:
                 level_info = stage
                 break
 
-        for difficulty, stage_difficulty_info in level_info.get("difficulties", {}).items():
+        for difficulty, stage_difficulty_info in level_info.get(
+            "difficulties", {}
+        ).items():
             if stage_difficulty_info.get("id", "") in mission:
                 return stage_difficulty_info
 
@@ -196,7 +208,9 @@ class PveGame:
     def _get_enemy_lineup(self, mission: str) -> T.List[types.BattleUnit]:
         enemies: T.List[types.BattleUnit] = []
 
-        stage_info: types.StageDifficulty = self._get_stage_info_from_cache(mission)
+        stage_info: types.StageDifficulty = self._get_stage_info_from_cache(
+            mission
+        )
 
         enemies_info = stage_info.get("enemy", {})
         for enemy_type, category in enemies_info.items():
@@ -231,7 +245,9 @@ class PveGame:
     ) -> T.List[types.BattleUnit]:
         units: T.List[types.BattleUnit] = []
         if not our_units:
-            logger.print_warn(f"Could not get nft data for player lineup creation")
+            logger.print_warn(
+                f"Could not get nft data for player lineup creation"
+            )
             return []
 
         wynds: T.List[types.PveWynd] = our_units.get("wynd", [])
@@ -245,7 +261,9 @@ class PveGame:
         index = random.randrange(num_players)
         for _ in range(num_players):
             if len(used_dnas_inx) >= len(wynds):
-                logger.print_warn(f"Unable to find enough wynds to play with. Found {len(units)}")
+                logger.print_warn(
+                    f"Unable to find enough wynds to play with. Found {len(units)}"
+                )
                 return units
 
             while index in used_dnas_inx:
@@ -253,7 +271,9 @@ class PveGame:
 
             used_dnas_inx.append(index)
 
-            dna_string = wynds[index].get("metadata", {}).get("dna", {}).get("all", "")
+            dna_string = (
+                wynds[index].get("metadata", {}).get("dna", {}).get("all", "")
+            )
             product_id = wynds[index].get("product_id", "")
             cooldown_time = wynds[index].get("cooldown_time", 1)
 
@@ -264,7 +284,9 @@ class PveGame:
                 continue
 
             if not dna_string:
-                logger.print_warn(f"Could not get DNA string for ID: {product_id}")
+                logger.print_warn(
+                    f"Could not get DNA string for ID: {product_id}"
+                )
                 continue
 
             unit = types.BattleUnit = {
@@ -317,10 +339,16 @@ class PveGame:
             stage_id = self.sorted_levels[min(available_indices)]
         else:
             return ""
-        return stage_id if any([s for s in ALLOWED_MAPS if stage_id.startswith(s)]) else ""
+        return (
+            stage_id
+            if any([s for s in ALLOWED_MAPS if stage_id.startswith(s)])
+            else ""
+        )
 
     def _get_stamina_for_level(self, mission: str) -> int:
-        stage_info: types.StageDifficulty = self._get_stage_info_from_cache(mission)
+        stage_info: types.StageDifficulty = self._get_stage_info_from_cache(
+            mission
+        )
         return stage_info.get("stamina_cost", 10000)
 
     def _get_stamina(self) -> int:
@@ -334,7 +362,9 @@ class PveGame:
         levels_completed = len(pve_stats.get("levels_completed", []))
 
         if levels_completed < 1:
-            logger.print_normal("Did not complete levels, skipping notifications")
+            logger.print_normal(
+                "Did not complete levels, skipping notifications"
+            )
             return
 
         user_data: types.PveUser = self.wynd_w2.get_user_profile()
@@ -379,10 +409,18 @@ class PveGame:
             color=Color.purple().value,
         )
 
-        embed.add_embed_field(name=f"Max Level", value=f"{max_level}", inline=True)
-        embed.add_embed_field(name=f"Levels Won", value=f"{levels_completed}", inline=True)
-        embed.add_embed_field(name=f"Account Exp", value=f"{account_exp}", inline=True)
-        embed.add_embed_field(name=f"Account Level", value=f"{account_level}", inline=True)
+        embed.add_embed_field(
+            name=f"Max Level", value=f"{max_level}", inline=True
+        )
+        embed.add_embed_field(
+            name=f"Levels Won", value=f"{levels_completed}", inline=True
+        )
+        embed.add_embed_field(
+            name=f"Account Exp", value=f"{account_exp}", inline=True
+        )
+        embed.add_embed_field(
+            name=f"Account Level", value=f"{account_level}", inline=True
+        )
         embed.add_embed_field(
             name=f"Total Chro (unclaimed)",
             value=f"{unclaimed_chro_earned:.2f}",
@@ -409,7 +447,9 @@ class PveGame:
             url = item["metadata"]["image_url"]
             embed.set_image(url=url)
         except:
-            embed.set_thumbnail(url=WYNDBLAST_ASSETS["wynd"], height=100, width=100)
+            embed.set_thumbnail(
+                url=WYNDBLAST_ASSETS["wynd"], height=100, width=100
+            )
 
         webhook.add_embed(embed)
         webhook.execute()
@@ -447,7 +487,9 @@ class PveGame:
     def _update_stats(self) -> None:
         chro_rewards = self.current_stats["chro"]
 
-        for address, commission_percent in self.config["commission_percent_per_mine"].items():
+        for address, commission_percent in self.config[
+            "commission_percent_per_mine"
+        ].items():
             commission_chro = chro_rewards * (commission_percent / 100.0)
 
             with self.stats.commission(address) as commission:
@@ -468,7 +510,8 @@ class PveGame:
         with self.stats.pve() as pve:
             stats_json = PveSchema().dump(pve)
             logger.print_ok_blue(
-                f"Lifetime Stats for {self.user.upper()}\n" f"{json.dumps(stats_json, indent=4)}"
+                f"Lifetime Stats for {self.user.upper()}\n"
+                f"{json.dumps(stats_json, indent=4)}"
             )
 
     def _check_and_level_units(self, our_units: types.PveNfts) -> None:
@@ -486,7 +529,9 @@ class PveGame:
                 product_id = player.get("product_id", "")
                 if product_id not in self.units_last_used:
                     continue
-                logger.print_normal(f"Attempting to level up wynd {product_id}...")
+                logger.print_normal(
+                    f"Attempting to level up wynd {product_id}..."
+                )
                 if self.wynd_w2.level_up_wynd(product_id):
                     logger.print_ok_arrow(f"Leveled up wynd {product_id}!")
                 else:
@@ -516,10 +561,16 @@ class PveGame:
             res: types.ClaimQuests = action()
 
             if res:
-                logger.print_ok(f"Successfully claimed {quest.upper()} rewards! +{res['exp']} exp")
-                self.current_stats["pve_game"][self.address]["account_exp"] = self.current_stats[
-                    "pve_game"
-                ][self.address].get("account_exp", 0) + res.get("exp", 0)
+                logger.print_ok(
+                    f"Successfully claimed {quest.upper()} rewards! +{res['exp']} exp"
+                )
+                self.current_stats["pve_game"][self.address][
+                    "account_exp"
+                ] = self.current_stats["pve_game"][self.address].get(
+                    "account_exp", 0
+                ) + res.get(
+                    "exp", 0
+                )
 
                 with self.stats.pve() as pve:
                     pve.account_exp += res.get("exp", 0)
@@ -527,7 +578,9 @@ class PveGame:
                 if res.get("is_level_up", False):
                     logger.print_ok_arrow(f"Leveled up our Profile!")
 
-    def _check_and_do_standard_quest_list(self, nft_data: types.PveNfts) -> None:
+    def _check_and_do_standard_quest_list(
+        self, nft_data: types.PveNfts
+    ) -> None:
         """
         Do the Quest List for non-story related items
         """
@@ -555,12 +608,15 @@ class PveGame:
                 return ""
 
             if countdown:
-                daily_countdown_seconds = countdown.get("daily_countdown_second", 0)
+                daily_countdown_seconds = countdown.get(
+                    "daily_countdown_second", 0
+                )
             else:
                 daily_countdown_seconds = 0
 
             if (
-                user_data.get("exp", self._get_level_five_exp()) < self._get_level_five_exp()
+                user_data.get("exp", self._get_level_five_exp())
+                < self._get_level_five_exp()
                 and self.num_replays < self.MAX_REPLAYS_PER_CYCLE
                 and daily_countdown_seconds < 60 * 60 * 3
             ):
@@ -568,17 +624,26 @@ class PveGame:
                 # so that we can get the daily exp towards our level up and weekly level up
                 # otherwise no need to play since it only helps with wynd leveling which we don't
                 # care about
-                logger.print_bold(f"We've beat the full map, but still need more exp, replaying...")
-                hard_levels = self._get_levels_at_difficulty(difficulty=Difficulty.HARD)
+                logger.print_bold(
+                    f"We've beat the full map, but still need more exp, replaying..."
+                )
+                hard_levels = self._get_levels_at_difficulty(
+                    difficulty=Difficulty.HARD
+                )
                 stage_id = hard_levels[random.randrange(len(hard_levels))]
                 self.num_replays += 1
-            elif user_data.get("exp", self._get_level_five_exp()) >= self._get_level_five_exp():
+            elif (
+                user_data.get("exp", self._get_level_five_exp())
+                >= self._get_level_five_exp()
+            ):
                 self.num_replays = 0
                 logger.print_bold(f"Beat game, no need to play anymore!")
                 return ""
             else:
                 self.num_replays = 0
-                logger.print_bold(f"Waiting for EXP boosts, no way to do that now so not playing")
+                logger.print_bold(
+                    f"Waiting for EXP boosts, no way to do that now so not playing"
+                )
                 return ""
 
         needed_stamina = self._get_stamina_for_level(stage_id)
@@ -592,9 +657,13 @@ class PveGame:
 
         return stage_id
 
-    def _check_and_play_story(self, nft_data: types.PveNfts, countdown: types.Countdown) -> bool:
+    def _check_and_play_story(
+        self, nft_data: types.PveNfts, countdown: types.Countdown
+    ) -> bool:
         if not self._is_just_past_midnight_utc():
-            logger.print_warn(f"Not within midnight window, waiting to play game...")
+            logger.print_warn(
+                f"Not within midnight window, waiting to play game..."
+            )
             return False
 
         stage_id = self._get_next_level(countdown)
@@ -604,10 +673,14 @@ class PveGame:
 
         num_enemies = self._get_num_enemies_for_mission(stage_id)
 
-        logger.print_ok_blue(f"We will be battling {num_enemies} enemies in stage {stage_id}...")
+        logger.print_ok_blue(
+            f"We will be battling {num_enemies} enemies in stage {stage_id}..."
+        )
         battle_setup: types.BattleSetup = types.BattleSetup()
         battle_setup["enemy"] = self._get_enemy_lineup(stage_id)
-        battle_setup["player"] = self._get_player_lineup(self.MAX_WYNDS_PER_BATTLE, nft_data)
+        battle_setup["player"] = self._get_player_lineup(
+            self.MAX_WYNDS_PER_BATTLE, nft_data
+        )
 
         if not battle_setup["player"]:
             logger.print_warn(f"No players available to battle")
@@ -617,14 +690,18 @@ class PveGame:
         did_succeed = False
         difficulty_adjustment = LEVEL_HIERARCHY[stage_id[-2:]]
         for attempt in range(RETRY_ATTEMPTS):
-            duration = random.randint(self.min_game_duration, self.max_game_duration)
+            duration = random.randint(
+                self.min_game_duration, self.max_game_duration
+            )
             result = "win" if random.randint(1, 2) == 1 else "lose"
             should_win = result == "win"
 
             logger.print_normal(f"Getting stamina...")
             needed_stamina = self._get_stamina_for_level(stage_id)
             current_stamina = self._get_stamina()
-            logger.print_normal(f"Stamina, Have: {current_stamina} Need: {needed_stamina}")
+            logger.print_normal(
+                f"Stamina, Have: {current_stamina} Need: {needed_stamina}"
+            )
 
             logger.print_normal(f"Pinging realtime...")
             self.wynd_w2.ping_realtime()
@@ -635,7 +712,9 @@ class PveGame:
                 logger.print_warn("Not enough stamina not attempting battle...")
                 break
 
-            if self.wynd_w2.battle(stage_id, battle_setup, duration=duration, result=result):
+            if self.wynd_w2.battle(
+                stage_id, battle_setup, duration=duration, result=result
+            ):
                 if result == "win":
                     logger.print_ok(f"We {result.upper()}! \U0001F389")
                 else:
@@ -645,13 +724,15 @@ class PveGame:
 
             if did_succeed:
                 if result == "lose" and attempt + 1 < RETRY_ATTEMPTS:
-                    logger.print_normal(f"Since we lost, let's retry here shortly...")
+                    logger.print_normal(
+                        f"Since we lost, let's retry here shortly..."
+                    )
                     wait(3.0)
                 elif result == "win":
                     self.completed.add(stage_id)
-                    self.current_stats["pve_game"][self.address]["levels_completed"].append(
-                        stage_id
-                    )
+                    self.current_stats["pve_game"][self.address][
+                        "levels_completed"
+                    ].append(stage_id)
                     self.stats.add_stage(stage_id)
                     self.last_mission = stage_id
                     logger.print_normal(
@@ -683,7 +764,9 @@ class PveGame:
             return False
 
         if exp < self._get_level_five_exp():
-            logger.print_normal(f"Waiting till level 5 to claim rewards ({unclaimed_chro} CHRO)")
+            logger.print_normal(
+                f"Waiting till level 5 to claim rewards ({unclaimed_chro} CHRO)"
+            )
             return False
 
         if unclaimed_chro < self.MIN_CHRO_CLAIM:
@@ -692,11 +775,15 @@ class PveGame:
             )
             return False
 
-        logger.print_ok(f"Sending rewards to the contract: {unclaimed_chro} CHRO...")
+        logger.print_ok(
+            f"Sending rewards to the contract: {unclaimed_chro} CHRO..."
+        )
         ret = self.wynd_w2.claim_chro()
 
         if not ret:
-            logger.print_warn(f"Failed to set rewards. Trying to claim anyways...")
+            logger.print_warn(
+                f"Failed to set rewards. Trying to claim anyways..."
+            )
         else:
             logger.print_ok_arrow(f"Success!")
 
@@ -705,7 +792,9 @@ class PveGame:
         logger.print_ok(f"Claiming rewards! {unclaimed_chro} CHRO")
         tx_hash = self.wynd_w3.claim_rewards()
         tx_receipt = self.wynd_w3.get_transaction_receipt(tx_hash)
-        gas = wei_to_token(self.wynd_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        gas = wei_to_token(
+            self.wynd_w3.get_gas_cost_of_transaction_wei(tx_receipt)
+        )
         logger.print_bold(f"Paid {gas} AVAX in gas")
 
         with self.stats.user() as user:
@@ -716,7 +805,9 @@ class PveGame:
             return False
         else:
             logger.print_ok(f"Successfully claimed CHRO")
-            logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+            logger.print_normal(
+                f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n"
+            )
 
         chro_after = self.chro_w3.get_balance()
 
@@ -769,7 +860,9 @@ class PveGame:
 
     def play_game(self) -> None:
         if self.is_deactivated:
-            logger.print_warn(f"Skipping {self.user} since we have been deactivated!")
+            logger.print_warn(
+                f"Skipping {self.user} since we have been deactivated!"
+            )
             return
 
         if not self.did_tutorial:
@@ -790,18 +883,26 @@ class PveGame:
         countdown: types.Countdown = self.wynd_w2.get_countdown()
 
         if countdown:
-            daily_reset_left = get_pretty_seconds(countdown.get("daily_countdown_second", -1))
+            daily_reset_left = get_pretty_seconds(
+                countdown.get("daily_countdown_second", -1)
+            )
             logger.print_ok_blue(f"Daily quests reset in {daily_reset_left}")
 
-            weekly_reset_left = get_pretty_seconds(countdown.get("weekly_countdown_second", -1))
+            weekly_reset_left = get_pretty_seconds(
+                countdown.get("weekly_countdown_second", -1)
+            )
             logger.print_ok_blue(f"Weekly quests reset in {weekly_reset_left}")
 
         logger.print_ok_blue_arrow(f"User exp: {user_exp}")
         logger.print_ok_blue_arrow(f"User stamina: {self._get_stamina()}")
         chro_rewards_before: types.PveRewards = self.wynd_w2.get_chro_rewards()
         if chro_rewards_before:
-            logger.print_ok_blue_arrow(f"Unclaimed: {chro_rewards_before['claimable']}")
-            logger.print_ok_blue_arrow(f"Claimed: {chro_rewards_before['claimed']}")
+            logger.print_ok_blue_arrow(
+                f"Unclaimed: {chro_rewards_before['claimable']}"
+            )
+            logger.print_ok_blue_arrow(
+                f"Claimed: {chro_rewards_before['claimed']}"
+            )
 
         while self._check_and_play_story(nft_data, countdown):
             wait(random.randint(1, 10 if self.human_mode else 5))
@@ -821,8 +922,12 @@ class PveGame:
         chro_rewards_after: types.PveRewards = self.wynd_w2.get_chro_rewards()
 
         if chro_rewards_after:
-            logger.print_ok_blue_arrow(f"Unclaimed (after): {chro_rewards_after['claimable']}")
-            logger.print_ok_blue_arrow(f"Claimed (after): {chro_rewards_after['claimed']}")
+            logger.print_ok_blue_arrow(
+                f"Unclaimed (after): {chro_rewards_after['claimable']}"
+            )
+            logger.print_ok_blue_arrow(
+                f"Claimed (after): {chro_rewards_after['claimed']}"
+            )
             with self.stats.pve() as pve:
                 pve.unclaimed_chro += chro_rewards_after["claimable"]
                 pve.claimed_chro += chro_rewards_after["claimed"]
@@ -830,9 +935,14 @@ class PveGame:
         if chro_rewards_before and chro_rewards_after:
             delta = max(
                 0,
-                (chro_rewards_after["claimable"] - chro_rewards_before["claimable"]),
+                (
+                    chro_rewards_after["claimable"]
+                    - chro_rewards_before["claimable"]
+                ),
             )
-            self.current_stats["pve_game"][self.address] = {"unclaimed_chro": delta}
+            self.current_stats["pve_game"][self.address] = {
+                "unclaimed_chro": delta
+            }
             self.current_stats["chro"] += delta
         else:
             self.current_stats[self.address] = {"unclaimed_chro": 0}

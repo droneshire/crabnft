@@ -16,7 +16,9 @@ from utils.user import get_alias_from_user
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--user", choices=list(USERS.keys()) + ["ALL"], default="ALL")
+    parser.add_argument(
+        "--user", choices=list(USERS.keys()) + ["ALL"], default="ALL"
+    )
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument(
         "--target-date",
@@ -39,7 +41,9 @@ def calc_profits() -> None:
     else:
         encrypt_password = os.getenv("NFT_PWD")
         if not encrypt_password:
-            encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
+            encrypt_password = getpass.getpass(
+                prompt="Enter decryption password: "
+            )
 
     aliases = set([get_alias_from_user(u) for u in USERS])
 
@@ -52,12 +56,18 @@ def calc_profits() -> None:
         if alias not in aliases:
             continue
 
-        stats_logger = CrabadaLifetimeGameStatsLogger(user, logger.get_logging_dir("crabada"), {})
-        csv_header = ["timestamp"] + [k for k in NULL_STATS.keys()] + ["team_id"]
+        stats_logger = CrabadaLifetimeGameStatsLogger(
+            user, logger.get_logging_dir("crabada"), {}
+        )
+        csv_header = (
+            ["timestamp"] + [k for k in NULL_STATS.keys()] + ["team_id"]
+        )
         csv_file = stats_logger.get_lifetime_stats_file().split(".")[0] + ".csv"
         csv = CsvLogger(csv_file, csv_header, dry_run=args.dry_run)
 
-        target_date = datetime.datetime.strptime(args.target_date, "%m/%d/%Y").date()
+        target_date = datetime.datetime.strptime(
+            args.target_date, "%m/%d/%Y"
+        ).date()
         message = get_daily_stats_message(alias, csv, target_date)
 
         logger.print_normal(f"{message}")
@@ -79,7 +89,9 @@ def calc_profits() -> None:
                 str.encode(encrypt_password), email_account["password"]
             ).decode()
             email_accounts.append(
-                email.Email(address=email_account["user"], password=email_password)
+                email.Email(
+                    address=email_account["user"], password=email_password
+                )
             )
         try:
             email.send_email(email_accounts, config["email"], subject, message)

@@ -7,5 +7,7 @@ class OnMessage:
     ALLOWLIST_CHANNELS = []
     ALLOWLIST_GUILDS = []
 
-    def response(cls, message: discord.message.Message) -> T.Union[str, discord.Embed]:
+    def response(
+        cls, message: discord.message.Message
+    ) -> T.Union[str, discord.Embed]:
         raise NotImplementedError()

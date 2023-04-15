@@ -69,7 +69,9 @@ class MechavaxMint(NftCollectionAnalyzerBase):
 
         return self.get_data(data, filename)
 
-    def get_data(self, collection: T.Dict[int, int], filename: str) -> T.Dict[int, int]:
+    def get_data(
+        self, collection: T.Dict[int, int], filename: str
+    ) -> T.Dict[int, int]:
         fails = 0
         try:
             for token_id in range(self.MAX_TOTAL_SUPPLY):
@@ -77,7 +79,9 @@ class MechavaxMint(NftCollectionAnalyzerBase):
                 jp_id = None
 
                 if token_id in collection.values():
-                    logger.print_ok_blue(f"Already have {token_id}, skipping...")
+                    logger.print_ok_blue(
+                        f"Already have {token_id}, skipping..."
+                    )
                     continue
 
                 for i in range(1, 5):
@@ -98,7 +102,9 @@ class MechavaxMint(NftCollectionAnalyzerBase):
                     continue
 
                 try:
-                    jp_id = os.path.basename(item["metadata"]["tokenUri"]).split(".")[0]
+                    jp_id = os.path.basename(
+                        item["metadata"]["tokenUri"]
+                    ).split(".")[0]
                 except:
                     logger.print_fail(f"Failed to parse ids {item}")
 
@@ -119,6 +125,8 @@ class MechavaxMint(NftCollectionAnalyzerBase):
 
     def custom_nft_info(self, token_id: int) -> T.Dict[str, T.Any]:
         real_token_id = self.collection_map.get(str(token_id), -1)
-        self.CUSTOM_INFO["emission_multiple"] = self.w3.get_mech_multiplier(real_token_id)
+        self.CUSTOM_INFO["emission_multiple"] = self.w3.get_mech_multiplier(
+            real_token_id
+        )
         self.CUSTOM_INFO["token_id"] = real_token_id
         return self.CUSTOM_INFO

@@ -9,7 +9,9 @@ I'd like to share a document with you!
 
 
 class GoogleSheets:
-    def __init__(self, title: str, credential_file: str, share_emails: T.Dict[str, str]):
+    def __init__(
+        self, title: str, credential_file: str, share_emails: T.Dict[str, str]
+    ):
         self.title = title
         self.gspread_client = gspread.service_account(filename=credential_file)
         self.share_emails = share_emails if share_emails is not None else {}
@@ -20,7 +22,9 @@ class GoogleSheets:
         except:
             self.sheet = self.create(title, self.share_emails)
 
-    def create(self, title: str, worksheet: str, share_emails: T.Dict[str, str]) -> None:
+    def create(
+        self, title: str, worksheet: str, share_emails: T.Dict[str, str]
+    ) -> None:
         self.sheet = self.gspread_client.create(title)
         self.sheet.add_worksheet(worksheet, rows=100, cols=40)
         for email, role in share_emails.items():
@@ -40,11 +44,15 @@ class GoogleSheets:
         worksheet = self.sheet.get_worksheet(worksheet_inx)
         return worksheet.col_values(column)
 
-    def read_range(self, ranges: str, worksheet_inx: int = 0) -> T.List[T.List[T.Any]]:
+    def read_range(
+        self, ranges: str, worksheet_inx: int = 0
+    ) -> T.List[T.List[T.Any]]:
         worksheet = self.sheet.get_worksheet(worksheet_inx)
         return worksheet.batch_get(ranges)
 
-    def write(self, cell_range: str, value: T.Any, worksheet_inx: int = 0) -> None:
+    def write(
+        self, cell_range: str, value: T.Any, worksheet_inx: int = 0
+    ) -> None:
         worksheet = self.sheet.get_worksheet(worksheet_inx)
         if ":" in cell_range:
             assert isinstance(value, list), "value not a range"

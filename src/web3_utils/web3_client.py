@@ -16,7 +16,9 @@ from web3.types import BlockData, Nonce, TxParams, TxReceipt, TxData, Wei
 
 
 @contextmanager
-def web3_transaction(err_string_compare: str, handler: T.Callable) -> T.Iterator[None]:
+def web3_transaction(
+    err_string_compare: str, handler: T.Callable
+) -> T.Iterator[None]:
     try:
         yield
     except exceptions.ContractLogicError as e:
@@ -92,14 +94,20 @@ class Web3Client:
             tx["gasPrice"] = self.w3.eth.generate_gas_price()
             gas_fee_gwei = float(Web3.fromWei(tx["gasPrice"], "gwei"))
         elif self.tx_type == 2:
-            tx["maxFeePerGas"] = Web3.toWei(self.estimate_max_fee_per_gas_in_gwei(), "gwei")
-            tx["maxPriorityFeePerGas"] = Web3.toWei(self.max_priority_fee_per_gas_in_gwei, "gwei")
+            tx["maxFeePerGas"] = Web3.toWei(
+                self.estimate_max_fee_per_gas_in_gwei(), "gwei"
+            )
+            tx["maxPriorityFeePerGas"] = Web3.toWei(
+                self.max_priority_fee_per_gas_in_gwei, "gwei"
+            )
 
         tx["nonce"] = self.get_nonce()
 
         return tx
 
-    def build_transaction_with_value(self, to: Address, value_in_eth: float) -> TxParams:
+    def build_transaction_with_value(
+        self, to: Address, value_in_eth: float
+    ) -> TxParams:
         """
         Build a transaction involving a transfer of value to an address,
         where the value is expressed in the blockchain token (e.g. ETH or AVAX or TUS).
@@ -255,12 +263,18 @@ class Web3Client:
         return self.w3.eth.get_block("pending")
 
     def get_gas_cost_of_transaction_wei(self, tx_receipt: TxReceipt) -> Wei:
-        return tx_receipt.get("effectiveGasPrice", 0.0) * tx_receipt.get("gasUsed", 0.0)
+        return tx_receipt.get("effectiveGasPrice", 0.0) * tx_receipt.get(
+            "gasUsed", 0.0
+        )
 
     def get_gas_cost_of_transaction_wei_from_gas_used(
         self, gas_used_wei: float, gas_price_wei: T.Optional[float] = None
     ) -> Wei:
-        return gas_used_wei * gas_price_wei if gas_price_wei is not None else self.w3.eth.gas_price
+        return (
+            gas_used_wei * gas_price_wei
+            if gas_price_wei is not None
+            else self.w3.eth.gas_price
+        )
 
     def estimate_gas_for_transfer(self, to: Address, value_in_wei: Wei) -> int:
         """
@@ -286,8 +300,12 @@ class Web3Client:
 
         Run only after setting the node URI (set_node_uri)
         """
-        self.contract_checksum_address = Web3.toChecksumAddress(self.contract_address)
-        self.contract = self.w3.eth.contract(address=self.contract_checksum_address, abi=self.abi)
+        self.contract_checksum_address = Web3.toChecksumAddress(
+            self.contract_address
+        )
+        self.contract = self.w3.eth.contract(
+            address=self.contract_checksum_address, abi=self.abi
+        )
         return self
 
     def set_node_uri(self, node_uri: str = None) -> Web3Client:
@@ -302,7 +320,9 @@ class Web3Client:
         self.nonce = self.get_nonce()
         return self
 
-    def set_credentials(self, user_address: Address, private_key: str) -> Web3Client:
+    def set_credentials(
+        self, user_address: Address, private_key: str
+    ) -> Web3Client:
         """
         Set credentials, must be set before set_node_uri
         """

@@ -8,7 +8,9 @@ TEAMS_PER_GROUP = 6
 CRABS_PER_GROUP = 2
 
 
-def assign_teams_to_groups(teams_info: T.Dict[int, T.Tuple[int, int]]) -> T.Dict[int, int]:
+def assign_teams_to_groups(
+    teams_info: T.Dict[int, T.Tuple[int, int]]
+) -> T.Dict[int, int]:
     team_assignments = {}
     fast_mine_teams = []
     slow_mine_teams = []
@@ -38,7 +40,9 @@ def assign_teams_to_groups(teams_info: T.Dict[int, T.Tuple[int, int]]) -> T.Dict
     return team_assignments
 
 
-def assign_crabs_to_groups(crabs: T.Dict[int, int], groups: T.List[int]) -> T.Dict[int, int]:
+def assign_crabs_to_groups(
+    crabs: T.Dict[int, int], groups: T.List[int]
+) -> T.Dict[int, int]:
     crab_assignments = {}
     num_crabs = 0
     group_inx = 0

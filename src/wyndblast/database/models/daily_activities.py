@@ -12,7 +12,9 @@ class ElementalStones(GameBase):  # type: ignore
     __tablename__ = "ElementalStones"
 
     id = Column(types.Integer, primary_key=True)
-    daily_activities_id = Column(types.Integer, ForeignKey("DailyActivities.id"))
+    daily_activities_id = Column(
+        types.Integer, ForeignKey("DailyActivities.id")
+    )
     fire = Column(types.Integer, nullable=False, default=0)
     wind = Column(types.Integer, nullable=False, default=0)
     earth = Column(types.Integer, nullable=False, default=0)
@@ -46,7 +48,9 @@ class WinLoss(GameBase):  # type: ignore
     stage = Column(types.Integer, nullable=False)
     wins = Column(types.Integer, nullable=False, default=0)
     losses = Column(types.Integer, nullable=False, default=0)
-    daily_activities_id = Column(types.Integer, ForeignKey("DailyActivities.id"))
+    daily_activities_id = Column(
+        types.Integer, ForeignKey("DailyActivities.id")
+    )
 
     def __repr__(self):
         return f"<Win Loss {self.id}>"
@@ -69,10 +73,14 @@ class DailyActivities(GameBase):  # type: ignore
 
     id = Column(types.Integer, primary_key=True)
     address = Column(types.String(80), unique=True, nullable=False)
-    elemental_stones = relationship("ElementalStones", backref="DailyActivities")
+    elemental_stones = relationship(
+        "ElementalStones", backref="DailyActivities"
+    )
     stages = relationship("WinLoss", backref="win_loss")
     user_id = Column(types.Integer, ForeignKey("WyndblastUser.id"))
-    created_at = Column(types.DateTime(timezone=True), server_default=func.now())
+    created_at = Column(
+        types.DateTime(timezone=True), server_default=func.now()
+    )
 
     def __repr__(self):
         return f"<Daily Activities {self.address}>"

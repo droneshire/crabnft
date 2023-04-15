@@ -25,7 +25,9 @@ class CircuitBreaker:
     def end(self):
         now = time.time()
 
-        logger.print_bold(f"Start->End: {get_pretty_seconds(int(now - self.start_time))}")
+        logger.print_bold(
+            f"Start->End: {get_pretty_seconds(int(now - self.start_time))}"
+        )
 
         if now - self.start_time < self.min_delta:
             self.trip()

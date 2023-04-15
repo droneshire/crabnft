@@ -19,9 +19,13 @@ class WyndblastUser(GameBase):  # type: ignore
     wams = Column(types.Float, nullable=False, default=0.0)
     gas_avax = Column(types.Float, nullable=False, default=0.0)
     commission = relationship("Commission", backref="WyndblastUser")
-    daily_activity_stats = relationship("DailyActivities", backref="WyndblastUser")
+    daily_activity_stats = relationship(
+        "DailyActivities", backref="WyndblastUser"
+    )
     pve_stats = relationship("Pve", backref="WyndblastUser")
-    created_at = Column(types.DateTime(timezone=True), server_default=func.now())
+    created_at = Column(
+        types.DateTime(timezone=True), server_default=func.now()
+    )
 
     def __repr__(self):
         return f"<User {self.user}:{self.id}>"

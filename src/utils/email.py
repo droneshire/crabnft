@@ -18,7 +18,9 @@ def get_email_accounts_from_password(
 ) -> T.List[Email]:
     email_accounts = []
     for email_account in encrypted_emails:
-        email_password = decrypt_secret(encrypt_password, email_account["password"])
+        email_password = decrypt_secret(
+            encrypt_password, email_account["password"]
+        )
         email_accounts.append(
             Email(
                 address=email_account["user"],
@@ -47,7 +49,9 @@ def send_email_raw(
                 attachments=attachments,
             )
         if verbose:
-            logger.print_ok(f"To: {', '.join(to_addresses)}\nFrom: {email['address']}")
+            logger.print_ok(
+                f"To: {', '.join(to_addresses)}\nFrom: {email['address']}"
+            )
             logger.print_ok(f"Subject: {subject}")
             logger.print_ok(f"{content}")
 

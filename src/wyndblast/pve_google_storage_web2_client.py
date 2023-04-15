@@ -50,11 +50,15 @@ class PveGoogleStorageWeb2Client(WyndblastWeb2Client):
         }
         default_params.update(params)
 
-        return self._get_request(url, headers=headers, params=default_params, timeout=10.0)
+        return self._get_request(
+            url, headers=headers, params=default_params, timeout=10.0
+        )
 
     def get_all_enemies(self) -> T.List[PveWynd]:
         try:
-            res = self._get_all_enemies_raw(headers=self._get_google_pve_headers())
+            res = self._get_all_enemies_raw(
+                headers=self._get_google_pve_headers()
+            )
             return res
         except KeyboardInterrupt:
             raise
@@ -75,11 +79,15 @@ class PveGoogleStorageWeb2Client(WyndblastWeb2Client):
         }
         default_params.update(params)
 
-        return self._get_request(url, headers=headers, params=default_params, timeout=10.0)
+        return self._get_request(
+            url, headers=headers, params=default_params, timeout=10.0
+        )
 
     def get_account_stats(self) -> T.List[AccountLevels]:
         try:
-            res = self._get_account_stats_raw(headers=self._get_google_pve_headers())
+            res = self._get_account_stats_raw(
+                headers=self._get_google_pve_headers()
+            )
             return res
         except KeyboardInterrupt:
             raise
@@ -100,11 +108,15 @@ class PveGoogleStorageWeb2Client(WyndblastWeb2Client):
         }
         default_params.update(params)
 
-        return self._get_request(url, headers=headers, params=default_params, timeout=10.0)
+        return self._get_request(
+            url, headers=headers, params=default_params, timeout=10.0
+        )
 
     def get_level_data(self) -> T.List[LevelsInformation]:
         try:
-            res = self._get_level_data_raw(headers=self._get_google_pve_headers())
+            res = self._get_level_data_raw(
+                headers=self._get_google_pve_headers()
+            )
             return res
         except KeyboardInterrupt:
             raise
@@ -125,11 +137,15 @@ class PveGoogleStorageWeb2Client(WyndblastWeb2Client):
         }
         default_params.update(params)
 
-        return self._get_request(url, headers=headers, params=default_params, timeout=10.0)
+        return self._get_request(
+            url, headers=headers, params=default_params, timeout=10.0
+        )
 
     def get_enemy_data(self) -> T.Any:
         try:
-            res = self._get_level_data_raw(headers=self._get_google_pve_headers())
+            res = self._get_level_data_raw(
+                headers=self._get_google_pve_headers()
+            )
             return res
         except KeyboardInterrupt:
             raise
@@ -150,11 +166,15 @@ class PveGoogleStorageWeb2Client(WyndblastWeb2Client):
         }
         default_params.update(params)
 
-        return self._get_request(url, headers=headers, params=default_params, timeout=10.0)
+        return self._get_request(
+            url, headers=headers, params=default_params, timeout=10.0
+        )
 
     def get_wynd_level_stats_data(self) -> WyndLevelsStats:
         try:
-            res = self._get_level_data_raw(headers=self._get_google_pve_headers())
+            res = self._get_level_data_raw(
+                headers=self._get_google_pve_headers()
+            )
             return res
         except KeyboardInterrupt:
             raise
@@ -175,11 +195,15 @@ class PveGoogleStorageWeb2Client(WyndblastWeb2Client):
         }
         default_params.update(params)
 
-        return self._get_request(url, headers=headers, params=default_params, timeout=10.0)
+        return self._get_request(
+            url, headers=headers, params=default_params, timeout=10.0
+        )
 
     def get_skill_data(self) -> T.List[Skills]:
         try:
-            res = self._get_level_data_raw(headers=self._get_google_pve_headers())
+            res = self._get_level_data_raw(
+                headers=self._get_google_pve_headers()
+            )
             return res
         except KeyboardInterrupt:
             raise

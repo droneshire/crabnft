@@ -42,17 +42,25 @@ class LifetimeGameStatsLogger:
                 logger.print_normal(f"Using previous game stats...")
                 self.lifetime_stats = game_stats
             elif backup_stats:
-                logger.print_normal(f"Using backup stats even though stats present...")
+                logger.print_normal(
+                    f"Using backup stats even though stats present..."
+                )
                 self.lifetime_stats = backup_stats
             else:
-                logger.print_normal(f"Using null stats even though stats present...")
+                logger.print_normal(
+                    f"Using null stats even though stats present..."
+                )
                 self.lifetime_stats = copy.deepcopy(self.null_game_stats)
 
         self.write_game_stats(self.lifetime_stats, dry_run=dry_run)
 
-        self.last_lifetime_stats: T.Dict[T.Any, T.Any] = copy.deepcopy(self.lifetime_stats)
+        self.last_lifetime_stats: T.Dict[T.Any, T.Any] = copy.deepcopy(
+            self.lifetime_stats
+        )
 
-    def write_game_stats(self, game_stats: T.Dict[T.Any, T.Any], dry_run=False) -> None:
+    def write_game_stats(
+        self, game_stats: T.Dict[T.Any, T.Any], dry_run=False
+    ) -> None:
         if dry_run or not os.path.isdir(self.log_dir):
             return
 
@@ -77,7 +85,9 @@ class LifetimeGameStatsLogger:
             with open(game_stats_file, "r") as infile:
                 return json.load(infile)
         except:
-            logger.print_fail(f"Failed to read game stats from {game_stats_file}")
+            logger.print_fail(
+                f"Failed to read game stats from {game_stats_file}"
+            )
             return {}
 
     def write(self) -> None:
@@ -93,14 +103,18 @@ class LifetimeGameStatsLogger:
         )
 
         if self.verbose:
-            logger.print_bold(f"Writing stats for {self.user} [alias: {self.alias}]")
+            logger.print_bold(
+                f"Writing stats for {self.user} [alias: {self.alias}]"
+            )
 
         self.write_game_stats(combined_stats, dry_run=self.dry_run)
         self.last_lifetime_stats = copy.deepcopy(self.lifetime_stats)
 
     def read(self) -> T.Dict[T.Any, T.Any]:
         if self.verbose:
-            logger.print_bold(f"Reading stats for {self.user} [alias: {self.alias}]")
+            logger.print_bold(
+                f"Reading stats for {self.user} [alias: {self.alias}]"
+            )
 
         return self.get_game_stats()
 

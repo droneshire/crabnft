@@ -13,7 +13,9 @@ class PotnWeb3Client(AvalancheCWeb3Client):
     Interact with the POTN token
     """
 
-    contract_address = T.cast(Address, "0x48dAf7dA11146a81D717682009ce6Ee6e6770e58")
+    contract_address = T.cast(
+        Address, "0x48dAf7dA11146a81D717682009ce6Ee6e6770e58"
+    )
     this_dir = os.path.dirname(os.path.realpath(__file__))
     # standard erc20 token abi so reusing tus
     abi_dir = os.path.join(this_dir, "abi", "abi-tus.json")

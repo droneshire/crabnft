@@ -172,10 +172,14 @@ class ConfigManagerSheets(CrabadaConfigManager):
 
         now = time.time()
         if now - self.last_config_update_time < self.CONFIG_UPDATE_TIME:
-            wait_end_time = self.last_config_update_time + self.CONFIG_UPDATE_TIME
+            wait_end_time = (
+                self.last_config_update_time + self.CONFIG_UPDATE_TIME
+            )
             wait_time_left = wait_end_time - now
             wait_time_pretty = get_pretty_seconds(int(wait_time_left))
-            logger.print_normal(f"Waiting {wait_time_pretty} to check for config")
+            logger.print_normal(
+                f"Waiting {wait_time_pretty} to check for config"
+            )
             return
 
         self.last_config_update_time = now
@@ -188,7 +192,9 @@ class ConfigManagerSheets(CrabadaConfigManager):
         updated_config = self._read_sheets_config()
 
         if updated_config is None:
-            logger.print_warn("Incorrect sheet config, writing with current config...")
+            logger.print_warn(
+                "Incorrect sheet config, writing with current config..."
+            )
             self._write_sheets_config()
             self._save_config()
             return False
@@ -284,9 +290,13 @@ class ConfigManagerSheets(CrabadaConfigManager):
                 if MineOption.MINE in data[1]:
                     new_config["mining_teams"][team_id] = self.MINING_GROUP_NUM
                 elif MineOption.LOOT in data[1]:
-                    new_config["looting_teams"][team_id] = self.LOOTING_GROUP_NUM
+                    new_config["looting_teams"][
+                        team_id
+                    ] = self.LOOTING_GROUP_NUM
                 else:
-                    logger.print_warn(f"Team ID did not have valid option: {data[1]}")
+                    logger.print_warn(
+                        f"Team ID did not have valid option: {data[1]}"
+                    )
 
             elif parse_state == ParseState.CRAB_IDS:
                 try:
@@ -298,11 +308,17 @@ class ConfigManagerSheets(CrabadaConfigManager):
                     return None
 
                 if MineOption.MINE in data[1]:
-                    new_config["reinforcing_crabs"][crab_id] = self.MINING_GROUP_NUM
+                    new_config["reinforcing_crabs"][
+                        crab_id
+                    ] = self.MINING_GROUP_NUM
                 elif MineOption.LOOT in data[1]:
-                    new_config["reinforcing_crabs"][crab_id] = self.LOOTING_GROUP_NUM
+                    new_config["reinforcing_crabs"][
+                        crab_id
+                    ] = self.LOOTING_GROUP_NUM
                 else:
-                    logger.print_warn(f"Crab ID did not have valid option: {data[1]}")
+                    logger.print_warn(
+                        f"Crab ID did not have valid option: {data[1]}"
+                    )
             else:
                 for label, info in INPUT_VERIFY.items():
                     if label not in data[0]:
@@ -317,7 +333,9 @@ class ConfigManagerSheets(CrabadaConfigManager):
                         return None
         return new_config
 
-    def _write_updated_config_worksheet(self, worksheet: T.Any, rows: int, cols: int) -> None:
+    def _write_updated_config_worksheet(
+        self, worksheet: T.Any, rows: int, cols: int
+    ) -> None:
         if not self._check_to_see_if_action():
             return self.config
 
@@ -342,7 +360,9 @@ class ConfigManagerSheets(CrabadaConfigManager):
         cell_values.extend(get_full_row([]))
         cell_values.extend(get_full_row([]))
 
-        cell_values.extend(get_full_row([Titles.MAX_GAS, self.config["max_gas_price_gwei"]]))
+        cell_values.extend(
+            get_full_row([Titles.MAX_GAS, self.config["max_gas_price_gwei"]])
+        )
         cell_values.extend(
             get_full_row(
                 [
@@ -352,16 +372,22 @@ class ConfigManagerSheets(CrabadaConfigManager):
             )
         )
         cell_values.extend(
-            get_full_row([Titles.REINFORCE_ENABLED, self.config["should_reinforce"]])
+            get_full_row(
+                [Titles.REINFORCE_ENABLED, self.config["should_reinforce"]]
+            )
         )
 
         # blank rows
         cell_values.extend(get_full_row([]))
         cell_values.extend(get_full_row([]))
 
-        cell_values.extend(get_full_row(["Team ID", Titles.DYNAMIC_OPTIONS, "Composition"]))
+        cell_values.extend(
+            get_full_row(["Team ID", Titles.DYNAMIC_OPTIONS, "Composition"])
+        )
 
-        num_teams = len(self.config["mining_teams"]) + len(self.config["looting_teams"])
+        num_teams = len(self.config["mining_teams"]) + len(
+            self.config["looting_teams"]
+        )
         num_crabs = len(self.config["reinforcing_crabs"])
 
         values = []
@@ -382,7 +408,9 @@ class ConfigManagerSheets(CrabadaConfigManager):
         cell_values.extend(get_full_row([]))
         cell_values.extend(get_full_row([]))
 
-        cell_values.extend(get_full_row(["Reinforce Crab ID", Titles.DYNAMIC_OPTIONS, "Class"]))
+        cell_values.extend(
+            get_full_row(["Reinforce Crab ID", Titles.DYNAMIC_OPTIONS, "Class"])
+        )
         for crab, group in self.config["reinforcing_crabs"].items():
             game_type = MineOption.MINE if group < 10 else MineOption.LOOT
             crab_class = self.crab_classes.get(crab, self._get_crab_class(crab))
@@ -391,7 +419,9 @@ class ConfigManagerSheets(CrabadaConfigManager):
         for _ in range(self.BUFFER_ROWS):
             cell_values.extend(get_full_row([]))
 
-        logger.print_normal(f"Added {len(cell_values)} cells, expecting {len(cell_list)}\n\n")
+        logger.print_normal(
+            f"Added {len(cell_values)} cells, expecting {len(cell_list)}\n\n"
+        )
         assert len(cell_values) == len(cell_list), "Cell/value mismatch"
 
         for i, val in enumerate(cell_values):
@@ -404,8 +434,12 @@ class ConfigManagerSheets(CrabadaConfigManager):
             logger.print_warn("failed to update sheet cells")
             return
 
-        team_ranges = [(f"A{i}:B{i}", FMT_VALUES) for i in range(10, 10 + num_teams)]
-        team_ranges.extend([(f"C{i}", FMT_BLANK_CENTER) for i in range(10, 10 + num_teams)])
+        team_ranges = [
+            (f"A{i}:B{i}", FMT_VALUES) for i in range(10, 10 + num_teams)
+        ]
+        team_ranges.extend(
+            [(f"C{i}", FMT_BLANK_CENTER) for i in range(10, 10 + num_teams)]
+        )
 
         reinforce_row = 9 + 3 + num_teams
         crab_ranges = [
@@ -531,7 +565,9 @@ class ConfigManagerSheets(CrabadaConfigManager):
                 message_cells[i].value = line
             worksheet.update_cells(message_cells)
 
-            gsf.format_cell_ranges(worksheet, [("A1:F1", FMT_TITLE), ("A13:F13", FMT_TITLE)])
+            gsf.format_cell_ranges(
+                worksheet, [("A1:F1", FMT_TITLE), ("A13:F13", FMT_TITLE)]
+            )
 
         if not self.google_api_success:
             self.sheet = None
@@ -563,12 +599,16 @@ class ConfigManagerSheets(CrabadaConfigManager):
             yield
             self.backoff = self.DEFAULT_BACKOFF_OPTION
             self.google_api_success = True
-            logger.print_normal(f"resetting backoff to {self.DEFAULT_BACKOFF_OPTION}")
+            logger.print_normal(
+                f"resetting backoff to {self.DEFAULT_BACKOFF_OPTION}"
+            )
         except KeyboardInterrupt:
             raise
         except Exception as e:
             now = time.time()
-            self.backoff = max(self.backoff * 2, (now - self.last_fail_time) * 2)
+            self.backoff = max(
+                self.backoff * 2, (now - self.last_fail_time) * 2
+            )
             self.last_fail_time = now
             logger.print_fail(
                 f"failure to google api call, updating backoff to {self.backoff} seconds and fail time to {self.last_fail_time}"

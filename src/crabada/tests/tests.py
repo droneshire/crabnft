@@ -64,31 +64,43 @@ def test_miners_revenge() -> None:
     this_dir = os.path.dirname(os.path.realpath(__file__))
     crabada_test_dir = os.path.join(this_dir)
 
-    mine_file = os.path.join(crabada_test_dir, "test_mines", "example_mine.json")
+    mine_file = os.path.join(
+        crabada_test_dir, "test_mines", "example_mine.json"
+    )
     with open(mine_file, "r") as infile:
         mine = json.load(infile)["result"]
 
-    miners_revenge = calc_miners_revenge(mine, is_looting=False, additional_crabs=[], verbose=True)
+    miners_revenge = calc_miners_revenge(
+        mine, is_looting=False, additional_crabs=[], verbose=True
+    )
     assert math.isclose(
         expected_miners_revenge, miners_revenge, abs_tol=0.01
     ), f"Expected: {expected_miners_revenge} Actual: {miners_revenge}"
 
-    miners_revenge = calc_miners_revenge(mine, is_looting=True, additional_crabs=[], verbose=True)
+    miners_revenge = calc_miners_revenge(
+        mine, is_looting=True, additional_crabs=[], verbose=True
+    )
     assert math.isclose(
         expected_miners_revenge, miners_revenge, abs_tol=0.01
     ), f"Expected: {expected_miners_revenge} Actual: {miners_revenge}"
 
     expected_miners_revenge = 37.15
-    mine_file = os.path.join(crabada_test_dir, "test_mines", "example_mine1.json")
+    mine_file = os.path.join(
+        crabada_test_dir, "test_mines", "example_mine1.json"
+    )
     with open(mine_file, "r") as infile:
         mine = json.load(infile)["result"]
 
-    miners_revenge = calc_miners_revenge(mine, is_looting=False, additional_crabs=[], verbose=True)
+    miners_revenge = calc_miners_revenge(
+        mine, is_looting=False, additional_crabs=[], verbose=True
+    )
     assert math.isclose(
         expected_miners_revenge, miners_revenge, abs_tol=0.01
     ), f"Expected: {expected_miners_revenge} Actual: {miners_revenge}"
 
-    mine_file = os.path.join(crabada_test_dir, "test_mines", "example_mine2.json")
+    mine_file = os.path.join(
+        crabada_test_dir, "test_mines", "example_mine2.json"
+    )
     with open(mine_file, "r") as infile:
         mine = json.load(infile)["result"]
     additional_crab = [
@@ -116,7 +128,9 @@ def test_miners_revenge() -> None:
         expected_miners_revenge, miners_revenge, abs_tol=0.01
     ), f"Expected: {expected_miners_revenge} Actual: {miners_revenge}"
 
-    mine_file = os.path.join(crabada_test_dir, "test_mines", "example_mine3.json")
+    mine_file = os.path.join(
+        crabada_test_dir, "test_mines", "example_mine3.json"
+    )
     with open(mine_file, "r") as infile:
         mine = json.load(infile)["result"]
 
@@ -167,7 +181,9 @@ def test_config_manager_sheets() -> None:
     email_accounts = []
 
     encrypt_password = ""
-    cm = ConfigManagerSheets("TEST", TEST_CONFIG, email_accounts, encrypt_password, dry_run=False)
+    cm = ConfigManagerSheets(
+        "TEST", TEST_CONFIG, email_accounts, encrypt_password, dry_run=False
+    )
     cm._delete_sheet()
     cm._create_sheet_if_needed()
     new_config = cm._read_sheets_config()
@@ -241,7 +257,9 @@ def test_profitability_calc() -> None:
         verbose=False,
     )
 
-    assert math.isclose(profit_tus, 563.32, abs_tol=0.1), "Failed MINE +10% NO CONTEST test"
+    assert math.isclose(
+        profit_tus, 563.32, abs_tol=0.1
+    ), "Failed MINE +10% NO CONTEST test"
 
     test_team = Team(
         crabada_1_class=CrabadaClass.PRIME,
@@ -263,7 +281,9 @@ def test_profitability_calc() -> None:
         verbose=False,
     )
 
-    assert math.isclose(profit_tus, 347.88, abs_tol=0.1), "Failed MINE +10% REINFORCE test"
+    assert math.isclose(
+        profit_tus, 347.88, abs_tol=0.1
+    ), "Failed MINE +10% REINFORCE test"
 
     profit_tus = get_scenario_profitability(
         test_team,
@@ -277,7 +297,9 @@ def test_profitability_calc() -> None:
         can_self_reinforce=True,
         verbose=False,
     )
-    assert math.isclose(profit_tus, 363.60, abs_tol=0.1), "Failed MINE +10% SELF REINFORCE test"
+    assert math.isclose(
+        profit_tus, 363.60, abs_tol=0.1
+    ), "Failed MINE +10% SELF REINFORCE test"
 
     avg_gas_price_tus = 0.01712
     profit_tus = get_scenario_profitability(
@@ -294,7 +316,9 @@ def test_profitability_calc() -> None:
     )
 
     # in this scenario, gas is high so we should result in NO REINFORCE
-    assert math.isclose(profit_tus, 69.30, abs_tol=0.1), "Failed MINE +10% REINFORCE test"
+    assert math.isclose(
+        profit_tus, 69.30, abs_tol=0.1
+    ), "Failed MINE +10% REINFORCE test"
 
     profit_tus = get_scenario_profitability(
         test_team,
@@ -309,7 +333,9 @@ def test_profitability_calc() -> None:
         verbose=False,
     )
     # in this scenario, gas is high so we should result in NO REINFORCE
-    assert math.isclose(profit_tus, 69.30, abs_tol=0.1), "Failed MINE +10% SELF REINFORCE test"
+    assert math.isclose(
+        profit_tus, 69.30, abs_tol=0.1
+    ), "Failed MINE +10% SELF REINFORCE test"
 
     profit_tus = get_scenario_profitability(
         test_team,
@@ -323,7 +349,9 @@ def test_profitability_calc() -> None:
         can_self_reinforce=True,
         verbose=False,
     )
-    assert math.isclose(profit_tus, 69.29, abs_tol=0.1), "Failed MINE +10% NO REINFORCE test"
+    assert math.isclose(
+        profit_tus, 69.29, abs_tol=0.1
+    ), "Failed MINE +10% NO REINFORCE test"
 
     profit_tus = get_scenario_profitability(
         test_team,
@@ -337,7 +365,9 @@ def test_profitability_calc() -> None:
         can_self_reinforce=False,
         verbose=False,
     )
-    assert math.isclose(profit_tus, 69.29, abs_tol=0.1), "Failed MINE +10% NO REINFORCE test"
+    assert math.isclose(
+        profit_tus, 69.29, abs_tol=0.1
+    ), "Failed MINE +10% NO REINFORCE test"
 
     profit_tus = get_scenario_profitability(
         test_team,
@@ -351,7 +381,9 @@ def test_profitability_calc() -> None:
         can_self_reinforce=True,
         verbose=False,
     )
-    assert math.isclose(profit_tus, 173.79, abs_tol=0.1), "Failed LOOT SELF REINFORCE test"
+    assert math.isclose(
+        profit_tus, 173.79, abs_tol=0.1
+    ), "Failed LOOT SELF REINFORCE test"
 
     profit_tus = get_scenario_profitability(
         test_team,
@@ -379,14 +411,18 @@ def test_profitability_calc() -> None:
         can_self_reinforce=False,
         verbose=False,
     )
-    assert math.isclose(profit_tus, 173.79, abs_tol=0.1), "Failed LOOT NO CONTEST test"
+    assert math.isclose(
+        profit_tus, 173.79, abs_tol=0.1
+    ), "Failed LOOT NO CONTEST test"
 
 
 def test_config_manager() -> None:
     send_email_accounts = []
     encrypt_password = ""
 
-    cm = ConfigManager("TEST", TEST_CONFIG, send_email_accounts, encrypt_password)
+    cm = ConfigManager(
+        "TEST", TEST_CONFIG, send_email_accounts, encrypt_password
+    )
     cm._print_out_config()
     cm._send_email_config_if_needed()
     cm._save_config()

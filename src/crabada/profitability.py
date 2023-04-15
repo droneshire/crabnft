@@ -315,7 +315,9 @@ REWARDS_TUS: T.Dict[str, T.Dict[str, float]] = {
 }
 
 
-def get_expected_tus(game_type: Scenarios, prices: Prices, win_percent: float) -> float:
+def get_expected_tus(
+    game_type: Scenarios, prices: Prices, win_percent: float
+) -> float:
     win_decimal = win_percent / 100.0
     winnings_tus = REWARDS_TUS[game_type][Result.WIN]["TUS"]
     winnings_cra = REWARDS_TUS[game_type][Result.WIN]["CRA"]
@@ -340,10 +342,17 @@ def get_expected_game_profit(
 ) -> float:
     revenue_tus = get_expected_tus(game_type, prices, win_percent)
     avg_gas_per_game_tus = avg_gas_price_tus * (4 if do_reinforce else 2)
-    reinforcement_per_game_tus = 2.0 * avg_reinforce_tus if do_reinforce else 0.0
+    reinforcement_per_game_tus = (
+        2.0 * avg_reinforce_tus if do_reinforce else 0.0
+    )
     commission_tus = (commission_percent / 100.0) * revenue_tus
 
-    profit_tus = revenue_tus - avg_gas_per_game_tus - reinforcement_per_game_tus - commission_tus
+    profit_tus = (
+        revenue_tus
+        - avg_gas_per_game_tus
+        - reinforcement_per_game_tus
+        - commission_tus
+    )
     if verbose:
         logger.print_normal(
             f"[{game_type}]: Win %: {win_percent:.2f}%, AVAX: ${prices.avax_usd:.2f}, TUS: ${prices.tus_usd:.2f}, CRA: ${prices.cra_usd:.2f}"
@@ -359,10 +368,14 @@ def get_actual_game_profit(
     with_commission: bool,
     verbose: bool = False,
 ) -> T.Tuple[float, float]:
-    prices = Prices(game_stats["avax_usd"], game_stats["tus_usd"], game_stats["cra_usd"])
+    prices = Prices(
+        game_stats["avax_usd"], game_stats["tus_usd"], game_stats["cra_usd"]
+    )
     if game_stats["reward_tus"] is None or game_stats["reward_cra"] is None:
         return 0.0, 0.0
-    revenue_tus = game_stats["reward_tus"] + prices.cra_to_tus(game_stats["reward_cra"])
+    revenue_tus = game_stats["reward_tus"] + prices.cra_to_tus(
+        game_stats["reward_cra"]
+    )
 
     gas_used_tus = sum(
         [
@@ -382,7 +395,9 @@ def get_actual_game_profit(
     if not with_commission:
         commission_tus = 0.0
 
-    profit_tus = revenue_tus - gas_used_tus - reinforcement_used_tus - commission_tus
+    profit_tus = (
+        revenue_tus - gas_used_tus - reinforcement_used_tus - commission_tus
+    )
     profit_usd = prices.tus_usd * profit_tus
     if verbose:
         logger.print_normal(
@@ -412,7 +427,9 @@ def get_rewards_from_tx_receipt(
         if len(data) != 3:
             continue
 
-        if int(data[0], 16) == int(CrabadaWeb3Client().contract_address.lower(), 16):
+        if int(data[0], 16) == int(
+            CrabadaWeb3Client().contract_address.lower(), 16
+        ):
             tus_rewards = wei_to_token(int(data[2], 16))
 
     return (tus_rewards, cra_rewards)
@@ -484,9 +501,13 @@ def get_scenario_profitability(
 
             if is_reinforcing_allowed:
                 if can_self_reinforce:
-                    scenarios_to_check.append(Scenarios.MineTenPercentAndSelfReinforce)
+                    scenarios_to_check.append(
+                        Scenarios.MineTenPercentAndSelfReinforce
+                    )
                 else:
-                    scenarios_to_check.append(Scenarios.MineTenPercentAndReinforce)
+                    scenarios_to_check.append(
+                        Scenarios.MineTenPercentAndReinforce
+                    )
         else:
             scenarios_to_check = [Scenarios.MineAndNoReinforce]
 
@@ -499,8 +520,12 @@ def get_scenario_profitability(
     scenario_profits_tus = {}
     for scenario_to_check in scenarios_to_check:
         do_reinforce = scenario_to_check in REINFORCE_SCENARIOS
-        dont_pay_for_reinforcements = scenario_to_check in NO_REINFORCE_PAY_SCENARIOS
-        reinforce_tus = 0.0 if dont_pay_for_reinforcements else avg_reinforce_tus
+        dont_pay_for_reinforcements = (
+            scenario_to_check in NO_REINFORCE_PAY_SCENARIOS
+        )
+        reinforce_tus = (
+            0.0 if dont_pay_for_reinforcements else avg_reinforce_tus
+        )
 
         if verbose:
             logger.print_normal(f"Testing scenario: {scenario_to_check}")
@@ -522,7 +547,9 @@ def get_scenario_profitability(
 
     max_profit_tus = max(scenario_profits_tus.keys())
 
-    logger.print_normal(f"Most profitable scenario: {scenario_profits_tus[max_profit_tus]}")
+    logger.print_normal(
+        f"Most profitable scenario: {scenario_profits_tus[max_profit_tus]}"
+    )
     return max_profit_tus
 
 
@@ -585,15 +612,23 @@ def get_profitability_message(
     else:
         percentages = win_percentages
 
-    if prices.avax_usd is None or prices.tus_usd is None or prices.cra_usd is None:
+    if (
+        prices.avax_usd is None
+        or prices.tus_usd is None
+        or prices.cra_usd is None
+    ):
         return ""
 
     message = "**Swimmer Profitability Update**\n"
-    message += "{}\t\t{}\n".format(f"**Avg Tx Gas \U000026FD**:", f"{avg_gas_tus:.3f} TUS")
+    message += "{}\t\t{}\n".format(
+        f"**Avg Tx Gas \U000026FD**:", f"{avg_gas_tus:.3f} TUS"
+    )
     message += "{}\t\t{}\n".format(
         f"**Avg Gas Price \U000026FD**:", f"{gas_price_gwei/1000.0:.2f} TUS"
     )
-    message += "{}\t{}\n".format(f"**Avg Mining Win % \U0001F3C6**:", f"{percentages['MINE']:.2f}%")
+    message += "{}\t{}\n".format(
+        f"**Avg Mining Win % \U0001F3C6**:", f"{percentages['MINE']:.2f}%"
+    )
     message += "{}\t{}\n".format(
         f"**Avg Looting Win % \U0001F480**:", f"{percentages['LOOT']:.2f}%"
     )
@@ -602,9 +637,7 @@ def get_profitability_message(
     )
 
     message += f"**Prices**\n"
-    message += (
-        f"AVAX: ${prices.avax_usd:.2f}, TUS: ${prices.tus_usd:.4f}, CRA: ${prices.cra_usd:.4f}\n\n"
-    )
+    message += f"AVAX: ${prices.avax_usd:.2f}, TUS: ${prices.tus_usd:.4f}, CRA: ${prices.cra_usd:.4f}\n\n"
 
     message += f"**Expected Profit (EP)**\n"
     message += f"*(normalized over a 4 hour window)*\n"
@@ -613,7 +646,9 @@ def get_profitability_message(
         csv_file = os.path.join(
             logger.get_logging_dir("crabada"),
             "stats",
-            "profitability_stats{}.csv".format(str(group) if group is not None else ""),
+            "profitability_stats{}.csv".format(
+                str(group) if group is not None else ""
+            ),
         )
 
         profit_headers = []
@@ -639,7 +674,9 @@ def get_profitability_message(
         else:
             do_reinforce = game in REINFORCE_SCENARIOS
             dont_pay_for_reinforcements = game in NO_REINFORCE_PAY_SCENARIOS
-            reinforce_tus = 0.0 if dont_pay_for_reinforcements else avg_reinforce_tus
+            reinforce_tus = (
+                0.0 if dont_pay_for_reinforcements else avg_reinforce_tus
+            )
             profit_tus = get_expected_game_profit(
                 game,
                 prices,

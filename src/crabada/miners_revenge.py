@@ -70,7 +70,11 @@ def calc_miners_revenge(
     attack_point = get_faction_adjusted_battle_point(mine, is_looting=True)
 
     defense_mine_point = 0
-    key = "defense_team_info" if "defense_team_info" in mine else "defense_team_members"
+    key = (
+        "defense_team_info"
+        if "defense_team_info" in mine
+        else "defense_team_members"
+    )
     for crab in mine[key]:
         _, defense_mp = get_bp_mp_from_crab(crab)
         defense_mine_point += defense_mp

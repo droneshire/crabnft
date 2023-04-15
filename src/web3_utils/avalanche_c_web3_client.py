@@ -34,7 +34,9 @@ class AvalancheCWeb3Client(Web3Client):
         self.w3.middleware_onion.inject(geth_poa_middleware, layer=0)
         return self
 
-    def approve(self, approval_address: Address = None, max_amount: int = MAX_UINT256) -> HexStr:
+    def approve(
+        self, approval_address: Address = None, max_amount: int = MAX_UINT256
+    ) -> HexStr:
         if approval_address is None:
             approval_address = self.contract_checksum_address
 
@@ -53,7 +55,9 @@ class AvalancheCWeb3Client(Web3Client):
     def unapprove(self) -> HexStr:
         try:
             tx: TxParams = self.build_contract_transaction(
-                self.contract.functions.approve(self.contract_checksum_address, 0)
+                self.contract.functions.approve(
+                    self.contract_checksum_address, 0
+                )
             )
             return self.sign_and_send_transaction(tx)
         except KeyboardInterrupt:
@@ -68,7 +72,12 @@ class AvalancheCWeb3Client(Web3Client):
 
         address = Web3.toChecksumAddress(approval_address)
         try:
-            return self.contract.functions.allowance(self.user_address, address).call() > 0
+            return (
+                self.contract.functions.allowance(
+                    self.user_address, address
+                ).call()
+                > 0
+            )
         except KeyboardInterrupt:
             raise
         except:
@@ -77,7 +86,9 @@ class AvalancheCWeb3Client(Web3Client):
 
     def get_balance(self) -> float:
         try:
-            balance = self.contract.functions.balanceOf(self.user_address).call()
+            balance = self.contract.functions.balanceOf(
+                self.user_address
+            ).call()
         except KeyboardInterrupt:
             raise
         except:
@@ -88,7 +99,9 @@ class AvalancheCWeb3Client(Web3Client):
     def transfer_token(self, to_address: Address, token: TokenWei) -> HexStr:
         try:
             tx: TxParams = self.build_contract_transaction(
-                self.contract.functions.transfer(to_address, token_to_wei(token))
+                self.contract.functions.transfer(
+                    to_address, token_to_wei(token)
+                )
             )
             return self.sign_and_send_transaction(tx)
         except KeyboardInterrupt:

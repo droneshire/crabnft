@@ -33,10 +33,12 @@ class CrabadaConfigManager(ConfigManager):
             dry_run,
         )
         self.crabada_w2 = crabada_w2
-        self.team_composition_and_mp = self.crabada_w2.get_team_compositions_and_mp(
+        self.team_composition_and_mp = (
+            self.crabada_w2.get_team_compositions_and_mp(self.config["address"])
+        )
+        self.crab_classes = self.crabada_w2.get_crab_classes(
             self.config["address"]
         )
-        self.crab_classes = self.crabada_w2.get_crab_classes(self.config["address"])
 
     def _load_config(self) -> UserConfig:
         config_file = self._get_config_file()
@@ -58,9 +60,9 @@ class CrabadaConfigManager(ConfigManager):
                         load_config["game_specific_configs"] = {}
 
                     if old_game_key in load_config:
-                        load_config["game_specific_configs"][old_game_key] = copy_config[
+                        load_config["game_specific_configs"][
                             old_game_key
-                        ]
+                        ] = copy_config[old_game_key]
                         if old_game_key in [
                             "max_reinforcement_price_tus",
                             "should_reinforce",
@@ -77,9 +79,15 @@ class CrabadaConfigManager(ConfigManager):
                     "looting_teams",
                     "reinforcing_crabs",
                 ]:
-                    for k, v in copy_config["game_specific_configs"].get(config_key, {}).items():
+                    for k, v in (
+                        copy_config["game_specific_configs"]
+                        .get(config_key, {})
+                        .items()
+                    ):
                         del load_config["game_specific_configs"][config_key][k]
-                        load_config["game_specific_configs"][config_key][int(k)] = v
+                        load_config["game_specific_configs"][config_key][
+                            int(k)
+                        ] = v
                 return load_config
         except:
             return copy.deepcopy(self.config)
@@ -102,7 +110,9 @@ class CrabadaConfigManager(ConfigManager):
 
         for del_key in delete_keys:
             if del_key in new_config:
-                new_config["game_specific_configs"][del_key] = new_config[del_key]
+                new_config["game_specific_configs"][del_key] = new_config[
+                    del_key
+                ]
                 del new_config[del_key]
 
             if isinstance(new_config["game_specific_configs"][del_key], dict):
@@ -122,8 +132,8 @@ class CrabadaConfigManager(ConfigManager):
         self, team: int, config: UserConfig
     ) -> T.Tuple[CrabadaClass, int]:
         self.team_composition_and_mp = {}
-        self.team_composition_and_mp = self.crabada_w2.get_team_compositions_and_mp(
-            config["address"]
+        self.team_composition_and_mp = (
+            self.crabada_w2.get_team_compositions_and_mp(config["address"])
         )
         return self.team_composition_and_mp.get(team, (["UNKNOWN"] * 3, 0))
 

@@ -36,7 +36,9 @@ class JoePegsClient:
         params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
         try:
-            return requests.request("GET", url, params=params, headers=headers, timeout=5.0).json()
+            return requests.request(
+                "GET", url, params=params, headers=headers, timeout=5.0
+            ).json()
         except KeyboardInterrupt:
             raise
         except:
@@ -80,11 +82,15 @@ class JoePegsClient:
         params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
         try:
-            return self._joepegs_api(f"/collections/{address}/tokens/{token_id}", params=params)
+            return self._joepegs_api(
+                f"/collections/{address}/tokens/{token_id}", params=params
+            )
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed to get item {token_id}\n{res if res else ''}")
+            logger.print_fail(
+                f"Failed to get item {token_id}\n{res if res else ''}"
+            )
             return {}
 
     def get_collection(
@@ -98,7 +104,9 @@ class JoePegsClient:
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed to get collection {address}\n{res if res else ''}")
+            logger.print_fail(
+                f"Failed to get collection {address}\n{res if res else ''}"
+            )
             return {}
 
     def get_listings(
@@ -120,7 +128,9 @@ class JoePegsClient:
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed to get list items:\n{res if res else ''}")
+            logger.print_fail(
+                f"Failed to get list items:\n{res if res else ''}"
+            )
             return {}
 
     def get_activities(
@@ -140,7 +150,9 @@ class JoePegsClient:
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed to get activities:\n{res if res else ''}")
+            logger.print_fail(
+                f"Failed to get activities:\n{res if res else ''}"
+            )
             return []
 
     def get_sales(
@@ -150,7 +162,11 @@ class JoePegsClient:
         params: T.Dict[str, T.Any] = {},
     ) -> T.List[Activity]:
         activities = self.get_activities(address, params=params)
-        return [a for a in activities if type(a) == dict and a["activityType"] == "sale"]
+        return [
+            a
+            for a in activities
+            if type(a) == dict and a["activityType"] == "sale"
+        ]
 
     def get_floor_avax(
         self,
@@ -189,5 +205,7 @@ class JoePegsClient:
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed to get maker orders:\n{res if res else ''}")
+            logger.print_fail(
+                f"Failed to get maker orders:\n{res if res else ''}"
+            )
             return []

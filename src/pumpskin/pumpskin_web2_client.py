@@ -30,7 +30,9 @@ class PumpskinWeb2Client:
         params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
         try:
-            return requests.request("GET", url, params=params, headers=headers, timeout=5.0).json()
+            return requests.request(
+                "GET", url, params=params, headers=headers, timeout=5.0
+            ).json()
         except KeyboardInterrupt:
             raise
         except:
@@ -63,20 +65,29 @@ class PumpskinWeb2Client:
         headers: T.Dict[str, T.Any] = {},
         params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
-        url = self.BASE_URL + f"/QmY1Fccg5JrnpbyzNJBekPPPMQsPFm1Cxx9MJSeArpwTdP/{token_id}"
+        url = (
+            self.BASE_URL
+            + f"/QmY1Fccg5JrnpbyzNJBekPPPMQsPFm1Cxx9MJSeArpwTdP/{token_id}"
+        )
         return self._get_request(url, headers=headers, params=params)
 
-    def get_pumpskin_info(self, token_id: int, params: T.Dict[str, T.Any] = {}) -> Pumpskin:
+    def get_pumpskin_info(
+        self, token_id: int, params: T.Dict[str, T.Any] = {}
+    ) -> Pumpskin:
         try:
             res = self._get_pumpskin_info_raw(token_id=token_id, params=params)
             return res
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed to get pumpskin info:\n{res if res else ''}")
+            logger.print_fail(
+                f"Failed to get pumpskin info:\n{res if res else ''}"
+            )
             return {}
 
-    def get_pumpskin_image(self, token_id: int, params: T.Dict[str, T.Any] = {}) -> Pumpskin:
+    def get_pumpskin_image(
+        self, token_id: int, params: T.Dict[str, T.Any] = {}
+    ) -> Pumpskin:
         try:
             res = self._get_pumpskin_info_raw(token_id=token_id, params=params)
             image_path = res["image"].split("://")[1]
@@ -84,5 +95,7 @@ class PumpskinWeb2Client:
         except KeyboardInterrupt:
             raise
         except:
-            logger.print_fail(f"Failed to get pumpskin image:\n{res if res else ''}")
+            logger.print_fail(
+                f"Failed to get pumpskin image:\n{res if res else ''}"
+            )
             return {}

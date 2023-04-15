@@ -88,7 +88,9 @@ class CrabadaWeb2Client:
 
     MAX_BP_NORMAL_CRAB = 237
 
-    def __init__(self, authorization_token: str = "", use_proxy: bool = False) -> None:
+    def __init__(
+        self, authorization_token: str = "", use_proxy: bool = False
+    ) -> None:
         self.requests = requests
         self.authorization_token = authorization_token
         self.proxy = None
@@ -134,7 +136,9 @@ class CrabadaWeb2Client:
             headers["authorization"] = f"Bearer {self.authorization_token}"
 
             if not self.authorization_token:
-                logger.print_fail(f"No auth token present, unable to complete post request!")
+                logger.print_fail(
+                    f"No auth token present, unable to complete post request!"
+                )
                 return {}
 
         try:
@@ -178,7 +182,9 @@ class CrabadaWeb2Client:
         }
 
         try:
-            res = self._post_put_request("PUT", url, json_data=json.loads(json.dumps(data)))
+            res = self._post_put_request(
+                "PUT", url, json_data=json.loads(json.dumps(data))
+            )
             return res["result"]
         except KeyboardInterrupt:
             raise
@@ -186,7 +192,9 @@ class CrabadaWeb2Client:
             logger.format_fail(f"Failed to get loot data!\n{res}")
             return {}
 
-    def get_auth_token(self, user_address: Address, signature: str, timestamp: int) -> str:
+    def get_auth_token(
+        self, user_address: Address, signature: str, timestamp: int
+    ) -> str:
         url = self.MARKETPLACE_URL + "/crabada-user/public/login-signature"
         data = {
             "address": user_address,
@@ -209,7 +217,9 @@ class CrabadaWeb2Client:
             logger.format_fail(f"Failed to get authorization!\n{res}")
             return ""
 
-    def get_crabs(self, user_address: Address, params: T.Dict[str, T.Any] = {}) -> T.List[Crab]:
+    def get_crabs(
+        self, user_address: Address, params: T.Dict[str, T.Any] = {}
+    ) -> T.List[Crab]:
         res = self.list_crabs_in_game_raw(user_address, params)
         try:
             return res["result"]["data"] or []
@@ -257,7 +267,9 @@ class CrabadaWeb2Client:
 
         return team_composition
 
-    def get_mine(self, mine_id: int, params: T.Dict[str, T.Any] = {}) -> IdleGame:
+    def get_mine(
+        self, mine_id: int, params: T.Dict[str, T.Any] = {}
+    ) -> IdleGame:
         """Get information from the given mine"""
         res = self.get_mine_raw(mine_id, params)
         if res:
@@ -265,7 +277,9 @@ class CrabadaWeb2Client:
         else:
             return {}
 
-    def get_mine_raw(self, mine_id: int, params: T.Dict[str, T.Any] = {}) -> T.Any:
+    def get_mine_raw(
+        self, mine_id: int, params: T.Dict[str, T.Any] = {}
+    ) -> T.Any:
         url = self.BASE_URL + "/mine/" + str(mine_id)
         return self._get_request(url, params)
 
@@ -289,7 +303,11 @@ class CrabadaWeb2Client:
     ) -> T.List[Crab]:
         res = self.list_crabs_in_game_raw(user_address, params)
         try:
-            return [c for c in res["result"]["data"] if c.get("crabada_status", "") == "AVAILABLE"]
+            return [
+                c
+                for c in res["result"]["data"]
+                if c.get("crabada_status", "") == "AVAILABLE"
+            ]
         except KeyboardInterrupt:
             raise
         except:
@@ -377,7 +395,9 @@ class CrabadaWeb2Client:
     def get_team(self) -> None:
         raise Exception("The team route does not exit on the server!")
 
-    def list_teams(self, user_address: Address, params: T.Dict[str, T.Any] = {}) -> T.List[Team]:
+    def list_teams(
+        self, user_address: Address, params: T.Dict[str, T.Any] = {}
+    ) -> T.List[Team]:
         """
         Get all teams of a given user address.
 
@@ -404,7 +424,9 @@ class CrabadaWeb2Client:
         actual_params.update(params)
         return self.list_teams(user_address, actual_params)
 
-    def list_teams_raw(self, user_address: Address, params: T.Dict[str, T.Any] = {}) -> T.Any:
+    def list_teams_raw(
+        self, user_address: Address, params: T.Dict[str, T.Any] = {}
+    ) -> T.Any:
         url = self.BASE_URL + "/teams"
         actual_params = {
             "limit": self.TEAM_AND_MINE_LIMIT,
@@ -430,7 +452,9 @@ class CrabadaWeb2Client:
         params["order"] = "desc"
         return self.list_crabs_for_lending(params)
 
-    def list_crabs_for_lending(self, params: T.Dict[str, T.Any] = {}) -> T.List[CrabForLending]:
+    def list_crabs_for_lending(
+        self, params: T.Dict[str, T.Any] = {}
+    ) -> T.List[CrabForLending]:
         """
         Get all crabs available for lending as reinforcements; you can use
         sortBy and sort parameters, default is orderBy": 'price' and
@@ -495,7 +519,9 @@ class CrabadaWeb2Client:
         if len(affordable_crabs) < 25:
             nth_crab = len(affordable_crabs) - 1
         else:
-            nth_crab = int(math.ceil(self.N_CRAB_PERCENT / 100.0 * len(affordable_crabs)))
+            nth_crab = int(
+                math.ceil(self.N_CRAB_PERCENT / 100.0 * len(affordable_crabs))
+            )
             nth_crab += reinforcement_search_backoff
         nth_crab = min(len(affordable_crabs), nth_crab)
         logger.print_ok_blue(
@@ -636,7 +662,9 @@ class CrabadaWeb2Client:
         min_reinforcement_battle_point: int = -1,
         params: T.Dict[str, T.Any] = {},
     ) -> T.Optional[CrabForLending]:
-        my_crabs = self.list_my_available_crabs_for_reinforcement(user_address, params)
+        my_crabs = self.list_my_available_crabs_for_reinforcement(
+            user_address, params
+        )
         if not my_crabs:
             return None
 
@@ -653,7 +681,9 @@ class CrabadaWeb2Client:
         if not available_crabs:
             return None
 
-        logger.print_normal(f"Found {len(available_crabs)} of own crabs that can reinforce")
+        logger.print_normal(
+            f"Found {len(available_crabs)} of own crabs that can reinforce"
+        )
         point_type = params.get("orderBy", "mine_point")
 
         sorted_crabs = sorted(available_crabs, key=lambda c: c[point_type])
@@ -661,13 +691,21 @@ class CrabadaWeb2Client:
         best_crab["price"] = 0
         return best_crab
 
-    def get_reinforcement_crabs(self, mine: IdleGame, is_loot: bool = False) -> T.List[int]:
+    def get_reinforcement_crabs(
+        self, mine: IdleGame, is_loot: bool = False
+    ) -> T.List[int]:
         if is_loot:
-            return [m["crabada_id"] for m in mine.get("attack_team_info", [])][3:]
+            return [m["crabada_id"] for m in mine.get("attack_team_info", [])][
+                3:
+            ]
         else:
-            return [m["crabada_id"] for m in mine.get("defense_team_info", [])][3:]
+            return [m["crabada_id"] for m in mine.get("defense_team_info", [])][
+                3:
+            ]
 
-    def list_crabs_for_lending_raw(self, params: T.Dict[str, T.Any] = {}) -> T.Any:
+    def list_crabs_for_lending_raw(
+        self, params: T.Dict[str, T.Any] = {}
+    ) -> T.Any:
         url = self.BASE_URL + "/crabadas/lending"
         actual_params = {
             "limit": self.CRAB_LIMIT,
@@ -693,7 +731,9 @@ class CrabadaWeb2Client:
         logger.print_normal(
             f"Loot[{mine['game_id']}]: reinforce check: [D] {defense_battle_point} [A] {attack_battle_point + self.MAX_BP_NORMAL_CRAB}"
         )
-        return attack_battle_point + self.MAX_BP_NORMAL_CRAB > defense_battle_point
+        return (
+            attack_battle_point + self.MAX_BP_NORMAL_CRAB > defense_battle_point
+        )
 
     def loot_is_winning(self, mine: IdleGame) -> bool:
         """
@@ -780,30 +820,44 @@ class CrabadaWeb2Client:
             return False
 
         if not self.mine_is_open(mine):
-            logger.print_normal(f"{mine['game_id']}: Not reinforcing, loot not open")
+            logger.print_normal(
+                f"{mine['game_id']}: Not reinforcing, loot not open"
+            )
             return False
 
         if self.mine_is_finished(mine):
-            logger.print_normal(f"{mine['game_id']}: Not reinforcing, loot finished")
+            logger.print_normal(
+                f"{mine['game_id']}: Not reinforcing, loot finished"
+            )
             return False
 
         if self.mine_is_settled(mine):
-            logger.print_normal(f"{mine['game_id']}: Not reinforcing, loot settled")
+            logger.print_normal(
+                f"{mine['game_id']}: Not reinforcing, loot settled"
+            )
             return False
 
         process = mine["process"]
         actions = [p["action"] for p in process]
         if actions[-1] not in ["reinforce-defense"]:
-            logger.print_normal(f"{mine['game_id']}: Not reinforcing loot, not our turn")
+            logger.print_normal(
+                f"{mine['game_id']}: Not reinforcing loot, not our turn"
+            )
             return False
 
-        num_reinforcements = len([a for a in actions if "reinforce-attack" in a])
+        num_reinforcements = len(
+            [a for a in actions if "reinforce-attack" in a]
+        )
         if num_reinforcements >= 2:
-            logger.print_normal(f"{mine['game_id']}: Not reinforcing loot, already did 2x")
+            logger.print_normal(
+                f"{mine['game_id']}: Not reinforcing loot, already did 2x"
+            )
             return False
 
         if self.loot_is_winning(mine):
-            logger.print_normal(f"{mine['game_id']}: Not reinforcing loot, we're winning")
+            logger.print_normal(
+                f"{mine['game_id']}: Not reinforcing loot, we're winning"
+            )
             return False
 
         # make sure we don't reinforce to a legendary when we can't win
@@ -836,7 +890,10 @@ class CrabadaWeb2Client:
         if not mine:
             return False
 
-        return self.get_remaining_time(mine) < 7000 or mine.get("winner_team_id", None) is not None
+        return (
+            self.get_remaining_time(mine) < 7000
+            or mine.get("winner_team_id", None) is not None
+        )
 
     def mine_is_finished(self, mine: IdleGame) -> bool:
         """
@@ -865,7 +922,8 @@ class CrabadaWeb2Client:
         if actions[-1] in ["attack", "reinforce-attack"]:
             margin = 60.0 * 3
             is_past_action_time = (
-                self.get_time_since_last_action(mine) > self.TIME_PER_MINING_ACTION + margin
+                self.get_time_since_last_action(mine)
+                > self.TIME_PER_MINING_ACTION + margin
             )
             return is_past_action_time
 
@@ -962,7 +1020,9 @@ class CrabadaWeb2Client:
 
         If a game is already finished, it won't be considered"""
         unfinished_games = [g for g in games if not mine_is_finished(g)]
-        return first_or_none(sorted(unfinished_games, key=lambda g: g.get("end_time", 10e20)))
+        return first_or_none(
+            sorted(unfinished_games, key=lambda g: g.get("end_time", 10e20))
+        )
 
     def get_last_mine_start_time(self, user_address: Address) -> int:
         last_mine_start = 0

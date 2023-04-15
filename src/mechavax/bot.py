@@ -118,22 +118,42 @@ class MechBot:
             ): self.mech_minted_handler,
         }
 
-        self.resolved_address = resolve_address_to_avvy(self.w3_mech.w3, address)
+        self.resolved_address = resolve_address_to_avvy(
+            self.w3_mech.w3, address
+        )
         logger.print_bold(f"We are {self.resolved_address}")
 
     def get_events(
-        self, event_function: T.Any, cadence: int = 1, latest_only: bool = True
+        self,
+        event_function: T.Any,
+        cadence: int = 1,
+        latest_only: bool = True,
+        age: T.Optional[int] = None,
     ) -> T.List[T.Any]:
-        NUM_CHUNKS = int(500 / cadence)
+        NUM_CHUNKS = int(250 / cadence)
         latest_block = self.w3_mech.w3.eth.block_number
 
         events = []
         for i in track(range(NUM_CHUNKS), description=f"{event_function}"):
-            events.extend(
-                event_function.getLogs(
-                    fromBlock=latest_block - 2048, toBlock=latest_block
-                )
+            new_events = event_function.getLogs(
+                fromBlock=latest_block - 2048, toBlock=latest_block
             )
+
+            for event in new_events:
+                if age:
+                    block_number = event.get("blockNumber", 0)
+
+                    if block_number == 0:
+                        continue
+                    timestamp = self.w3_mech.w3.eth.get_block(
+                        block_number
+                    ).timestamp
+                    if time.time() - timestamp < age:
+                        events.append(event)
+                else:
+                    events.append(event)
+
+            events.extend(new_events)
             if len(events) > 0 and latest_only:
                 break
 
@@ -198,7 +218,7 @@ class MechBot:
 
     def get_last_marm_mint(self) -> float:
         events = self.get_events(
-            self.w3_arm.contract.events.ShirakBalanceUpdated,
+            self.w3_mech.contract.events.ShirakBalanceUpdated,
             cadence=1,
             latest_only=True,
         )
@@ -212,7 +232,9 @@ class MechBot:
             latest_event = max(latest_event, timestamp)
 
         if latest_event == 0:
-            logger.print_warn(f"Failed to find block timestamp, defaulting to now")
+            logger.print_warn(
+                f"Failed to find block timestamp, defaulting to now"
+            )
             latest_event = time.time()
 
         time_since = int(time.time() - latest_event)
@@ -221,7 +243,9 @@ class MechBot:
         )
         return latest_event
 
-    def mech_minted_handler(self, event: web3.datastructures.AttributeDict) -> None:
+    def mech_minted_handler(
+        self, event: web3.datastructures.AttributeDict
+    ) -> None:
         event_data = json.loads(Web3.toJSON(event))
         self.last_time_mech_minted = time.time()
         try:
@@ -240,7 +264,9 @@ class MechBot:
         logger.print_ok_blue(message)
         self.webhook.send(message)
 
-    def marm_minted_handler(self, event: web3.datastructures.AttributeDict) -> None:
+    def marm_minted_handler(
+        self, event: web3.datastructures.AttributeDict
+    ) -> None:
         event_data = json.loads(Web3.toJSON(event))
         self.last_time_marm_minted = time.time()
         try:
@@ -259,7 +285,9 @@ class MechBot:
         logger.print_ok_blue(message)
         self.webhook.send(message)
 
-    def arms_bonded_handler(self, event: web3.datastructures.AttributeDict) -> None:
+    def arms_bonded_handler(
+        self, event: web3.datastructures.AttributeDict
+    ) -> None:
         event_data = json.loads(Web3.toJSON(event))
         try:
             user = event_data["args"]["user"]
@@ -289,12 +317,16 @@ class MechBot:
             logger.print_warn(f"Failed to process legendary minted event")
             return
 
-        logger.print_ok_blue(f"New ascended minted: {user}, {token_id}, {burned_mechs}")
+        logger.print_ok_blue(
+            f"New ascended minted: {user}, {token_id}, {burned_mechs}"
+        )
         self.webhook.send(
             f"\U0001F916 New ascended minted: `{user}`, ID: `{token_id}`\nBurned mechs: {burned_mechs}"
         )
 
-    def shirak_mint_handler(self, event: web3.datastructures.AttributeDict) -> None:
+    def shirak_mint_handler(
+        self, event: web3.datastructures.AttributeDict
+    ) -> None:
         event_data = json.loads(Web3.toJSON(event))
         try:
             tx_hash = event_data["transactionHash"]
@@ -309,7 +341,9 @@ class MechBot:
                 return
             logger.print_warn(f"Non-mint shirak event...")
         except:
-            logger.print_warn(f"Failed to process shirak transfer event\n{event_data}")
+            logger.print_warn(
+                f"Failed to process shirak transfer event\n{event_data}"
+            )
             return
 
         explorer_link = f"Explorer: https://snowtrace.io/tx/{tx_hash}"
@@ -334,7 +368,9 @@ class MechBot:
         num_minted_mechs_from_shk = await async_func_wrapper(
             self.w3_mech.get_minted_shk_mechs
         )
-        our_mechs = await async_func_wrapper(self.w3_mech.get_num_mechs, self.address)
+        our_mechs = await async_func_wrapper(
+            self.w3_mech.get_num_mechs, self.address
+        )
         multiplier = await async_func_wrapper(
             self.w3_mech.get_emmissions_multiplier, self.address
         )
@@ -348,21 +384,29 @@ class MechBot:
         message += f"**SHK Deposited**: `{shk_balance:.2f}`\n"
         message += f"**Multiplier**: `{multiplier:.2f}`\n\n"
         message += f"**Current Mint Price**: `{min_mint_shk:.2f} $SHK`\n"
-        message += f"**SHK Minted Mechs**: `{num_minted_mechs_from_shk:.2f}`\n\n"
+        message += (
+            f"**SHK Minted Mechs**: `{num_minted_mechs_from_shk:.2f}`\n\n"
+        )
 
         logger.print_ok_blue(message)
 
     async def mint_bot(self) -> None:
+        mints_within_past_period = await self.get_minting_info()
+
         if self.MINTING_INFO["MECH"]["enable"]:
             await self.try_to_mint(
-                self.w3_mech,
                 "MECH",
+                self.w3_mech,
+                mints_within_past_period["MECH"]["total"],
+                mints_within_past_period["MECH"]["ours"],
                 self.last_time_mech_minted,
             )
         if self.MINTING_INFO["MARM"]["enable"]:
             await self.try_to_mint(
-                self.w3_arm,
                 "MARM",
+                self.w3_arm,
+                mints_within_past_period["MARM"]["total"],
+                mints_within_past_period["MARM"]["ours"],
                 self.last_time_marm_minted,
             )
 
@@ -380,57 +424,90 @@ class MechBot:
 
         total_shk_wei = token_to_wei(total_shk)
         logger.print_bold(f"Depositing {total_shk:.2f} SHK in account...")
-        tx_hash = await async_func_wrapper(self.w3_mech.add_shirak, total_shk_wei)
+        tx_hash = await async_func_wrapper(
+            self.w3_mech.add_shirak, total_shk_wei
+        )
 
         action_str = f"Deposit {total_shk:.2f} SHK to account"
         _, txn_url = process_w3_results(self.w3_mech, action_str, tx_hash)
         if txn_url:
-            message = f"\U0001F389 Successfully deposited {total_shk:.2f}!\n{txn_url}"
+            message = (
+                f"\U0001F389 Successfully deposited {total_shk:.2f}!\n{txn_url}"
+            )
             logger.print_ok_arrow(message)
         else:
             message = f"\U00002620 Failed to deposit {total_shk:.2f}!"
             logger.print_fail_arrow(message)
 
+    async def get_minting_info(self) -> T.Dict[str, T.Any]:
+        now = time.time()
+        time_window = max(
+            self.MINTING_INFO["MECH"]["period"],
+            self.MINTING_INFO["MARM"]["period"],
+        )
+
+        event_function = self.w3_mech.contract.events.ShirakBalanceUpdated
+        events_within_past_period = self.get_events_within(
+            event_function, time_window
+        )
+
+        mints_within_past_period = {
+            "MECH": {"total": 0, "ours": 0},
+            "MARM": {"total": 0, "ours": 0},
+        }
+        for mint in events_within_past_period:
+            event_data = json.loads(Web3.toJSON(mint))
+            minter = mint["args"]["user"]
+            time_block = self.w3_mech.w3.eth.get_block(
+                mint["blockNumber"]
+            ).timestamp
+            # try:
+            tx_hash = event_data["transactionHash"]
+            tx_receipt = self.w3_mech.get_transaction_receipt(tx_hash)
+            transaction = tx_receipt["logs"][1]
+            if transaction["address"] == self.w3_mech.contract.address:
+                if now - time_block > self.MINTING_INFO["MECH"]["period"]:
+                    continue
+                mints_within_past_period["MECH"]["total"] += 1
+                if minter == self.address:
+                    mints_within_past_period["MECH"]["ours"] += 1
+            elif transaction["address"] == self.w3_arm.contract.address:
+                if now - time_block > self.MINTING_INFO["MARM"]["period"]:
+                    continue
+                mints_within_past_period["MARM"]["total"] += 1
+                if minter == self.address:
+                    mints_within_past_period["MARM"]["ours"] += 1
+            else:
+                continue
+            # except:
+            #     logger.print_warn(
+            #         f"Failed to process shirak transfer event\n{event_data}"
+            #     )
+            #     continue
+
+        for nft_type in mints_within_past_period.keys():
+            ours = mints_within_past_period[nft_type]["ours"]
+            total = mints_within_past_period[nft_type]["total"]
+            mint_time_window = self.MINTING_INFO[nft_type]["period"]
+            logger.print_bold(
+                f"We've minted {ours} {nft_type}s in past {get_pretty_seconds(mint_time_window)} out of {total} mints"
+            )
+
+        return mints_within_past_period
+
     async def try_to_mint(
         self,
-        w3: AvalancheCWeb3Client,
         nft_type: T.Literal["MECH", "MARM"],
+        w3: AvalancheCWeb3Client,
+        mints_within_past_period: int,
+        num_our_mints: int,
         last_time_minted: float,
     ) -> None:
         now = time.time()
         time_since_last_mint = now - last_time_minted
-        time_window = self.MINTING_INFO[nft_type]["period"]
-
-        event_function = self.w3_mech.contract.events.ShirakBalanceUpdated
-        events_within_past_period = self.get_events_within(event_function, time_window)
-
-        num_our_mints = 0
-        mints_within_past_period = 0
-        for mint in events_within_past_period:
-            event_data = json.loads(Web3.toJSON(event))
-            try:
-                tx_hash = event_data["transactionHash"]
-                tx_receipt = w3.get_transaction_receipt(tx_hash)
-                transaction = tx_receipt["logs"][1]
-                if transaction["address"] != w3.contract_address:
-                    continue
-                mints_within_past_period += 1
-            except:
-                logger.print_warn(
-                    f"Failed to process shirak transfer event\n{event_data}"
-                )
-                continue
-
-            minter = mint["args"]["user"]
-            if minter == self.address:
-                num_our_mints += 1
-
-        logger.print_bold(
-            f"We've minted {num_our_mints} {nft_type}s in past {get_pretty_seconds(time_window)} out of {mints_within_past_period} mints"
-        )
 
         if time_since_last_mint < self.MINTING_INFO[nft_type]["cooldown"]:
-            logger.print_normal(
+            logger.print_warn(
                 f"Skipping minting {nft_type} since still within window: {get_pretty_seconds(int(time_since_last_mint))}"
             )
             return
@@ -446,15 +523,21 @@ class MechBot:
         for _, totals in current_balances.items():
             total_shk += totals["shk"]
 
-        our_shk = current_balances.get(self.resolved_address, {}).get("shk", 0.0)
+        our_shk = current_balances.get(self.resolved_address, {}).get(
+            "shk", 0.0
+        )
 
-        logger.print_normal(f"Total supply SHK: {total_shk:.2f}, ours: {our_shk:.2f}")
+        logger.print_normal(
+            f"Total supply SHK: {total_shk:.2f}, ours: {our_shk:.2f}"
+        )
 
         if total_shk <= 0.0:
             return
 
         shk_ownership_percent = our_shk / total_shk * 100.0
-        desired_shk_ownership_percent = self.MINTING_INFO[nft_type]["percent_shk"]
+        desired_shk_ownership_percent = self.MINTING_INFO[nft_type][
+            "percent_shk"
+        ]
 
         if shk_ownership_percent < desired_shk_ownership_percent:
             logger.print_warn(
@@ -480,7 +563,7 @@ class MechBot:
             )
             return
 
-        if num_mints >= self.MINTING_INFO[nft_type]["max"]:
+        if num_our_mints >= self.MINTING_INFO[nft_type]["max"]:
             logger.print_warn(
                 f"Skipping mint of {nft_type} since we've max minted today!"
             )
@@ -510,15 +593,21 @@ class MechBot:
                 continue
 
             current_balances[address] = {}
-            current_balances[address]["shk"] = self.w3_mech.get_deposited_shk(address)
-            current_balances[address]["mechs"] = self.w3_mech.get_num_mechs(address)
+            current_balances[address]["shk"] = self.w3_mech.get_deposited_shk(
+                address
+            )
+            current_balances[address]["mechs"] = self.w3_mech.get_num_mechs(
+                address
+            )
             logger.print_normal(
                 f"Found {address} with {current_balances[address]['shk']}, {current_balances[address]['mechs']} mechs"
             )
 
         sorted_stats = {
             k: v
-            for k, v in sorted(current_balances.items(), key=lambda x: -x[1]["shk"])
+            for k, v in sorted(
+                current_balances.items(), key=lambda x: -x[1]["shk"]
+            )
         }
 
         total_shk = 0.0
@@ -544,11 +633,15 @@ class MechBot:
                         data[address][k] = []
                     data[address][k].append(v)
 
-                resolved_address = resolve_address_to_avvy(self.w3_mech.w3, address)
+                resolved_address = resolve_address_to_avvy(
+                    self.w3_mech.w3, address
+                )
                 if resolved_address in data and resolved_address != address:
                     data[address] = data[resolved_address]
                     del data[resolved_address]
-                    logger.print_normal(f"Converting {resolved_address} -> {address}")
+                    logger.print_normal(
+                        f"Converting {resolved_address} -> {address}"
+                    )
             json.dump(data, outfile, indent=4)
 
         logger.print_bold("Updated cache file!")
@@ -573,10 +666,12 @@ class MechBot:
             if address not in guild_stats:
                 guild_stats[address] = {}
 
-            shortened_address = await async_func_wrapper(shortened_address_str, address)
-            guild_stats[address]["owner"] = GUILD_WALLET_MAPPING.get(address, "").split(
-                "#"
-            )[0]
+            shortened_address = await async_func_wrapper(
+                shortened_address_str, address
+            )
+            guild_stats[address]["owner"] = GUILD_WALLET_MAPPING.get(
+                address, ""
+            ).split("#")[0]
 
             if "MARM" not in guild_stats[address]:
                 guild_stats[address]["MARM"] = []
@@ -601,7 +696,9 @@ class MechBot:
                 guild_stats[address]["MECH"][mech] = mech_emission
                 multiplier += mech_emission
 
-            guild_stats[address]["SHK"] = shk_holders.get(address, {}).get("SHK", 0)
+            guild_stats[address]["SHK"] = shk_holders.get(address, {}).get(
+                "SHK", 0
+            )
             multiplier /= 10.0
 
         logger.print_bold(f"Updated {MECH_GUILD_STATS_FILE}")

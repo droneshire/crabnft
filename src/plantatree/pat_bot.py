@@ -59,7 +59,9 @@ class PatBot:
         self.avg_gas_gwei: Average = Average()
         self.avg_gas_used: Average = Average(0.001570347)
 
-        self.referral_address: Address = Web3.toChecksumAddress(referral_address)
+        self.referral_address: Address = Web3.toChecksumAddress(
+            referral_address
+        )
         self.todays_tax = 100.0
 
         self.txns = []
@@ -91,7 +93,9 @@ class PatBot:
             url=discord.DISCORD_WEBHOOK_URL["PAT_ACTIVITY"],
             rate_limit_retry=True,
         )
-        discord_username = self.config_mgr.config["discord_handle"].split("#")[0].upper()
+        discord_username = (
+            self.config_mgr.config["discord_handle"].split("#")[0].upper()
+        )
         EMBED_COLOR = {
             Action.HARVEST: Color.gold().value,
             Action.REPLANT: Color.green().value,
@@ -102,9 +106,13 @@ class PatBot:
             description=f"Bot action for {discord_username}\n",
             color=EMBED_COLOR,
         )
-        embed.add_embed_field(name=f"Action", value=f"{action.upper()}", inline=False)
+        embed.add_embed_field(
+            name=f"Action", value=f"{action.upper()}", inline=False
+        )
         embed.add_embed_field(name=f"Gas", value=f"{gas}", inline=False)
-        embed.add_embed_field(name=f"Today's Tax", value=f"{self.todays_tax:.1f}%", inline=False)
+        embed.add_embed_field(
+            name=f"Today's Tax", value=f"{self.todays_tax:.1f}%", inline=False
+        )
 
         contract_balance = self.pat_w3.get_contract_balance()
         embed.add_embed_field(
@@ -156,7 +164,9 @@ class PatBot:
 
         diff = deepdiff.DeepDiff(self.current_stats, NULL_GAME_STATS)
         if not diff:
-            logger.print_normal(f"Didn't update any stats, not sending email...")
+            logger.print_normal(
+                f"Didn't update any stats, not sending email..."
+            )
             return
 
         if self.dry_run:
@@ -187,11 +197,15 @@ class PatBot:
                 self.stats_logger.lifetime_stats[k].extend(v)
             elif isinstance(v, dict):
                 for i, j in self.stats_logger.lifetime_stats[k].items():
-                    self.stats_logger.lifetime_stats[k][i] += self.current_stats[k][i]
+                    self.stats_logger.lifetime_stats[k][
+                        i
+                    ] += self.current_stats[k][i]
             else:
                 self.stats_logger.lifetime_stats[k] += v
 
-        self.stats_logger.lifetime_stats["commission_avax"] = self.stats_logger.lifetime_stats.get(
+        self.stats_logger.lifetime_stats[
+            "commission_avax"
+        ] = self.stats_logger.lifetime_stats.get(
             "commission_avax", {COMMISSION_WALLET_ADDRESS: 0.0}
         )
 
@@ -202,7 +216,9 @@ class PatBot:
             commission_avax = avax_rewards * (commission_percent / 100.0)
 
             self.stats_logger.lifetime_stats["commission_avax"][address] = (
-                self.stats_logger.lifetime_stats["commission_avax"].get(address, 0.0)
+                self.stats_logger.lifetime_stats["commission_avax"].get(
+                    address, 0.0
+                )
                 + commission_avax
             )
 
@@ -218,11 +234,15 @@ class PatBot:
         )
 
     def _harvest(self, rewards_avax: float) -> bool:
-        logger.print_bold(f"It's HARVEST DAY! Attempting to reap \U0001F332 \U0001F332...")
+        logger.print_bold(
+            f"It's HARVEST DAY! Attempting to reap \U0001F332 \U0001F332..."
+        )
         tx_hash = self.pat_w3.harvest()
         tx_receipt = self.pat_w3.get_transaction_receipt(tx_hash)
 
-        gas = wei_to_token(self.pat_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        gas = wei_to_token(
+            self.pat_w3.get_gas_cost_of_transaction_wei(tx_receipt)
+        )
         self.avg_gas_used.update(gas)
         self.stats_logger.lifetime_stats["avax_gas"] += gas
         logger.print_bold(f"Paid {gas} AVAX in gas")
@@ -233,10 +253,14 @@ class PatBot:
         else:
             logger.print_ok(f"Successfully completed harvest!\n{tx_receipt}")
             self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
-            logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+            logger.print_normal(
+                f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n"
+            )
             self.current_stats["harvests"] += 1
             self.current_stats["avax_harvested"] += rewards_avax
-            self._send_discord_activity_update(Action.HARVEST, gas, rewards_avax)
+            self._send_discord_activity_update(
+                Action.HARVEST, gas, rewards_avax
+            )
         return True
 
     def _replant(self, rewards_avax: float) -> bool:
@@ -244,7 +268,9 @@ class PatBot:
         tx_hash = self.pat_w3.re_plant(self.referral_address)
         tx_receipt = self.pat_w3.get_transaction_receipt(tx_hash)
 
-        gas = wei_to_token(self.pat_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        gas = wei_to_token(
+            self.pat_w3.get_gas_cost_of_transaction_wei(tx_receipt)
+        )
         self.avg_gas_used.update(gas)
         self.stats_logger.lifetime_stats["avax_gas"] += gas
         logger.print_bold(f"Paid {gas} AVAX in gas")
@@ -255,19 +281,27 @@ class PatBot:
         else:
             logger.print_ok(f"Successfully completed replant!")
             self.txns.append(f"https://snowtrace.io/tx/{tx_hash}")
-            logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+            logger.print_normal(
+                f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n"
+            )
             self.current_stats["replants"] += 1
-            self._send_discord_activity_update(Action.REPLANT, gas, rewards_avax)
+            self._send_discord_activity_update(
+                Action.REPLANT, gas, rewards_avax
+            )
         return True
 
     def _should_replant(self) -> bool:
         last_replant = self.pat_w3.get_seconds_since_last_replant()
-        logger.print_ok_blue(f"Last replant: {get_pretty_seconds(last_replant)} ago")
+        logger.print_ok_blue(
+            f"Last replant: {get_pretty_seconds(last_replant)} ago"
+        )
         min_time_replant = 60.0 * 60.0 * 1.0
 
         if last_replant < max(
             min_time_replant,
-            self.config_mgr.config["game_specific_configs"]["time_between_plants"],
+            self.config_mgr.config["game_specific_configs"][
+                "time_between_plants"
+            ],
         ):
             return False
 
@@ -281,7 +315,8 @@ class PatBot:
         contract_balance = float(self.pat_w3.get_contract_balance())
         trees = float(trees)
         trees_total = (
-            (TSN * contract_balance - rewards * TSNH) * trees / rewards - TSNH * trees
+            (TSN * contract_balance - rewards * TSNH) * trees / rewards
+            - TSNH * trees
         ) / TSN
         return int(trees_total)
 
@@ -295,7 +330,9 @@ class PatBot:
         is_harvest_day = math.isclose(0.0, self.todays_tax)
 
         logger.print_bold(f"{self.user.upper()} \U0001F332 Stats:")
-        logger.print_ok_arrow(f"Referral Awards: {self.pat_w3.get_my_referral_rewards()} trees")
+        logger.print_ok_arrow(
+            f"Referral Awards: {self.pat_w3.get_my_referral_rewards()} trees"
+        )
         logger.print_ok_blue_arrow(f"Today's tax: {self.todays_tax:.2f}%")
         logger.print_ok_blue_arrow(
             f"Contract balance: {self.pat_w3.get_contract_balance():.2f} $AVAX"
@@ -305,13 +342,19 @@ class PatBot:
         logger.print_ok(f"Rewards: {rewards_avax}")
         logger.print_ok(f"My Trees: {my_trees}")
 
-        if is_harvest_day and self.pat_w3.is_harvest_day() and self.pat_w3.did_48_hour_replant():
+        if (
+            is_harvest_day
+            and self.pat_w3.is_harvest_day()
+            and self.pat_w3.did_48_hour_replant()
+        ):
             self._harvest(rewards_avax)
 
         if self.todays_tax > 30.0 and self._should_replant():
             self._replant(rewards_avax)
         elif self.todays_tax <= 30.0:
-            logger.print_warn(f"Skipping replant b/c we are in the harvest window!")
+            logger.print_warn(
+                f"Skipping replant b/c we are in the harvest window!"
+            )
 
         self._send_email_update()
         self._update_stats()

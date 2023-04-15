@@ -13,7 +13,9 @@ class CraSwimmerWeb3Client(SwimmerNetworkClient):
     Interact with the CRA token on Swimmer Network
     """
 
-    contract_address = T.cast(Address, "0xC1a1F40D558a3E82C3981189f61EF21e17d6EB48")
+    contract_address = T.cast(
+        Address, "0xC1a1F40D558a3E82C3981189f61EF21e17d6EB48"
+    )
     this_dir = os.path.dirname(os.path.realpath(__file__))
     abi_dir = os.path.join(this_dir, "abi", "abi-erc20.json")
     abi = Web3Client._get_contract_abi_from_file(abi_dir)

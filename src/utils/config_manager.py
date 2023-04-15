@@ -192,7 +192,9 @@ class ConfigManager:
         if self.dry_run or not self._did_config_change():
             return
 
-        logger.print_warn(f"Config changed for {self.alias}, sending config email...")
+        logger.print_warn(
+            f"Config changed for {self.alias}, sending config email..."
+        )
         self._send_email_config()
 
     def _send_email_config(self) -> None:

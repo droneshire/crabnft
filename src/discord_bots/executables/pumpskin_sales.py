@@ -27,7 +27,9 @@ SALES_CHANNEL_ID = 1039452204257521684  # Sales bot channel P2E
 discord_bot_dir = logger.get_logging_dir("discord_bots")
 log_dir = os.path.join(discord_bot_dir, "pumpskin_sales")
 
-sales_bot = PumpskinSalesBot(BOT_NAME, discord.Color.orange(), COLLECTIONS, log_dir)
+sales_bot = PumpskinSalesBot(
+    BOT_NAME, discord.Color.orange(), COLLECTIONS, log_dir
+)
 
 
 async def sales_loop():
@@ -45,12 +47,17 @@ async def sales_loop():
 async def on_ready() -> None:
     await client.change_presence(
         status=discord.Status.online,
-        activity=discord.Activity(type=discord.ActivityType.watching, name=ACTIVITY_STATUS),
+        activity=discord.Activity(
+            type=discord.ActivityType.watching, name=ACTIVITY_STATUS
+        ),
     )
     await client.user.edit(username=BOT_NAME)
 
     for guild in client.guilds:
-        logger.print_ok(f"{client.user} is connected to guild:\n" f"{guild.name}(id: {guild.id})")
+        logger.print_ok(
+            f"{client.user} is connected to guild:\n"
+            f"{guild.name}(id: {guild.id})"
+        )
 
     client.loop.create_task(sales_loop())
 

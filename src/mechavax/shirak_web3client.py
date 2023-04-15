@@ -14,7 +14,9 @@ class ShirakWeb3Client(AvalancheCWeb3Client):
     https://snowtrace.io/address/0x7d57f563db93f257bd556d86e6fee7079c80226e
     """
 
-    contract_address = T.cast(Address, "0x7D57f563db93F257BD556D86e6FEe7079c80226e")
+    contract_address = T.cast(
+        Address, "0x7D57f563db93F257BD556D86e6FEe7079c80226e"
+    )
     this_dir = os.path.dirname(os.path.realpath(__file__))
     src_dir = os.path.dirname(this_dir)
     web3_utils_dir = os.path.join(src_dir, "web3_utils")

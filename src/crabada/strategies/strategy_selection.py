@@ -26,4 +26,8 @@ STRATEGY_SELECTION: T.Dict[str, Strategy] = {
 
 
 def strategy_to_game_type(strategy: Strategy) -> MineOption:
-    return MineOption.LOOT if isinstance(strategy, looting.LootingStrategy) else MineOption.MINE
+    return (
+        MineOption.LOOT
+        if isinstance(strategy, looting.LootingStrategy)
+        else MineOption.MINE
+    )

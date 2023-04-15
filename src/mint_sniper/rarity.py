@@ -31,7 +31,9 @@ class NftCollectionAnalyzerBase:
     ):
         self.collection_name = collection_name
         self.address = self.CONTRACT_ADDRESS
-        self.discord_webhook = DISCORD_WEBHOOK_URL.get(self.DISCORD_WEBHOOK, None)
+        self.discord_webhook = DISCORD_WEBHOOK_URL.get(
+            self.DISCORD_WEBHOOK, None
+        )
         self.pool = ThreadPoolExecutor(max_workers=20)
         self.try_all_mints = try_all_mints
 
@@ -40,9 +42,15 @@ class NftCollectionAnalyzerBase:
         make_sure_path_exists(collection_dir)
 
         self.files = {
-            "attributes": os.path.join(collection_dir, f"{collection_name}_attributes.json"),
-            "collection": os.path.join(collection_dir, f"{collection_name}_collection.json"),
-            "rarity": os.path.join(collection_dir, f"{collection_name}_rarity.json"),
+            "attributes": os.path.join(
+                collection_dir, f"{collection_name}_attributes.json"
+            ),
+            "collection": os.path.join(
+                collection_dir, f"{collection_name}_collection.json"
+            ),
+            "rarity": os.path.join(
+                collection_dir, f"{collection_name}_rarity.json"
+            ),
         }
 
         csv_file = os.path.join(collection_dir, f"{collection_name}_rarity.csv")
@@ -73,7 +81,10 @@ class NftCollectionAnalyzerBase:
     ) -> T.List[T.Dict[T.Any, T.Any]]:
         results = []
         if parallelize:
-            pool_results = [self.pool.submit(self._get_request, url) for url in collection_urls]
+            pool_results = [
+                self.pool.submit(self._get_request, url)
+                for url in collection_urls
+            ]
             wait(pool_results)
             results.extend([r.result() for r in pool_results])
         else:
@@ -89,7 +100,9 @@ class NftCollectionAnalyzerBase:
         params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
         try:
-            return requests.request("GET", url, params=params, headers=headers, timeout=8.0).json()
+            return requests.request(
+                "GET", url, params=params, headers=headers, timeout=8.0
+            ).json()
         except KeyboardInterrupt:
             raise
         except:
@@ -118,19 +131,24 @@ class NftCollectionAnalyzerBase:
                 collection_info = json.load(infile)
 
         collection_urls = [
-            self.get_token_uri(token_id) for token_id in range(self.MAX_TOTAL_SUPPLY)
+            self.get_token_uri(token_id)
+            for token_id in range(self.MAX_TOTAL_SUPPLY)
         ]
 
         logger.print_ok_blue(f"Have URLs for {self.MAX_TOTAL_SUPPLY} NFTs...")
 
-        assert self.MAX_TOTAL_SUPPLY % self.MAX_PER_BATCH == 0, "Batch amount mismatch!"
+        assert (
+            self.MAX_TOTAL_SUPPLY % self.MAX_PER_BATCH == 0
+        ), "Batch amount mismatch!"
 
         collection_info_list = list(collection_info.values())
 
         for index in range(int(self.MAX_TOTAL_SUPPLY / self.MAX_PER_BATCH)):
             did_succeed = False
             offset = index * self.MAX_PER_BATCH
-            logger.print_normal(f"Range: {offset}-{offset + self.MAX_PER_BATCH}")
+            logger.print_normal(
+                f"Range: {offset}-{offset + self.MAX_PER_BATCH}"
+            )
             for i in range(1, 6):
                 if download:
                     results = self._get_collection_info(
@@ -138,7 +156,9 @@ class NftCollectionAnalyzerBase:
                         parallelize=True,
                     )
                 else:
-                    results = collection_info_list[offset : offset + self.MAX_PER_BATCH]
+                    results = collection_info_list[
+                        offset : offset + self.MAX_PER_BATCH
+                    ]
 
                 did_succeed = (
                     self.get_nft_attributes(
@@ -183,7 +203,9 @@ class NftCollectionAnalyzerBase:
 
             try:
                 if self.TOKEN_ID_KEY not in nft_info:
-                    logger.print_warn(f"Missing {self.TOKEN_ID_KEY}:\n{nft_info}")
+                    logger.print_warn(
+                        f"Missing {self.TOKEN_ID_KEY}:\n{nft_info}"
+                    )
                     continue
                 nft = int(nft_info[self.TOKEN_ID_KEY])
                 collection_info[nft] = nft_info
@@ -192,7 +214,9 @@ class NftCollectionAnalyzerBase:
                 logger.print_normal(f"Processing nft {nft}...")
                 for attribute in collection_info[nft].get("attributes", []):
                     if attribute["trait_type"] not in collection_stats:
-                        logger.print_fail(f"Unknown attribute: {attribute['trait_type']}")
+                        logger.print_fail(
+                            f"Unknown attribute: {attribute['trait_type']}"
+                        )
                         logger.print_fail_arrow(
                             f"Failed on nft info\n{json.dumps(nft_info, indent=4)}"
                         )
@@ -203,7 +227,9 @@ class NftCollectionAnalyzerBase:
                         collection_stats[trait_type].get(trait_value, 0) + 1
                     )
             except:
-                logger.print_fail_arrow(f"Failed on nft info\n{json.dumps(nft_info, indent=4)}")
+                logger.print_fail_arrow(
+                    f"Failed on nft info\n{json.dumps(nft_info, indent=4)}"
+                )
         return True
 
     def calculate_rarity(
@@ -220,7 +246,9 @@ class NftCollectionAnalyzerBase:
         nft_traits = {k: 0.0 for k in collection_stats.keys()}
 
         if "attributes" not in nft_info:
-            logger.print_warn(f"No attributes! Skipping rarity calcs for {token_id}")
+            logger.print_warn(
+                f"No attributes! Skipping rarity calcs for {token_id}"
+            )
             return {}
 
         for attribute in nft_info["attributes"]:
@@ -243,7 +271,8 @@ class NftCollectionAnalyzerBase:
 
         nft_rarity["Overall"] = {
             "rank": -1,
-            "rarity": float(total_trait_count) / (total_count * len(collection_stats.keys())),
+            "rarity": float(total_trait_count)
+            / (total_count * len(collection_stats.keys())),
         }
 
         for k, v in self.CUSTOM_INFO.items():
@@ -254,7 +283,9 @@ class NftCollectionAnalyzerBase:
 
         return nft_rarity
 
-    def get_rarity_from_query(self, token_id: int) -> T.Dict[str, T.Dict[T.Any, T.Any]]:
+    def get_rarity_from_query(
+        self, token_id: int
+    ) -> T.Dict[str, T.Dict[T.Any, T.Any]]:
         """
         Download info from the web source for a particular nft in the collection
         and get its attributes rarity
@@ -320,7 +351,9 @@ class NftCollectionAnalyzerBase:
 
         return sorted_collection_rarity
 
-    def write_rarity_to_csv(self, collection_rarity: T.Dict[str, T.Dict[int, float]]) -> None:
+    def write_rarity_to_csv(
+        self, collection_rarity: T.Dict[str, T.Dict[int, float]]
+    ) -> None:
         logger.print_bold(f"Writing rarity stats to {self.csv.csv_file}...")
         for token_id in range(self.MAX_TOTAL_SUPPLY):
             if token_id not in collection_rarity:

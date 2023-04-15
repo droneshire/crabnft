@@ -47,10 +47,17 @@ def calc_ppie_per_day_from_level(level: int) -> int:
 
 
 def calc_ppie_earned_per_day(pumpskins: T.Dict[int, T.Dict[int, T.Any]]) -> int:
-    return sum([calc_ppie_per_day_from_level(p.get("kg", 0) / 100) for _, p in pumpskins.items()])
+    return sum(
+        [
+            calc_ppie_per_day_from_level(p.get("kg", 0) / 100)
+            for _, p in pumpskins.items()
+        ]
+    )
 
 
-def calc_roi_from_mint(ppie_price_usd: float, avax_usd: float, pumpskin_price_avax: float) -> float:
+def calc_roi_from_mint(
+    ppie_price_usd: float, avax_usd: float, pumpskin_price_avax: float
+) -> float:
     ppie_accumulations = {1: {"days": 2.1, Tokens.PPIE: 8, Tokens.POTN: 12}}
     for level in range(2, 101):
         ppie_accumulations[level] = {}
@@ -62,11 +69,16 @@ def calc_roi_from_mint(ppie_price_usd: float, avax_usd: float, pumpskin_price_av
 
         cost_to_level = calc_potn_from_level(level)
         days_to_level = cost_to_level / ppie_accumulations[level][Tokens.POTN]
-        ppie_while_waiting_to_level = days_to_level * calc_ppie_per_day_from_level(level)
-        ppie_accumulations[level][Tokens.PPIE] = (
-            ppie_accumulations[level - 1][Tokens.PPIE] + ppie_while_waiting_to_level
+        ppie_while_waiting_to_level = (
+            days_to_level * calc_ppie_per_day_from_level(level)
         )
-        ppie_accumulations[level]["days"] = ppie_accumulations[level - 1]["days"] + days_to_level
+        ppie_accumulations[level][Tokens.PPIE] = (
+            ppie_accumulations[level - 1][Tokens.PPIE]
+            + ppie_while_waiting_to_level
+        )
+        ppie_accumulations[level]["days"] = (
+            ppie_accumulations[level - 1]["days"] + days_to_level
+        )
 
     pumpskin_price_usd = pumpskin_price_avax * avax_usd
     ppie_per_pumpskin = pumpskin_price_usd / ppie_price_usd
@@ -105,7 +117,9 @@ def update_nft_collection_attributes(
         logger.print_normal(f"Processing pumpskin {pumpskin}...")
         for attribute in pumpskins_info[pumpskin].get("attributes", []):
             if attribute["trait_type"] not in pumpskins_stats:
-                logger.print_fail(f"Unknown attribute: {attribute['trait_type']}")
+                logger.print_fail(
+                    f"Unknown attribute: {attribute['trait_type']}"
+                )
                 continue
             trait_type = attribute["trait_type"]
             trait_value = attribute["value"]
@@ -161,7 +175,8 @@ def calculate_rarity(
 
     pumpskin_rarity["Overall"] = {
         "trait": None,
-        "rarity": float(total_trait_count) / (total_count * len(pumpskin_stats.keys())),
+        "rarity": float(total_trait_count)
+        / (total_count * len(pumpskin_stats.keys())),
     }
 
     return pumpskin_rarity

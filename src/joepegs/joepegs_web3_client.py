@@ -49,12 +49,18 @@ class JoePegsWeb3Client(AvalancheCWeb3Client):
     TODO: untested!
     """
 
-    contract_address = T.cast(Address, "0xbb01D7ad46A1229F8383F4e863abf4461b427745")
+    contract_address = T.cast(
+        Address, "0xbb01D7ad46A1229F8383F4e863abf4461b427745"
+    )
     this_dir = os.path.dirname(os.path.realpath(__file__))
-    abi_dir = os.path.join(os.path.dirname(this_dir), "web3_utils", "abi", "abi-joepegs.json")
+    abi_dir = os.path.join(
+        os.path.dirname(this_dir), "web3_utils", "abi", "abi-joepegs.json"
+    )
     abi = Web3Client._get_contract_abi_from_file(abi_dir)
 
-    def purchase_using_avax_and_wavax(self, taker: TakerBid, maker: MakerBid) -> HexStr:
+    def purchase_using_avax_and_wavax(
+        self, taker: TakerBid, maker: MakerBid
+    ) -> HexStr:
         """
         Purchase from JoePegs
         """

@@ -17,7 +17,9 @@ class PeonSalesBot(JoePegsSalesBot):
     ):
         super().__init__(bot_name, collection_color, collections, log_dir)
 
-    def custom_filter_for_item(self, price: float, item: T.Dict[T.Any, T.Any]) -> bool:
+    def custom_filter_for_item(
+        self, price: float, item: T.Dict[T.Any, T.Any]
+    ) -> bool:
         pass
 
     def add_custom_embed_fields(

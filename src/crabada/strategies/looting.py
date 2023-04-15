@@ -41,12 +41,18 @@ class LootingStrategy(Strategy):
             config_mgr,
         )
 
-    def start(self, team_id: int, game_id: T.Optional[int] = None) -> CrabadaTransaction:
+    def start(
+        self, team_id: int, game_id: T.Optional[int] = None
+    ) -> CrabadaTransaction:
         logger.print_normal(f"Starting loot")
         signature, expired_time = self._get_loot_signature(game_id, team_id)
-        tx_hash = self.crabada_w3.attack(game_id, team_id, expired_time, signature)
+        tx_hash = self.crabada_w3.attack(
+            game_id, team_id, expired_time, signature
+        )
         tx_receipt = self._check_for_tx_receipt(tx_hash)
-        gas = wei_to_token(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        gas = wei_to_token(
+            self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt)
+        )
 
         return CrabadaTransaction(
             tx_hash,
@@ -64,7 +70,9 @@ class LootingStrategy(Strategy):
         tx_hash = self.crabada_w3.settle_game(game_id)
         tx_receipt = self._check_for_tx_receipt(tx_hash)
 
-        gas = wei_to_token(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        gas = wei_to_token(
+            self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt)
+        )
         tus, cra = get_rewards_from_tx_receipt(tx_receipt)
         if tus is not None:
             result = self._get_game_result(tus)
@@ -82,12 +90,18 @@ class LootingStrategy(Strategy):
             tx_receipt.get("gasUsed", 0.0),
         )
 
-    def reinforce(self, game_id: int, crabada_id: int, borrow_price: Wei) -> T.Dict[T.Any, T.Any]:
+    def reinforce(
+        self, game_id: int, crabada_id: int, borrow_price: Wei
+    ) -> T.Dict[T.Any, T.Any]:
         logger.print_normal(f"Loot[{game_id}]: reinforcing")
-        tx_hash = self.crabada_w3.reinforce_attack(game_id, crabada_id, borrow_price)
+        tx_hash = self.crabada_w3.reinforce_attack(
+            game_id, crabada_id, borrow_price
+        )
         tx_receipt = self._check_for_tx_receipt(tx_hash)
 
-        gas = wei_to_token(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        gas = wei_to_token(
+            self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt)
+        )
 
         return CrabadaTransaction(
             tx_hash,
@@ -112,7 +126,9 @@ class LootingStrategy(Strategy):
     def get_backoff_margin(self) -> int:
         return 0
 
-    def get_gas_margin(self, game_stage: GameStage, mine: T.Optional[IdleGame] = None) -> int:
+    def get_gas_margin(
+        self, game_stage: GameStage, mine: T.Optional[IdleGame] = None
+    ) -> int:
         if game_stage == GameStage.START:
             return 0
         elif game_stage == GameStage.CLOSE:
@@ -126,7 +142,9 @@ class LootingStrategy(Strategy):
             return 0
 
     def _get_loot_signature(self, game_id: int, team_id: int) -> (str, int):
-        data = self.crabada_w2.get_loot_attack_data(self.address, team_id, game_id)
+        data = self.crabada_w2.get_loot_attack_data(
+            self.address, team_id, game_id
+        )
         if "signature" not in data or "expire_time" not in data:
             logger.print_fail(f"Failed to get loot attack info:\n{data}")
             return "", 0
@@ -141,23 +159,29 @@ class LootingStrategy(Strategy):
             f"Loot[{mine['game_id']}]: using reinforcement strategy of {self.__class__.__name__}"
         )
 
-        attack_battle_point = get_faction_adjusted_battle_point(mine, is_looting=True, verbose=True)
+        attack_battle_point = get_faction_adjusted_battle_point(
+            mine, is_looting=True, verbose=True
+        )
         defense_battle_point = get_faction_adjusted_battle_point(
             mine, is_looting=False, verbose=False
         )
         if attack_battle_point >= defense_battle_point:
-            logger.print_normal(f"Loot[{mine['game_id']}]: not reinforcing since we're winning!")
+            logger.print_normal(
+                f"Loot[{mine['game_id']}]: not reinforcing since we're winning!"
+            )
             return None
 
-        group_id = self.config_mgr.config["game_specific_configs"]["looting_teams"].get(
-            team["team_id"], -1
-        )
+        group_id = self.config_mgr.config["game_specific_configs"][
+            "looting_teams"
+        ].get(team["team_id"], -1)
         reinforcement_crab = super()._use_bp_reinforcement(
             mine, group_id, use_own_crabs=use_own_crabs
         )
 
         if reinforcement_crab is None:
-            logger.print_fail(f"Loot[{mine['game_id']}]: Could not find suitable reinforcement!")
+            logger.print_fail(
+                f"Loot[{mine['game_id']}]: Could not find suitable reinforcement!"
+            )
             return None
 
         if (
@@ -191,7 +215,9 @@ class PreferOtherBpCrabs(LootingStrategy):
         self, team: Team, mine: IdleGame, reinforcement_search_backoff: int = 0
     ) -> T.Optional[TeamMember]:
         self.reinforcement_search_backoff = reinforcement_search_backoff
-        return super()._get_best_mine_reinforcement(team, mine, use_own_crabs=False)
+        return super()._get_best_mine_reinforcement(
+            team, mine, use_own_crabs=False
+        )
 
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:
         return super().should_reinforce(mine)
@@ -216,7 +242,9 @@ class PreferOwnBpCrabs(LootingStrategy):
         self, team: Team, mine: IdleGame, reinforcement_search_backoff: int = 0
     ) -> T.Optional[TeamMember]:
         self.reinforcement_search_backoff = reinforcement_search_backoff
-        return super()._get_best_mine_reinforcement(team, mine, use_own_crabs=True)
+        return super()._get_best_mine_reinforcement(
+            team, mine, use_own_crabs=True
+        )
 
     def should_reinforce(self, mine: IdleGame, verbose=True) -> bool:
         return super().should_reinforce(mine)

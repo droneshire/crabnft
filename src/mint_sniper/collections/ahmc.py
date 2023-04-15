@@ -18,10 +18,14 @@ class AhmcWeb3Client(AvalancheCWeb3Client):
     https://snowtrace.io/address/0x66F703e48F68C03FFFEE0eAee7BE2fE411cB3713
     """
 
-    contract_address = T.cast(Address, "0x66F703e48F68C03FFFEE0eAee7BE2fE411cB3713")
+    contract_address = T.cast(
+        Address, "0x66F703e48F68C03FFFEE0eAee7BE2fE411cB3713"
+    )
     this_dir = os.path.dirname(os.path.realpath(__file__))
     module_dir = os.path.dirname(this_dir)
-    abi_dir = os.path.join(os.path.dirname(module_dir), "web3_utils", "abi", "abi-ahcp-nft.json")
+    abi_dir = os.path.join(
+        os.path.dirname(module_dir), "web3_utils", "abi", "abi-ahcp-nft.json"
+    )
     abi = Web3Client._get_contract_abi_from_file(abi_dir)
 
     def get_token_uri(self, token_id: int) -> HexStr:
@@ -51,7 +55,9 @@ class AhmcMint(NftCollectionAnalyzerBase):
     CONTRACT_ADDRESS: Address = "0x66F703e48F68C03FFFEE0eAee7BE2fE411cB3713"
 
     def __init__(self, force: bool = False):
-        super().__init__("avalanche_hills_muscle_cars", force, try_all_mints=False)
+        super().__init__(
+            "avalanche_hills_muscle_cars", force, try_all_mints=False
+        )
         self.w3: AhmcWeb3Client = T.cast(
             AhmcWeb3Client,
             (

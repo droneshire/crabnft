@@ -74,7 +74,9 @@ class LootSnipes:
         self.urls = DISCORD_WEBHOOK_URL
         self.snipes = {}
         self.gsheet = (
-            GoogleSheets(self.ADDRESS_GSHEET, credentials, []) if update_from_sheet else None
+            GoogleSheets(self.ADDRESS_GSHEET, credentials, [])
+            if update_from_sheet
+            else None
         )
         self.last_update = 0.0
         self.web2 = crabada_w2
@@ -159,7 +161,9 @@ class LootSnipes:
                 "verified", self.addresses["verified"]
             )
             logger.print_ok_blue("Hunting for verified loot snipes...")
-            self._hunt_no_reinforce_mines(address, addresses_to_search, available_loots, True)
+            self._hunt_no_reinforce_mines(
+                address, addresses_to_search, available_loots, True
+            )
 
         if len(self.addresses["unverified"]) > 0:
             addresses_to_search = self._update_address_search_circ_buffer(
@@ -211,7 +215,9 @@ class LootSnipes:
                 "limit": 100,
             }
             pb.update(1)
-            loots: T.List[IdleGame] = self.web2.list_available_loots(user_address, params=params)
+            loots: T.List[IdleGame] = self.web2.list_available_loots(
+                user_address, params=params
+            )
 
             if not loots:
                 break
@@ -241,18 +247,24 @@ class LootSnipes:
             search_this_time = address_list[start:] + address_list[0:end]
         else:
             search_this_time = address_list[start:end]
-        logger.print_normal(f"Searching through address list index {start}->{end}")
+        logger.print_normal(
+            f"Searching through address list index {start}->{end}"
+        )
 
         self.search_index[list_name] = end
 
-        logger.print_normal(f"Updated {list_name} search index: {self.search_index[list_name]}")
+        logger.print_normal(
+            f"Updated {list_name} search index: {self.search_index[list_name]}"
+        )
         return search_this_time
 
     def add_no_reinforce_address(self, mine: IdleGame) -> None:
         user_address = mine.get("owner", "")
         if user_address in self.addresses["verified"]:
             return
-        logger.print_ok(f"Found a new no-reinforce snipe {mine['owner']} to list")
+        logger.print_ok(
+            f"Found a new no-reinforce snipe {mine['owner']} to list"
+        )
         self.addresses["verified"].add(user_address)
         self._write_log(self.addresses)
 
@@ -260,7 +272,9 @@ class LootSnipes:
         user_address = mine.get("owner", "")
         if user_address not in self.addresses["verified"]:
             return
-        logger.print_ok(f"Removing previous no-reinforce snipe {mine['owner']} from list")
+        logger.print_ok(
+            f"Removing previous no-reinforce snipe {mine['owner']} from list"
+        )
         self.addresses["verified"].remove(user_address)
         self._write_log(self.addresses)
 
@@ -273,7 +287,9 @@ class LootSnipes:
         bot_user_addresses = [v["address"] for _, v in USERS.items()]
 
         if verbose:
-            logger.print_normal(f"Searching through max of {num_mines_needed} addresses...")
+            logger.print_normal(
+                f"Searching through max of {num_mines_needed} addresses..."
+            )
 
         if address_list is None:
             address_list = self.addresses["verified"]
@@ -283,12 +299,18 @@ class LootSnipes:
         loot_list = {}
         for address in address_list:
             if address in bot_user_addresses:
-                logger.print_fail_arrow(f"Snipe was a bot holder user: {address}...skipping")
+                logger.print_fail_arrow(
+                    f"Snipe was a bot holder user: {address}...skipping"
+                )
                 continue
             if address in self.addresses["blocklist"]:
-                logger.print_warn(f"Owner ({address}) is on blocklist...skipping")
+                logger.print_warn(
+                    f"Owner ({address}) is on blocklist...skipping"
+                )
                 continue
-            mines = {m["game_id"]: address for m in self.web2.list_my_mines(address)}
+            mines = {
+                m["game_id"]: address for m in self.web2.list_my_mines(address)
+            }
             loot_list.update(mines)
 
             if len(loot_list.keys()) >= num_mines_needed:
@@ -365,7 +387,9 @@ class LootSnipes:
 
         mine["attack_team_members"].append(crab)
         mine["attack_point"] = PURE_LOOT_TEAM_IDLE_GAME_STATS[loot_team]["bp"]
-        mine["attack_team_faction"] = PURE_LOOT_TEAM_IDLE_GAME_STATS[loot_team]["faction"]
+        mine["attack_team_faction"] = PURE_LOOT_TEAM_IDLE_GAME_STATS[loot_team][
+            "faction"
+        ]
 
         return mine
 
@@ -439,9 +463,15 @@ class LootSnipes:
         diff = deepdiff.DeepDiff(old_addresses, self.addresses)
         if diff:
             logger.print_bold(f"Updating from spreadsheet...")
-            logger.print_bold(f"{len(self.addresses['verified'])} verified addresses")
-            logger.print_bold(f"{len(self.addresses['unverified'])} unverified addresses")
-            logger.print_bold(f"{len(self.addresses['blocklist'])} blocklist addresses")
+            logger.print_bold(
+                f"{len(self.addresses['verified'])} verified addresses"
+            )
+            logger.print_bold(
+                f"{len(self.addresses['unverified'])} unverified addresses"
+            )
+            logger.print_bold(
+                f"{len(self.addresses['blocklist'])} blocklist addresses"
+            )
             logger.print_normal(f"{diff}")
 
     def _get_address_snipe_embed(
@@ -459,12 +489,18 @@ class LootSnipes:
             description=f"{', '.join(attack_factions)}\n",
             color=FACTION_COLORS[mine_faction].value,
         )
-        embed.add_embed_field(name="Mine", value=mine_faction.upper(), inline=True)
+        embed.add_embed_field(
+            name="Mine", value=mine_faction.upper(), inline=True
+        )
         embed.add_embed_field(name="Page", value=page, inline=True)
         embed.add_embed_field(name="BP", value=battle_point, inline=False)
-        embed.add_embed_field(name="Verified", value="True" if verified else "False", inline=True)
+        embed.add_embed_field(
+            name="Verified", value="True" if verified else "False", inline=True
+        )
         embed.add_embed_field(name="Address", value=address[:8], inline=True)
-        embed.add_embed_field(name="Address Hit Count", value=self.hit_rate[address], inline=False)
+        embed.add_embed_field(
+            name="Address Hit Count", value=self.hit_rate[address], inline=False
+        )
 
         embed.set_thumbnail(url=FACTION_ICON_URLS[mine_faction])
         return embed
@@ -483,15 +519,21 @@ class LootSnipes:
             description=f"{', '.join(attack_factions)}\n",
             color=FACTION_COLORS[mine_faction].value,
         )
-        embed.add_embed_field(name="Mine", value=mine_faction.upper(), inline=True)
+        embed.add_embed_field(
+            name="Mine", value=mine_faction.upper(), inline=True
+        )
         embed.add_embed_field(name="Page", value=page, inline=True)
         embed.add_embed_field(name="BP", value=battle_point, inline=False)
         embed.add_embed_field(name="MP", value=mine_point, inline=True)
         embed.set_thumbnail(url=FACTION_ICON_URLS[mine_faction])
         return embed
 
-    def _hunt_low_mp_teams(self, address: str, available_loots: T.List[IdleGame]) -> None:
-        update_loot_snipes = self.find_low_mr_teams(address, available_loots, verbose=True)
+    def _hunt_low_mp_teams(
+        self, address: str, available_loots: T.List[IdleGame]
+    ) -> None:
+        update_loot_snipes = self.find_low_mr_teams(
+            address, available_loots, verbose=True
+        )
 
         def get_embed(mine: int, data: T.Dict[str, T.Any]) -> DiscordEmbed:
             page = data["page"]
@@ -502,7 +544,11 @@ class LootSnipes:
             if mine_faction == Faction.NO_FACTION:
                 attack_factions = ["ANY"]
             else:
-                attack_factions = [f for f, a in FACTIONAL_ADVANTAGE.items() if mine_faction in a]
+                attack_factions = [
+                    f
+                    for f, a in FACTIONAL_ADVANTAGE.items()
+                    if mine_faction in a
+                ]
 
             context = f"MINE: {mine} Faction: {mine_faction} Page: {page}\n"
             context += f"Loot with: {' '.join(attack_factions)}\n"
@@ -553,7 +599,11 @@ class LootSnipes:
             if mine_faction == Faction.NO_FACTION:
                 attack_factions = ["ANY"]
             else:
-                attack_factions = [f for f, a in FACTIONAL_ADVANTAGE.items() if mine_faction in a]
+                attack_factions = [
+                    f
+                    for f, a in FACTIONAL_ADVANTAGE.items()
+                    if mine_faction in a
+                ]
 
             context = f"MINE: {mine} Faction: {mine_faction} Page: {page}\n"
             context += f"Loot with: {' '.join(attack_factions)}\n"
@@ -570,7 +620,9 @@ class LootSnipes:
             )
 
         open_loots = [m["game_id"] for m in available_loots]
-        self._update_discord(update_loot_snipes, open_loots, "LOOT_SNIPE", embed_handle=get_embed)
+        self._update_discord(
+            update_loot_snipes, open_loots, "LOOT_SNIPE", embed_handle=get_embed
+        )
 
     def _get_mines_to_delete(self, available_loots: T.List[int]) -> T.List[int]:
         mark_for_delete = []
@@ -579,7 +631,10 @@ class LootSnipes:
                 mark_for_delete.append(mine)
                 continue
 
-            if time.time() - self.snipes[mine].get("start_time", 0.0) > self.MAX_LOOT_STALE_TIME:
+            if (
+                time.time() - self.snipes[mine].get("start_time", 0.0)
+                > self.MAX_LOOT_STALE_TIME
+            ):
                 mark_for_delete.append(mine)
                 continue
 
@@ -610,20 +665,26 @@ class LootSnipes:
             if mine in self.snipes.keys():
                 old_page = self.snipes[mine]["page"]
                 if page == old_page:
-                    logger.print_ok_blue(f"Skipping {mine} since already in cache")
+                    logger.print_ok_blue(
+                        f"Skipping {mine} since already in cache"
+                    )
                     continue
 
-                logger.print_normal(f"Updating page for mine {mine}, {old_page} -> {page}")
+                logger.print_normal(
+                    f"Updating page for mine {mine}, {old_page} -> {page}"
+                )
                 self.snipes[mine]["webhook"].remove_embeds()
                 self.snipes[mine]["webhook"].add_embed(embed_handle(mine, data))
                 try:
-                    self.snipes[mine]["sent"] = self.snipes[mine]["webhook"].edit(
-                        self.snipes[mine]["sent"]
-                    )
+                    self.snipes[mine]["sent"] = self.snipes[mine][
+                        "webhook"
+                    ].edit(self.snipes[mine]["sent"])
                     self.snipes[mine]["page"] = page
                     self.snipes[mine]["fail_count"] = 0
                 except:
-                    logger.print_warn("failed to edit webhook, deleting webhook...")
+                    logger.print_warn(
+                        "failed to edit webhook, deleting webhook..."
+                    )
                     self.snipes[mine]["fail_count"] += 1
                 continue
 
@@ -633,7 +694,9 @@ class LootSnipes:
             )
             self.snipes[mine]["webhook"].add_embed(embed_handle(mine, data))
             try:
-                self.snipes[mine]["sent"] = self.snipes[mine]["webhook"].execute()
+                self.snipes[mine]["sent"] = self.snipes[mine][
+                    "webhook"
+                ].execute()
                 self.snipes[mine]["page"] = page
                 self.snipes[mine]["start_time"] = time.time()
                 self.snipes[mine]["fail_count"] = 0
@@ -653,6 +716,8 @@ class LootSnipes:
             except:
                 logger.print_fail("failed to delete webhook")
 
-        logger.print_normal(f"DB: {','.join([str(k) for k in self.snipes.keys()])}")
+        logger.print_normal(
+            f"DB: {','.join([str(k) for k in self.snipes.keys()])}"
+        )
 
         self._write_log(self.hit_rate)

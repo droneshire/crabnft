@@ -32,7 +32,9 @@ class AvaxCWeb3Client(Web3Client):
     def approve(self, max_amount: int = MAX_UINT256) -> HexStr:
         try:
             tx: TxParams = self.build_contract_transaction(
-                self.contract.functions.approve(self.contract_checksum_address, max_amount)
+                self.contract.functions.approve(
+                    self.contract_checksum_address, max_amount
+                )
             )
             return self.sign_and_send_transaction(tx)
         except KeyboardInterrupt:
@@ -55,7 +57,9 @@ class AvaxCWeb3Client(Web3Client):
 
     def transfer_token(self, to_address: Address, token: TokenWei) -> HexStr:
         try:
-            tx: TxParams = self.build_transaction_with_value_in_wei(to_address, token_to_wei(avax))
+            tx: TxParams = self.build_transaction_with_value_in_wei(
+                to_address, token_to_wei(avax)
+            )
             return self.sign_and_send_transaction(tx)
         except KeyboardInterrupt:
             raise
@@ -64,7 +68,9 @@ class AvaxCWeb3Client(Web3Client):
 
     def unwrap(self, amount: float) -> HexStr:
         try:
-            tx: TxParams = self.build_contract_transaction(self.contract.functions.withdraw(amount))
+            tx: TxParams = self.build_contract_transaction(
+                self.contract.functions.withdraw(amount)
+            )
             return self.sign_and_send_transaction(tx)
         except KeyboardInterrupt:
             raise

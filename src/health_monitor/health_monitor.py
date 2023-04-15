@@ -53,7 +53,9 @@ class HealthMonitor:
                 headers={"accept": "application/json, text/plain, */*"},
             ).json()
         except:
-            logger.print_fail(f"Failed to update {self.server_url} for {self.bot_name}")
+            logger.print_fail(
+                f"Failed to update {self.server_url} for {self.bot_name}"
+            )
 
     def run(self, daemon: bool = True) -> None:
         def loop() -> None:

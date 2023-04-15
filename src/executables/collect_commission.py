@@ -36,7 +36,9 @@ Confirmation will be sent after successful tx.
 COMMISSION_SUBJECT = """Bot Commission Collection"""
 
 
-def send_sms_message(encrypt_password: str, to_email: str, to_number: str, message: str) -> None:
+def send_sms_message(
+    encrypt_password: str, to_email: str, to_number: str, message: str
+) -> None:
     sms_client = Client(
         config_crabada.TWILIO_CONFIG["account_sid"],
         config_crabada.TWILIO_CONFIG["account_auth_token"],
@@ -59,10 +61,14 @@ def send_sms_message(encrypt_password: str, to_email: str, to_number: str, messa
                 str.encode(encrypt_password), email_account["password"]
             ).decode()
             email_accounts.append(
-                email.Email(address=email_account["user"], password=email_password)
+                email.Email(
+                    address=email_account["user"], password=email_password
+                )
             )
         if to_email:
-            email.send_email(email_accounts, to_email, COMMISSION_SUBJECT, message)
+            email.send_email(
+                email_accounts, to_email, COMMISSION_SUBJECT, message
+            )
     except:
         logger.print_warn(f"Failed to send email message to {to_email}")
 
@@ -82,13 +88,17 @@ def send_collection_notice(
         alias = get_alias_from_user(user)
 
         if alias not in aliases:
-            logger.print_normal(f"Multi-wallet, skipping {user} b/c we already sent notice")
+            logger.print_normal(
+                f"Multi-wallet, skipping {user} b/c we already sent notice"
+            )
             continue
 
         private_key = (
             ""
             if not encrypt_password
-            else decrypt(str.encode(encrypt_password), config["private_key"]).decode()
+            else decrypt(
+                str.encode(encrypt_password), config["private_key"]
+            ).decode()
         )
         config["private_key"] = private_key
 
@@ -113,21 +123,29 @@ def send_collection_notice(
             continue
 
         if commission_token > available_tus:
-            logger.print_fail(f"WARNING: {commission_token:.2f} from {alias}: insufficient funds!")
+            logger.print_fail(
+                f"WARNING: {commission_token:.2f} from {alias}: insufficient funds!"
+            )
 
         total_tus += commission_token
         message = f"\U0000203C  COURTESY NOTICE  \U0000203C\n"
         message += f"Hey {alias}!\nCollecting Crabada commission at next low gas period.\n"
-        message += f"Please ensure {commission_token:.2f} {token} are in wallet.\n"
+        message += (
+            f"Please ensure {commission_token:.2f} {token} are in wallet.\n"
+        )
         message += f"Confirmation will be sent after successful tx\n"
         message += f"snib snib \U0001F980\n"
         logger.print_ok_blue(message)
         if not dry_run:
-            send_sms_message(encrypt_password, config["email"], config["sms_number"], message)
+            send_sms_message(
+                encrypt_password, config["email"], config["sms_number"], message
+            )
 
         aliases.remove(alias)
 
-    logger.print_bold(f"Projected to collect {total_tus:.2f} {token} in commission")
+    logger.print_bold(
+        f"Projected to collect {total_tus:.2f} {token} in commission"
+    )
 
     if not dry_run:
         discord.get_discord_hook(game.DISCORD).send(DISCORD_TRANSFER_NOTICE)
@@ -151,13 +169,17 @@ def collect_commission(
         alias = get_alias_from_user(user)
 
         if alias not in aliases:
-            logger.print_normal(f"Multi-wallet, skipping {user} b/c we already collected")
+            logger.print_normal(
+                f"Multi-wallet, skipping {user} b/c we already collected"
+            )
             continue
 
         private_key = (
             ""
             if not encrypt_password
-            else decrypt(str.encode(encrypt_password), config["private_key"]).decode()
+            else decrypt(
+                str.encode(encrypt_password), config["private_key"]
+            ).decode()
         )
         config["private_key"] = private_key
 
@@ -224,7 +246,9 @@ def collect_commission(
                 except:
                     if i >= 4:
                         failed_to_collect.append(alias)
-                        logger.print_fail(f"Failed to get tx receipt for hash: {tx_hash}")
+                        logger.print_fail(
+                            f"Failed to get tx receipt for hash: {tx_hash}"
+                        )
                     else:
                         logger.print_warn(
                             f"Failed to get tx receipt for hash: {tx_hash}. Retrying..."
@@ -259,8 +283,12 @@ def collect_commission(
 
         new_commission = sum([c for _, c in game_stats_commission.items()])
         message = f"\U0000203C  Commission Collection: \U0000203C\n"
-        message += f"Successful tx of {commission_token:.2f} {token} from {alias}\n"
-        transactions = "\n\t".join([f"{token.explorer_url}/{t}" for t in tx_hashes])
+        message += (
+            f"Successful tx of {commission_token:.2f} {token} from {alias}\n"
+        )
+        transactions = "\n\t".join(
+            [f"{token.explorer_url}/{t}" for t in tx_hashes]
+        )
         message += f"Explorer: {transactions}\n\n"
         message += f"New {token} commission balance: {new_commission} {token}\n"
         logger.print_ok_blue(message)
@@ -268,7 +296,9 @@ def collect_commission(
         if dry_run or quiet:
             continue
 
-        send_sms_message(encrypt_password, config["email"], config["sms_number"], message)
+        send_sms_message(
+            encrypt_password, config["email"], config["sms_number"], message
+        )
 
     logger.print_bold(
         f"Collected {sum([c for _, c in total_stats[totals_key].items()])} {token} in commission!!!"
@@ -349,7 +379,9 @@ def main() -> None:
     if "ALL" in from_users:
         from_users = copy.deepcopy(game_users)
     else:
-        from_users = {user: game_users[user] for user in from_users if user in game_users}
+        from_users = {
+            user: game_users[user] for user in from_users if user in game_users
+        }
 
     if args.dry_run:
         logger.print_warn(f"DRY RUN ACTIVATED")
@@ -357,18 +389,26 @@ def main() -> None:
     if not args.dry_run:
         encrypt_password = os.getenv("NFT_PWD")
         if not encrypt_password:
-            encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
+            encrypt_password = getpass.getpass(
+                prompt="Enter decryption password: "
+            )
     else:
         encrypt_password = ""
 
     game_commission = COMMISSION_GAMES[args.game]
 
     if args.send_notice:
-        logger.print_bold(f"Sending SMS notice that we're collecting when gas is low!")
-        send_collection_notice(from_users, log_dir, game_commission, encrypt_password, args.dry_run)
+        logger.print_bold(
+            f"Sending SMS notice that we're collecting when gas is low!"
+        )
+        send_collection_notice(
+            from_users, log_dir, game_commission, encrypt_password, args.dry_run
+        )
         return
 
-    logger.print_ok(f"Collecting {game_commission.TOKEN} Commissions from {', '.join(from_users)}")
+    logger.print_ok(
+        f"Collecting {game_commission.TOKEN} Commissions from {', '.join(from_users)}"
+    )
 
     collect_commission(
         from_users,

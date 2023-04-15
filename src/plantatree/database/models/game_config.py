@@ -14,7 +14,9 @@ class PatGameConfig(AccountBase):  # type: ignore
 
     id = Column(types.Integer, ForeignKey("GameConfig.id"), primary_key=True)
     name = Column(types.String(40), nullable=False)
-    time_between_plants = Column(types.Float, nullable=False, default=60.0 * 60.0 * 24)
+    time_between_plants = Column(
+        types.Float, nullable=False, default=60.0 * 60.0 * 24
+    )
 
 
 class PatGameConfigSchema(Schema):  # type: ignore

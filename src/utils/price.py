@@ -48,7 +48,9 @@ class Prices:
             return 0.0
 
 
-def get_avax_price_usd(api_token: str, dry_run: bool = False) -> T.Optional[float]:
+def get_avax_price_usd(
+    api_token: str, dry_run: bool = False
+) -> T.Optional[float]:
     if dry_run:
         return 1.0
 
@@ -66,11 +68,17 @@ def get_avax_price_usd(api_token: str, dry_run: bool = False) -> T.Optional[floa
     return price
 
 
-def get_token_price_usd(api_token: str, symbol: str, dry_run: bool = False) -> T.Optional[float]:
+def get_token_price_usd(
+    api_token: str, symbol: str, dry_run: bool = False
+) -> T.Optional[float]:
     if dry_run:
         return 1.0
     try:
-        data = CoinMarketCapAPI(api_key=api_token).cryptocurrency_info(symbol=symbol).data
+        data = (
+            CoinMarketCapAPI(api_key=api_token)
+            .cryptocurrency_info(symbol=symbol)
+            .data
+        )
         description = data[symbol]["description"]
         match = re.search(r"\d+\.\d+\s+USD", description)
         if match:
@@ -94,12 +102,16 @@ def wei_to_token(wei: Wei) -> float:
     return T.cast(float, float(Web3.fromWei(wei, "ether")))
 
 
-def is_gas_too_high(gas_price_gwei: float, max_price_gwei: float, margin: int = 0) -> bool:
+def is_gas_too_high(
+    gas_price_gwei: float, max_price_gwei: float, margin: int = 0
+) -> bool:
     if gas_price_gwei is None:
         return True
 
     gas_price_limit = max_price_gwei + margin
     if int(gas_price_gwei) > int(gas_price_limit):
-        logger.print_warn(f"Warning: High Gas ({gas_price_gwei}) > {gas_price_limit}!")
+        logger.print_warn(
+            f"Warning: High Gas ({gas_price_gwei}) > {gas_price_limit}!"
+        )
         return True
     return False

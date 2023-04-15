@@ -37,10 +37,12 @@ class SnowtraceApi(Web2Client):
                 nft_type = token["tokenSymbol"]
                 if checksum_address not in tokens:
                     tokens[checksum_address] = {}
-                tokens[checksum_address][nft_type] = tokens[checksum_address].get(nft_type, []) + [
-                    token_id
-                ]
-                logger.print_normal(f"Found {nft_type} {token_id} from {checksum_address}")
+                tokens[checksum_address][nft_type] = tokens[
+                    checksum_address
+                ].get(nft_type, []) + [token_id]
+                logger.print_normal(
+                    f"Found {nft_type} {token_id} from {checksum_address}"
+                )
         except:
             logger.print_fail(f"Failed to get ERC721 token transfers")
 
@@ -67,15 +69,21 @@ class SnowtraceApi(Web2Client):
                 address = transfer["from"]
                 to_address = transfer["to"]
                 checksum_address = Web3.toChecksumAddress(address)
-                if Web3.toChecksumAddress(to_address) != Web3.toChecksumAddress(target_address):
+                if Web3.toChecksumAddress(to_address) != Web3.toChecksumAddress(
+                    target_address
+                ):
                     continue
                 symbol = transfer["tokenSymbol"]
                 amount_wei = int(transfer["value"])
                 amount = price.wei_to_token(amount_wei)
                 if checksum_address not in tokens:
                     tokens[checksum_address] = {}
-                tokens[checksum_address][symbol] = tokens[checksum_address].get(symbol, 0) + amount
-                logger.print_normal(f"Found {amount:.2f} {symbol} from {checksum_address}")
+                tokens[checksum_address][symbol] = (
+                    tokens[checksum_address].get(symbol, 0) + amount
+                )
+                logger.print_normal(
+                    f"Found {amount:.2f} {symbol} from {checksum_address}"
+                )
         except:
             logger.print_fail(f"Failed to get ERC20 token transfers")
         return tokens

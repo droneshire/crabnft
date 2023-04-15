@@ -50,11 +50,13 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
             dry_run=dry_run,
         )
 
-    def _get_pve_headers(self, api_key: str = API_KEYS["pve"]) -> T.Dict[str, str]:
+    def _get_pve_headers(
+        self, api_key: str = API_KEYS["pve"]
+    ) -> T.Dict[str, str]:
         headers = copy.deepcopy(WYNDBLAST_PVE_HEADERS)
-        headers["authorization"] = WYNDBLAST_AUTHORIZATION_HEADER_KEY_FORMAT.format(
-            self.session_token
-        )
+        headers[
+            "authorization"
+        ] = WYNDBLAST_AUTHORIZATION_HEADER_KEY_FORMAT.format(self.session_token)
         headers["x-api-key"] = api_key
         return headers
 
@@ -87,7 +89,9 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
 
     def get_level_quests(self, level: str) -> T.List[LevelQuests]:
         try:
-            res = self._get_level_quests_raw(level, headers=self._get_pve_headers())
+            res = self._get_level_quests_raw(
+                level, headers=self._get_pve_headers()
+            )
             return res["result"]
         except KeyboardInterrupt:
             raise
@@ -153,7 +157,9 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         self, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
     ) -> T.Any:
         url = self.PVE_BASE_URL + f"/nft"
-        return self._get_request(url, headers=headers, params=params, timeout=20.0)
+        return self._get_request(
+            url, headers=headers, params=params, timeout=20.0
+        )
 
     def get_nft_data(self) -> PveNfts:
         try:
@@ -171,7 +177,9 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         self, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
     ) -> T.Any:
         url = self.PVE_BASE_URL + f"/stamina"
-        return self._get_request(url, headers=headers, params=params, timeout=20.0)
+        return self._get_request(
+            url, headers=headers, params=params, timeout=20.0
+        )
 
     def get_stamina(self) -> int:
         try:
@@ -189,7 +197,9 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         self, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
     ) -> T.Any:
         url = self.PVE_BASE_URL + f"/stamina"
-        return self._get_request(url, headers=headers, params=params, timeout=20.0)
+        return self._get_request(
+            url, headers=headers, params=params, timeout=20.0
+        )
 
     def refresh_auth(self) -> bool:
         try:
@@ -210,7 +220,9 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
         url = self.PVE_BASE_URL + f"/rewards/wynd/claim/{product_id}"
-        return self._post_request(url, json_data={}, headers=headers, params=params)
+        return self._post_request(
+            url, json_data={}, headers=headers, params=params
+        )
 
     def get_wynd_dna_str(self, product_id: str) -> str:
         nft: PveNfts = self.get_nft_data()
@@ -232,7 +244,9 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
 
     def level_up_wynd(self, product_id: str) -> bool:
         try:
-            res = self._level_up_wynd_raw(product_id, headers=self._get_pve_headers())
+            res = self._level_up_wynd_raw(
+                product_id, headers=self._get_pve_headers()
+            )
             return res["result"]["is_level_up"]
         except KeyboardInterrupt:
             raise
@@ -268,7 +282,9 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         payload["result"] = result
         payload["survived"] = {
             "player": battle_setup["player"] if result == "win" else [],
-            "enemy": battle_setup["enemy"][: random.randint(1, len(battle_setup["enemy"]))]
+            "enemy": battle_setup["enemy"][
+                : random.randint(1, len(battle_setup["enemy"]))
+            ]
             if result == "lose"
             else [],
         }
@@ -294,7 +310,9 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
         url = self.PVE_BASE_URL + "/rewards/quest/daily/claim"
-        return self._post_request(url, json_data={}, headers=headers, params=params, timeout=15.0)
+        return self._post_request(
+            url, json_data={}, headers=headers, params=params, timeout=15.0
+        )
 
     def claim_daily(self) -> ClaimQuests:
         try:
@@ -314,7 +332,9 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
         url = self.PVE_BASE_URL + "/rewards/quest/weekly/claim"
-        return self._post_request(url, json_data={}, headers=headers, params=params, timeout=15.0)
+        return self._post_request(
+            url, json_data={}, headers=headers, params=params, timeout=15.0
+        )
 
     def claim_weekly(self) -> ClaimQuests:
         try:
@@ -334,7 +354,9 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
         url = self.PVE_BASE_URL + "/rewards/chro/claim"
-        return self._post_request(url, json_data={}, headers=headers, params=params, timeout=15.0)
+        return self._post_request(
+            url, json_data={}, headers=headers, params=params, timeout=15.0
+        )
 
     def claim_chro(self) -> T.Dict[T.Any, T.Any]:
         try:
@@ -423,7 +445,9 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
         url = self.PVE_BASE_URL + "/ws/realtime"
-        return self._post_request(url, json_data={}, headers=headers, params=params, timeout=15.0)
+        return self._post_request(
+            url, json_data={}, headers=headers, params=params, timeout=15.0
+        )
 
     def ping_realtime(self) -> T.Dict[str, str]:
         try:
@@ -443,7 +467,9 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
         url = self.PVE_BASE_URL + "/opening"
-        return self._post_request(url, json_data={}, headers=headers, params=params, timeout=15.0)
+        return self._post_request(
+            url, json_data={}, headers=headers, params=params, timeout=15.0
+        )
 
     def complete_opening(self) -> bool:
         try:
@@ -463,11 +489,15 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
         url = self.PVE_BASE_URL + "/visual-novel/Selecting_Stage_1_1"
-        return self._post_request(url, json_data={}, headers=headers, params=params, timeout=15.0)
+        return self._post_request(
+            url, json_data={}, headers=headers, params=params, timeout=15.0
+        )
 
     def complete_novel_stage1(self) -> bool:
         try:
-            res = self._complete_novel_stage1_raw(headers=self._get_pve_headers())
+            res = self._complete_novel_stage1_raw(
+                headers=self._get_pve_headers()
+            )
             return res["status"]
         except KeyboardInterrupt:
             raise
@@ -483,11 +513,15 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
         url = self.PVE_BASE_URL + "/visual-novel/Before_Main_Map_1"
-        return self._post_request(url, json_data={}, headers=headers, params=params, timeout=15.0)
+        return self._post_request(
+            url, json_data={}, headers=headers, params=params, timeout=15.0
+        )
 
     def complete_novel_before_main1(self) -> bool:
         try:
-            res = self._complete_novel_before_main1_raw(headers=self._get_pve_headers())
+            res = self._complete_novel_before_main1_raw(
+                headers=self._get_pve_headers()
+            )
             return res["status"]
         except KeyboardInterrupt:
             raise
@@ -507,11 +541,15 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         data = {
             "amount": stamina,
         }
-        return self._post_request(url, json_data=data, headers=headers, params=params, timeout=20.0)
+        return self._post_request(
+            url, json_data=data, headers=headers, params=params, timeout=20.0
+        )
 
     def request_stamina_buy(self, stamina: int) -> StaminaBuy:
         try:
-            res = self._request_stamina_buy_raw(stamina, headers=self._get_pve_headers())
+            res = self._request_stamina_buy_raw(
+                stamina, headers=self._get_pve_headers()
+            )
             return res["result"]
         except KeyboardInterrupt:
             raise

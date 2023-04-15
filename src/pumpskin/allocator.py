@@ -24,12 +24,24 @@ class TokenAllocator:
         self.token = token
         self.token_w3 = token_w3
 
-        percent_profit = config["game_specific_configs"][f"percent_{token.lower()}_profit"] / 100.0
-        percent_hold = config["game_specific_configs"][f"percent_{token.lower()}_hold"] / 100.0
-        percent_levelling = (
-            config["game_specific_configs"][f"percent_{token.lower()}_levelling"] / 100.0
+        percent_profit = (
+            config["game_specific_configs"][f"percent_{token.lower()}_profit"]
+            / 100.0
         )
-        percent_lp = config["game_specific_configs"][f"percent_{token.lower()}_lp"] / 100.0
+        percent_hold = (
+            config["game_specific_configs"][f"percent_{token.lower()}_hold"]
+            / 100.0
+        )
+        percent_levelling = (
+            config["game_specific_configs"][
+                f"percent_{token.lower()}_levelling"
+            ]
+            / 100.0
+        )
+        percent_lp = (
+            config["game_specific_configs"][f"percent_{token.lower()}_lp"]
+            / 100.0
+        )
 
         self._percents = {
             Category.PROFIT: percent_profit,
@@ -62,7 +74,9 @@ class TokenAllocator:
         amount = self.token_w3.get_balance()
 
         if self.verbose:
-            logger.print_normal(f"Updating using full balance of {amount:.2f} {self.token}")
+            logger.print_normal(
+                f"Updating using full balance of {amount:.2f} {self.token}"
+            )
 
         for category in ALL_CATEGORIES:
             self.reset(category)
@@ -70,7 +84,9 @@ class TokenAllocator:
 
     def reallocate(self, from_category: Category) -> None:
         if self.verbose:
-            logger.print_normal(f"Reallocating {self.token} from {from_category}")
+            logger.print_normal(
+                f"Reallocating {self.token} from {from_category}"
+            )
 
         for category in ALL_CATEGORIES:
             if category == from_category:
@@ -116,13 +132,17 @@ class TokenAllocator:
 
     def reset(self, category: Category) -> None:
         if self.verbose:
-            logger.print_normal(f"Reseting {self.token} allocation category: {category}")
+            logger.print_normal(
+                f"Reseting {self.token} allocation category: {category}"
+            )
         self.set_amount(category, 0.0)
 
     def maybe_add(self, amount: float) -> None:
         if self.use_full_balance:
             if self.verbose:
-                logger.print_normal(f"Tried to add but we're using full balance so ignoring")
+                logger.print_normal(
+                    f"Tried to add but we're using full balance so ignoring"
+                )
             return
 
         for category in ALL_CATEGORIES:
@@ -131,7 +151,9 @@ class TokenAllocator:
     def maybe_subtract(self, amount: float, category: Category) -> None:
         if self.use_full_balance:
             if self.verbose:
-                logger.print_normal(f"Tried to subtract but we're using full balance so ignoring")
+                logger.print_normal(
+                    f"Tried to subtract but we're using full balance so ignoring"
+                )
             return
 
         new_balance = max(0.0, self._allocations[category] - amount)
@@ -154,7 +176,9 @@ class TokenAllocator:
         percent_before = self._percents[category]
         self._percents[category] = percent
 
-        delta_per_category = (percent_before - percent) / (len(self._percents.keys()) - 1)
+        delta_per_category = (percent_before - percent) / (
+            len(self._percents.keys()) - 1
+        )
 
         if self.verbose:
             logger.print_normal(
@@ -196,7 +220,9 @@ class PpieAllocator(TokenAllocator):
         use_full_balance: bool,
         verbose: bool = True,
     ):
-        super().__init__(Tokens.PPIE, token_w3, config, use_full_balance, verbose)
+        super().__init__(
+            Tokens.PPIE, token_w3, config, use_full_balance, verbose
+        )
 
 
 class PotnAllocator(TokenAllocator):
@@ -207,4 +233,6 @@ class PotnAllocator(TokenAllocator):
         use_full_balance: bool,
         verbose: bool = True,
     ):
-        super().__init__(Tokens.POTN, token_w3, config, use_full_balance, verbose)
+        super().__init__(
+            Tokens.POTN, token_w3, config, use_full_balance, verbose
+        )

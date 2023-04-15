@@ -17,7 +17,11 @@ def get_events(
     logger.print_normal(f"Searching through {num_blocks} blocks...")
     events = []
     for block in range(num_blocks - max_blocks, num_blocks):
-        events.extend(event_function.getLogs(fromBlock=block, toBlock=block + BLOCK_CHUNKS))
+        events.extend(
+            event_function.getLogs(
+                fromBlock=block, toBlock=block + BLOCK_CHUNKS
+            )
+        )
     return events
 
 

@@ -20,18 +20,26 @@ class TraderJoeWeb3Client(AvalancheCWeb3Client):
     https://snowtrace.io/address/0x60aE616a2155Ee3d9A68541Ba4544862310933d4
     """
 
-    contract_address = T.cast(Address, "0x60aE616a2155Ee3d9A68541Ba4544862310933d4")
+    contract_address = T.cast(
+        Address, "0x60aE616a2155Ee3d9A68541Ba4544862310933d4"
+    )
     this_dir = os.path.dirname(os.path.realpath(__file__))
-    abi_dir = os.path.join(os.path.dirname(this_dir), "web3_utils", "abi", "abi-trader-joe.json")
+    abi_dir = os.path.join(
+        os.path.dirname(this_dir), "web3_utils", "abi", "abi-trader-joe.json"
+    )
     abi = Web3Client._get_contract_abi_from_file(abi_dir)
 
-    def get_amounts_out(self, amount_in: TokenWei, path: T.List[str]) -> T.List[TokenWei]:
+    def get_amounts_out(
+        self, amount_in: TokenWei, path: T.List[str]
+    ) -> T.List[TokenWei]:
         try:
             checksum_paths = []
             for p in path:
                 address = Web3.toChecksumAddress(p)
                 checksum_paths.append(address)
-            return self.contract.functions.getAmountsOut(amount_in, checksum_paths).call()
+            return self.contract.functions.getAmountsOut(
+                amount_in, checksum_paths
+            ).call()
         except Exception as e:
             logger.print_fail(f"{e}")
             return []

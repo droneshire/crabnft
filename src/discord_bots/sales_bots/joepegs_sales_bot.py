@@ -62,12 +62,16 @@ class JoePegsSalesBot:
                     logger.print_ok(f"Found new collection {collection}")
                     self.posted_items[collection] = {"sold": [], "listed": []}
 
-    def custom_filter_for_item(self, price: float, item: T.Dict[T.Any, T.Any]) -> bool:
+    def custom_filter_for_item(
+        self, price: float, item: T.Dict[T.Any, T.Any]
+    ) -> bool:
         # Override this in any derived class to provide a custom filter for
         # a collection and associated floor
         return False
 
-    def add_custom_embed_fields(self, embed: discord.Embed, embed_type: int) -> discord.Embed:
+    def add_custom_embed_fields(
+        self, embed: discord.Embed, embed_type: int
+    ) -> discord.Embed:
         # Override this in any derived class to add more custom info to the default embed
         return embed
 
@@ -76,7 +80,9 @@ class JoePegsSalesBot:
         for collection in self.collections:
             logger.print_normal(f"Collection: {collection}")
             for page in range(1, 5):
-                sales = self.client.get_sales(collection, params={"pageNum": page})
+                sales = self.client.get_sales(
+                    collection, params={"pageNum": page}
+                )
                 if not sales:
                     break
                 all_sales.extend(sales)
@@ -90,7 +96,9 @@ class JoePegsSalesBot:
                 )
                 continue
             if now - sale["timestamp"] > self.MAX_TIME_SINCE_SALE:
-                logger.print_normal(f"Skipping {sale['tokenId']} since too old...")
+                logger.print_normal(
+                    f"Skipping {sale['tokenId']} since too old..."
+                )
                 continue
             logger.print_normal(f"Found new sale of {sale['tokenId']}")
             recent_sales.append(sale)
@@ -114,7 +122,9 @@ class JoePegsSalesBot:
                 if listing.get("tokenId", "UNKNOWN") in self.posted_items.get(
                     listing.get("collection", ""), {}
                 ).get("listed", ""):
-                    logger.print_normal(f"Skipping {listing['tokenId']} since already posted...")
+                    logger.print_normal(
+                        f"Skipping {listing['tokenId']} since already posted..."
+                    )
                     continue
                 list_price_wei = int(listing["currentAsk"]["price"])
                 price = wei_to_token(list_price_wei)
@@ -122,7 +132,9 @@ class JoePegsSalesBot:
                 if not self.custom_filter_for_item(price, listing):
                     continue
 
-                logger.print_normal(f"Found new listing of {listing['tokenId']}")
+                logger.print_normal(
+                    f"Found new listing of {listing['tokenId']}"
+                )
                 snipe_listings.append(listing)
         return snipe_listings
 
@@ -131,7 +143,11 @@ class JoePegsSalesBot:
     ) -> discord.Embed:
         collection_name = listing["collectionName"]
         token_id = listing["tokenId"]
-        name = listing["metadata"]["name"] if listing["metadata"]["name"] else token_id
+        name = (
+            listing["metadata"]["name"]
+            if listing["metadata"]["name"]
+            else token_id
+        )
         sale_name_url = f"[{name}]({JOEPEGS_ITEM_URL.format(listing['collection'], token_id)})"
         embed = discord.Embed(
             title=f"{collection_name} Listing",
@@ -150,11 +166,15 @@ class JoePegsSalesBot:
 
         return self.add_custom_embed_fields(embed, EmbedType.Listing, listing)
 
-    def _get_sales_embed(self, sale: Activity, collection_floor_avax: float) -> discord.Embed:
+    def _get_sales_embed(
+        self, sale: Activity, collection_floor_avax: float
+    ) -> discord.Embed:
         collection_name = sale["collectionName"]
         token_id = sale["tokenId"]
         name = sale["name"] if sale["name"] else token_id
-        sale_name_url = f"[{name}]({JOEPEGS_ITEM_URL.format(sale['collection'], token_id)})"
+        sale_name_url = (
+            f"[{name}]({JOEPEGS_ITEM_URL.format(sale['collection'], token_id)})"
+        )
         embed = discord.Embed(
             title=f"{collection_name} Sale",
             description=f"New sale on JOEPEGS - {sale_name_url} sold\n",
@@ -181,7 +201,9 @@ class JoePegsSalesBot:
             percent_of_floor = price_avax / collection_floor_avax
             above_below_str = "above" if percent_of_floor > 1.0 else "below"
             percent_str = (
-                percent_of_floor - 1.0 if percent_of_floor > 1.0 else 1.0 - percent_of_floor
+                percent_of_floor - 1.0
+                if percent_of_floor > 1.0
+                else 1.0 - percent_of_floor
             )
             percent_str = percent_str * 100.0
 
@@ -214,7 +236,9 @@ class JoePegsSalesBot:
         for timestamp in sorted_sales:
             sale = timestamp_sales[timestamp]
             collection_address = sale["collection"]
-            self.posted_items[collection_address]["sold"].append(sale["tokenId"])
+            self.posted_items[collection_address]["sold"].append(
+                sale["tokenId"]
+            )
             embed = self._get_sales_embed(sale, floors[collection_address])
             embeds.append(embed)
 
@@ -232,7 +256,9 @@ class JoePegsSalesBot:
         embeds = []
         for listing in self._get_recent_discount_listings(floors):
             collection_address = listing["collection"]
-            self.posted_items[collection_address]["listed"].append(listing["tokenId"])
+            self.posted_items[collection_address]["listed"].append(
+                listing["tokenId"]
+            )
             embed = self._get_listing_embed(listing, floors[collection_address])
             embeds.append(embed)
 

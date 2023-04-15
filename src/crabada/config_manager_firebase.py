@@ -72,7 +72,9 @@ class ConfigManagerFirebase(CrabadaConfigManager):
 
     def init(self) -> None:
         if self.user_doc is None:
-            logger.print_warn(f"{self.user} does not have a firebase account! Using default config")
+            logger.print_warn(
+                f"{self.user} does not have a firebase account! Using default config"
+            )
         else:
             self.config = self._load_config()
         self._print_out_config()
@@ -94,7 +96,9 @@ class ConfigManagerFirebase(CrabadaConfigManager):
         try:
             did_update = self._read_and_update_config()
         except:
-            logger.print_fail(f"Failed to read and translate updated config from database")
+            logger.print_fail(
+                f"Failed to read and translate updated config from database"
+            )
 
         try:
             self._update_game_stats()
@@ -144,22 +148,29 @@ class ConfigManagerFirebase(CrabadaConfigManager):
         new_config: UserConfig = self._get_empty_new_config()
 
         logger.print_ok_blue(f"Checking database for preferences changes...")
-        new_config["email"] = db_config["preferences"]["notifications"]["email"]["email"]
-        new_config["get_email_updates"] = db_config["preferences"]["notifications"]["email"][
-            "updatesEnabled"
-        ]
+        new_config["email"] = db_config["preferences"]["notifications"][
+            "email"
+        ]["email"]
+        new_config["get_email_updates"] = db_config["preferences"][
+            "notifications"
+        ]["email"]["updatesEnabled"]
         if db_config["preferences"]["notifications"]["sms"]["phoneNumber"]:
             new_config["sms_number"] = (
-                "+1" + db_config["preferences"]["notifications"]["sms"]["phoneNumber"]
+                "+1"
+                + db_config["preferences"]["notifications"]["sms"][
+                    "phoneNumber"
+                ]
             )
 
-        logger.print_ok_blue(f"Checking database for strategy setting changes...")
-        new_config["game_specific_configs"]["should_reinforce"] = db_config["strategy"][
-            "reinforceEnabled"
-        ]
-        new_config["game_specific_configs"]["max_reinforcement_price_tus"] = float(
-            db_config["strategy"]["maxReinforcement"]
+        logger.print_ok_blue(
+            f"Checking database for strategy setting changes..."
         )
+        new_config["game_specific_configs"]["should_reinforce"] = db_config[
+            "strategy"
+        ]["reinforceEnabled"]
+        new_config["game_specific_configs"][
+            "max_reinforcement_price_tus"
+        ] = float(db_config["strategy"]["maxReinforcement"])
         new_config["max_gas_price_gwei"] = SMALL_TEAM_GAS_LIMIT
 
         logger.print_ok_blue(f"Checking database for team changes...")
@@ -172,24 +183,40 @@ class ConfigManagerFirebase(CrabadaConfigManager):
             team_id = int(team)
 
             if team_id not in [t["team_id"] for t in teams]:
-                logger.print_warn(f"Team not associated with user, not adding from database")
+                logger.print_warn(
+                    f"Team not associated with user, not adding from database"
+                )
                 continue
 
-            if details["action"] == StrategyActions.MINING or details["action"] == "MINING":
+            if (
+                details["action"] == StrategyActions.MINING
+                or details["action"] == "MINING"
+            ):
                 group_base = MINING_GROUP_NUM
-                db_config["strategy"]["teams"][team]["action"] = StrategyActions.MINING
-            elif details["action"] == StrategyActions.LOOTING or details["action"] == "LOOTING":
+                db_config["strategy"]["teams"][team][
+                    "action"
+                ] = StrategyActions.MINING
+            elif (
+                details["action"] == StrategyActions.LOOTING
+                or details["action"] == "LOOTING"
+            ):
                 group_base = LOOTING_GROUP_NUM
-                db_config["strategy"]["teams"][team]["action"] = StrategyActions.LOOTING
+                db_config["strategy"]["teams"][team][
+                    "action"
+                ] = StrategyActions.LOOTING
             elif details["action"] == StrategyActions.INACTIVE:
                 logger.print_fail(f"Detected inactive team {team_id}!")
                 group_base = INACTIVE_GROUP_NUM
-                db_config["strategy"]["teams"][team]["action"] = StrategyActions.INACTIVE
+                db_config["strategy"]["teams"][team][
+                    "action"
+                ] = StrategyActions.INACTIVE
             else:
                 logger.print_fail(f"Unknown action from teams!")
                 continue
 
-            composition, mp = self._get_team_composition_and_mp(team_id, new_config)
+            composition, mp = self._get_team_composition_and_mp(
+                team_id, new_config
+            )
 
             team_group_assignment[team_id] = (group_base, mp)
 
@@ -201,16 +228,24 @@ class ConfigManagerFirebase(CrabadaConfigManager):
                 )
 
         groups = set()
-        for team, group in assign_teams_to_groups(team_group_assignment).items():
+        for team, group in assign_teams_to_groups(
+            team_group_assignment
+        ).items():
             if group >= MINING_GROUP_NUM:
                 groups.add(group)
-                new_config["game_specific_configs"]["mining_teams"][team] = group
+                new_config["game_specific_configs"]["mining_teams"][
+                    team
+                ] = group
             elif group >= LOOTING_GROUP_NUM:
-                new_config["game_specific_configs"]["looting_teams"][team] = group
+                new_config["game_specific_configs"]["looting_teams"][
+                    team
+                ] = group
 
             logger.print_normal(f"Assigning team {team} to group {group}")
 
-        logger.print_ok_blue(f"Checking database for reinforcement crab changes...")
+        logger.print_ok_blue(
+            f"Checking database for reinforcement crab changes..."
+        )
 
         crabs = self.crabada_w2.get_crabs(self.config["address"])
 
@@ -224,18 +259,34 @@ class ConfigManagerFirebase(CrabadaConfigManager):
                 )
                 continue
 
-            if details["action"] == StrategyActions.MINING or details["action"] == "MINING":
+            if (
+                details["action"] == StrategyActions.MINING
+                or details["action"] == "MINING"
+            ):
                 group_base = MINING_GROUP_NUM
-                new_config["game_specific_configs"]["reinforcing_crabs"][crab_id] = group_base
-                db_config["strategy"]["reinforcingCrabs"][crab]["action"] = StrategyActions.MINING
-            elif details["action"] == StrategyActions.LOOTING or details["action"] == "LOOTING":
+                new_config["game_specific_configs"]["reinforcing_crabs"][
+                    crab_id
+                ] = group_base
+                db_config["strategy"]["reinforcingCrabs"][crab][
+                    "action"
+                ] = StrategyActions.MINING
+            elif (
+                details["action"] == StrategyActions.LOOTING
+                or details["action"] == "LOOTING"
+            ):
                 group_base = LOOTING_GROUP_NUM
-                new_config["game_specific_configs"]["reinforcing_crabs"][crab_id] = group_base
-                db_config["strategy"]["reinforcingCrabs"][crab]["action"] = StrategyActions.LOOTING
+                new_config["game_specific_configs"]["reinforcing_crabs"][
+                    crab_id
+                ] = group_base
+                db_config["strategy"]["reinforcingCrabs"][crab][
+                    "action"
+                ] = StrategyActions.LOOTING
             elif details["action"] == StrategyActions.INACTIVE:
                 logger.print_normal(f"Detected inactive crab")
                 group_base = INACTIVE_GROUP_NUM
-                db_config["strategy"]["reinforcingCrabs"][crab]["action"] = StrategyActions.INACTIVE
+                db_config["strategy"]["reinforcingCrabs"][crab][
+                    "action"
+                ] = StrategyActions.INACTIVE
             else:
                 logger.print_fail(f"Unknown action from reinforcingCrabs!")
                 continue
@@ -243,7 +294,9 @@ class ConfigManagerFirebase(CrabadaConfigManager):
             crab_class = self._get_crab_class(crab_id, new_config)
 
             crab_assignment[crab_id] = group_base
-            db_config["strategy"]["reinforcingCrabs"][crab]["class"] = [crab_class.strip()]
+            db_config["strategy"]["reinforcingCrabs"][crab]["class"] = [
+                crab_class.strip()
+            ]
 
             if self.verbose:
                 logger.print_normal(
@@ -252,8 +305,12 @@ class ConfigManagerFirebase(CrabadaConfigManager):
 
         groups = sorted(list(groups))
         crabs = sorted([c for c in db_config["strategy"]["reinforcingCrabs"]])
-        for crab, group in assign_crabs_to_groups(crab_assignment, groups).items():
-            new_config["game_specific_configs"]["reinforcing_crabs"][crab] = group
+        for crab, group in assign_crabs_to_groups(
+            crab_assignment, groups
+        ).items():
+            new_config["game_specific_configs"]["reinforcing_crabs"][
+                crab
+            ] = group
             logger.print_normal(f"Assigning crab {crab} to group {group}")
 
         diff = deepdiff.DeepDiff(
@@ -264,7 +321,9 @@ class ConfigManagerFirebase(CrabadaConfigManager):
             ignore_order_func=True,
         )
         if diff:
-            logger.print_ok_blue(f"Detected changes in config from firebase database")
+            logger.print_ok_blue(
+                f"Detected changes in config from firebase database"
+            )
             logger.print_normal(f"{diff}")
             self.config = copy.deepcopy(new_config)
             logger.print_normal(f"Saving new config to disk")
@@ -285,9 +344,9 @@ class ConfigManagerFirebase(CrabadaConfigManager):
         email = config["email"].lower()
         for db_email, db_config in db_setup.items():
             try:
-                notification_email = db_config["preferences"]["notifications"]["email"][
+                notification_email = db_config["preferences"]["notifications"][
                     "email"
-                ].lower()
+                ]["email"].lower()
             except:
                 continue
 
@@ -295,7 +354,10 @@ class ConfigManagerFirebase(CrabadaConfigManager):
                 email = db_email.lower()
                 break
 
-        if config["email"].lower() in db_setup or notification_email == config["email"].lower():
+        if (
+            config["email"].lower() in db_setup
+            or notification_email == config["email"].lower()
+        ):
             return self.users_ref.document(email)
         else:
             return None
@@ -322,7 +384,9 @@ class ConfigManagerFirebase(CrabadaConfigManager):
                 alias_configs[alias] = config
         return alias_configs
 
-    def update_user_from_crabada(self, local_user: str, erase_old_config: bool = True) -> None:
+    def update_user_from_crabada(
+        self, local_user: str, erase_old_config: bool = True
+    ) -> None:
         user = local_user
         config = USERS[local_user]
 
@@ -338,7 +402,9 @@ class ConfigManagerFirebase(CrabadaConfigManager):
                 "reinforcingCrabs": {}
                 if erase_old_config
                 else db_config["strategy"]["reinforcingCrabs"],
-                "teams": {} if erase_old_config else db_config["strategy"]["teams"],
+                "teams": {}
+                if erase_old_config
+                else db_config["strategy"]["teams"],
                 "maxReinforcement": db_config["strategy"]["maxReinforcement"],
                 "maxGas": 0,
             }
@@ -360,10 +426,14 @@ class ConfigManagerFirebase(CrabadaConfigManager):
                 }
             }
             db_config["strategy"] = {
-                "reinforceEnabled": config["game_specific_configs"]["should_reinforce"],
+                "reinforceEnabled": config["game_specific_configs"][
+                    "should_reinforce"
+                ],
                 "reinforcingCrabs": {},
                 "teams": {},
-                "maxReinforcement": config["game_specific_configs"]["max_reinforcement_price_tus"],
+                "maxReinforcement": config["game_specific_configs"][
+                    "max_reinforcement_price_tus"
+                ],
                 "maxGas": 0,
             }
 
@@ -381,10 +451,14 @@ class ConfigManagerFirebase(CrabadaConfigManager):
                 "user": user,
             }
 
-        crabs = self.crabada_w2.list_my_available_crabs_for_reinforcement(config["address"])
+        crabs = self.crabada_w2.list_my_available_crabs_for_reinforcement(
+            config["address"]
+        )
         for crab in crabs:
             crab_id = crab["crabada_id"]
-            crab_class = self.crab_classes.get(crab_id, self._get_crab_class(crab_id, config))
+            crab_class = self.crab_classes.get(
+                crab_id, self._get_crab_class(crab_id, config)
+            )
             if crab_class == "UNKNOWN":
                 continue
             db_config["strategy"]["reinforcingCrabs"][str(crab_id)] = {
@@ -435,14 +509,20 @@ class ConfigManagerFirebase(CrabadaConfigManager):
                 }
             }
             db_config["strategy"] = {
-                "reinforceEnabled": config["game_specific_configs"]["should_reinforce"],
+                "reinforceEnabled": config["game_specific_configs"][
+                    "should_reinforce"
+                ],
                 "reinforcingCrabs": {},
                 "teams": {},
-                "maxReinforcement": config["game_specific_configs"]["max_reinforcement_price_tus"],
+                "maxReinforcement": config["game_specific_configs"][
+                    "max_reinforcement_price_tus"
+                ],
                 "maxGas": 0,
             }
 
-            for team, value in config["game_specific_configs"]["mining_teams"].items():
+            for team, value in config["game_specific_configs"][
+                "mining_teams"
+            ].items():
                 composition, _ = self._get_team_composition_and_mp(team, config)
                 db_config["strategy"]["teams"][team] = {
                     "action": StrategyActions.MINING,
@@ -450,7 +530,9 @@ class ConfigManagerFirebase(CrabadaConfigManager):
                     "user": value[1],
                 }
 
-            for team, value in config["game_specific_configs"]["looting_teams"].items():
+            for team, value in config["game_specific_configs"][
+                "looting_teams"
+            ].items():
                 composition, _ = self._get_team_composition_and_mp(team, config)
                 db_config["strategy"]["teams"][team] = {
                     "action": StrategyActions.LOOTING,
@@ -458,9 +540,17 @@ class ConfigManagerFirebase(CrabadaConfigManager):
                     "user": value[1],
                 }
 
-            for crab, value in config["game_specific_configs"]["reinforcing_crabs"].items():
-                action = StrategyActions.MINING if value[0] < 10 else StrategyActions.LOOTING
-                crab_class = self.crab_classes.get(crab, self._get_crab_class(crab, config))
+            for crab, value in config["game_specific_configs"][
+                "reinforcing_crabs"
+            ].items():
+                action = (
+                    StrategyActions.MINING
+                    if value[0] < 10
+                    else StrategyActions.LOOTING
+                )
+                crab_class = self.crab_classes.get(
+                    crab, self._get_crab_class(crab, config)
+                )
                 db_config["strategy"]["reinforcingCrabs"][crab] = {
                     "action": action,
                     "class": [crab_class.strip()],

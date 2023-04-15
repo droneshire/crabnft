@@ -47,14 +47,22 @@ class GetPumpkinLevel(OnMessage):
         )
 
         embed.add_field(name=f"Pumpskin", value=f"{token_id}", inline=True)
-        embed.add_field(name=f"Cooldown", value=f"{cooldown_time}", inline=False)
+        embed.add_field(
+            name=f"Cooldown", value=f"{cooldown_time}", inline=False
+        )
         ppie_per_day = calc_ppie_per_day_from_level(level)
         embed.add_field(name=f"$PPIE/Day", value=f"{ppie_per_day}", inline=True)
         potn_to_level = calc_potn_from_level(level)
-        embed.add_field(name=f"Level Up:", value=f"{potn_to_level} $POTN", inline=False)
-        embed.add_field(name=f"\U0000200b", value=f"**Attribute Rarity**", inline=False)
+        embed.add_field(
+            name=f"Level Up:", value=f"{potn_to_level} $POTN", inline=False
+        )
+        embed.add_field(
+            name=f"\U0000200b", value=f"**Attribute Rarity**", inline=False
+        )
 
-        pumpskin_rarity = calculate_rarity_from_query(token_id, get_json_path(ATTRIBUTES_FILE))
+        pumpskin_rarity = calculate_rarity_from_query(
+            token_id, get_json_path(ATTRIBUTES_FILE)
+        )
 
         if not pumpskin_rarity:
             return ""
@@ -80,16 +88,24 @@ class GetPumpkinLevel(OnMessage):
             inline=True,
         )
         embed.set_thumbnail(url=image_uri)
-        url = JOEPEGS_URL.format(PumpskinNftWeb3Client.contract_address) + str(token_id)
-        embed.set_author(name="JoePeg Link", url=f"{url}", icon_url=f"{JOEPEGS_ICON_URL}")
+        url = JOEPEGS_URL.format(PumpskinNftWeb3Client.contract_address) + str(
+            token_id
+        )
+        embed.set_author(
+            name="JoePeg Link", url=f"{url}", icon_url=f"{JOEPEGS_ICON_URL}"
+        )
         return embed
 
     @classmethod
-    def response(cls, message: discord.message.Message) -> T.Union[str, discord.Embed]:
+    def response(
+        cls, message: discord.message.Message
+    ) -> T.Union[str, discord.Embed]:
         if not any([g for g in cls.ALLOWLIST_GUILDS if message.guild.id == g]):
             return ""
 
-        if not any([c for c in cls.ALLOWLIST_CHANNELS if message.channel.id == c]):
+        if not any(
+            [c for c in cls.ALLOWLIST_CHANNELS if message.channel.id == c]
+        ):
             return ""
 
         text = message.content.lower().strip()
@@ -117,7 +133,9 @@ class GetPumpkinLevel(OnMessage):
 
             w2: PumpskinWeb2Client = PumpskinWeb2Client()
 
-            pumpskin_info: StakedPumpskin = w3.get_staked_pumpskin_info(token_id)
+            pumpskin_info: StakedPumpskin = w3.get_staked_pumpskin_info(
+                token_id
+            )
             pumpskin_image_uri = w2.get_pumpskin_image(token_id)
 
             now = time.time()
@@ -167,16 +185,22 @@ class GetPumpkinRoi(OnMessage):
             value=f"{pumpskin_price_avax:.2f} $AVAX",
             inline=True,
         )
-        embed.add_field(name=f"$PPIE Price", value=f"{ppie_price_usd:.5f} $USD", inline=True)
+        embed.add_field(
+            name=f"$PPIE Price", value=f"{ppie_price_usd:.5f} $USD", inline=True
+        )
         return embed
 
     @classmethod
-    def response(cls, message: discord.message.Message) -> T.Union[str, discord.Embed]:
+    def response(
+        cls, message: discord.message.Message
+    ) -> T.Union[str, discord.Embed]:
         if not any([g for g in cls.ALLOWLIST_GUILDS if message.guild.id == g]):
             return ""
 
         logger.print_normal(f"{message.channel.name} id: {message.channel.id}")
-        if not any([c for c in cls.ALLOWLIST_CHANNELS if message.channel.id == c]):
+        if not any(
+            [c for c in cls.ALLOWLIST_CHANNELS if message.channel.id == c]
+        ):
             return ""
 
         text = message.content.lower().strip()
@@ -184,7 +208,9 @@ class GetPumpkinRoi(OnMessage):
             return ""
 
         try:
-            pumpskin_price_avax = float(text.strip().split(cls.HOTKEY)[1].strip())
+            pumpskin_price_avax = float(
+                text.strip().split(cls.HOTKEY)[1].strip()
+            )
         except ValueError:
             return ""
 
@@ -194,8 +220,12 @@ class GetPumpkinRoi(OnMessage):
         # TODO: get price from LP
         ppie_price_usd = 0.3
 
-        roi_days = calc_roi_from_mint(ppie_price_usd, prices.avax_usd, pumpskin_price_avax)
-        return cls._get_pumpskin_roi_embed(pumpskin_price_avax, ppie_price_usd, roi_days)
+        roi_days = calc_roi_from_mint(
+            ppie_price_usd, prices.avax_usd, pumpskin_price_avax
+        )
+        return cls._get_pumpskin_roi_embed(
+            pumpskin_price_avax, ppie_price_usd, roi_days
+        )
 
 
 class SnoopChannel(OnMessage):
@@ -209,12 +239,16 @@ class SnoopChannel(OnMessage):
     ]
 
     @classmethod
-    def response(cls, message: discord.message.Message) -> T.Union[str, discord.Embed]:
+    def response(
+        cls, message: discord.message.Message
+    ) -> T.Union[str, discord.Embed]:
         if not any([g for g in cls.ALLOWLIST_GUILDS if message.guild.id == g]):
             return ""
 
         logger.print_normal(f"{message.channel.name} id: {message.channel.id}")
-        if not any([c for c in cls.ALLOWLIST_CHANNELS if message.channel.id == c]):
+        if not any(
+            [c for c in cls.ALLOWLIST_CHANNELS if message.channel.id == c]
+        ):
             return ""
 
         logger.print_normal(f"{message.channel.name} id: {message.channel.id}")
@@ -234,7 +268,9 @@ class MintNumber(OnMessage):
     ]
 
     @classmethod
-    def response(cls, message: discord.message.Message) -> T.Union[str, discord.Embed]:
+    def response(
+        cls, message: discord.message.Message
+    ) -> T.Union[str, discord.Embed]:
         if not any([g for g in cls.ALLOWLIST_GUILDS if message.guild.id == g]):
             return ""
 
@@ -257,7 +293,9 @@ class MintNumber(OnMessage):
     ]
 
     @classmethod
-    def response(cls, message: discord.message.Message) -> T.Union[str, discord.Embed]:
+    def response(
+        cls, message: discord.message.Message
+    ) -> T.Union[str, discord.Embed]:
         if not any([g for g in cls.ALLOWLIST_GUILDS if message.guild.id == g]):
             return ""
 

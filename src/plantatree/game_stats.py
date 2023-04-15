@@ -33,7 +33,9 @@ class PatLifetimeGameStatsLogger(LifetimeGameStatsLogger):
         dry_run: bool = False,
         verbose: bool = False,
     ):
-        super().__init__(user, NULL_GAME_STATS, log_dir, backup_stats, dry_run, verbose)
+        super().__init__(
+            user, NULL_GAME_STATS, log_dir, backup_stats, dry_run, verbose
+        )
 
     def delta_game_stats(
         self,
@@ -88,8 +90,12 @@ class PatLifetimeGameStatsLogger(LifetimeGameStatsLogger):
             logger.print_normal(json.dumps(user_b_stats, indent=4))
 
         for item in ["avax_gas", "harvests", "replants", "avax_harvested"]:
-            merged_stats[item] = merged_stats.get(item, 0.0) + user_a_stats.get(item, 0.0)
-            merged_stats[item] = merged_stats.get(item, 0.0) + user_b_stats.get(item, 0.0)
+            merged_stats[item] = merged_stats.get(item, 0.0) + user_a_stats.get(
+                item, 0.0
+            )
+            merged_stats[item] = merged_stats.get(item, 0.0) + user_b_stats.get(
+                item, 0.0
+            )
 
         for item in ["commission_avax"]:
             for k, v in user_a_stats.get(item, {}).items():

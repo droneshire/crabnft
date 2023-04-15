@@ -25,7 +25,9 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     log_dir = logger.get_logging_dir("pumpskin")
     parser.add_argument("--dry-run", action="store_true", help="Dry run")
-    parser.add_argument("--update-config", action="store_true", help="Update config from source")
+    parser.add_argument(
+        "--update-config", action="store_true", help="Update config from source"
+    )
     parser.add_argument("--quiet", action="store_true", help="Disable alerts")
     parser.add_argument(
         "--log-level",
@@ -56,8 +58,12 @@ def run_bot() -> None:
     if not args.dry_run:
         encrypt_password = os.getenv("NFT_PWD")
         if not encrypt_password:
-            encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
-        email_accounts = get_email_accounts_from_password(encrypt_password, GMAIL, args.quiet)
+            encrypt_password = getpass.getpass(
+                prompt="Enter decryption password: "
+            )
+        email_accounts = get_email_accounts_from_password(
+            encrypt_password, GMAIL, args.quiet
+        )
 
     bots = []
     for user, config in USERS.items():
@@ -80,7 +86,9 @@ def run_bot() -> None:
     last_totals_update = 0.0
 
     users = [b.user for b in bots]
-    health_monitor = HealthMonitor(args.server_url, "pumpskin", users).run(daemon=True)
+    health_monitor = HealthMonitor(args.server_url, "pumpskin", users).run(
+        daemon=True
+    )
 
     try:
         while True:
@@ -103,24 +111,44 @@ def run_bot() -> None:
                 total_lp_potn = 0.0
                 total_lp_ppie = 0.0
                 for bot in bots:
-                    total_levels += bot.stats_logger.lifetime_stats.get("levels", 0.0)
-                    total_ppie += bot.stats_logger.lifetime_stats.get("ppie", 0.0)
-                    total_potn += bot.stats_logger.lifetime_stats.get("potn", 0.0)
-                    total_gas += bot.stats_logger.lifetime_stats.get("avax_gas", 0.0)
-                    total_avax_profits += bot.stats_logger.lifetime_stats.get("avax_profits", 0.0)
-                    total_lp_potn += bot.stats_logger.lifetime_stats.get("potn_lp_tokens", 0.0)
-                    total_lp_ppie += bot.stats_logger.lifetime_stats.get("ppie_lp_tokens", 0.0)
+                    total_levels += bot.stats_logger.lifetime_stats.get(
+                        "levels", 0.0
+                    )
+                    total_ppie += bot.stats_logger.lifetime_stats.get(
+                        "ppie", 0.0
+                    )
+                    total_potn += bot.stats_logger.lifetime_stats.get(
+                        "potn", 0.0
+                    )
+                    total_gas += bot.stats_logger.lifetime_stats.get(
+                        "avax_gas", 0.0
+                    )
+                    total_avax_profits += bot.stats_logger.lifetime_stats.get(
+                        "avax_profits", 0.0
+                    )
+                    total_lp_potn += bot.stats_logger.lifetime_stats.get(
+                        "potn_lp_tokens", 0.0
+                    )
+                    total_lp_ppie += bot.stats_logger.lifetime_stats.get(
+                        "ppie_lp_tokens", 0.0
+                    )
                     total_pumps += len(bot.get_pumpskin_ids())
 
-                message = "\U0001F383\U0001F383 **Totals** \U0001F383\U0001F383\n"
+                message = (
+                    "\U0001F383\U0001F383 **Totals** \U0001F383\U0001F383\n"
+                )
                 message += f"**Total Users:** `{len(bots)}`\n"
                 message += f"**Total Pumpskins:** `{total_pumps}`\n"
                 message += f"**Total Levels Upgraded:** `{total_levels}`\n"
                 message += f"**Total $PPIE Claimed:** `{total_ppie:.2f}`\n"
                 message += f"**Total $POTN Claimed:** `{total_potn:.2f}`\n"
                 message += f"**Total AVAX Profits Swapped:** `{total_avax_profits:.3f}`\n"
-                message += f"**Total $POTN LP Purchased:** `{total_lp_potn:.2f}`\n"
-                message += f"**Total $PPIE LP Purchased:** `{total_lp_ppie:.2f}`\n"
+                message += (
+                    f"**Total $POTN LP Purchased:** `{total_lp_potn:.2f}`\n"
+                )
+                message += (
+                    f"**Total $PPIE LP Purchased:** `{total_lp_ppie:.2f}`\n"
+                )
                 message += f"**Total Gas Spent:** `{total_gas:.2f}`\n"
                 logger.print_bold(f"{message}")
                 discord.get_discord_hook("PUMPSKIN_ACTIVITY").send(message)
@@ -140,7 +168,9 @@ def run_bot() -> None:
                 to=TWILIO_CONFIG["admin_sms_number"],
             )
         if alerts_enabled:
-            stop_message += "Please manually attend your pumpskins until we're back up"
+            stop_message += (
+                "Please manually attend your pumpskins until we're back up"
+            )
             try:
                 discord.get_discord_hook("PUMPSKIN_UPDATES").send(stop_message)
             except:

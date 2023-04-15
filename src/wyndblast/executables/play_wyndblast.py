@@ -33,7 +33,9 @@ def parse_args() -> argparse.Namespace:
     log_dir = logger.get_logging_dir("")
     parser.add_argument("--dry-run", action="store_true", help="Dry run")
     parser.add_argument("--human-mode", action="store_true", help="Human mode")
-    parser.add_argument("--ignore-utc", action="store_true", help="Ignore the utc time hold")
+    parser.add_argument(
+        "--ignore-utc", action="store_true", help="Ignore the utc time hold"
+    )
     parser.add_argument("--quiet", action="store_true", help="Disable alerts")
     parser.add_argument(
         "--log-level",
@@ -72,8 +74,12 @@ def run_bot() -> None:
     if not args.dry_run:
         encrypt_password = os.getenv("NFT_PWD")
         if not encrypt_password:
-            encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
-        email_accounts = get_email_accounts_from_password(encrypt_password, GMAIL)
+            encrypt_password = getpass.getpass(
+                prompt="Enter decryption password: "
+            )
+        email_accounts = get_email_accounts_from_password(
+            encrypt_password, GMAIL
+        )
 
     stages_info, account_info, _, _, _ = get_cache_info(log_dir)
 
@@ -113,7 +119,9 @@ def run_bot() -> None:
     alerts_enabled = not args.quiet and not args.dry_run
 
     usernames = [b.user for b in bots]
-    health_monitor = HealthMonitor(args.server_url, "wyndblast", usernames).run(daemon=True)
+    health_monitor = HealthMonitor(args.server_url, "wyndblast", usernames).run(
+        daemon=True
+    )
 
     try:
         while True:

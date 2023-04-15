@@ -86,7 +86,9 @@ class CrabadaMineBot:
         self.dry_run: bool = dry_run
         self.address: Address = config["address"]
 
-        self.crabada_w2: CrabadaWeb2Client = CrabadaWeb2Client(use_proxy=use_proxy)
+        self.crabada_w2: CrabadaWeb2Client = CrabadaWeb2Client(
+            use_proxy=use_proxy
+        )
         self.crabada_w3: CrabadaWeb3Client = T.cast(
             CrabadaWeb3Client,
             (
@@ -135,7 +137,9 @@ class CrabadaMineBot:
         )
         self.config_mgr.init()
 
-        if not self.config_mgr.config["game_specific_configs"].get("authorization", ""):
+        if not self.config_mgr.config["game_specific_configs"].get(
+            "authorization", ""
+        ):
             self._authorize_user()
 
         self.crabada_w2.update_auth_token(
@@ -167,8 +171,12 @@ class CrabadaMineBot:
             dry_run=self.dry_run,
             verbose=False,
         )
-        csv_header = ["timestamp"] + [k for k in NULL_STATS.keys()] + ["team_id"]
-        csv_file = self.stats_logger.get_lifetime_stats_file().split(".")[0] + ".csv"
+        csv_header = (
+            ["timestamp"] + [k for k in NULL_STATS.keys()] + ["team_id"]
+        )
+        csv_file = (
+            self.stats_logger.get_lifetime_stats_file().split(".")[0] + ".csv"
+        )
         self.csv = CsvLogger(csv_file, csv_header, dry_run)
 
         self.loot_sniper: LootSnipes = LootSnipes(
@@ -178,22 +186,30 @@ class CrabadaMineBot:
 
         self.inactive_rounds = 0
 
-        logger.print_ok_blue(f"Adding bot for user {self.alias} with address {self.address}")
+        logger.print_ok_blue(
+            f"Adding bot for user {self.alias} with address {self.address}"
+        )
 
     def _authorize_user(self) -> str:
         address = self.address.lower()
         timestamp = str(int(time.time() * 1000))
         to_sign = f"{address}_{timestamp}"
         signable = messages.encode_defunct(text=to_sign)
-        signed = Account.sign_message(signable, private_key=self.config_mgr.config["private_key"])
+        signed = Account.sign_message(
+            signable, private_key=self.config_mgr.config["private_key"]
+        )
         logger.print_normal(f"Signing authorization and getting auth token....")
-        auth_token = self.crabada_w2.get_auth_token(self.address, signed.signature.hex(), timestamp)
+        auth_token = self.crabada_w2.get_auth_token(
+            self.address, signed.signature.hex(), timestamp
+        )
         if not auth_token:
             logger.print_warn(f"Failed to auth user!")
             return ""
 
         logger.print_ok(f"Successfully authorized user: {auth_token}")
-        self.config_mgr.config["game_specific_configs"]["authorization"] = auth_token
+        self.config_mgr.config["game_specific_configs"][
+            "authorization"
+        ] = auth_token
         return auth_token
 
     def _check_calc_and_send_daily_update_message(self) -> None:
@@ -239,7 +255,9 @@ class CrabadaMineBot:
         if tx_hash is None:
             explorer_content = f"Explorer: https://explorer.swimmer.network/address/{self.config_mgr.config['address']}\n\n"
         else:
-            explorer_content = f"Explorer: https://explorer.swimmer.network/tx/{tx_hash}\n\n"
+            explorer_content = (
+                f"Explorer: https://explorer.swimmer.network/tx/{tx_hash}\n\n"
+            )
 
         logger.print_normal(explorer_content)
 
@@ -254,7 +272,9 @@ class CrabadaMineBot:
                 content += "\n"
             else:
                 if isinstance(v, dict):
-                    content += f"{' '.join(k.upper().split('_'))}: {dict_sum(v):.3f}\n"
+                    content += (
+                        f"{' '.join(k.upper().split('_'))}: {dict_sum(v):.3f}\n"
+                    )
                 else:
                     content += f"{' '.join(k.upper().split('_'))}: {v:.3f}\n"
                 content += "\n"
@@ -311,13 +331,17 @@ class CrabadaMineBot:
             value=f"{game_stats['game_win_percent']:.2f}%",
             inline=True,
         )
-        embed.add_embed_field(name=f"MR %", value=f"{miners_revenge:.2f}%", inline=True)
+        embed.add_embed_field(
+            name=f"MR %", value=f"{miners_revenge:.2f}%", inline=True
+        )
 
         embed.set_thumbnail(url=FACTION_ICON_URLS[faction])
         webhook.add_embed(embed)
         webhook.execute()
 
-    def _update_bot_stats(self, tx: CrabadaTransaction, team: Team, mine: IdleGame) -> None:
+    def _update_bot_stats(
+        self, tx: CrabadaTransaction, team: Team, mine: IdleGame
+    ) -> None:
         team_id = team["team_id"]
         if team_id not in self.game_stats:
             self.game_stats[team_id] = NULL_STATS
@@ -332,7 +356,9 @@ class CrabadaMineBot:
             self.config_mgr.config["commission_percent_per_mine"],
         )
 
-        outcome_emoji = "\U0001F389" if tx.result == Result.WIN else "\U0001F915"
+        outcome_emoji = (
+            "\U0001F389" if tx.result == Result.WIN else "\U0001F915"
+        )
 
         profit_tus, profit_usd = get_actual_game_profit(
             self.game_stats[team_id], with_commission=False
@@ -346,7 +372,9 @@ class CrabadaMineBot:
             self.game_stats[team_id], with_commission=True
         )
 
-        logger.print_bold(f"Profits w/ commission: {profit_tus:.2f} TUS (${profit_usd:.2f})")
+        logger.print_bold(
+            f"Profits w/ commission: {profit_tus:.2f} TUS (${profit_usd:.2f})"
+        )
 
         message = f"Successfully closed {tx.game_type} {team['game_id']}, we {tx.result} {outcome_emoji}.\n"
 
@@ -395,7 +423,9 @@ class CrabadaMineBot:
             if k in [MineOption.MINE, MineOption.LOOT]:
                 logger.print_ok_blue(f"{k}:")
                 for s, n in self.stats_logger.lifetime_stats[k].items():
-                    logger.print_ok_blue(f"  {' '.join(s.lower().split('_'))}: {n:.3f}")
+                    logger.print_ok_blue(
+                        f"  {' '.join(s.lower().split('_'))}: {n:.3f}"
+                    )
             else:
                 logger.print_ok_blue(f"{' '.join(k.upper().split('_'))}: {v}")
         logger.print_ok_blue("\n")
@@ -410,7 +440,9 @@ class CrabadaMineBot:
             return
 
         message = f"Unable to complete bot transaction due to insufficient gas \U000026FD!\n"
-        message += f"Please add TUS to your wallet ASAP to avoid delay in mining!\n"
+        message += (
+            f"Please add TUS to your wallet ASAP to avoid delay in mining!\n"
+        )
         logger.print_fail(message)
 
         # always send the email
@@ -464,11 +496,19 @@ class CrabadaMineBot:
         return tx.gas
 
     def _print_mine_loot_status(self) -> None:
-        self._print_stats(self.crabada_w2.list_my_open_mines(self.address), True)
-        self._print_stats(self.crabada_w2.list_my_open_loots(self.address), False)
+        self._print_stats(
+            self.crabada_w2.list_my_open_mines(self.address), True
+        )
+        self._print_stats(
+            self.crabada_w2.list_my_open_loots(self.address), False
+        )
 
-    def _print_stats(self, mines: T.List[IdleGame], is_mine: bool = True) -> None:
-        formatted_date = time.strftime("%A, %Y-%m-%d %H:%M:%S", time.localtime(time.time()))
+    def _print_stats(
+        self, mines: T.List[IdleGame], is_mine: bool = True
+    ) -> None:
+        formatted_date = time.strftime(
+            "%A, %Y-%m-%d %H:%M:%S", time.localtime(time.time())
+        )
         header = "{:4s}{:10s}{:6s}{:10s}{:20s}{:25s}{:15s}{:15s}{:12s}\t{:25s}\n".format(
             "#",
             "Team",
@@ -486,7 +526,10 @@ class CrabadaMineBot:
         if is_mine:
             logger.print_normal(f"Mines ({formatted_date})")
             last_mine_start_formatted = get_pretty_seconds(
-                int(time.time() - self.crabada_w2.get_last_mine_start_time(self.address))
+                int(
+                    time.time()
+                    - self.crabada_w2.get_last_mine_start_time(self.address)
+                )
             )
             logger.print_normal(f"Last Mine Start: {last_mine_start_formatted}")
         else:
@@ -506,33 +549,45 @@ class CrabadaMineBot:
 
             if is_mine:
                 team_id = "team_id"
-                num_reinforcements = self.crabada_w2.get_num_mine_reinforcements(mine_data)
+                num_reinforcements = (
+                    self.crabada_w2.get_num_mine_reinforcements(mine_data)
+                )
                 is_winning = self.crabada_w2.mine_is_winning(mine_data)
                 total_time = self.crabada_w2.get_total_mine_time(mine_data) + 1
                 remaining_time = self.crabada_w2.get_remaining_time(mine_data)
-                group = self.config_mgr.config["game_specific_configs"]["mining_teams"].get(
-                    mine_data.get(team_id, -1)
-                )
+                group = self.config_mgr.config["game_specific_configs"][
+                    "mining_teams"
+                ].get(mine_data.get(team_id, -1))
             else:
                 team_id = "attack_team_id"
-                num_reinforcements = self.crabada_w2.get_num_loot_reinforcements(mine_data)
+                num_reinforcements = (
+                    self.crabada_w2.get_num_loot_reinforcements(mine_data)
+                )
                 is_winning = self.crabada_w2.loot_is_winning(mine_data)
                 total_time = self.looting_strategy.LOOTING_DURATION
-                remaining_time = self.crabada_w2.get_remaining_loot_time(mine_data)
-                group = self.config_mgr.config["game_specific_configs"]["looting_teams"].get(
-                    mine_data.get(team_id, -1)
+                remaining_time = self.crabada_w2.get_remaining_loot_time(
+                    mine_data
                 )
+                group = self.config_mgr.config["game_specific_configs"][
+                    "looting_teams"
+                ].get(mine_data.get(team_id, -1))
 
             percent_done = (total_time - remaining_time) / total_time
             progress = (
-                math.ceil(percent_done * PROGRESS_SLOTS) if remaining_time > 0 else PROGRESS_SLOTS
+                math.ceil(percent_done * PROGRESS_SLOTS)
+                if remaining_time > 0
+                else PROGRESS_SLOTS
             )
 
             reinforments_used_str = logger.format_normal("[")
-            for crab in self.crabada_w2.get_reinforcement_crabs(mine_data, not is_mine):
+            for crab in self.crabada_w2.get_reinforcement_crabs(
+                mine_data, not is_mine
+            ):
                 if (
                     crab
-                    in self.config_mgr.config["game_specific_configs"]["reinforcing_crabs"].keys()
+                    in self.config_mgr.config["game_specific_configs"][
+                        "reinforcing_crabs"
+                    ].keys()
                 ):
                     reinforments_used_str += logger.format_ok_blue(f"{crab} ")
                 else:
@@ -559,10 +614,14 @@ class CrabadaMineBot:
                     str(group),
                     game_str,
                     round_str,
-                    "|{}{}|".format("#" * progress, " " * (PROGRESS_SLOTS - progress)),
+                    "|{}{}|".format(
+                        "#" * progress, " " * (PROGRESS_SLOTS - progress)
+                    ),
                     get_pretty_seconds(remaining_time),
                     f"reinforced {num_reinforcements}x",
-                    logger.format_ok("winning") if is_winning else logger.format_fail("losing"),
+                    logger.format_ok("winning")
+                    if is_winning
+                    else logger.format_fail("losing"),
                     reinforments_used_str,
                 )
             )
@@ -580,13 +639,17 @@ class CrabadaMineBot:
         if game_stage == GameStage.START:
             stats = self.get_lifetime_stats()
             total_mine_games = (
-                stats[MineOption.MINE]["game_wins"] + stats[MineOption.MINE]["game_losses"]
+                stats[MineOption.MINE]["game_wins"]
+                + stats[MineOption.MINE]["game_losses"]
             )
             total_loot_games = (
-                stats[MineOption.LOOT]["game_wins"] + stats[MineOption.LOOT]["game_losses"]
+                stats[MineOption.LOOT]["game_wins"]
+                + stats[MineOption.LOOT]["game_losses"]
             )
             if (
-                math.isclose(stats[MineOption.MINE]["game_win_percent"], 0.0, abs_tol=1.0)
+                math.isclose(
+                    stats[MineOption.MINE]["game_win_percent"], 0.0, abs_tol=1.0
+                )
                 or total_mine_games < 50
             ):
                 mine_win_percent = 40.0
@@ -594,7 +657,9 @@ class CrabadaMineBot:
                 mine_win_percent = stats[MineOption.MINE]["game_win_percent"]
 
             if (
-                math.isclose(stats[MineOption.LOOT]["game_win_percent"], 0.0, abs_tol=1.0)
+                math.isclose(
+                    stats[MineOption.LOOT]["game_win_percent"], 0.0, abs_tol=1.0
+                )
                 or total_loot_games < 50
             ):
                 loot_win_percent = 60.0
@@ -607,13 +672,13 @@ class CrabadaMineBot:
             }
 
             if game_type == MineOption.MINE:
-                group = self.config_mgr.config["game_specific_configs"]["mining_teams"].get(
-                    team["team_id"], -1
-                )
+                group = self.config_mgr.config["game_specific_configs"][
+                    "mining_teams"
+                ].get(team["team_id"], -1)
             else:
-                group = self.config_mgr.config["game_specific_configs"]["looting_teams"].get(
-                    team["team_id"], -1
-                )
+                group = self.config_mgr.config["game_specific_configs"][
+                    "looting_teams"
+                ].get(team["team_id"], -1)
 
             does_have_self_reinforcements = any(
                 [
@@ -626,7 +691,9 @@ class CrabadaMineBot:
             )
 
             if self.fast_avg_gas_used.get_avg() is not None:
-                avg_gas_price_tus = self._get_gas_cost(self.fast_avg_gas_used.get_avg())
+                avg_gas_price_tus = self._get_gas_cost(
+                    self.fast_avg_gas_used.get_avg()
+                )
                 if avg_gas_price_tus is None:
                     avg_gas_price_tus = 2.03
             else:
@@ -641,11 +708,13 @@ class CrabadaMineBot:
                 avg_gas_price_tus=avg_gas_price_tus,
                 avg_reinforce_tus=self.avg_reinforce_tus.get_avg(),
                 win_percentages=win_percentages,
-                commission_percent=dict_sum(self.config_mgr.config["commission_percent_per_mine"]),
+                commission_percent=dict_sum(
+                    self.config_mgr.config["commission_percent_per_mine"]
+                ),
                 is_looting=game_type == MineOption.LOOT,
-                is_reinforcing_allowed=self.config_mgr.config["game_specific_configs"][
-                    "should_reinforce"
-                ],
+                is_reinforcing_allowed=self.config_mgr.config[
+                    "game_specific_configs"
+                ]["should_reinforce"],
                 can_self_reinforce=does_have_self_reinforcements,
                 min_profit_threshold_tus=0.0,
                 verbose=False,
@@ -695,7 +764,9 @@ class CrabadaMineBot:
                 verbose=True,
             )
 
-            mine_to_loot, lowest_mr = self._find_best_loot(team, loot_candidates, use_high_mr=False)
+            mine_to_loot, lowest_mr = self._find_best_loot(
+                team, loot_candidates, use_high_mr=False
+            )
 
         # if all else fails, just pick an available mine
         if mine_to_loot is None:
@@ -707,14 +778,18 @@ class CrabadaMineBot:
                 verbose=True,
             )
 
-            mine_to_loot, lowest_mr = self._find_best_loot(team, loot_candidates, use_high_mr=False)
+            mine_to_loot, lowest_mr = self._find_best_loot(
+                team, loot_candidates, use_high_mr=False
+            )
 
         if mine_to_loot is not None:
             logger.print_normal(
                 f"Loot[{mine_to_loot}]: Theirs: {loot_candidates[mine_to_loot]['faction']} Ours: {team['faction']}"
             )
             logger.print_normal(f"Miners Revenge: {lowest_mr:.2f}%")
-            logger.print_normal(f"{json.dumps(loot_candidates[mine_to_loot], indent=4)}")
+            logger.print_normal(
+                f"{json.dumps(loot_candidates[mine_to_loot], indent=4)}"
+            )
 
         # remove it from the available loots list (regardless of success/fail)
         for i, loot in enumerate(available_loots):
@@ -775,14 +850,17 @@ class CrabadaMineBot:
         if not strategy.should_reinforce(mine):
             return
 
-        if not self._should_take_action(team, GameStage.REINFORCE, strategy, mine):
+        if not self._should_take_action(
+            team, GameStage.REINFORCE, strategy, mine
+        ):
             return
 
         for _ in range(self.REINFORCING_RETRIES):
             reinforcement_crab = strategy.get_reinforcement_crab(
                 team,
                 mine,
-                self.reinforcement_search_backoff + strategy.get_backoff_margin(),
+                self.reinforcement_search_backoff
+                + strategy.get_backoff_margin(),
             )
             if self._reinforce_with_crab(
                 team,
@@ -790,9 +868,16 @@ class CrabadaMineBot:
                 reinforcement_crab,
                 strategy,
             ):
-                last_reinforcement_search_backoff = self.reinforcement_search_backoff
-                self.reinforcement_search_backoff = max(0, self.reinforcement_search_backoff - 1)
-                if last_reinforcement_search_backoff != self.reinforcement_search_backoff:
+                last_reinforcement_search_backoff = (
+                    self.reinforcement_search_backoff
+                )
+                self.reinforcement_search_backoff = max(
+                    0, self.reinforcement_search_backoff - 1
+                )
+                if (
+                    last_reinforcement_search_backoff
+                    != self.reinforcement_search_backoff
+                ):
                     logger.print_ok_blue(
                         f"Reinforcement backoff: {last_reinforcement_search_backoff}->{self.reinforcement_search_backoff}"
                     )
@@ -800,7 +885,9 @@ class CrabadaMineBot:
                     self.reinforcement_skip_tracker.discard(team["team_id"])
                 return
 
-            self.reinforcement_search_backoff = min(self.reinforcement_search_backoff + 5, 30)
+            self.reinforcement_search_backoff = min(
+                self.reinforcement_search_backoff + 5, 30
+            )
             logger.print_ok_blue(
                 f"Adjusting reinforcement backoff to {self.reinforcement_search_backoff}"
             )
@@ -813,7 +900,9 @@ class CrabadaMineBot:
         strategy: Strategy,
     ) -> bool:
         if reinforcement_crab is None:
-            logger.print_warn(f"Mine[{mine['game_id']}: Unable to find suitable reinforcement...")
+            logger.print_warn(
+                f"Mine[{mine['game_id']}: Unable to find suitable reinforcement..."
+            )
             return
 
         price_tus = wei_to_token(reinforcement_crab["price"])
@@ -843,8 +932,12 @@ class CrabadaMineBot:
             )
             return True
 
-        with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
-            tx = strategy.reinforce(team["game_id"], crabada_id, reinforcement_crab["price"])
+        with web3_transaction(
+            "insufficient funds for gas", self._send_out_of_gas_sms
+        ):
+            tx = strategy.reinforce(
+                team["game_id"], crabada_id, reinforcement_crab["price"]
+            )
 
             have_reinforced = strategy.have_reinforced_at_least_once(mine)
             gas_tus = self._calculate_and_log_gas_price(tx)
@@ -853,22 +946,32 @@ class CrabadaMineBot:
             ] = gas_tus
 
             if tx.did_succeed:
-                logger.print_ok_arrow(f"Successfully reinforced mine {team['game_id']}")
+                logger.print_ok_arrow(
+                    f"Successfully reinforced mine {team['game_id']}"
+                )
                 self.time_since_last_alert = None
-                self.stats_logger.lifetime_stats[tx.game_type]["tus_net"] -= price_tus
-                self.stats_logger.lifetime_stats[tx.game_type]["tus_reinforcement"] += price_tus
+                self.stats_logger.lifetime_stats[tx.game_type][
+                    "tus_net"
+                ] -= price_tus
+                self.stats_logger.lifetime_stats[tx.game_type][
+                    "tus_reinforcement"
+                ] += price_tus
                 self.updated_game_stats = True
                 return True
 
         logger.print_fail_arrow(f"Error reinforcing mine {team['game_id']}")
         return False
 
-    def _close_mine(self, team: Team, mine: IdleGame, strategy: Strategy) -> bool:
+    def _close_mine(
+        self, team: Team, mine: IdleGame, strategy: Strategy
+    ) -> bool:
 
         if not self._should_take_action(team, GameStage.CLOSE, strategy, mine):
             return False
 
-        with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
+        with web3_transaction(
+            "insufficient funds for gas", self._send_out_of_gas_sms
+        ):
             tx = strategy.close(team["game_id"])
 
             gas_tus = self._calculate_and_log_gas_price(tx)
@@ -879,7 +982,9 @@ class CrabadaMineBot:
 
                 if team["team_id"] in self.fraud_detection_tracker:
                     self.fraud_detection_tracker.discard(team["team_id"])
-                    logger.print_warn(f"Removing {team['team_id']} from fraud detection list")
+                    logger.print_warn(
+                        f"Removing {team['team_id']} from fraud detection list"
+                    )
 
                 return True
 
@@ -892,9 +997,13 @@ class CrabadaMineBot:
         return False
 
     def _start_mine(self, team: Team) -> bool:
-        logger.print_normal(f"Attemting to start new mine with team {team['team_id']}!")
+        logger.print_normal(
+            f"Attemting to start new mine with team {team['team_id']}!"
+        )
 
-        with web3_transaction("insufficient funds for gas", self._send_out_of_gas_sms):
+        with web3_transaction(
+            "insufficient funds for gas", self._send_out_of_gas_sms
+        ):
             tx = self.mining_strategy.start(team["team_id"])
 
             gas_tus = self._calculate_and_log_gas_price(tx)
@@ -903,10 +1012,14 @@ class CrabadaMineBot:
                 self.time_since_last_alert = None
                 self.game_stats[team["team_id"]] = copy.deepcopy(NULL_STATS)
                 self.game_stats[team["team_id"]]["gas_start"] = gas_tus
-                logger.print_ok_arrow(f"Successfully started mine for team {team['team_id']}")
+                logger.print_ok_arrow(
+                    f"Successfully started mine for team {team['team_id']}"
+                )
 
                 if team["team_id"] in self.fraud_detection_tracker:
-                    content = f"Possible fraud detection from user {self.alias}.\n\n"
+                    content = (
+                        f"Possible fraud detection from user {self.alias}.\n\n"
+                    )
                     content += f"Started a mine with team {team['team_id']} that never was closed by the bot!"
                     send_email(
                         self.emails,
@@ -916,7 +1029,9 @@ class CrabadaMineBot:
                     )
                 else:
                     self.fraud_detection_tracker.add(team["team_id"])
-                    logger.print_warn(f"Adding team {team['team_id']} to fraud detection list")
+                    logger.print_warn(
+                        f"Adding team {team['team_id']} to fraud detection list"
+                    )
 
                 return True
 
@@ -937,10 +1052,14 @@ class CrabadaMineBot:
                 self.time_since_last_alert = None
                 self.game_stats[team["team_id"]] = copy.deepcopy(NULL_STATS)
                 self.game_stats[team["team_id"]]["gas_start"] = gas_tus
-                logger.print_ok_arrow(f"Successfully started loot for team {team['team_id']}")
+                logger.print_ok_arrow(
+                    f"Successfully started loot for team {team['team_id']}"
+                )
 
                 if team["team_id"] in self.fraud_detection_tracker:
-                    content = f"Possible fraud detection from user {self.alias}.\n\n"
+                    content = (
+                        f"Possible fraud detection from user {self.alias}.\n\n"
+                    )
                     content += f"Started a loot with team {team['team_id']} that never was closed by the bot!"
                     send_email(
                         self.emails,
@@ -950,7 +1069,9 @@ class CrabadaMineBot:
                     )
                 else:
                     self.fraud_detection_tracker.add(team["team_id"])
-                    logger.print_warn(f"Adding team {team['team_id']} to fraud detection list")
+                    logger.print_warn(
+                        f"Adding team {team['team_id']} to fraud detection list"
+                    )
 
                 return True
 
@@ -958,27 +1079,33 @@ class CrabadaMineBot:
         return False
 
     def _is_team_allowed_to_mine(self, team: Team) -> bool:
-        return team["team_id"] in self.config_mgr.config["game_specific_configs"][
-            "mining_teams"
-        ].keys() or self._is_team_allowed_to_loot(
+        return team["team_id"] in self.config_mgr.config[
+            "game_specific_configs"
+        ]["mining_teams"].keys() or self._is_team_allowed_to_loot(
             team
         )  # looting teams go back and forth between loot/mine
 
     def _is_team_allowed_to_loot(self, team: Team) -> bool:
         return (
             team["team_id"]
-            in self.config_mgr.config["game_specific_configs"]["looting_teams"].keys()
+            in self.config_mgr.config["game_specific_configs"][
+                "looting_teams"
+            ].keys()
             and self.config_mgr.config["game_specific_configs"]["authorization"]
         )
 
-    def _check_and_maybe_reinforce_loots(self, team: Team, mine: IdleGame) -> None:
+    def _check_and_maybe_reinforce_loots(
+        self, team: Team, mine: IdleGame
+    ) -> None:
         self._reinforce_loot_or_mine(
             team,
             mine,
             self.looting_strategy,
         )
 
-    def _check_and_maybe_reinforce_mines(self, team: Team, mine: IdleGame) -> None:
+    def _check_and_maybe_reinforce_mines(
+        self, team: Team, mine: IdleGame
+    ) -> None:
         self._reinforce_loot_or_mine(
             team,
             mine,
@@ -1009,7 +1136,9 @@ class CrabadaMineBot:
         teams_to_mine = []
         for team in available_teams:
             if not self._is_team_allowed_to_loot(team):
-                logger.print_warn(f"Skipping team {team['team_id']} for looting...")
+                logger.print_warn(
+                    f"Skipping team {team['team_id']} for looting..."
+                )
                 continue
 
             if not self._should_take_action(
@@ -1030,11 +1159,15 @@ class CrabadaMineBot:
                 )
 
             if not no_reinforce_list:
-                no_reinforce_list = self.loot_sniper.get_loot_list_from_addresses(
-                    num_mines_needed=len(available_teams) * 2, verbose=True
+                no_reinforce_list = (
+                    self.loot_sniper.get_loot_list_from_addresses(
+                        num_mines_needed=len(available_teams) * 2, verbose=True
+                    )
                 )
 
-            mine_to_loot: int = self._find_mine_to_loot(team, available_loots, no_reinforce_list)
+            mine_to_loot: int = self._find_mine_to_loot(
+                team, available_loots, no_reinforce_list
+            )
 
             if mine_to_loot is None:
                 logger.print_warn(f"Failed to find a mine to loot!")
@@ -1058,10 +1191,14 @@ class CrabadaMineBot:
 
         for team in teams_to_mine:
             if not self._is_team_allowed_to_mine(team):
-                logger.print_warn(f"Skipping team {team['team_id']} for mining...")
+                logger.print_warn(
+                    f"Skipping team {team['team_id']} for mining..."
+                )
                 continue
 
-            if not self._should_take_action(team, GameStage.START, self.mining_strategy, mine=None):
+            if not self._should_take_action(
+                team, GameStage.START, self.mining_strategy, mine=None
+            ):
                 continue
 
             if not self.mining_strategy.should_start(team):
@@ -1069,20 +1206,27 @@ class CrabadaMineBot:
 
             # only start one team from group at a time in case there's some staggering
             # that needs to happen
-            team_group = self.config_mgr.config["game_specific_configs"]["mining_teams"].get(
-                team["team_id"], -1
-            )
+            team_group = self.config_mgr.config["game_specific_configs"][
+                "mining_teams"
+            ].get(team["team_id"], -1)
 
             if self._start_mine(team):
                 groups_started.append(team_group)
 
     def _check_and_maybe_reinforce(self) -> None:
-        if not self.config_mgr.config["game_specific_configs"].get("should_reinforce", True):
+        if not self.config_mgr.config["game_specific_configs"].get(
+            "should_reinforce", True
+        ):
             return
 
         teams = self.crabada_w2.list_teams(self.address)
-        loots = [l["game_id"] for l in self.crabada_w2.list_my_open_loots(self.address)]
-        mines = [m["game_id"] for m in self.crabada_w2.list_my_mines(self.address)]
+        loots = [
+            l["game_id"]
+            for l in self.crabada_w2.list_my_open_loots(self.address)
+        ]
+        mines = [
+            m["game_id"] for m in self.crabada_w2.list_my_mines(self.address)
+        ]
         for team in teams:
             mine = self.crabada_w2.get_mine(team["game_id"])
 
@@ -1099,8 +1243,13 @@ class CrabadaMineBot:
 
     def _check_and_maybe_close(self) -> None:
         teams = self.crabada_w2.list_teams(self.address)
-        loots = [l["game_id"] for l in self.crabada_w2.list_my_open_loots(self.address)]
-        mines = [m["game_id"] for m in self.crabada_w2.list_my_mines(self.address)]
+        loots = [
+            l["game_id"]
+            for l in self.crabada_w2.list_my_open_loots(self.address)
+        ]
+        mines = [
+            m["game_id"] for m in self.crabada_w2.list_my_mines(self.address)
+        ]
 
         if len(teams) == 0:
             self.inactive_rounds += 1
@@ -1156,7 +1305,9 @@ class CrabadaMineBot:
         logger.print_ok(f"User: {self.alias.upper()}")
 
         if self.inactive_rounds > self.MAX_INACTIVE_ROUNDS:
-            logger.print_warn(f"Skipping {self.alias.upper()} due to inactivity!")
+            logger.print_warn(
+                f"Skipping {self.alias.upper()} due to inactivity!"
+            )
             return
 
         self.config_mgr.check_for_config_updates()

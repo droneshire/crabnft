@@ -48,7 +48,9 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     log_dir = logger.get_logging_dir("crabada")
     parser.add_argument("--dry-run", action="store_true", help="Dry run")
-    parser.add_argument("--use-proxy", action="store_true", help="Use proxy if available")
+    parser.add_argument(
+        "--use-proxy", action="store_true", help="Use proxy if available"
+    )
     parser.add_argument("--quiet", action="store_true", help="Disable alerts")
     parser.add_argument(
         "--log-level",
@@ -88,7 +90,9 @@ def handle_subscription_posts(
         }
     }
     for subscription, details in subscriptions.items():
-        logger.print_normal(f"Sending subscription profitability update to {subscription}")
+        logger.print_normal(
+            f"Sending subscription profitability update to {subscription}"
+        )
         message = get_profitability_message(
             prices,
             avg_gas_tus,
@@ -113,7 +117,9 @@ def run_bot() -> None:
         id_string = "_".join([str(g) for g in args.groups])
     logger.setup_log(args.log_level, args.log_dir, id_string)
 
-    sms_client = Client(TWILIO_CONFIG["account_sid"], TWILIO_CONFIG["account_auth_token"])
+    sms_client = Client(
+        TWILIO_CONFIG["account_sid"], TWILIO_CONFIG["account_auth_token"]
+    )
 
     webhooks = {
         "CRABADA_HOLDERS": discord.get_discord_hook("CRABADA_HOLDERS"),
@@ -128,8 +134,12 @@ def run_bot() -> None:
     if not args.dry_run:
         encrypt_password = os.getenv("NFT_PWD")
         if not encrypt_password:
-            encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
-        email_accounts = get_email_accounts_from_password(encrypt_password, GMAIL)
+            encrypt_password = getpass.getpass(
+                prompt="Enter decryption password: "
+            )
+        email_accounts = get_email_accounts_from_password(
+            encrypt_password, GMAIL
+        )
 
     bots = []
     for user, config in USERS.items():
@@ -138,7 +148,9 @@ def run_bot() -> None:
             clean_up_stats_for_user(args.log_dir, user)
             continue
 
-        config["private_key"] = security.decrypt_secret(encrypt_password, config["private_key"])
+        config["private_key"] = security.decrypt_secret(
+            encrypt_password, config["private_key"]
+        )
 
         bots.append(
             CrabadaMineBot(
@@ -167,7 +179,9 @@ def run_bot() -> None:
         for k in [MineOption.MINE, MineOption.LOOT]:
             total_tus += bot_stats[k]["tus_gross"]
 
-    logger.print_bold(f"Mined TUS: {total_tus} TUS Commission TUS: {total_commission_tus} TUS")
+    logger.print_bold(
+        f"Mined TUS: {total_tus} TUS Commission TUS: {total_commission_tus} TUS"
+    )
     total_users, total_teams = get_users_teams()
     logger.print_bold(f"Users: {total_users}, Teams: {total_teams}")
     logger.print_normal("\n")
@@ -184,7 +198,9 @@ def run_bot() -> None:
 
     # assume only group 1 can post updates
     should_post_updates = 1 in [int(i) for i in args.groups]
-    group_backoff_adjustment = int(args.groups[0]) if len(args.groups) == 1 else 0
+    group_backoff_adjustment = (
+        int(args.groups[0]) if len(args.groups) == 1 else 0
+    )
 
     circuit_breaker = CircuitBreaker(min_delta=20.0 * len(bots), backoff=80.0)
 
@@ -209,7 +225,9 @@ def run_bot() -> None:
                 bot_stats = bot.get_lifetime_stats()
                 for k in totals.keys():
                     gross_tus += bot_stats[k]["tus_gross"]
-                    if bot.get_config()["game_specific_configs"]["should_reinforce"]:
+                    if bot.get_config()["game_specific_configs"][
+                        "should_reinforce"
+                    ]:
                         totals[k]["wins"] += bot_stats[k]["game_wins"]
                         totals[k]["losses"] += bot_stats[k]["game_losses"]
 
@@ -221,18 +239,25 @@ def run_bot() -> None:
                         new_prices.tus_usd,
                         new_prices.cra_usd,
                     )
-                    bot.update_prices(prices.avax_usd, prices.tus_usd, prices.cra_usd)
+                    bot.update_prices(
+                        prices.avax_usd, prices.tus_usd, prices.cra_usd
+                    )
                     last_price_update = now
 
             circuit_breaker.end()
 
             win_percentages = {}
             for k in totals.keys():
-                if totals[k].get("wins", 0) == 0 and totals[k].get("losses", 0) == 0:
+                if (
+                    totals[k].get("wins", 0) == 0
+                    and totals[k].get("losses", 0) == 0
+                ):
                     win_percentages[k] = 0.0
                 else:
                     win_percentages[k] = (
-                        float(totals[k]["wins"]) / (totals[k]["wins"] + totals[k]["losses"]) * 100.0
+                        float(totals[k]["wins"])
+                        / (totals[k]["wins"] + totals[k]["losses"])
+                        * 100.0
                     )
             profitability_message = get_profitability_message(
                 prices,
@@ -263,7 +288,10 @@ def run_bot() -> None:
                 continue
 
             now = time.time()
-            if alerts_enabled and now - last_profitability_update > PROFITABILITY_UPDATE_TIME:
+            if (
+                alerts_enabled
+                and now - last_profitability_update > PROFITABILITY_UPDATE_TIME
+            ):
                 last_profitability_update = now
                 # try:
                 #     webhooks["CRABADA_UPDATES"].send(profitability_message)
@@ -300,7 +328,9 @@ def run_bot() -> None:
                 to=TWILIO_CONFIG["admin_sms_number"],
             )
         if alerts_enabled:
-            stop_message += "Please manually attend your mines until we're back up"
+            stop_message += (
+                "Please manually attend your mines until we're back up"
+            )
             try:
                 webhooks["CRABADA_HOLDERS"].send(stop_message)
             except:

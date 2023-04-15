@@ -15,7 +15,9 @@ class Account(AccountBase):  # type: ignore
     email = Column(types.String(80), unique=True, nullable=False)
     discord_handle = Column(types.String(80), unique=True, nullable=False)
     wallets = relationship("Wallet", backref="Account")
-    created_at = Column(types.DateTime(timezone=True), server_default=func.now())
+    created_at = Column(
+        types.DateTime(timezone=True), server_default=func.now()
+    )
 
     def __repr__(self):
         return f"<Account {self.owner}:{self.discord_handle}, {self.email} {[w.address for w in self.wallets]}>"

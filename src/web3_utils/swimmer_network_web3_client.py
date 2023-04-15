@@ -30,7 +30,9 @@ class SwimmerNetworkClient(Web3Client):
 
     def get_balance(self) -> TokenWei:
         try:
-            balance = self.contract.functions.balanceOf(self.user_address).call()
+            balance = self.contract.functions.balanceOf(
+                self.user_address
+            ).call()
         except KeyboardInterrupt:
             raise
         except:
@@ -40,7 +42,9 @@ class SwimmerNetworkClient(Web3Client):
     def transfer_token(self, to_address: Address, token: TokenWei) -> HexStr:
         try:
             tx: TxParams = self.build_contract_transaction(
-                self.contract.functions.transfer(to_address, token_to_wei(token))
+                self.contract.functions.transfer(
+                    to_address, token_to_wei(token)
+                )
             )
             return self.sign_and_send_transaction(tx)
         except KeyboardInterrupt:

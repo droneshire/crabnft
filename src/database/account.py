@@ -98,7 +98,9 @@ class AccountDb:
 
             logger.print_ok_arrow(f"Created {user} account")
 
-            account = Account(owner=user, email=email, discord_handle=discord_handle)
+            account = Account(
+                owner=user, email=email, discord_handle=discord_handle
+            )
 
             db.add(account)
 
@@ -137,7 +139,9 @@ class AccountDb:
         with ManagedSession(db_str) as db:
             wallet = db.query(Wallet).filter(Wallet.address == address).first()
             if wallet is None:
-                logger.print_fail(f"Failed to add game config, wallet doesn't exist!")
+                logger.print_fail(
+                    f"Failed to add game config, wallet doesn't exist!"
+                )
                 return
 
             if game in [g.name for g in wallet.game_configs]:
@@ -146,12 +150,16 @@ class AccountDb:
 
             logger.print_ok_arrow(f"Created {game} config for wallet {address}")
 
-            config = config_type(name=game, email_updates=email_updates, wallet_id=wallet.address)
+            config = config_type(
+                name=game, email_updates=email_updates, wallet_id=wallet.address
+            )
 
             db.add(config)
 
     @staticmethod
-    def get_configs_for_game(game: str, db_str: str = USER_CONFIGS_DB) -> T.List[Account]:
+    def get_configs_for_game(
+        game: str, db_str: str = USER_CONFIGS_DB
+    ) -> T.List[Account]:
         with ManagedSession(db_str) as db:
             accounts = (
                 db.query(Account)

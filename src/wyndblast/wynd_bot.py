@@ -77,13 +77,17 @@ class WyndBot:
         assert self.config["address"], "Missing public key"
 
         if human_mode:
-            logger.print_ok_blue_arrow(f"Playing in human mode, by the rules...")
+            logger.print_ok_blue_arrow(
+                f"Playing in human mode, by the rules..."
+            )
 
-        self.wynd_w2: DailyActivitiesWyndblastWeb2Client = DailyActivitiesWyndblastWeb2Client(
-            self.config["private_key"],
-            self.address,
-            WyndblastWeb2Client.DAILY_ACTIVITY_BASE_URL,
-            dry_run=dry_run,
+        self.wynd_w2: DailyActivitiesWyndblastWeb2Client = (
+            DailyActivitiesWyndblastWeb2Client(
+                self.config["private_key"],
+                self.address,
+                WyndblastWeb2Client.DAILY_ACTIVITY_BASE_URL,
+                dry_run=dry_run,
+            )
         )
         self.pve_w2: PveWyndblastWeb2Client = PveWyndblastWeb2Client(
             self.config["private_key"],
@@ -142,7 +146,9 @@ class WyndBot:
         wynds_to_move = []
         for wynd in wynd_infos:
             if not wynd["isSubmitted"]:
-                logger.print_ok_blue_arrow(f"Found {wynd['token_id']} in inventory...")
+                logger.print_ok_blue_arrow(
+                    f"Found {wynd['token_id']} in inventory..."
+                )
                 wynds_to_move.append(int(wynd["token_id"]))
 
         if not wynds_to_move:
@@ -150,11 +156,17 @@ class WyndBot:
             return
 
         logger.print_bold(f"Attempting to move wynds from inventory to game...")
-        if not self.nft_w3.is_approved_for_all(self.wynd_w3.contract_checksum_address):
+        if not self.nft_w3.is_approved_for_all(
+            self.wynd_w3.contract_checksum_address
+        ):
             logger.print_bold(f"Allowing access to wynds...")
-            tx_hash = self.nft_w3.set_approval_for_all(self.wynd_w3.contract_checksum_address, True)
+            tx_hash = self.nft_w3.set_approval_for_all(
+                self.wynd_w3.contract_checksum_address, True
+            )
             tx_receipt = self.nft_w3.get_transaction_receipt(tx_hash)
-            gas = wei_to_token(self.nft_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+            gas = wei_to_token(
+                self.nft_w3.get_gas_cost_of_transaction_wei(tx_receipt)
+            )
             logger.print_bold(f"Paid {gas} AVAX in gas")
 
             with self.stats.user() as user:
@@ -164,24 +176,32 @@ class WyndBot:
                 logger.print_warn(f"Failed to allow access!")
             else:
                 logger.print_ok(f"Successfully allowed access")
-                logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+                logger.print_normal(
+                    f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n"
+                )
 
         time.sleep(5.0)
 
         for wynd in wynds_to_move:
             tx_hash = self.wynd_w3.move_out_of_inventory(token_ids=[wynd])
             tx_receipt = self.wynd_w3.get_transaction_receipt(tx_hash)
-            gas = wei_to_token(self.wynd_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+            gas = wei_to_token(
+                self.wynd_w3.get_gas_cost_of_transaction_wei(tx_receipt)
+            )
             logger.print_bold(f"Paid {gas} AVAX in gas")
 
             with self.stats.user() as user:
                 user.gas_avax += gas
 
             if tx_receipt.get("status", 0) != 1:
-                logger.print_fail(f"Failed to move wynds to game!\n{tx_receipt}")
+                logger.print_fail(
+                    f"Failed to move wynds to game!\n{tx_receipt}"
+                )
             else:
                 logger.print_ok(f"Successfully moved to game")
-                logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+                logger.print_normal(
+                    f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n"
+                )
 
     def _check_and_maybe_secure_account(self) -> None:
         if not self.SUPPORT_ACCOUNT_DEACTIVATION:
@@ -206,7 +226,9 @@ class WyndBot:
         wynds_to_move = []
         for wynd in wynd_infos:
             if wynd["isSubmitted"]:
-                logger.print_ok_blue_arrow(f"Found {wynd['token_id']} in game...")
+                logger.print_ok_blue_arrow(
+                    f"Found {wynd['token_id']} in game..."
+                )
                 wynds_to_move.append(int(wynd["token_id"]))
 
         if not wynds_to_move and self.address in ADDR_TO_WYND:
@@ -217,12 +239,16 @@ class WyndBot:
 
         did_succeed = True
         if wynds_to_move:
-            if not self.nft_w3.is_approved_for_all(self.wynd_w3.contract_checksum_address):
+            if not self.nft_w3.is_approved_for_all(
+                self.wynd_w3.contract_checksum_address
+            ):
                 tx_hash = self.nft_w3.set_approval_for_all(
                     self.wynd_w3.contract_checksum_address, True
                 )
                 tx_receipt = self.nft_w3.get_transaction_receipt(tx_hash)
-                gas = wei_to_token(self.nft_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+                gas = wei_to_token(
+                    self.nft_w3.get_gas_cost_of_transaction_wei(tx_receipt)
+                )
                 logger.print_bold(f"Paid {gas} AVAX in gas")
 
                 with self.stats.user() as user:
@@ -233,14 +259,20 @@ class WyndBot:
                     return
                 else:
                     logger.print_ok(f"Successfully added nft access")
-                    logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+                    logger.print_normal(
+                        f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n"
+                    )
 
-            logger.print_ok_blue_arrow(f"Moving {len(wynds_to_move)} wynds out of game")
+            logger.print_ok_blue_arrow(
+                f"Moving {len(wynds_to_move)} wynds out of game"
+            )
 
             for wynd in wynds_to_move:
                 tx_hash = self.wynd_w3.move_into_inventory([wynd])
                 tx_receipt = self.nft_w3.get_transaction_receipt(tx_hash)
-                gas = wei_to_token(self.nft_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+                gas = wei_to_token(
+                    self.nft_w3.get_gas_cost_of_transaction_wei(tx_receipt)
+                )
                 logger.print_bold(f"Paid {gas} AVAX in gas")
 
                 with self.stats.user() as user:
@@ -252,7 +284,9 @@ class WyndBot:
                     continue
                 else:
                     logger.print_ok(f"Successfully move wynds out of game")
-                    logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+                    logger.print_normal(
+                        f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n"
+                    )
         else:
             logger.print_normal(f"No NFTs found in game")
 
@@ -262,13 +296,19 @@ class WyndBot:
         self.pve_w2.logout_user()
         self.pve_w2.authorize_user()
 
-        if self.nft_w3.is_approved_for_all(self.wynd_w3.contract_checksum_address):
-            logger.print_ok_blue_arrow(f"Locking down NFTs since not playing game")
+        if self.nft_w3.is_approved_for_all(
+            self.wynd_w3.contract_checksum_address
+        ):
+            logger.print_ok_blue_arrow(
+                f"Locking down NFTs since not playing game"
+            )
             tx_hash = self.nft_w3.set_approval_for_all(
                 self.wynd_w3.contract_checksum_address, False
             )
             tx_receipt = self.nft_w3.get_transaction_receipt(tx_hash)
-            gas = wei_to_token(self.nft_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+            gas = wei_to_token(
+                self.nft_w3.get_gas_cost_of_transaction_wei(tx_receipt)
+            )
             logger.print_bold(f"Paid {gas} AVAX in gas")
 
             with self.stats.user() as user:
@@ -278,7 +318,9 @@ class WyndBot:
                 logger.print_warn(f"Failed to remove nft access!")
             else:
                 logger.print_ok(f"Successfully removed nft access")
-                logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+                logger.print_normal(
+                    f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n"
+                )
 
     def init(self) -> None:
         self.config_mgr.init()
@@ -294,7 +336,9 @@ class WyndBot:
 
         if self.alias in DAILY_ENABLED:
             if self.daily_downsample > self.MIN_DAILY_DOWNSAMPLE:
-                logger.print_bold(f"\n\nAttempting Daily Activities for {self.user}")
+                logger.print_bold(
+                    f"\n\nAttempting Daily Activities for {self.user}"
+                )
                 if not self.wynd_w2.update_account():
                     self.wynd_w2.authorize_user()
                     self.wynd_w2.update_account()

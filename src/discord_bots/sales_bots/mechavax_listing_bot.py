@@ -35,7 +35,9 @@ class MechavaxListingBot(JoePegsSalesBot):
         )
         self.rarity = MechavaxMint()
 
-    def custom_filter_for_item(self, price: float, item: T.Dict[T.Any, T.Any]) -> bool:
+    def custom_filter_for_item(
+        self, price: float, item: T.Dict[T.Any, T.Any]
+    ) -> bool:
         token_id = int(item["tokenId"])
         multiplier = self.w3.get_mech_multiplier(token_id)
         if multiplier < self.MIN_MULTIPLIER:
@@ -52,7 +54,12 @@ class MechavaxListingBot(JoePegsSalesBot):
         multiplier = self.w3.get_mech_multiplier(token_id)
         with open(self.rarity.files["rarity"]) as infile:
             data = json.load(infile)
-            rarity = data.get(str(token_id), {}).get("Overall", {}).get("rarity", -0.01) * 100.0
+            rarity = (
+                data.get(str(token_id), {})
+                .get("Overall", {})
+                .get("rarity", -0.01)
+                * 100.0
+            )
         embed.add_field(
             name=f"\U0001F522 Emissions Multiplier",
             value=f"{multiplier}",

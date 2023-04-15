@@ -39,11 +39,15 @@ class MiningStrategy(Strategy):
             config_mgr,
         )
 
-    def start(self, team_id: int, game_id: T.Optional[int] = None) -> CrabadaTransaction:
+    def start(
+        self, team_id: int, game_id: T.Optional[int] = None
+    ) -> CrabadaTransaction:
         tx_hash = self.crabada_w3.start_game(team_id)
         tx_receipt = self._check_for_tx_receipt(tx_hash)
 
-        gas = wei_to_token(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        gas = wei_to_token(
+            self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt)
+        )
         return CrabadaTransaction(
             tx_hash,
             MineOption.MINE,
@@ -60,7 +64,9 @@ class MiningStrategy(Strategy):
         tx_hash = self.crabada_w3.close_game(game_id)
         tx_receipt = self._check_for_tx_receipt(tx_hash)
 
-        gas = wei_to_token(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        gas = wei_to_token(
+            self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt)
+        )
         tus, cra = get_rewards_from_tx_receipt(tx_receipt)
         if tus is not None:
             result = self._get_game_result(tus)
@@ -77,12 +83,18 @@ class MiningStrategy(Strategy):
             tx_receipt.get("gasUsed", 0.0),
         )
 
-    def reinforce(self, game_id: int, crabada_id: int, borrow_price: Wei) -> CrabadaTransaction:
+    def reinforce(
+        self, game_id: int, crabada_id: int, borrow_price: Wei
+    ) -> CrabadaTransaction:
         logger.print_normal(f"Mine[{game_id}]: reinforcing")
-        tx_hash = self.crabada_w3.reinforce_defense(game_id, crabada_id, borrow_price)
+        tx_hash = self.crabada_w3.reinforce_defense(
+            game_id, crabada_id, borrow_price
+        )
         tx_receipt = self._check_for_tx_receipt(tx_hash)
 
-        gas = wei_to_token(self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        gas = wei_to_token(
+            self.crabada_w3.get_gas_cost_of_transaction_wei(tx_receipt)
+        )
 
         return CrabadaTransaction(
             tx_hash,
@@ -117,12 +129,14 @@ class MiningStrategy(Strategy):
             mine, is_looting=True, verbose=False
         )
         if defense_battle_point >= attack_battle_point:
-            logger.print_normal(f"Mine[{mine['game_id']}]: not reinforcing since we're winning!")
+            logger.print_normal(
+                f"Mine[{mine['game_id']}]: not reinforcing since we're winning!"
+            )
             return None
 
-        group_id = self.config_mgr.config["game_specific_configs"]["mining_teams"].get(
-            team["team_id"], -1
-        )
+        group_id = self.config_mgr.config["game_specific_configs"][
+            "mining_teams"
+        ].get(team["team_id"], -1)
         if attack_battle_point - defense_battle_point < self.MAX_BP_DELTA:
             reinforcement_crab = super()._use_bp_reinforcement(
                 mine, group_id, use_own_crabs=use_own_crabs
@@ -133,7 +147,9 @@ class MiningStrategy(Strategy):
             )
 
         if reinforcement_crab is None:
-            logger.print_fail(f"Mine[{mine['game_id']}]: Could not find suitable reinforcement!")
+            logger.print_fail(
+                f"Mine[{mine['game_id']}]: Could not find suitable reinforcement!"
+            )
             return None
 
         if (
@@ -167,7 +183,9 @@ class PreferOtherMpCrabs(MiningStrategy):
         self, team: Team, mine: IdleGame, reinforcement_search_backoff: int = 0
     ) -> T.Optional[TeamMember]:
         self.reinforcement_search_backoff = reinforcement_search_backoff
-        return super()._get_best_mine_reinforcement(team, mine, use_own_crabs=False)
+        return super()._get_best_mine_reinforcement(
+            team, mine, use_own_crabs=False
+        )
 
 
 class PreferOwnMpCrabs(MiningStrategy):
@@ -189,4 +207,6 @@ class PreferOwnMpCrabs(MiningStrategy):
         self, team: Team, mine: IdleGame, reinforcement_search_backoff: int = 0
     ) -> T.Optional[TeamMember]:
         self.reinforcement_search_backoff = reinforcement_search_backoff
-        return super()._get_best_mine_reinforcement(team, mine, use_own_crabs=True)
+        return super()._get_best_mine_reinforcement(
+            team, mine, use_own_crabs=True
+        )

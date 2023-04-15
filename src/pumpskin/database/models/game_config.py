@@ -44,8 +44,12 @@ class PumpskinsGameConfig(AccountBase):  # type: ignore
     special_pumps = relationship("SpecialPumpskins", backref="GameConfig")
     only_special_pumps = Column(types.Boolean, nullable=False, default=False)
 
-    all_available_ppie_balances = Column(types.Boolean, nullable=False, default=True)
-    all_available_potn_balances = Column(types.Boolean, nullable=False, default=True)
+    all_available_ppie_balances = Column(
+        types.Boolean, nullable=False, default=True
+    )
+    all_available_potn_balances = Column(
+        types.Boolean, nullable=False, default=True
+    )
 
     rewards_claim_multiplier = Column(types.Float, nullable=False, default=10.0)
 

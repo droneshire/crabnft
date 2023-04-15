@@ -38,7 +38,9 @@ class Pve(GameBase):  # type: ignore
     unclaimed_chro = Column(types.Float, nullable=False, default=0.0)
     claimed_chro = Column(types.Float, nullable=False, default=0.0)
     user_id = Column(types.Integer, ForeignKey("WyndblastUser.id"))
-    created_at = Column(types.DateTime(timezone=True), server_default=func.now())
+    created_at = Column(
+        types.DateTime(timezone=True), server_default=func.now()
+    )
 
     def __repr__(self):
         return f"<Pve {self.address}>"

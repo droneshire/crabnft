@@ -20,9 +20,13 @@ class PlantATreeWeb3Client(AvalancheCWeb3Client):
     https://snowtrace.io/address/0xFd97C61962FF2aE3D08491Db4805E7E46F38C502
     """
 
-    contract_address = T.cast(Address, "0xFd97C61962FF2aE3D08491Db4805E7E46F38C502")
+    contract_address = T.cast(
+        Address, "0xFd97C61962FF2aE3D08491Db4805E7E46F38C502"
+    )
     this_dir = os.path.dirname(os.path.realpath(__file__))
-    abi_dir = os.path.join(os.path.dirname(this_dir), "web3_utils", "abi", "abi-plant-a-tree.json")
+    abi_dir = os.path.join(
+        os.path.dirname(this_dir), "web3_utils", "abi", "abi-plant-a-tree.json"
+    )
     abi = Web3Client._get_contract_abi_from_file(abi_dir)
 
     def re_plant(self, referral_address: Address) -> HexStr:
@@ -58,7 +62,9 @@ class PlantATreeWeb3Client(AvalancheCWeb3Client):
         Harvest rewards
         """
         try:
-            tx: TxParams = self.build_contract_transaction(self.contract.functions.HarvestTrees())
+            tx: TxParams = self.build_contract_transaction(
+                self.contract.functions.HarvestTrees()
+            )
             return self.sign_and_send_transaction(tx)
         except Exception as e:
             logger.print_fail(f"{e}")
@@ -70,9 +76,9 @@ class PlantATreeWeb3Client(AvalancheCWeb3Client):
         """
         try:
             return float(
-                self.contract.functions.getCurrentDayExtraTax(extra_48_tax).call(
-                    {"from": self.user_address}
-                )
+                self.contract.functions.getCurrentDayExtraTax(
+                    extra_48_tax
+                ).call({"from": self.user_address})
             )
         except Exception as e:
             logger.print_fail(f"{e}")
@@ -83,7 +89,9 @@ class PlantATreeWeb3Client(AvalancheCWeb3Client):
         Is harvest day, yo? i.e. tax is 0%
         """
         try:
-            return self.contract.functions.isHarvestDay().call({"from": self.user_address})
+            return self.contract.functions.isHarvestDay().call(
+                {"from": self.user_address}
+            )
         except Exception as e:
             logger.print_fail(f"{e}")
             return False
@@ -105,8 +113,10 @@ class PlantATreeWeb3Client(AvalancheCWeb3Client):
         Get time in seconds since last replant
         """
         try:
-            seconds = self.contract.functions.diffTimeSinceLastRePlantTree().call(
-                {"from": self.user_address}
+            seconds = (
+                self.contract.functions.diffTimeSinceLastRePlantTree().call(
+                    {"from": self.user_address}
+                )
             )
             return float(seconds)
         except Exception as e:
@@ -148,7 +158,9 @@ class PlantATreeWeb3Client(AvalancheCWeb3Client):
 
     def get_my_total_trees(self) -> int:
         try:
-            return self.contract.functions.getMyTrees().call({"from": self.user_address})
+            return self.contract.functions.getMyTrees().call(
+                {"from": self.user_address}
+            )
         except Exception as e:
             logger.print_fail(f"{e}")
             return 0
@@ -156,7 +168,9 @@ class PlantATreeWeb3Client(AvalancheCWeb3Client):
     def calculate_harvest_reward(self, trees: int) -> float:
         try:
             return wei_to_token(
-                self.contract.functions.calculateTreeSell(trees).call({"from": self.user_address})
+                self.contract.functions.calculateTreeSell(trees).call(
+                    {"from": self.user_address}
+                )
             )
         except Exception as e:
             logger.print_fail(f"{e}")

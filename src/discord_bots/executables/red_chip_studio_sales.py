@@ -49,12 +49,17 @@ async def sales_loop():
 async def on_ready() -> None:
     await client.change_presence(
         status=discord.Status.online,
-        activity=discord.Activity(type=discord.ActivityType.watching, name=ACTIVITY_STATUS),
+        activity=discord.Activity(
+            type=discord.ActivityType.watching, name=ACTIVITY_STATUS
+        ),
     )
     await client.user.edit(username=BOT_NAME)
 
     for guild in client.guilds:
-        logger.print_ok(f"{client.user} is connected to guild:\n" f"{guild.name}(id: {guild.id})")
+        logger.print_ok(
+            f"{client.user} is connected to guild:\n"
+            f"{guild.name}(id: {guild.id})"
+        )
 
     client.loop.create_task(sales_loop())
 

@@ -25,13 +25,17 @@ from utils.user import get_alias_from_user
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--user", choices=list(USERS.keys()) + ["ALL"], default="ALL")
+    parser.add_argument(
+        "--user", choices=list(USERS.keys()) + ["ALL"], default="ALL"
+    )
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--quiet", action="store_true")
     return parser.parse_args()
 
 
-def create_patch_csv(csv_file: str, bot: PumpskinBot, dry_run: bool = False) -> None:
+def create_patch_csv(
+    csv_file: str, bot: PumpskinBot, dry_run: bool = False
+) -> None:
     logger.print_normal(f"Creating patch stats csv file: {csv_file}...")
 
     csv_header = ["Pumpskin ID"]
@@ -53,7 +57,9 @@ def create_patch_csv(csv_file: str, bot: PumpskinBot, dry_run: bool = False) -> 
         row = {}
         row["Pumpskin ID"] = pumpskin
         for _ in range(3):
-            pumpskin_info: StakedPumpskin = bot.collection_w3.get_staked_pumpskin_info(pumpskin)
+            pumpskin_info: StakedPumpskin = (
+                bot.collection_w3.get_staked_pumpskin_info(pumpskin)
+            )
             if pumpskin_info:
                 break
             time.sleep(3.0)
@@ -63,7 +69,9 @@ def create_patch_csv(csv_file: str, bot: PumpskinBot, dry_run: bool = False) -> 
         row["PPIE/Day"] = calc_ppie_per_day_from_level(level)
         row["Level Up Cost"] = calc_potn_from_level(level)
         row["JoePeg Link"] = f"{JOEPEGS_URL}/{pumpskin}"
-        pumpskin_rarity = calculate_rarity_from_query(pumpskin, get_json_path(ATTRIBUTES_FILE))
+        pumpskin_rarity = calculate_rarity_from_query(
+            pumpskin, get_json_path(ATTRIBUTES_FILE)
+        )
 
         if not pumpskin_rarity:
             continue
@@ -92,14 +100,20 @@ def send_patch_stats() -> None:
     else:
         encrypt_password = os.getenv("NFT_PWD")
         if not encrypt_password:
-            encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
+            encrypt_password = getpass.getpass(
+                prompt="Enter decryption password: "
+            )
 
     aliases = set([get_alias_from_user(u) for u in USERS])
 
     email_accounts = []
     for email_account in GMAIL:
-        email_password = decrypt(str.encode(encrypt_password), email_account["password"]).decode()
-        email_accounts.append(email.Email(address=email_account["user"], password=email_password))
+        email_password = decrypt(
+            str.encode(encrypt_password), email_account["password"]
+        ).decode()
+        email_accounts.append(
+            email.Email(address=email_account["user"], password=email_password)
+        )
 
     for user in users:
         alias = get_alias_from_user(user)
@@ -155,7 +169,9 @@ def send_patch_stats() -> None:
                 )
                 aliases.remove(alias)
             except:
-                logger.print_warn(f"Failed to send message to {config['email']}")
+                logger.print_warn(
+                    f"Failed to send message to {config['email']}"
+                )
 
 
 if __name__ == "__main__":

@@ -36,7 +36,9 @@ class MultiHandler(logging.Handler):
         super().__init__()
         self.files: dict[str, T.TextIO] = {}
         self.dirname = dirname
-        self.block_list_prefixes = [] if block_list_prefixes is None else block_list_prefixes
+        self.block_list_prefixes = (
+            [] if block_list_prefixes is None else block_list_prefixes
+        )
         if not os.access(dirname, os.W_OK):
             raise Exception(f"Directory {dirname} not writeable")
 
@@ -85,7 +87,8 @@ def setup_log(log_level: str, log_dir: str, id_string: str) -> None:
         return
 
     log_name = (
-        time.strftime("%Y_%m_%d__%H_%M_%S", time.localtime(time.time())) + f"_{id_string}.log"
+        time.strftime("%Y_%m_%d__%H_%M_%S", time.localtime(time.time()))
+        + f"_{id_string}.log"
     )
 
     log_file = os.path.join(log_dir, log_name)
@@ -102,7 +105,9 @@ def setup_log(log_level: str, log_dir: str, id_string: str) -> None:
 
 
 def get_lifetime_game_stats(log_dir: str, user: str) -> str:
-    return os.path.join(log_dir, "stats", user.lower() + "_lifetime_game_bot_stats.json")
+    return os.path.join(
+        log_dir, "stats", user.lower() + "_lifetime_game_bot_stats.json"
+    )
 
 
 def get_logging_dir(name: str, create_if_not_exist: bool = True) -> str:
@@ -148,7 +153,9 @@ def make_formatter_printer(
                 return formatted_text
 
         try:
-            return formatted_text.encode("utf-8").decode(sys.stdout.encoding, errors="ignore")
+            return formatted_text.encode("utf-8").decode(
+                sys.stdout.encoding, errors="ignore"
+            )
         except TypeError:
             return formatted_text
 
@@ -176,7 +183,9 @@ print_fail = make_formatter_printer(Colors.FAIL)
 print_bold = make_formatter_printer(Colors.BOLD)
 print_normal = make_formatter_printer(Colors.ENDC)
 print_ok_arrow = make_formatter_printer(Colors.OKGREEN, prefix=Prefixes.ARROW)
-print_ok_blue_arrow = make_formatter_printer(Colors.OKBLUE, prefix=Prefixes.ARROW)
+print_ok_blue_arrow = make_formatter_printer(
+    Colors.OKBLUE, prefix=Prefixes.ARROW
+)
 print_fail_arrow = make_formatter_printer(Colors.FAIL, prefix=Prefixes.ARROW)
 
 format_ok_blue = make_formatter_printer(Colors.OKBLUE, return_formatter=True)

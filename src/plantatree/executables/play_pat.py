@@ -56,8 +56,12 @@ def harvester() -> None:
     if not args.dry_run:
         encrypt_password = os.getenv("NFT_PWD")
         if not encrypt_password:
-            encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
-        email_accounts = get_email_accounts_from_password(encrypt_password, GMAIL)
+            encrypt_password = getpass.getpass(
+                prompt="Enter decryption password: "
+            )
+        email_accounts = get_email_accounts_from_password(
+            encrypt_password, GMAIL
+        )
 
     bots = []
     referral_address = ADMIN_ADDRESS
@@ -83,7 +87,9 @@ def harvester() -> None:
     avg_gas_used: Average = Average()
 
     users = [b.user for b in bots]
-    health_monitor = HealthMonitor(args.server_url, "plant-a-tree", users).run(daemon=True)
+    health_monitor = HealthMonitor(args.server_url, "plant-a-tree", users).run(
+        daemon=True
+    )
 
     try:
         while True:
@@ -91,7 +97,9 @@ def harvester() -> None:
             avax_usd_value = avax_usd if avax_usd is not None else 0.0
             gas_gwei = avg_gas_gwei.get_avg()
             gas_gwei_value = gas_gwei if gas_gwei else 0
-            logger.print_bold(f"AVAX: ${avax_usd_value:.3f}, Gas: {gas_gwei_value}")
+            logger.print_bold(
+                f"AVAX: ${avax_usd_value:.3f}, Gas: {gas_gwei_value}"
+            )
 
             for bot in bots:
                 bot.run(avax_usd)
@@ -117,7 +125,9 @@ def harvester() -> None:
                 to=TWILIO_CONFIG["admin_sms_number"],
             )
         if alerts_enabled:
-            stop_message += "Please manually attend your trees until we're back up"
+            stop_message += (
+                "Please manually attend your trees until we're back up"
+            )
             try:
                 discord.get_discord_hook("PAT_UPDATES").send(stop_message)
             except:

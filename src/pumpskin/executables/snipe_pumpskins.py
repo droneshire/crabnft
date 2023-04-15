@@ -46,7 +46,9 @@ def parse_args() -> argparse.Namespace:
         default=MINT_MARGIN,
         help="margin before target mint",
     )
-    parser.add_argument("--sms-rank", type=int, default=1000, help="rank for sms alert")
+    parser.add_argument(
+        "--sms-rank", type=int, default=1000, help="rank for sms alert"
+    )
     parser.add_argument("--auto", action="store_true", help="Auto buy")
 
     return parser.parse_args()
@@ -74,10 +76,16 @@ def snipe() -> None:
     if not args.dry_run:
         encrypt_password = os.getenv("NFT_PWD")
         if not encrypt_password:
-            encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
-        email_accounts = get_email_accounts_from_password(encrypt_password, GMAIL)
+            encrypt_password = getpass.getpass(
+                prompt="Enter decryption password: "
+            )
+        email_accounts = get_email_accounts_from_password(
+            encrypt_password, GMAIL
+        )
 
-        private_key = decrypt_secret(encrypt_password, USERS["ROSS"]["private_key"])
+        private_key = decrypt_secret(
+            encrypt_password, USERS["ROSS"]["private_key"]
+        )
 
     w3: PumpskinNftWeb3Client = (
         PumpskinNftWeb3Client()
@@ -105,7 +113,9 @@ def snipe() -> None:
         sorted_rarity_unminted[pumpkin_id] = rarity_percent
 
     logger.print_normal(f"{json.dumps(sorted_rarity_unminted, indent=4)}")
-    logger.print_ok_blue(f"Found {len(sorted_rarity_unminted.keys())} snipe targets")
+    logger.print_ok_blue(
+        f"Found {len(sorted_rarity_unminted.keys())} snipe targets"
+    )
 
     target_inx = 0
     last_minted = 0
@@ -131,7 +141,9 @@ def snipe() -> None:
                     next_index = target_inx + i
                     next_target_id = mint_targets[next_index]
                     rarity = sorted_rarity_unminted[next_target_id]
-                    rank = list(sorted_rarity_unminted.keys()).index(next_target_id)
+                    rank = list(sorted_rarity_unminted.keys()).index(
+                        next_target_id
+                    )
                     if rank < 5:
                         printer = logger.print_ok
                     else:
@@ -148,7 +160,9 @@ def snipe() -> None:
                     and sorted_rarity_unminted[target_id] < args.sms_rank
                 ):
                     if not args.quiet and TWILIO_CONFIG["enable_admin_sms"]:
-                        alert_message = f"Time to get ready to buy {target_id}!!!"
+                        alert_message = (
+                            f"Time to get ready to buy {target_id}!!!"
+                        )
                         sms_client = Client(
                             TWILIO_CONFIG["account_sid"],
                             TWILIO_CONFIG["account_auth_token"],

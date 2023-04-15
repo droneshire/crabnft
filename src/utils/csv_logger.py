@@ -10,7 +10,9 @@ from utils import logger
 
 
 class CsvLogger:
-    def __init__(self, csv_file: str, header: T.List[str], dry_run=False, verbose=False) -> None:
+    def __init__(
+        self, csv_file: str, header: T.List[str], dry_run=False, verbose=False
+    ) -> None:
         self.csv_file = csv_file
         self.header = header
         self.col_map = {col.lower(): i for i, col in enumerate(header)}
@@ -57,7 +59,9 @@ class CsvLogger:
             with open(self.csv_file) as infile:
                 reader = list(csv.reader(infile))
 
-        if len(reader) == 0 or len(self.header) != len([i for i in reader[0] if i in self.header]):
+        if len(reader) == 0 or len(self.header) != len(
+            [i for i in reader[0] if i in self.header]
+        ):
             reader.insert(0, self.header)
 
         with open(self.csv_file, "w") as outfile:

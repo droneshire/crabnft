@@ -87,14 +87,22 @@ class WyndblastLifetimeGameStats:
         self.user_id = None
 
         with ManagedSession(self.db_str) as db:
-            user = db.query(WyndblastUser).filter(WyndblastUser.user == self.alias).first()
+            user = (
+                db.query(WyndblastUser)
+                .filter(WyndblastUser.user == self.alias)
+                .first()
+            )
             assert user is not None, f"User {self.alias} not in DB!"
             self.user_id = user.id
 
     @contextmanager
     def user(self) -> T.Iterator[WyndblastUser]:
         with ManagedSession(self.db_str) as db:
-            user = db.query(WyndblastUser).filter(WyndblastUser.user == self.alias).first()
+            user = (
+                db.query(WyndblastUser)
+                .filter(WyndblastUser.user == self.alias)
+                .first()
+            )
             assert user is not None, f"User {self.alias} not in DB!"
 
             yield user
@@ -187,12 +195,20 @@ class WyndblastLifetimeGameStats:
             except:
                 logger.print_fail("Failed to store stage in db!")
 
-    def _insert_user(self, username: str, commission_address: str, token: str) -> None:
+    def _insert_user(
+        self, username: str, commission_address: str, token: str
+    ) -> None:
         with ManagedSession(self.db_str) as db:
-            user = db.query(WyndblastUser).filter(WyndblastUser.user == username).first()
+            user = (
+                db.query(WyndblastUser)
+                .filter(WyndblastUser.user == username)
+                .first()
+            )
 
             if user is not None:
-                logger.print_warn(f"{username} already in the database, not creating new user")
+                logger.print_warn(
+                    f"{username} already in the database, not creating new user"
+                )
                 return
 
             user = WyndblastUser(user=username)
@@ -203,9 +219,15 @@ class WyndblastLifetimeGameStats:
             except:
                 logger.print_fail(f"Failed to add db entry for {username}")
 
-            user = db.query(WyndblastUser).filter(WyndblastUser.user == username).first()
+            user = (
+                db.query(WyndblastUser)
+                .filter(WyndblastUser.user == username)
+                .first()
+            )
 
-            commission = Commission(address=commission_address, token=token, user_id=user.id)
+            commission = Commission(
+                address=commission_address, token=token, user_id=user.id
+            )
 
             try:
                 logger.print_normal(
@@ -213,11 +235,17 @@ class WyndblastLifetimeGameStats:
                 )
                 db.add(commission)
             except:
-                logger.print_fail(f"Failed to add commission entry for {commission_address}")
+                logger.print_fail(
+                    f"Failed to add commission entry for {commission_address}"
+                )
 
     def _add_dailies_wallet(self) -> None:
         with ManagedSession(self.db_str) as db:
-            user = db.query(WyndblastUser).filter(WyndblastUser.user == self.alias).first()
+            user = (
+                db.query(WyndblastUser)
+                .filter(WyndblastUser.user == self.alias)
+                .first()
+            )
 
             if user is None:
                 logger.print_warn(f"{self.alias} not in the database")
@@ -231,10 +259,14 @@ class WyndblastLifetimeGameStats:
             )
 
             if daily_activity_stats is not None:
-                logger.print_warn(f"{self.alias} {self.address} dailies already in db")
+                logger.print_warn(
+                    f"{self.alias} {self.address} dailies already in db"
+                )
                 return
 
-            daily_activity_stats = DailyActivities(address=self.address, user_id=user.id)
+            daily_activity_stats = DailyActivities(
+                address=self.address, user_id=user.id
+            )
             try:
                 db.add(daily_activity_stats)
             except:
@@ -242,26 +274,38 @@ class WyndblastLifetimeGameStats:
                 return
 
             daily = (
-                db.query(DailyActivities).filter(DailyActivities.address == self.address).first()
+                db.query(DailyActivities)
+                .filter(DailyActivities.address == self.address)
+                .first()
             )
 
             stages = []
             for stage in range(1, 4):
-                stages.append(WinLoss(stage=stage, daily_activities_id=daily.id))
+                stages.append(
+                    WinLoss(stage=stage, daily_activities_id=daily.id)
+                )
 
             estones = ElementalStones(daily_activities_id=daily.id)
 
             try:
-                logger.print_normal(f"Adding {self.address} to daily activity database...")
+                logger.print_normal(
+                    f"Adding {self.address} to daily activity database..."
+                )
                 db.add(estones)
                 for stage in stages:
                     db.add(stage)
             except:
-                logger.print_fail(f"Failed to add daily activity db entry for {self.address}")
+                logger.print_fail(
+                    f"Failed to add daily activity db entry for {self.address}"
+                )
 
     def _add_pve_wallet(self) -> None:
         with ManagedSession(self.db_str) as db:
-            user = db.query(WyndblastUser).filter(WyndblastUser.user == self.alias).first()
+            user = (
+                db.query(WyndblastUser)
+                .filter(WyndblastUser.user == self.alias)
+                .first()
+            )
 
             if user is None:
                 logger.print_warn(f"{self.alias} not in the database")
@@ -275,7 +319,9 @@ class WyndblastLifetimeGameStats:
             )
 
             if pve_stats is not None:
-                logger.print_warn(f"{self.alias} {self.address} pve already in db")
+                logger.print_warn(
+                    f"{self.alias} {self.address} pve already in db"
+                )
                 return
 
             pve_stats = Pve(address=self.address, user_id=user.id)
@@ -284,4 +330,6 @@ class WyndblastLifetimeGameStats:
                 logger.print_normal(f"Adding {self.address} to pve database...")
                 db.add(pve_stats)
             except:
-                logger.print_fail(f"Failed to add pve db entry for {self.address}")
+                logger.print_fail(
+                    f"Failed to add pve db entry for {self.address}"
+                )

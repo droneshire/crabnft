@@ -77,12 +77,16 @@ class DailyActivitiesGame:
 
         unclaimed_chro = int(rewards_unclaimed.get("chro", 0))
         if unclaimed_chro < self.MIN_CLAIM_CHRO:
-            logger.print_normal(f"Not enough CHRO to claim rewards ({unclaimed_chro} CHRO)")
+            logger.print_normal(
+                f"Not enough CHRO to claim rewards ({unclaimed_chro} CHRO)"
+            )
             return False
 
         date: datetime.datetime = self.wynd_w2.get_last_claim()
         if date is not None:
-            time_delta: datetime.date = datetime.datetime.now().date() - date.date()
+            time_delta: datetime.date = (
+                datetime.datetime.now().date() - date.date()
+            )
 
             if time_delta.days < self.DAYS_BETWEEN_CLAIM:
                 return False
@@ -90,7 +94,9 @@ class DailyActivitiesGame:
         logger.print_ok(f"Claiming rewards! {unclaimed_chro} CHRO")
         tx_hash = self.wynd_w3.claim_rewards()
         tx_receipt = self.wynd_w3.get_transaction_receipt(tx_hash)
-        gas = wei_to_token(self.wynd_w3.get_gas_cost_of_transaction_wei(tx_receipt))
+        gas = wei_to_token(
+            self.wynd_w3.get_gas_cost_of_transaction_wei(tx_receipt)
+        )
         logger.print_bold(f"Paid {gas} AVAX in gas")
 
         with self.stats.user() as user:
@@ -100,7 +106,9 @@ class DailyActivitiesGame:
             logger.print_fail(f"Failed to claim CHRO!")
         else:
             logger.print_ok(f"Successfully claimed CHRO")
-            logger.print_normal(f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n")
+            logger.print_normal(
+                f"Explorer: https://snowtrace.io/tx/{tx_hash}\n\n"
+            )
 
         return True
 
@@ -134,13 +142,17 @@ class DailyActivitiesGame:
         try:
             total = account_overview["count_nfts"]["all"]
 
-            available_wynds = account_overview["count_nfts"]["game"]["daily_activity"]["idle"]
+            available_wynds = account_overview["count_nfts"]["game"][
+                "daily_activity"
+            ]["idle"]
         except:
             logger.print_fail(f"Failed to process account overview")
             return
 
         if available_wynds <= 0:
-            logger.print_warn(f"0/{total} wynds available for daily activities...")
+            logger.print_warn(
+                f"0/{total} wynds available for daily activities..."
+            )
             return
 
         logger.print_bold(
@@ -171,7 +183,9 @@ class DailyActivitiesGame:
 
             most_recent_activity: DayLog = wynd["days"][-1]
 
-            rounds_remaining = self._get_rounds_remaining(day_log=most_recent_activity)
+            rounds_remaining = self._get_rounds_remaining(
+                day_log=most_recent_activity
+            )
 
             if most_recent_activity["round_completed"] or rounds_remaining == 0:
                 logger.print_normal(
@@ -179,11 +193,17 @@ class DailyActivitiesGame:
                 )
                 continue
 
-            logger.print_normal(f"\nWynd[{wynd_id}]: {rounds_remaining} rounds left to play...")
+            logger.print_normal(
+                f"\nWynd[{wynd_id}]: {rounds_remaining} rounds left to play..."
+            )
 
             logger.print_bold(f"Wynd[{wynd_id}]: starting daily activities")
-            stats_fmt = logger.format_ok_blue(f"Faction: {wynd_faction.upper()}\t")
-            stats_fmt += logger.format_normal(f"Class: {wynd_class} Element: {wynd_element}\n")
+            stats_fmt = logger.format_ok_blue(
+                f"Faction: {wynd_faction.upper()}\t"
+            )
+            stats_fmt += logger.format_normal(
+                f"Class: {wynd_class} Element: {wynd_element}\n"
+            )
             logger.print_normal("{}".format(stats_fmt))
 
             activities_completed = most_recent_activity.get("activities")
@@ -203,7 +223,9 @@ class DailyActivitiesGame:
                     current_stage=stage,
                     wynd_info=wynd["product_metadata"],
                 ):
-                    logger.print_warn(f"We lost, unable to proceed to next round")
+                    logger.print_warn(
+                        f"We lost, unable to proceed to next round"
+                    )
                     break
 
         if rounds_completed <= 0:
@@ -241,7 +263,9 @@ class DailyActivitiesGame:
         else:
             win_percent = 0.0
 
-        embed.add_embed_field(name=f"Win %", value=f"{win_percent:.2f}%", inline=False)
+        embed.add_embed_field(
+            name=f"Win %", value=f"{win_percent:.2f}%", inline=False
+        )
         embed.add_embed_field(
             name=f"CHRO",
             value=f"{int(self.current_stats['chro'])}",
@@ -262,7 +286,9 @@ class DailyActivitiesGame:
             wynds: T.List[WyndNft] = self.wynd_w2.get_wynd_status()
             embed.set_image(url=wynds[random.randrange(len(wynds))]["image"])
         except:
-            embed.set_thumbnail(url=WYNDBLAST_ASSETS["wynd"], height=100, width=100)
+            embed.set_thumbnail(
+                url=WYNDBLAST_ASSETS["wynd"], height=100, width=100
+            )
 
         webhook.add_embed(embed)
         webhook.execute()
@@ -270,7 +296,9 @@ class DailyActivitiesGame:
     def _update_stats(self) -> None:
         chro_rewards = self.current_stats["chro"]
 
-        for address, commission_percent in self.config["commission_percent_per_mine"].items():
+        for address, commission_percent in self.config[
+            "commission_percent_per_mine"
+        ].items():
             commission_chro = chro_rewards * (commission_percent / 100.0)
 
             with self.stats.commission(address) as commission:
@@ -287,7 +315,8 @@ class DailyActivitiesGame:
         with self.stats.daily() as da:
             stats_json = DailyActivitiesSchema().dump(da)
             logger.print_ok_blue(
-                f"Lifetime Stats for {self.user.upper()}\n" f"{json.dumps(stats_json, indent=4)}"
+                f"Lifetime Stats for {self.user.upper()}\n"
+                f"{json.dumps(stats_json, indent=4)}"
             )
 
     def _send_summary_email(self, active_nfts: int) -> None:
@@ -296,7 +325,9 @@ class DailyActivitiesGame:
         for stage in range(1, 4):
             stage_str = f"Stage {stage}" if stage != 3 else "All Stages"
             key = f"stage_{stage}"
-            content += f"Completed {stage_str}: {self.current_stats[key]['wins']}\n\n"
+            content += (
+                f"Completed {stage_str}: {self.current_stats[key]['wins']}\n\n"
+            )
         content += f"REWARDS:"
         content += f"CHRO: {self.current_stats['chro']}\n"
         content += f"WAMS: {self.current_stats['wams']}\n"
@@ -323,7 +354,9 @@ class DailyActivitiesGame:
         wynd_info: ProductMetadata,
         verbose: bool = False,
     ) -> bool:
-        options: DailyActivitySelection = self.wynd_w2.get_activity_selection(wynd_id)
+        options: DailyActivitySelection = self.wynd_w2.get_activity_selection(
+            wynd_id
+        )
 
         if not options or not isinstance(options, dict):
             self.check_and_auth_account()
@@ -332,16 +365,18 @@ class DailyActivitiesGame:
         if current_stage > 1:
             actions: Action = options["selection_detail"]
         else:
-            faction_options: T.List[Action] = options.get("selection_detail", {}).get(
-                wynd_info.get("faction", ""), []
-            )
+            faction_options: T.List[Action] = options.get(
+                "selection_detail", {}
+            ).get(wynd_info.get("faction", ""), [])
 
             if not faction_options:
                 return False
 
             actions: Action = faction_options[0]
 
-        selection: ActivitySelection = self._get_best_action(current_stage, actions, wynd_info)
+        selection: ActivitySelection = self._get_best_action(
+            current_stage, actions, wynd_info
+        )
 
         if not selection:
             return False
@@ -369,8 +404,12 @@ class DailyActivitiesGame:
             user.wams += rewards["wams"]
             if rewards["elemental_stones"] is not None:
                 with self.stats.daily() as da:
-                    self.current_stats["elemental_stones"][rewards["elemental_stones"]] += 1
-                    self.current_stats["elemental_stones"]["elemental_stones_qty"] += 1
+                    self.current_stats["elemental_stones"][
+                        rewards["elemental_stones"]
+                    ] += 1
+                    self.current_stats["elemental_stones"][
+                        "elemental_stones_qty"
+                    ] += 1
                     previous_value = getattr(
                         da.elemental_stones[0],
                         rewards["elemental_stones"].lower(),

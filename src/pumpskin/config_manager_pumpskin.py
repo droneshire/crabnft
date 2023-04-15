@@ -38,9 +38,13 @@ class PumpskinConfigManager(ConfigManager):
         self._save_config()
 
         copy_config = {}
-        for k, v in self.config["game_specific_configs"]["special_pumps"].items():
+        for k, v in self.config["game_specific_configs"][
+            "special_pumps"
+        ].items():
             copy_config[int(k)] = v
-        self.config["game_specific_configs"]["special_pumps"] = copy.deepcopy(copy_config)
+        self.config["game_specific_configs"]["special_pumps"] = copy.deepcopy(
+            copy_config
+        )
 
     def get_lifetime_stats(self) -> T.Dict[T.Any, T.Any]:
         return copy.deepcopy(NULL_GAME_STATS)

@@ -35,7 +35,9 @@ def init_session_factory(db: str) -> ScopedSessionMixin:
             "Initialize ENGINE by calling init_engine before calling init_session_factory!"
         )
     if db not in THREAD_SAFE_SESSION_FACTORY:
-        THREAD_SAFE_SESSION_FACTORY[db] = scoped_session(sessionmaker(bind=ENGINE[db]))
+        THREAD_SAFE_SESSION_FACTORY[db] = scoped_session(
+            sessionmaker(bind=ENGINE[db])
+        )
     return THREAD_SAFE_SESSION_FACTORY[db]
 
 
@@ -55,7 +57,9 @@ def ManagedSession(db: str = None):
         db = list(THREAD_SAFE_SESSION_FACTORY.keys())[0]
 
     if db not in THREAD_SAFE_SESSION_FACTORY:
-        raise ValueError("Call init_session_factory before using ManagedSession!")
+        raise ValueError(
+            "Call init_session_factory before using ManagedSession!"
+        )
 
     session = THREAD_SAFE_SESSION_FACTORY[db]()
     try:

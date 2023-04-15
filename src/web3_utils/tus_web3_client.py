@@ -13,7 +13,9 @@ class TusWeb3Client(AvalancheCWeb3Client):
     Interact with the TUS token
     """
 
-    contract_address = T.cast(Address, "0xf693248f96fe03422fea95ac0afbbbc4a8fdd172")
+    contract_address = T.cast(
+        Address, "0xf693248f96fe03422fea95ac0afbbbc4a8fdd172"
+    )
     this_dir = os.path.dirname(os.path.realpath(__file__))
     abi_dir = os.path.join(this_dir, "abi", "abi-tus.json")
     abi = Web3Client._get_contract_abi_from_file(abi_dir)

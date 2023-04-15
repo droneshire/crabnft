@@ -38,16 +38,18 @@ def run_bot() -> None:
     log_dir = os.path.join(args.log_dir, "mechavax")
     logger.setup_log(args.log_level, log_dir, "mechavax_monitor")
 
-    health_monitor = HealthMonitor(args.server_url, "mechavax", ["Cashflow Cartel Guild"]).run(
-        daemon=True
-    )
+    health_monitor = HealthMonitor(
+        args.server_url, "mechavax", ["Cashflow Cartel Guild"]
+    ).run(daemon=True)
 
     encrypt_password = ""
 
     if not args.dry_run:
         encrypt_password = os.getenv("NFT_PWD")
         if not encrypt_password:
-            encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
+            encrypt_password = getpass.getpass(
+                prompt="Enter decryption password: "
+            )
 
     private_key = decrypt_secret(encrypt_password, GUILD_WALLET_PRIVATE_KEY)
 

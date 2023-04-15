@@ -68,7 +68,9 @@ NULL_GAME_STATS = LifetimeGameStats(
 )
 
 
-def get_daily_stats_message(user: str, csv: CsvLogger, target_date: datetime.datetime) -> str:
+def get_daily_stats_message(
+    user: str, csv: CsvLogger, target_date: datetime.datetime
+) -> str:
     profit_usd = 0.0
     total_tus = 0.0
     total_cra = 0.0
@@ -97,7 +99,9 @@ def get_daily_stats_message(user: str, csv: CsvLogger, target_date: datetime.dat
             continue
 
         try:
-            date = datetime.datetime.strptime(timestamp.strip(), TIMESTAMP_FORMAT)
+            date = datetime.datetime.strptime(
+                timestamp.strip(), TIMESTAMP_FORMAT
+            )
         except:
             continue
 
@@ -170,7 +174,9 @@ def update_game_stats_after_close(
 
     stats = lifetime_stats[tx.game_type]
 
-    did_win = tx.result == Result.WIN or mine.get("winner_team_id", "") == team_id
+    did_win = (
+        tx.result == Result.WIN or mine.get("winner_team_id", "") == team_id
+    )
 
     if did_win:
         stats["game_wins"] += 1
@@ -180,7 +186,9 @@ def update_game_stats_after_close(
         game_stats[team_id]["outcome"] = Result.LOSE
 
     stats["game_win_percent"] = (
-        100.0 * float(stats["game_wins"]) / (stats["game_wins"] + stats["game_losses"])
+        100.0
+        * float(stats["game_wins"])
+        / (stats["game_wins"] + stats["game_losses"])
     )
 
     logger.print_normal(f"Earned {tus_rewards} TUS, {cra_rewards} CRA")
@@ -196,7 +204,9 @@ def update_game_stats_after_close(
         # convert cra -> tus and add to tus commission, we dont take direct cra commission
         commission_tus += prices.cra_to_tus(commission_cra)
 
-        logger.print_ok(f"Added {commission_tus} TUS for {address} in commission ({commission}%)!")
+        logger.print_ok(
+            f"Added {commission_tus} TUS for {address} in commission ({commission}%)!"
+        )
 
         game_stats[team_id]["commission_tus"] = commission_tus
 
@@ -240,7 +250,9 @@ class CrabadaLifetimeGameStatsLogger(LifetimeGameStatsLogger):
         dry_run: bool = False,
         verbose: bool = False,
     ):
-        super().__init__(user, NULL_GAME_STATS, log_dir, backup_stats, dry_run, verbose)
+        super().__init__(
+            user, NULL_GAME_STATS, log_dir, backup_stats, dry_run, verbose
+        )
 
     def delta_game_stats(
         self,
@@ -271,7 +283,9 @@ class CrabadaLifetimeGameStatsLogger(LifetimeGameStatsLogger):
                 diffed_stats[game_type][k] = v
 
             for k, v in user_b_stats[game_type].items():
-                diffed_stats[game_type][k] = diffed_stats[game_type].get(k, 0.0) - v
+                diffed_stats[game_type][k] = (
+                    diffed_stats[game_type].get(k, 0.0) - v
+                )
 
         if self.verbose:
             logger.print_bold("Subtracting game stats:")
@@ -291,8 +305,12 @@ class CrabadaLifetimeGameStatsLogger(LifetimeGameStatsLogger):
         merged_stats = copy.deepcopy(self.null_game_stats)
 
         for item in ["avax_gas_usd", "gas_tus"]:
-            merged_stats[item] = merged_stats.get(item, 0.0) + user_a_stats.get(item, 0.0)
-            merged_stats[item] = merged_stats.get(item, 0.0) + user_b_stats.get(item, 0.0)
+            merged_stats[item] = merged_stats.get(item, 0.0) + user_a_stats.get(
+                item, 0.0
+            )
+            merged_stats[item] = merged_stats.get(item, 0.0) + user_b_stats.get(
+                item, 0.0
+            )
 
         for item in ["commission_tus"]:
             for k, v in user_a_stats[item].items():

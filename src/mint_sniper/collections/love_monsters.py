@@ -23,7 +23,9 @@ class LoveMonstersWeb3Client(AvalancheCWeb3Client):
     https://snowtrace.io/token/0x07e741cf962ef140cba9b15b7e6af7f31f3ed04d
     """
 
-    contract_address = T.cast(Address, "0x07E741cf962Ef140cbA9B15B7E6AF7F31F3eD04D")
+    contract_address = T.cast(
+        Address, "0x07E741cf962Ef140cbA9B15B7E6AF7F31F3eD04D"
+    )
     this_dir = os.path.dirname(os.path.realpath(__file__))
     module_dir = os.path.dirname(this_dir)
     abi_dir = os.path.join(
@@ -80,7 +82,9 @@ class LoveMonstersMint(NftCollectionAnalyzerBase):
             ),
         )
 
-        self.collection_uri = IPFS_BASE_URL + self.w3.get_base_uri().split(":")[1]
+        self.collection_uri = (
+            IPFS_BASE_URL + self.w3.get_base_uri().split(":")[1]
+        )
 
     def get_token_uri(self, token_id: int) -> str:
         """

@@ -8,7 +8,9 @@ from web3._utils.abi import normalize_event_input_types
 from web3.contract import ContractFunction
 from web3.eth import Eth
 
-MULTICALL_AVAX_ADDRESS = Web3.toChecksumAddress("0xca11bde05977b3631167028862be2a173976ca11")
+MULTICALL_AVAX_ADDRESS = Web3.toChecksumAddress(
+    "0xca11bde05977b3631167028862be2a173976ca11"
+)
 
 
 class Network(IntEnum):
@@ -66,14 +68,20 @@ class FunctionSignature:
 
         self.inputs = [
             {"name": arg["name"], "type": arg["type"]}
-            for arg in normalize_event_input_types(function.abi.get("inputs", []))
+            for arg in normalize_event_input_types(
+                function.abi.get("inputs", [])
+            )
         ]
-        self.input_types_signature = "({})".format(",".join([inp["type"] for inp in self.inputs]))
+        self.input_types_signature = "({})".format(
+            ",".join([inp["type"] for inp in self.inputs])
+        )
         self.output_types_signature = "({})".format(
             ",".join(
                 [
                     arg["type"]
-                    for arg in normalize_event_input_types(function.abi.get("outputs", []))
+                    for arg in normalize_event_input_types(
+                        function.abi.get("outputs", [])
+                    )
                 ]
             )
         )
@@ -114,7 +122,9 @@ class Function:
                 value=argument,
                 solidity_type=_input["type"],
             )
-            for _input, argument in zip(self.__signature.inputs, self.__function.arguments)
+            for _input, argument in zip(
+                self.__signature.inputs, self.__function.arguments
+            )
         ]
 
     @property
@@ -175,49 +185,65 @@ abi = [
             }
         ],
         "name": "getBlockHash",
-        "outputs": [{"internalType": "bytes32", "name": "blockHash", "type": "bytes32"}],
+        "outputs": [
+            {"internalType": "bytes32", "name": "blockHash", "type": "bytes32"}
+        ],
         "stateMutability": "view",
         "type": "function",
     },
     {
         "inputs": [],
         "name": "getCurrentBlockCoinbase",
-        "outputs": [{"internalType": "address", "name": "coinbase", "type": "address"}],
+        "outputs": [
+            {"internalType": "address", "name": "coinbase", "type": "address"}
+        ],
         "stateMutability": "view",
         "type": "function",
     },
     {
         "inputs": [],
         "name": "getCurrentBlockDifficulty",
-        "outputs": [{"internalType": "uint256", "name": "difficulty", "type": "uint256"}],
+        "outputs": [
+            {"internalType": "uint256", "name": "difficulty", "type": "uint256"}
+        ],
         "stateMutability": "view",
         "type": "function",
     },
     {
         "inputs": [],
         "name": "getCurrentBlockGasLimit",
-        "outputs": [{"internalType": "uint256", "name": "gaslimit", "type": "uint256"}],
+        "outputs": [
+            {"internalType": "uint256", "name": "gaslimit", "type": "uint256"}
+        ],
         "stateMutability": "view",
         "type": "function",
     },
     {
         "inputs": [],
         "name": "getCurrentBlockTimestamp",
-        "outputs": [{"internalType": "uint256", "name": "timestamp", "type": "uint256"}],
+        "outputs": [
+            {"internalType": "uint256", "name": "timestamp", "type": "uint256"}
+        ],
         "stateMutability": "view",
         "type": "function",
     },
     {
-        "inputs": [{"internalType": "address", "name": "addr", "type": "address"}],
+        "inputs": [
+            {"internalType": "address", "name": "addr", "type": "address"}
+        ],
         "name": "getEthBalance",
-        "outputs": [{"internalType": "uint256", "name": "balance", "type": "uint256"}],
+        "outputs": [
+            {"internalType": "uint256", "name": "balance", "type": "uint256"}
+        ],
         "stateMutability": "view",
         "type": "function",
     },
     {
         "inputs": [],
         "name": "getLastBlockHash",
-        "outputs": [{"internalType": "bytes32", "name": "blockHash", "type": "bytes32"}],
+        "outputs": [
+            {"internalType": "bytes32", "name": "blockHash", "type": "bytes32"}
+        ],
         "stateMutability": "view",
         "type": "function",
     },

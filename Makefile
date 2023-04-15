@@ -1,7 +1,7 @@
 PYTHON ?= python3
 PY_PATH=$(PWD)/src
 RUN_PY = PYTHONPATH=$(PY_PATH) $(PYTHON) -m
-BLACK_CMD = $(RUN_PY) black --line-length 100
+BLACK_CMD = $(RUN_PY) black --line-length 80 --target-version py37
 # NOTE: exclude any virtual environment subdirectories here
 PY_FIND_COMMAND = find -name '*.py' ! -path './venv/*'
 MYPY_CONFIG=$(PY_PATH)/mypy_config.ini
