@@ -359,6 +359,9 @@ async def shk_plots_command(
         if window > 0:
             plot[i] = plot[i][-window:]
 
+    if window > 0:
+        row_length = window
+
     row_label.append("sample")
     plot.append(list(range(row_length)))
 
