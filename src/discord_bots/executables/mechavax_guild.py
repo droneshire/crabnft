@@ -56,6 +56,7 @@ bot = commands.Bot(command_prefix="/", intents=discord.Intents.all())
 ENABLE_MINTING = False
 TOP_N = 5
 MAX_DELTA = 1000
+WINDOW = 1000
 ALLOWLIST_MINTERS = [
     935440767646851093,  # nftcashflow
 ]
@@ -277,6 +278,7 @@ async def shk_plots_command(
     interaction: discord.Interaction,
     nft_type: T.Literal["MECHS", "SHK"],
     address: str = "",
+    window: int = -1,
     top_n_holders: int = TOP_N,
     delta: bool = False,
     max_delta: int = MAX_DELTA,
@@ -353,6 +355,9 @@ async def shk_plots_command(
         row = plot[i]
         if len(row) < row_length:
             plot[i] = [0] * (row_length - len(row)) + row
+
+        if window > 0:
+            plot[i] = plot[i][-window:]
 
     row_label.append("sample")
     plot.append(list(range(row_length)))
