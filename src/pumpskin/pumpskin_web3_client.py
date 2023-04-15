@@ -23,7 +23,10 @@ class PumpskinCollectionWeb3Client(AvalancheCWeb3Client):
     contract_address = T.cast(Address, "0x94fde8DF71106cf2CF0141ce77546c2B3E35B243")
     this_dir = os.path.dirname(os.path.realpath(__file__))
     abi_dir = os.path.join(
-        os.path.dirname(this_dir), "web3_utils", "abi", "abi-pumpskin-collection.json"
+        os.path.dirname(this_dir),
+        "web3_utils",
+        "abi",
+        "abi-pumpskin-collection.json",
     )
     abi = Web3Client._get_contract_abi_from_file(abi_dir)
     NODE_URL = "https://rpc.ankr.com/avalanche"
@@ -113,7 +116,10 @@ class PumpskinContractWeb3Client(AvalancheCWeb3Client):
     contract_address = T.cast(Address, "0x03173999643d809301f7fa44631bc6aac775c7cf")
     this_dir = os.path.dirname(os.path.realpath(__file__))
     abi_dir = os.path.join(
-        os.path.dirname(this_dir), "web3_utils", "abi", "abi-pumpskin-contract.json"
+        os.path.dirname(this_dir),
+        "web3_utils",
+        "abi",
+        "abi-pumpskin-contract.json",
     )
     abi = Web3Client._get_contract_abi_from_file(abi_dir)
     NODE_URL = "https://rpc.ankr.com/avalanche"
@@ -310,7 +316,10 @@ class PpieLpStakingContractWeb3Client(LpStakingContractWeb3Client):
     contract_address = T.cast(Address, "0xbbBc80230E50E26cD448f38D8f2aEC977AD8Fa78")
     this_dir = os.path.dirname(os.path.realpath(__file__))
     abi_dir = os.path.join(
-        os.path.dirname(this_dir), "web3_utils", "abi", "abi-pumpskin-staking.json"
+        os.path.dirname(this_dir),
+        "web3_utils",
+        "abi",
+        "abi-pumpskin-staking.json",
     )
     abi = Web3Client._get_contract_abi_from_file(abi_dir)
     NODE_URL = "https://rpc.ankr.com/avalanche"
@@ -325,7 +334,10 @@ class PotnLpStakingContractWeb3Client(LpStakingContractWeb3Client):
     contract_address = T.cast(Address, "0x231add43e238b037e488a35014d2646d056df971")
     this_dir = os.path.dirname(os.path.realpath(__file__))
     abi_dir = os.path.join(
-        os.path.dirname(this_dir), "web3_utils", "abi", "abi-pumpskin-staking.json"
+        os.path.dirname(this_dir),
+        "web3_utils",
+        "abi",
+        "abi-pumpskin-staking.json",
     )
     abi = Web3Client._get_contract_abi_from_file(abi_dir)
     NODE_URL = "https://rpc.ankr.com/avalanche"

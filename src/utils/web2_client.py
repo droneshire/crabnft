@@ -77,7 +77,12 @@ class Web2Client:
 
         try:
             return self.requests.request(
-                "POST", url, json=json_data, params=params, headers=headers, timeout=timeout
+                "POST",
+                url,
+                json=json_data,
+                params=params,
+                headers=headers,
+                timeout=timeout,
             ).json()
         except KeyboardInterrupt:
             raise

@@ -37,7 +37,13 @@ from pumpskin.pumpskin_web3_client import (
 )
 from pumpskin.allocator import PotnAllocator, PpieAllocator
 from pumpskin.token_profit_lp import PumpskinTokenProfitManager
-from pumpskin.types import Category, Rarity, StakedPumpskin, Tokens, ALL_CATEGORIES
+from pumpskin.types import (
+    Category,
+    Rarity,
+    StakedPumpskin,
+    Tokens,
+    ALL_CATEGORIES,
+)
 from pumpskin.utils import calc_ppie_earned_per_day, calc_potn_from_level
 
 
@@ -131,10 +137,14 @@ class PumpskinBot:
 
         self.allocator: T.Dict[Tokens, TokenAllocator] = {
             Tokens.POTN: PotnAllocator(
-                self.potn_w3, config, config["game_specific_configs"]["all_available_potn_balances"]
+                self.potn_w3,
+                config,
+                config["game_specific_configs"]["all_available_potn_balances"],
             ),
             Tokens.PPIE: PpieAllocator(
-                self.ppie_w3, config, config["game_specific_configs"]["all_available_ppie_balances"]
+                self.ppie_w3,
+                config,
+                config["game_specific_configs"]["all_available_ppie_balances"],
             ),
         }
 
@@ -204,7 +214,8 @@ class PumpskinBot:
             return
 
         webhook = DiscordWebhook(
-            url=discord.DISCORD_WEBHOOK_URL["PUMPSKIN_ACTIVITY"], rate_limit_retry=True
+            url=discord.DISCORD_WEBHOOK_URL["PUMPSKIN_ACTIVITY"],
+            rate_limit_retry=True,
         )
         discord_username = self.config_mgr.config["discord_handle"].split("#")[0].upper()
         embed = DiscordEmbed(
@@ -227,7 +238,8 @@ class PumpskinBot:
             return
 
         webhook = DiscordWebhook(
-            url=discord.DISCORD_WEBHOOK_URL["PUMPSKIN_ACTIVITY"], rate_limit_retry=True
+            url=discord.DISCORD_WEBHOOK_URL["PUMPSKIN_ACTIVITY"],
+            rate_limit_retry=True,
         )
         discord_username = self.config_mgr.config["discord_handle"].split("#")[0].upper()
         embed = DiscordEmbed(
@@ -236,7 +248,11 @@ class PumpskinBot:
             color=Color.red().value,
         )
         embed.add_embed_field(name=f"AVAX", value=f"{avax_gas:.3f}", inline=False)
-        embed.set_thumbnail(url="https://plantatree.finance/images/avax.png", height=100, width=100)
+        embed.set_thumbnail(
+            url="https://plantatree.finance/images/avax.png",
+            height=100,
+            width=100,
+        )
         webhook.add_embed(embed)
         webhook.execute()
 
@@ -327,7 +343,8 @@ class PumpskinBot:
             return
 
         multiplier = max(
-            0.1, self.config_mgr.config["game_specific_configs"]["ppie_stake_multiplier"]
+            0.1,
+            self.config_mgr.config["game_specific_configs"]["ppie_stake_multiplier"],
         )
 
         min_ppie_to_stake = (
@@ -343,7 +360,8 @@ class PumpskinBot:
             total_claimable_potn = wei_to_token(self.game_w3.get_claimable_potn(self.address))
             action_str = f"Attempting to stake {ppie_available_to_stake:.2f} $PPIE"
             if self._process_w3_results(
-                action_str, self.game_w3.staking_ppie(token_to_wei(ppie_available_to_stake))
+                action_str,
+                self.game_w3.staking_ppie(token_to_wei(ppie_available_to_stake)),
             ):
                 ppie_available = self.allocator[Tokens.PPIE].maybe_subtract(
                     ppie_available_to_stake, Category.LEVELLING
@@ -468,7 +486,8 @@ class PumpskinBot:
         total_claimable_potn = wei_to_token(self.game_w3.get_claimable_potn(self.address))
 
         multiplier = max(
-            0.1, self.config_mgr.config["game_specific_configs"]["potn_claim_multiplier"]
+            0.1,
+            self.config_mgr.config["game_specific_configs"]["potn_claim_multiplier"],
         )
 
         ppie_staked = wei_to_token(self.game_w3.get_ppie_staked(self.address))
@@ -519,7 +538,8 @@ class PumpskinBot:
 
         # wait to claim at a half day's earnings
         multiplier = max(
-            0.1, self.config_mgr.config["game_specific_configs"]["ppie_claim_multiplier"]
+            0.1,
+            self.config_mgr.config["game_specific_configs"]["ppie_claim_multiplier"],
         )
         min_ppie_to_claim = ppie_per_day * multiplier
 
@@ -551,7 +571,8 @@ class PumpskinBot:
             (
                 AvaxCWeb3Client()
                 .set_credentials(
-                    self.config_mgr.config["address"], self.config_mgr.config["private_key"]
+                    self.config_mgr.config["address"],
+                    self.config_mgr.config["private_key"],
                 )
                 .set_node_uri(AvalancheCWeb3Client.NODE_URL)
                 .set_dry_run(self.dry_run)

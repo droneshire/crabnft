@@ -75,7 +75,10 @@ class WyndblastWeb2Client(web2_client.Web2Client):
         dry_run: bool = False,
     ) -> None:
         super().__init__(
-            base_url, rate_limit_delay=rate_limit_delay, use_proxy=use_proxy, dry_run=dry_run
+            base_url,
+            rate_limit_delay=rate_limit_delay,
+            use_proxy=use_proxy,
+            dry_run=dry_run,
         )
 
         self.private_key = private_key
@@ -119,7 +122,10 @@ class WyndblastWeb2Client(web2_client.Web2Client):
         payload["_SessionToken"] = self.session_token
         payload["ethAddress"] = self.user_address.lower()
         payload["ACL"] = {self.object_id: {"read": True, "write": True}}
-        payload["accounts"] = {"__op": "AddUnique", "objects": [self.user_address.lower()]}
+        payload["accounts"] = {
+            "__op": "AddUnique",
+            "objects": [self.user_address.lower()],
+        }
         return json.loads(json.dumps(payload))
 
     def _get_login_signature(self) -> (str, int):

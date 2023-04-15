@@ -109,7 +109,11 @@ class Function:
     @property
     def inputs(self) -> T.List[FunctionInput]:
         return [
-            FunctionInput(name=_input["name"], value=argument, solidity_type=_input["type"])
+            FunctionInput(
+                name=_input["name"],
+                value=argument,
+                solidity_type=_input["type"],
+            )
             for _input, argument in zip(self.__signature.inputs, self.__function.arguments)
         ]
 
@@ -130,8 +134,16 @@ abi = [
         "inputs": [
             {
                 "components": [
-                    {"internalType": "address", "name": "target", "type": "address"},
-                    {"internalType": "bytes", "name": "callData", "type": "bytes"},
+                    {
+                        "internalType": "address",
+                        "name": "target",
+                        "type": "address",
+                    },
+                    {
+                        "internalType": "bytes",
+                        "name": "callData",
+                        "type": "bytes",
+                    },
                 ],
                 "internalType": "struct Multicall.Call[]",
                 "name": "calls",
@@ -140,14 +152,28 @@ abi = [
         ],
         "name": "aggregate",
         "outputs": [
-            {"internalType": "uint256", "name": "blockNumber", "type": "uint256"},
-            {"internalType": "bytes[]", "name": "returnData", "type": "bytes[]"},
+            {
+                "internalType": "uint256",
+                "name": "blockNumber",
+                "type": "uint256",
+            },
+            {
+                "internalType": "bytes[]",
+                "name": "returnData",
+                "type": "bytes[]",
+            },
         ],
         "stateMutability": "nonpayable",
         "type": "function",
     },
     {
-        "inputs": [{"internalType": "uint256", "name": "blockNumber", "type": "uint256"}],
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "blockNumber",
+                "type": "uint256",
+            }
+        ],
         "name": "getBlockHash",
         "outputs": [{"internalType": "bytes32", "name": "blockHash", "type": "bytes32"}],
         "stateMutability": "view",

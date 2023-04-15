@@ -11,8 +11,15 @@ from eth_typing import Address
 
 from config_crabada import USERS
 from crabada.crabada_web2_client import CrabadaWeb2Client
-from crabada.factional_advantage import FACTIONAL_ADVANTAGE, FACTION_ICON_URLS, FACTION_COLORS
-from crabada.factional_advantage import get_faction_adjusted_battle_point, get_bp_mp_from_mine
+from crabada.factional_advantage import (
+    FACTIONAL_ADVANTAGE,
+    FACTION_ICON_URLS,
+    FACTION_COLORS,
+)
+from crabada.factional_advantage import (
+    get_faction_adjusted_battle_point,
+    get_bp_mp_from_mine,
+)
 from crabada.miners_revenge import calc_miners_revenge
 from crabada.types import Faction, IdleGame, TeamMember
 from utils import logger
@@ -258,7 +265,10 @@ class LootSnipes:
         self._write_log(self.addresses)
 
     def get_loot_list_from_addresses(
-        self, num_mines_needed: int, address_list: T.List[str] = None, verbose: bool = False
+        self,
+        num_mines_needed: int,
+        address_list: T.List[str] = None,
+        verbose: bool = False,
     ) -> T.Dict[int, str]:
         bot_user_addresses = [v["address"] for _, v in USERS.items()]
 
@@ -500,12 +510,20 @@ class LootSnipes:
             logger.print_normal(context)
 
             return self._get_low_mp_snipe_embed(
-                attack_factions, mine_faction, mine, page, battle_point, mine_point
+                attack_factions,
+                mine_faction,
+                mine,
+                page,
+                battle_point,
+                mine_point,
             )
 
         open_loots = [m["game_id"] for m in available_loots]
         self._update_discord(
-            update_loot_snipes, open_loots, "LOW_MR_LOOT_SNIPE", embed_handle=get_embed
+            update_loot_snipes,
+            open_loots,
+            "LOW_MR_LOOT_SNIPE",
+            embed_handle=get_embed,
         )
 
     def _hunt_no_reinforce_mines(
@@ -519,7 +537,11 @@ class LootSnipes:
             num_mines_needed=1000, address_list=address_list
         )
         update_loot_snipes = self.find_loot_snipe(
-            address, address_list, available_loots, no_reinforce_list, verbose=self.verbose
+            address,
+            address_list,
+            available_loots,
+            no_reinforce_list,
+            verbose=self.verbose,
         )
 
         def get_embed(mine: int, data: T.Dict[str, T.Any]) -> DiscordEmbed:
@@ -538,7 +560,13 @@ class LootSnipes:
             logger.print_bold(context)
 
             return self._get_address_snipe_embed(
-                attack_factions, mine_faction, mine, page, battle_point, verified, address
+                attack_factions,
+                mine_faction,
+                mine,
+                page,
+                battle_point,
+                verified,
+                address,
             )
 
         open_loots = [m["game_id"] for m in available_loots]

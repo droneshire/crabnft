@@ -27,7 +27,10 @@ class LoveMonstersWeb3Client(AvalancheCWeb3Client):
     this_dir = os.path.dirname(os.path.realpath(__file__))
     module_dir = os.path.dirname(this_dir)
     abi_dir = os.path.join(
-        os.path.dirname(module_dir), "web3_utils", "abi", "abi-love-monsters.json"
+        os.path.dirname(module_dir),
+        "web3_utils",
+        "abi",
+        "abi-love-monsters.json",
     )
     abi = Web3Client._get_contract_abi_from_file(abi_dir)
 

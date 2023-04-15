@@ -25,7 +25,11 @@ class GoogleSheets:
         self.sheet.add_worksheet(worksheet, rows=100, cols=40)
         for email, role in share_emails.items():
             self.sheet.share(
-                email, perm_type="user", role=role, notify=True, email_message=SHARE_MESSAGE
+                email,
+                perm_type="user",
+                role=role,
+                notify=True,
+                email_message=SHARE_MESSAGE,
             )
 
     def read_row(self, row: int, worksheet_inx: int = 0) -> T.List[T.Any]:
@@ -50,7 +54,10 @@ class GoogleSheets:
             worksheet.update(cell_range, value)
 
     def format(
-        self, cell_range: str, cell_format: T.Dict[T.Any, T.Any], worksheet_inx: int = 0
+        self,
+        cell_range: str,
+        cell_format: T.Dict[T.Any, T.Any],
+        worksheet_inx: int = 0,
     ) -> None:
         worksheet = self.sheet.get_worksheet(worksheet_inx)
         worksheet.format(cell_range, cell_format)

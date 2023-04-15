@@ -30,7 +30,10 @@ class JoePegsClient:
     """Access api endpoints of JoePegs"""
 
     def _get_request(
-        self, url: str, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+        self,
+        url: str,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
         try:
             return requests.request("GET", url, params=params, headers=headers, timeout=5.0).json()
@@ -48,7 +51,12 @@ class JoePegsClient:
     ) -> T.Any:
         try:
             return requests.request(
-                "POST", url, json=json_data, params=params, headers=headers, timeout=5.0
+                "POST",
+                url,
+                json=json_data,
+                params=params,
+                headers=headers,
+                timeout=5.0,
             ).json()
         except KeyboardInterrupt:
             raise
@@ -56,7 +64,10 @@ class JoePegsClient:
             return {}
 
     def _joepegs_api(
-        self, endpoint: str, headers: T.Dict[str, T.Any] = HEADERS, params: T.Dict[str, T.Any] = {}
+        self,
+        endpoint: str,
+        headers: T.Dict[str, T.Any] = HEADERS,
+        params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
         url = f"{BASE_URL}v2/{endpoint}"
         return self._get_request(url, headers=headers, params=params)
@@ -77,7 +88,10 @@ class JoePegsClient:
             return {}
 
     def get_collection(
-        self, address: Address, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+        self,
+        address: Address,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
         try:
             return self._joepegs_api(f"collections/{address}", params=params)
@@ -88,7 +102,10 @@ class JoePegsClient:
             return {}
 
     def get_listings(
-        self, address: Address, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+        self,
+        address: Address,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
         actual_params = {
             "filters": ListFilters.BUY_NOW,
@@ -107,7 +124,10 @@ class JoePegsClient:
             return {}
 
     def get_activities(
-        self, address: Address, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+        self,
+        address: Address,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
     ) -> T.List[Activity]:
         actual_params = {
             "pageSize": 100,
@@ -124,13 +144,19 @@ class JoePegsClient:
             return []
 
     def get_sales(
-        self, address: Address, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+        self,
+        address: Address,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
     ) -> T.List[Activity]:
         activities = self.get_activities(address, params=params)
         return [a for a in activities if type(a) == dict and a["activityType"] == "sale"]
 
     def get_floor_avax(
-        self, address: Address, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+        self,
+        address: Address,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
     ) -> float:
         collection = self.get_collection(address, params=params)
         if not collection:

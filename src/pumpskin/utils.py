@@ -154,7 +154,10 @@ def calculate_rarity(
                 total_trait_count += count
 
         rarity = float(pumpkin_trait_count) / total_count
-        pumpskin_rarity[trait] = {"trait": pumpskin_traits[trait], "rarity": rarity}
+        pumpskin_rarity[trait] = {
+            "trait": pumpskin_traits[trait],
+            "rarity": rarity,
+        }
 
     pumpskin_rarity["Overall"] = {
         "trait": None,

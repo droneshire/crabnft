@@ -21,7 +21,11 @@ from crabada.factional_advantage import (
     FACTION_COLORS,
     FACTION_ICON_URLS,
 )
-from crabada.game_stats import CrabadaLifetimeGameStatsLogger, NULL_GAME_STATS, Result
+from crabada.game_stats import (
+    CrabadaLifetimeGameStatsLogger,
+    NULL_GAME_STATS,
+    Result,
+)
 from crabada.game_stats import (
     get_daily_stats_message,
     update_game_stats_after_close,
@@ -29,9 +33,15 @@ from crabada.game_stats import (
 from crabada.loot_sniping import LootSnipes
 from crabada.miners_revenge import calc_miners_revenge, miners_revenge
 from crabada.profitability import CrabadaTransaction, GameStats, NULL_STATS
-from crabada.profitability import get_actual_game_profit, is_profitable_to_take_action
+from crabada.profitability import (
+    get_actual_game_profit,
+    is_profitable_to_take_action,
+)
 from crabada.strategies.strategy import GameStage, Strategy
-from crabada.strategies.strategy_selection import STRATEGY_SELECTION, strategy_to_game_type
+from crabada.strategies.strategy_selection import (
+    STRATEGY_SELECTION,
+    strategy_to_game_type,
+)
 from crabada.types import CrabForLending, Faction, IdleGame, MineOption, Team
 from utils import discord
 from utils import logger
@@ -283,7 +293,8 @@ class CrabadaMineBot:
         miners_revenge: float,
     ) -> None:
         webhook = DiscordWebhook(
-            url=discord.DISCORD_WEBHOOK_URL["CRABADA_ACTIVITY"], rate_limit_retry=True
+            url=discord.DISCORD_WEBHOOK_URL["CRABADA_ACTIVITY"],
+            rate_limit_retry=True,
         )
         game_type = "LOOT" if is_loot else "MINE"
         embed = DiscordEmbed(
@@ -296,7 +307,9 @@ class CrabadaMineBot:
             MineOption.LOOT if is_loot else MineOption.MINE
         ]
         embed.add_embed_field(
-            name=f"Win %", value=f"{game_stats['game_win_percent']:.2f}%", inline=True
+            name=f"Win %",
+            value=f"{game_stats['game_win_percent']:.2f}%",
+            inline=True,
         )
         embed.add_embed_field(name=f"MR %", value=f"{miners_revenge:.2f}%", inline=True)
 
@@ -556,7 +569,11 @@ class CrabadaMineBot:
         logger.print_normal("\n")
 
     def _should_take_action(
-        self, team: Team, game_stage: GameStage, strategy: Strategy, mine: T.Optional[IdleGame]
+        self,
+        team: Team,
+        game_stage: GameStage,
+        strategy: Strategy,
+        mine: T.Optional[IdleGame],
     ) -> bool:
         game_type = strategy_to_game_type(strategy)
 
@@ -672,7 +689,10 @@ class CrabadaMineBot:
         # if that fails, grab a low MR loot not on the first few pages
         if mine_to_loot is None:
             loot_candidates = self.loot_sniper.find_low_mr_teams(
-                self.address, available_loots, min_page_threshold=2, verbose=True
+                self.address,
+                available_loots,
+                min_page_threshold=2,
+                verbose=True,
             )
 
             mine_to_loot, lowest_mr = self._find_best_loot(team, loot_candidates, use_high_mr=False)
@@ -680,7 +700,11 @@ class CrabadaMineBot:
         # if all else fails, just pick an available mine
         if mine_to_loot is None:
             loot_candidates = self.loot_sniper.find_low_mr_teams(
-                self.address, available_loots, mp_threshold=1000, min_page_threshold=0, verbose=True
+                self.address,
+                available_loots,
+                mp_threshold=1000,
+                min_page_threshold=0,
+                verbose=True,
             )
 
             mine_to_loot, lowest_mr = self._find_best_loot(team, loot_candidates, use_high_mr=False)
@@ -703,20 +727,31 @@ class CrabadaMineBot:
         return mine_to_loot
 
     def _find_best_loot(
-        self, team: Team, loot_candidates: T.Dict[int, T.Any], use_high_mr: bool = False
+        self,
+        team: Team,
+        loot_candidates: T.Dict[int, T.Any],
+        use_high_mr: bool = False,
     ) -> T.Tuple[int, float]:
         mine_to_loot: int = None
         best_mr = 0.0 if use_high_mr else 100.0
         highest_page = 0
         for loot, data in loot_candidates.items():
             mine_team: Team = Team(
-                faction=data["faction"], battle_point=data["defense_battle_point"]
+                faction=data["faction"],
+                battle_point=data["defense_battle_point"],
             )
-            loot_points, mine_points = get_faction_adjusted_battle_points_from_teams(
-                team, mine_team
-            )
+            (
+                loot_points,
+                mine_points,
+            ) = get_faction_adjusted_battle_points_from_teams(team, mine_team)
             mr = miners_revenge(
-                mine_points, loot_points, data["defense_mine_point"], [], 3, False, False
+                mine_points,
+                loot_points,
+                data["defense_mine_point"],
+                [],
+                3,
+                False,
+                False,
             )
 
             if loot_points <= mine_points:
@@ -745,7 +780,9 @@ class CrabadaMineBot:
 
         for _ in range(self.REINFORCING_RETRIES):
             reinforcement_crab = strategy.get_reinforcement_crab(
-                team, mine, self.reinforcement_search_backoff + strategy.get_backoff_margin()
+                team,
+                mine,
+                self.reinforcement_search_backoff + strategy.get_backoff_margin(),
             )
             if self._reinforce_with_crab(
                 team,
@@ -871,7 +908,12 @@ class CrabadaMineBot:
                 if team["team_id"] in self.fraud_detection_tracker:
                     content = f"Possible fraud detection from user {self.alias}.\n\n"
                     content += f"Started a mine with team {team['team_id']} that never was closed by the bot!"
-                    send_email(self.emails, ADMIN_EMAIL, "Fraud Detection Alert!", content)
+                    send_email(
+                        self.emails,
+                        ADMIN_EMAIL,
+                        "Fraud Detection Alert!",
+                        content,
+                    )
                 else:
                     self.fraud_detection_tracker.add(team["team_id"])
                     logger.print_warn(f"Adding team {team['team_id']} to fraud detection list")
@@ -900,7 +942,12 @@ class CrabadaMineBot:
                 if team["team_id"] in self.fraud_detection_tracker:
                     content = f"Possible fraud detection from user {self.alias}.\n\n"
                     content += f"Started a loot with team {team['team_id']} that never was closed by the bot!"
-                    send_email(self.emails, ADMIN_EMAIL, "Fraud Detection Alert!", content)
+                    send_email(
+                        self.emails,
+                        ADMIN_EMAIL,
+                        "Fraud Detection Alert!",
+                        content,
+                    )
                 else:
                     self.fraud_detection_tracker.add(team["team_id"])
                     logger.print_warn(f"Adding team {team['team_id']} to fraud detection list")

@@ -344,7 +344,12 @@ class ConfigManagerSheets(CrabadaConfigManager):
 
         cell_values.extend(get_full_row([Titles.MAX_GAS, self.config["max_gas_price_gwei"]]))
         cell_values.extend(
-            get_full_row([Titles.MAX_REINFORCE, self.config["max_reinforcement_price_tus"]])
+            get_full_row(
+                [
+                    Titles.MAX_REINFORCE,
+                    self.config["max_reinforcement_price_tus"],
+                ]
+            )
         )
         cell_values.extend(
             get_full_row([Titles.REINFORCE_ENABLED, self.config["should_reinforce"]])

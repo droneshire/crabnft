@@ -35,7 +35,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--human-mode", action="store_true", help="Human mode")
     parser.add_argument("--ignore-utc", action="store_true", help="Ignore the utc time hold")
     parser.add_argument("--quiet", action="store_true", help="Disable alerts")
-    parser.add_argument("--log-level", choices=["INFO", "DEBUG", "ERROR", "NONE"], default="INFO")
+    parser.add_argument(
+        "--log-level",
+        choices=["INFO", "DEBUG", "ERROR", "NONE"],
+        default="INFO",
+    )
     parser.add_argument("--log-dir", default=log_dir)
     parser.add_argument("--groups", nargs="+", default=USER_GROUPS)
     parser.add_argument("--server-url", default="http://localhost:8080/monitor")
@@ -56,7 +60,11 @@ def run_bot() -> None:
     args = parse_args()
 
     log_dir = os.path.join(args.log_dir, "wyndblast")
-    logger.setup_log(args.log_level, log_dir, f"wynd_{'_'.join([str(i) for i in args.groups])}")
+    logger.setup_log(
+        args.log_level,
+        log_dir,
+        f"wynd_{'_'.join([str(i) for i in args.groups])}",
+    )
 
     encrypt_password = ""
     email_accounts = []

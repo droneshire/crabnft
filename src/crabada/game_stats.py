@@ -12,7 +12,13 @@ from utils.game_stats import LifetimeGameStatsLogger
 from utils.general import TIMESTAMP_FORMAT
 from utils.price import Prices, wei_to_token
 from utils.user import get_alias_from_user
-from crabada.profitability import CrabadaTransaction, GameStats, MineOption, Result, NULL_STATS
+from crabada.profitability import (
+    CrabadaTransaction,
+    GameStats,
+    MineOption,
+    Result,
+    NULL_STATS,
+)
 from crabada.types import IdleGame, MineOption, Team
 
 
@@ -208,7 +214,9 @@ def update_game_stats_after_close(
     lifetime_stats[tx.game_type] = copy.deepcopy(stats)
 
 
-def update_lifetime_stats_format(game_stats: LifetimeGameStats) -> LifetimeGameStats:
+def update_lifetime_stats_format(
+    game_stats: LifetimeGameStats,
+) -> LifetimeGameStats:
     new_game_stats = LifetimeGameStats()
     new_game_stats[MineOption.MINE] = MineLootGameStats()
     new_game_stats[MineOption.LOOT] = MineLootGameStats()

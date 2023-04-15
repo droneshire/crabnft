@@ -11,7 +11,12 @@ import typing as T
 from discord import Webhook
 from twilio.rest import Client
 
-from config_admin import COINMARKETCAP_API_TOKEN, GMAIL, IEX_API_TOKEN, TWILIO_CONFIG
+from config_admin import (
+    COINMARKETCAP_API_TOKEN,
+    GMAIL,
+    IEX_API_TOKEN,
+    TWILIO_CONFIG,
+)
 from config_crabada import GAME_BOT_STRING, USER_GROUPS, USERS
 from crabada.bot import CrabadaMineBot
 from crabada.crabada_web2_client import CrabadaWeb2Client
@@ -25,7 +30,12 @@ from utils.email import get_email_accounts_from_password
 from utils.game_stats import get_alias_from_user
 from utils.general import dict_sum
 from utils.math import Average
-from utils.price import DEFAULT_GAS_USED, get_avax_price_usd, get_token_price_usd, Prices
+from utils.price import (
+    DEFAULT_GAS_USED,
+    get_avax_price_usd,
+    get_token_price_usd,
+    Prices,
+)
 from utils.user import clean_up_stats_for_user
 
 PRICE_UPDATE_TIME = 60.0 * 60.0
@@ -40,7 +50,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dry-run", action="store_true", help="Dry run")
     parser.add_argument("--use-proxy", action="store_true", help="Use proxy if available")
     parser.add_argument("--quiet", action="store_true", help="Disable alerts")
-    parser.add_argument("--log-level", choices=["INFO", "DEBUG", "ERROR", "NONE"], default="INFO")
+    parser.add_argument(
+        "--log-level",
+        choices=["INFO", "DEBUG", "ERROR", "NONE"],
+        default="INFO",
+    )
     parser.add_argument("--log-dir", default=log_dir)
     parser.add_argument("--groups", nargs="+", default=USER_GROUPS)
     return parser.parse_args()
@@ -59,7 +73,10 @@ def get_users_teams() -> T.Tuple[int, int]:
 
 
 def handle_subscription_posts(
-    prices: Prices, avg_gas_tus: float, gas_price_gwei: float, avg_reinforce_tus: float
+    prices: Prices,
+    avg_gas_tus: float,
+    gas_price_gwei: float,
+    avg_reinforce_tus: float,
 ) -> None:
     subscriptions = {
         "HEYA_SUBSCRIPTION": {

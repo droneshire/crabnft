@@ -20,7 +20,14 @@ class PumpskinConfigManager(ConfigManager):
         verbose: bool = False,
         update_from_src: bool = False,
     ):
-        super().__init__(user, config, send_email_accounts, encrypt_password, log_dir, dry_run)
+        super().__init__(
+            user,
+            config,
+            send_email_accounts,
+            encrypt_password,
+            log_dir,
+            dry_run,
+        )
         self.update_from_src = update_from_src
 
     def init(self):

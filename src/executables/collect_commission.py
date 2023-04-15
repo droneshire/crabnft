@@ -190,7 +190,8 @@ def collect_commission(
             continue
 
         if is_gas_too_high(
-            gas_price_gwei=token_w3.get_gas_price(), max_price_gwei=MAX_COLLECTION_GAS_GWEI
+            gas_price_gwei=token_w3.get_gas_price(),
+            max_price_gwei=MAX_COLLECTION_GAS_GWEI,
         ):
             logger.print_fail_arrow(
                 f"Skipping transfer of {commission_token:.2f} from {alias}: gas too high!!!"
@@ -300,14 +301,22 @@ def collect_commission(
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--send-notice", action="store_true", help="Send out warning SMS that we're collecting!"
+        "--send-notice",
+        action="store_true",
+        help="Send out warning SMS that we're collecting!",
     )
     parser.add_argument("--from-users", default="ALL", nargs="+")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--quiet", action="store_true")
-    parser.add_argument("--log-level", choices=["INFO", "DEBUG", "ERROR", "NONE"], default="INFO")
     parser.add_argument(
-        "--game", choices=list(COMMISSION_GAMES.keys()), help="Token to collect commission with"
+        "--log-level",
+        choices=["INFO", "DEBUG", "ERROR", "NONE"],
+        default="INFO",
+    )
+    parser.add_argument(
+        "--game",
+        choices=list(COMMISSION_GAMES.keys()),
+        help="Token to collect commission with",
     )
     return parser.parse_args()
 
@@ -362,7 +371,12 @@ def main() -> None:
     logger.print_ok(f"Collecting {game_commission.TOKEN} Commissions from {', '.join(from_users)}")
 
     collect_commission(
-        from_users, log_dir, game_commission, encrypt_password, args.dry_run, args.quiet
+        from_users,
+        log_dir,
+        game_commission,
+        encrypt_password,
+        args.dry_run,
+        args.quiet,
     )
 
 

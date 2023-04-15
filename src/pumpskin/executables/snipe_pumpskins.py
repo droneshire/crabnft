@@ -28,12 +28,24 @@ def parse_args() -> argparse.Namespace:
     log_dir = logger.get_logging_dir("pumpskin")
     parser.add_argument("--dry-run", action="store_true", help="Dry run")
     parser.add_argument("--quiet", action="store_true", help="Disable alerts")
-    parser.add_argument("--log-level", choices=["INFO", "DEBUG", "ERROR", "NONE"], default="INFO")
+    parser.add_argument(
+        "--log-level",
+        choices=["INFO", "DEBUG", "ERROR", "NONE"],
+        default="INFO",
+    )
     parser.add_argument("--log-dir", default=log_dir)
     parser.add_argument(
-        "--rarity-threshold", type=float, default=15.0, help="Rarity percent max threshold"
+        "--rarity-threshold",
+        type=float,
+        default=15.0,
+        help="Rarity percent max threshold",
     )
-    parser.add_argument("--margin", type=int, default=MINT_MARGIN, help="margin before target mint")
+    parser.add_argument(
+        "--margin",
+        type=int,
+        default=MINT_MARGIN,
+        help="margin before target mint",
+    )
     parser.add_argument("--sms-rank", type=int, default=1000, help="rank for sms alert")
     parser.add_argument("--auto", action="store_true", help="Auto buy")
 
@@ -138,7 +150,8 @@ def snipe() -> None:
                     if not args.quiet and TWILIO_CONFIG["enable_admin_sms"]:
                         alert_message = f"Time to get ready to buy {target_id}!!!"
                         sms_client = Client(
-                            TWILIO_CONFIG["account_sid"], TWILIO_CONFIG["account_auth_token"]
+                            TWILIO_CONFIG["account_sid"],
+                            TWILIO_CONFIG["account_auth_token"],
                         )
                         message = sms_client.messages.create(
                             body=alert_message,
@@ -170,7 +183,10 @@ def snipe() -> None:
         stop_message = f"Pumpskin Alert \U0001F383\n\n"
         stop_message += f"Pumpskin Sniper Bot Stopped \U0000203C\n"
         if not args.quiet and TWILIO_CONFIG["enable_admin_sms"]:
-            sms_client = Client(TWILIO_CONFIG["account_sid"], TWILIO_CONFIG["account_auth_token"])
+            sms_client = Client(
+                TWILIO_CONFIG["account_sid"],
+                TWILIO_CONFIG["account_auth_token"],
+            )
             message = sms_client.messages.create(
                 body=stop_message,
                 from_=TWILIO_CONFIG["from_sms_number"],

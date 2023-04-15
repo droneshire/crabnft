@@ -2,7 +2,12 @@ import getpass
 import time
 import typing as T
 
-from config_wyndblast import BETA_TEST_LIST, COMMISSION_WALLET_ADDRESS, DAILY_ENABLED, PVE_ENABLED
+from config_wyndblast import (
+    BETA_TEST_LIST,
+    COMMISSION_WALLET_ADDRESS,
+    DAILY_ENABLED,
+    PVE_ENABLED,
+)
 from utils import logger
 from utils.config_types import UserConfig
 from utils.email import Email
@@ -12,14 +17,19 @@ from utils.security import decrypt_secret
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 from wyndblast.config_manager_wyndblast import WyndblastConfigManager
 from wyndblast.daily_activities import DailyActivitiesGame
-from wyndblast.daily_activities_web2_client import DailyActivitiesWyndblastWeb2Client
+from wyndblast.daily_activities_web2_client import (
+    DailyActivitiesWyndblastWeb2Client,
+)
 from wyndblast.database.models.user import WyndblastUser, WyndblastUserSchema
 from wyndblast.game_stats import WyndblastLifetimeGameStats
 from wyndblast.pve import PveGame
 from wyndblast.pve_web2_client import PveWyndblastWeb2Client
 from wyndblast.types import AccountLevels, LevelsInformation, WyndNft
 from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
-from wyndblast.wyndblast_web3_client import WyndblastGameWeb3Client, WyndblastNftGameWeb3Client
+from wyndblast.wyndblast_web3_client import (
+    WyndblastGameWeb3Client,
+    WyndblastNftGameWeb3Client,
+)
 
 ADDR_TO_WYND = {}
 

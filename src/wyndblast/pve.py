@@ -370,7 +370,8 @@ class PveGame:
         unclaimed_chro_earned: float,
     ) -> None:
         webhook = DiscordWebhook(
-            url=discord.DISCORD_WEBHOOK_URL["WYNDBLAST_PVE_ACTIVITY"], rate_limit_retry=True
+            url=discord.DISCORD_WEBHOOK_URL["WYNDBLAST_PVE_ACTIVITY"],
+            rate_limit_retry=True,
         )
         embed = DiscordEmbed(
             title=f"PVE ACTIVITIES",
@@ -383,10 +384,14 @@ class PveGame:
         embed.add_embed_field(name=f"Account Exp", value=f"{account_exp}", inline=True)
         embed.add_embed_field(name=f"Account Level", value=f"{account_level}", inline=True)
         embed.add_embed_field(
-            name=f"Total Chro (unclaimed)", value=f"{unclaimed_chro_earned:.2f}", inline=False
+            name=f"Total Chro (unclaimed)",
+            value=f"{unclaimed_chro_earned:.2f}",
+            inline=False,
         )
         embed.add_embed_field(
-            name=f"Total Chro (claimed)", value=f"{claimed_chro_earned:.2f}", inline=False
+            name=f"Total Chro (claimed)",
+            value=f"{claimed_chro_earned:.2f}",
+            inline=False,
         )
 
         try:
@@ -432,7 +437,12 @@ class PveGame:
 
         logger.print_bold(content)
 
-        send_email(self.email_accounts, self.config["email"], "Wyndblast PVE Update", content)
+        send_email(
+            self.email_accounts,
+            self.config["email"],
+            "Wyndblast PVE Update",
+            content,
+        )
 
     def _update_stats(self) -> None:
         chro_rewards = self.current_stats["chro"]
@@ -497,7 +507,10 @@ class PveGame:
 
         self.wynd_w2.ping_realtime()
 
-        QUESTS = {"weekly": self.wynd_w2.claim_weekly, "daily": self.wynd_w2.claim_daily}
+        QUESTS = {
+            "weekly": self.wynd_w2.claim_weekly,
+            "daily": self.wynd_w2.claim_daily,
+        }
         for quest, action in QUESTS.items():
             logger.print_ok_blue(f"Attempting to claim {quest.upper()} quests")
             res: types.ClaimQuests = action()
@@ -815,7 +828,10 @@ class PveGame:
                 pve.claimed_chro += chro_rewards_after["claimed"]
 
         if chro_rewards_before and chro_rewards_after:
-            delta = max(0, (chro_rewards_after["claimable"] - chro_rewards_before["claimable"]))
+            delta = max(
+                0,
+                (chro_rewards_after["claimable"] - chro_rewards_before["claimable"]),
+            )
             self.current_stats["pve_game"][self.address] = {"unclaimed_chro": delta}
             self.current_stats["chro"] += delta
         else:

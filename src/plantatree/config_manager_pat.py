@@ -19,7 +19,14 @@ class PatConfigManager(ConfigManager):
         dry_run: bool = False,
         verbose: bool = False,
     ):
-        super().__init__(user, config, send_email_accounts, encrypt_password, log_dir, dry_run)
+        super().__init__(
+            user,
+            config,
+            send_email_accounts,
+            encrypt_password,
+            log_dir,
+            dry_run,
+        )
 
     def init(self):
         self.config = self._load_config()

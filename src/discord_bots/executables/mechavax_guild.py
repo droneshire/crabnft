@@ -44,7 +44,11 @@ from utils.price import wei_to_token, TokenWei
 from utils.security import decrypt_secret
 from web3_utils import multicall
 from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
-from web3_utils.helpers import process_w3_results, shortened_address_str, resolve_address_to_avvy
+from web3_utils.helpers import (
+    process_w3_results,
+    shortened_address_str,
+    resolve_address_to_avvy,
+)
 from web3_utils.snowtrace import SnowtraceApi
 
 bot = commands.Bot(command_prefix="/", intents=discord.Intents.all())

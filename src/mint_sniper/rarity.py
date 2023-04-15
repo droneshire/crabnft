@@ -84,7 +84,9 @@ class NftCollectionAnalyzerBase:
 
     @staticmethod
     def _get_request(
-        url: str, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+        url: str,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
         try:
             return requests.request("GET", url, params=params, headers=headers, timeout=8.0).json()
@@ -132,7 +134,8 @@ class NftCollectionAnalyzerBase:
             for i in range(1, 6):
                 if download:
                     results = self._get_collection_info(
-                        collection_urls[offset : offset + self.MAX_PER_BATCH], parallelize=True
+                        collection_urls[offset : offset + self.MAX_PER_BATCH],
+                        parallelize=True,
                     )
                 else:
                     results = collection_info_list[offset : offset + self.MAX_PER_BATCH]

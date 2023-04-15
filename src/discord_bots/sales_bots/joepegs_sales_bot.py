@@ -141,7 +141,11 @@ class JoePegsSalesBot:
         price_wei = int(listing["currentAsk"]["price"])
         price_avax = wei_to_token(price_wei)
 
-        embed.add_field(name=f"\U0001F4B0 Price", value=f"{price_avax:.2f} AVAX", inline=True)
+        embed.add_field(
+            name=f"\U0001F4B0 Price",
+            value=f"{price_avax:.2f} AVAX",
+            inline=True,
+        )
         embed.set_image(url=listing["metadata"]["image"])
 
         return self.add_custom_embed_fields(embed, EmbedType.Listing, listing)
@@ -159,7 +163,11 @@ class JoePegsSalesBot:
         price_wei = int(sale["price"])
         price_avax = wei_to_token(price_wei)
 
-        embed.add_field(name=f"\U0001F4B0 Sold for", value=f"{price_avax:.2f} AVAX", inline=True)
+        embed.add_field(
+            name=f"\U0001F4B0 Sold for",
+            value=f"{price_avax:.2f} AVAX",
+            inline=True,
+        )
         # TODO(ross): implement last sold
         # embed.add_field(name=f"Last sold for", value=f"{sale['price_avax']:.2f} AVAX", inline=True)
 

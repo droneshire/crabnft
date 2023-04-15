@@ -14,7 +14,9 @@ def main() -> None:
     logger.setup_log("INFO", logger.get_logging_dir("crabada"), "loot_sniper")
     this_dir = os.path.dirname(os.path.realpath(__file__))
     sniper = LootSnipes(
-        os.path.join(this_dir, "gspread_credentials.json"), CrabadaWeb2Client(), verbose=True
+        os.path.join(this_dir, "gspread_credentials.json"),
+        CrabadaWeb2Client(),
+        verbose=True,
     )
     cb = circuit_breaker.CircuitBreaker(15.0)
     while True:

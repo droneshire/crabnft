@@ -147,7 +147,11 @@ def send_patch_stats() -> None:
 
             try:
                 email.send_email(
-                    email_accounts, config["email"], subject, message, attachments=csv_file.name
+                    email_accounts,
+                    config["email"],
+                    subject,
+                    message,
+                    attachments=csv_file.name,
                 )
                 aliases.remove(alias)
             except:

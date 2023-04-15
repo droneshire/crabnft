@@ -21,7 +21,10 @@ class WyndblastGameWeb3Client(AvalancheCWeb3Client):
     contract_address = T.cast(Address, "0x7bc18da262327117ef4b4359dda3ef2e9ed3ec54")
     this_dir = os.path.dirname(os.path.realpath(__file__))
     abi_dir = os.path.join(
-        os.path.dirname(this_dir), "web3_utils", "abi", "abi-wyndblast-game.json"
+        os.path.dirname(this_dir),
+        "web3_utils",
+        "abi",
+        "abi-wyndblast-game.json",
     )
     abi = Web3Client._get_contract_abi_from_file(abi_dir)
     holder_place = 0x01

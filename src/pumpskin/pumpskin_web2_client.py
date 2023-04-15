@@ -24,7 +24,10 @@ class PumpskinWeb2Client:
         self.username = None
 
     def _get_request(
-        self, url: str, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+        self,
+        url: str,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
         try:
             return requests.request("GET", url, params=params, headers=headers, timeout=5.0).json()
@@ -42,7 +45,12 @@ class PumpskinWeb2Client:
     ) -> T.Any:
         try:
             return requests.request(
-                "POST", url, json=json_data, params=params, headers=headers, timeout=5.0
+                "POST",
+                url,
+                json=json_data,
+                params=params,
+                headers=headers,
+                timeout=5.0,
             ).json()
         except KeyboardInterrupt:
             raise
@@ -50,7 +58,10 @@ class PumpskinWeb2Client:
             return {}
 
     def _get_pumpskin_info_raw(
-        self, token_id: int, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+        self,
+        token_id: int,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
         url = self.BASE_URL + f"/QmY1Fccg5JrnpbyzNJBekPPPMQsPFm1Cxx9MJSeArpwTdP/{token_id}"
         return self._get_request(url, headers=headers, params=params)

@@ -105,7 +105,10 @@ class Web3Client:
         where the value is expressed in the blockchain token (e.g. ETH or AVAX or TUS).
         """
         tx = self.build_base_transaction()
-        tx_value: TxParams = {"to": to, "value": self.w3.toWei(value_in_eth, "ether")}
+        tx_value: TxParams = {
+            "to": to,
+            "value": self.w3.toWei(value_in_eth, "ether"),
+        }
         tx.update(tx_value)
         return tx
 

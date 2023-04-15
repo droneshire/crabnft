@@ -6,7 +6,13 @@ from web3.types import Wei
 
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
-from crabada.profitability import CrabadaTransaction, GameStage, REWARDS_TUS, Result, Scenarios
+from crabada.profitability import (
+    CrabadaTransaction,
+    GameStage,
+    REWARDS_TUS,
+    Result,
+    Scenarios,
+)
 from crabada.types import IdleGame, Team, TeamMember
 from utils import logger
 from utils.config_manager import ConfigManager
@@ -109,7 +115,10 @@ class Strategy:
             elif now - self.reinforce_time_cache[crab] > self.REINFORCEMENT_REUSE_WINDOW:
                 available_reinforcing_crabs.append(crab)
 
-        defense_battle_point, attack_battle_point = self.crabada_w2.get_battle_points(mine)
+        (
+            defense_battle_point,
+            attack_battle_point,
+        ) = self.crabada_w2.get_battle_points(mine)
         min_reinforcement_battle_point = defense_battle_point - attack_battle_point + 1
         logger.print_normal(f"Mine[{mine['game_id']}]: using highest bp")
         if self.config_mgr.config["game_specific_configs"]["reinforcing_crabs"]:
@@ -206,7 +215,11 @@ class Strategy:
     def _get_game_result(tus: float) -> Result:
         for reward_type, scenario in REWARDS_TUS.items():
             # auto lose/no reinforce the win == lose, skip these for saying its a win
-            if math.isclose(scenario[Result.WIN]["TUS"], scenario[Result.LOSE]["TUS"], abs_tol=1.0):
+            if math.isclose(
+                scenario[Result.WIN]["TUS"],
+                scenario[Result.LOSE]["TUS"],
+                abs_tol=1.0,
+            ):
                 continue
             if math.isclose(scenario[Result.WIN]["TUS"], tus, abs_tol=1.0):
                 logger.print_normal(f"Detected WIN result for {reward_type}")

@@ -11,7 +11,13 @@ from wyndblast.api_headers import (
     WYNDBLAST_PVE_GOOGLESTORAGE_HEADERS,
     GOOGLE_STORAGE_X_CLIENT_DATA_KEYS,
 )
-from wyndblast.types import AccountLevels, LevelsInformation, PveWynd, Skills, WyndLevelsStats
+from wyndblast.types import (
+    AccountLevels,
+    LevelsInformation,
+    PveWynd,
+    Skills,
+    WyndLevelsStats,
+)
 from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
 
 

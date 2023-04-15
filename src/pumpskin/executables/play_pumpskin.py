@@ -27,7 +27,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dry-run", action="store_true", help="Dry run")
     parser.add_argument("--update-config", action="store_true", help="Update config from source")
     parser.add_argument("--quiet", action="store_true", help="Disable alerts")
-    parser.add_argument("--log-level", choices=["INFO", "DEBUG", "ERROR", "NONE"], default="INFO")
+    parser.add_argument(
+        "--log-level",
+        choices=["INFO", "DEBUG", "ERROR", "NONE"],
+        default="INFO",
+    )
     parser.add_argument("--log-dir", default=log_dir)
     parser.add_argument("--groups", nargs="+", default=USER_GROUPS)
     parser.add_argument("--server-url", default="http://localhost:8080/monitor")
@@ -126,7 +130,10 @@ def run_bot() -> None:
         stop_message = f"Pumpskin Alert \U0001F383\n\n"
         stop_message += f"Pumpskin Bot Stopped \U0000203C\n"
         if alerts_enabled and TWILIO_CONFIG["enable_admin_sms"]:
-            sms_client = Client(TWILIO_CONFIG["account_sid"], TWILIO_CONFIG["account_auth_token"])
+            sms_client = Client(
+                TWILIO_CONFIG["account_sid"],
+                TWILIO_CONFIG["account_auth_token"],
+            )
             message = sms_client.messages.create(
                 body=stop_message,
                 from_=TWILIO_CONFIG["from_sms_number"],

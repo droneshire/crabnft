@@ -34,7 +34,10 @@ class MechArmContractWeb3Client(AvalancheCWeb3Client):
     contract_address = T.cast(Address, "0x311E1a6c9190fA6847dC6B4617AE36c1277Fb24b")
     this_dir = os.path.dirname(os.path.realpath(__file__))
     abi_dir = os.path.join(
-        os.path.dirname(this_dir), "web3_utils", "abi", "abi-mech-blank-armament.json"
+        os.path.dirname(this_dir),
+        "web3_utils",
+        "abi",
+        "abi-mech-blank-armament.json",
     )
     abi = Web3Client._get_contract_abi_from_file(abi_dir)
 

@@ -12,13 +12,19 @@ class Email(T.TypedDict):
 
 
 def get_email_accounts_from_password(
-    encrypt_password: str, encrypted_emails: T.List[T.Dict[str, str]], dry_run: bool = False
+    encrypt_password: str,
+    encrypted_emails: T.List[T.Dict[str, str]],
+    dry_run: bool = False,
 ) -> T.List[Email]:
     email_accounts = []
     for email_account in encrypted_emails:
         email_password = decrypt_secret(encrypt_password, email_account["password"])
         email_accounts.append(
-            Email(address=email_account["user"], password=email_password, quiet=dry_run)
+            Email(
+                address=email_account["user"],
+                password=email_password,
+                quiet=dry_run,
+            )
         )
     return email_accounts
 
@@ -35,7 +41,10 @@ def send_email_raw(
         if isinstance(to_addresses, str):
             to_addresses = [to_addresses]
             email_sender.send(
-                to=to_addresses, subject=subject, contents=content, attachments=attachments
+                to=to_addresses,
+                subject=subject,
+                contents=content,
+                attachments=attachments,
             )
         if verbose:
             logger.print_ok(f"To: {', '.join(to_addresses)}\nFrom: {email['address']}")
@@ -56,7 +65,12 @@ def send_email(
             continue
         try:
             send_email_raw(
-                email, to_addresses, subject, content, attachments=attachments, verbose=verbose
+                email,
+                to_addresses,
+                subject,
+                content,
+                attachments=attachments,
+                verbose=verbose,
             )
             return
         except KeyboardInterrupt:

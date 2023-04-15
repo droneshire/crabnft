@@ -65,7 +65,13 @@ CRABADA_ID_TO_CLASS = {
 
 
 class GameProcess(T.TypedDict):
-    action: T.Literal["create-game", "attack", "reinforce-defence", "reinforce-attack", "settle"]
+    action: T.Literal[
+        "create-game",
+        "attack",
+        "reinforce-defence",
+        "reinforce-attack",
+        "settle",
+    ]
     transaction_time: int
 
 
@@ -188,7 +194,11 @@ class Team(T.TypedDict):
     mine_start_time: int
     owner: Address
     process_status: T.Literal[
-        "create-game", "attack", "reinforce-defence", "reinforce-attack", "settle"
+        "create-game",
+        "attack",
+        "reinforce-defence",
+        "reinforce-attack",
+        "settle",
     ]
     status: TeamStatus
     time_point: int

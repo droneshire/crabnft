@@ -54,7 +54,9 @@ class MechavaxListingBot(JoePegsSalesBot):
             data = json.load(infile)
             rarity = data.get(str(token_id), {}).get("Overall", {}).get("rarity", -0.01) * 100.0
         embed.add_field(
-            name=f"\U0001F522 Emissions Multiplier", value=f"{multiplier}", inline=False
+            name=f"\U0001F522 Emissions Multiplier",
+            value=f"{multiplier}",
+            inline=False,
         )
         embed.add_field(name=f"Rarity", value=f"{rarity:.2f}%", inline=False)
         return embed

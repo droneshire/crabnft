@@ -22,7 +22,12 @@ class Category:
     LP = "LP"
 
 
-ALL_CATEGORIES = [Category.PROFIT, Category.HOLD, Category.LEVELLING, Category.LP]
+ALL_CATEGORIES = [
+    Category.PROFIT,
+    Category.HOLD,
+    Category.LEVELLING,
+    Category.LP,
+]
 
 
 class Tokens:

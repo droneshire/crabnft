@@ -5,7 +5,9 @@ from eth_typing import Address
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.crabada_web3_client import CrabadaWeb3Client
 from crabada.strategies.mining import MiningStrategy
-from crabada.strategies.mining_delayed_reinforce import MiningDelayReinforcementStrategy
+from crabada.strategies.mining_delayed_reinforce import (
+    MiningDelayReinforcementStrategy,
+)
 from crabada.strategies.strategy import GameStage
 from crabada.types import IdleGame, Team, TeamMember
 from utils import logger

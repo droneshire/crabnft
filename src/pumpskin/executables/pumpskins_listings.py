@@ -11,7 +11,11 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--rarity", type=float, default=15.0)
     parser.add_argument("--max-price", type=float, default=1.0)
-    parser.add_argument("--log-level", choices=["INFO", "DEBUG", "ERROR", "NONE"], default="INFO")
+    parser.add_argument(
+        "--log-level",
+        choices=["INFO", "DEBUG", "ERROR", "NONE"],
+        default="INFO",
+    )
     log_dir = logger.get_logging_dir("pumpskin")
     parser.add_argument("--log-dir", default=log_dir)
 

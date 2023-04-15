@@ -38,7 +38,9 @@ from wyndblast.types import (
     WyndNft,
     WyndStatus,
 )
-from wyndblast.daily_activities_web2_client import DailyActivitiesWyndblastWeb2Client
+from wyndblast.daily_activities_web2_client import (
+    DailyActivitiesWyndblastWeb2Client,
+)
 from wyndblast.wyndblast_web3_client import WyndblastGameWeb3Client
 
 
@@ -216,7 +218,8 @@ class DailyActivitiesGame:
 
     def _send_close_game_discord_activity_update(self) -> None:
         webhook = DiscordWebhook(
-            url=discord.DISCORD_WEBHOOK_URL["WYNDBLAST_ACTIVITY"], rate_limit_retry=True
+            url=discord.DISCORD_WEBHOOK_URL["WYNDBLAST_ACTIVITY"],
+            rate_limit_retry=True,
         )
         embed = DiscordEmbed(
             title=f"DAILY ACTIVITIES",
@@ -239,8 +242,16 @@ class DailyActivitiesGame:
             win_percent = 0.0
 
         embed.add_embed_field(name=f"Win %", value=f"{win_percent:.2f}%", inline=False)
-        embed.add_embed_field(name=f"CHRO", value=f"{int(self.current_stats['chro'])}", inline=True)
-        embed.add_embed_field(name=f"WAMS", value=f"{int(self.current_stats['wams'])}", inline=True)
+        embed.add_embed_field(
+            name=f"CHRO",
+            value=f"{int(self.current_stats['chro'])}",
+            inline=True,
+        )
+        embed.add_embed_field(
+            name=f"WAMS",
+            value=f"{int(self.current_stats['wams'])}",
+            inline=True,
+        )
         embed.add_embed_field(
             name=f"ESTONES",
             value=f"{int(self.current_stats['elemental_stones']['elemental_stones_qty'])}",
@@ -298,10 +309,19 @@ class DailyActivitiesGame:
 
         logger.print_bold(content)
 
-        send_email(self.email_accounts, self.config["email"], "Wyndblast Daily Activities", content)
+        send_email(
+            self.email_accounts,
+            self.config["email"],
+            "Wyndblast Daily Activities",
+            content,
+        )
 
     def _play_round(
-        self, wynd_id: int, current_stage: int, wynd_info: ProductMetadata, verbose: bool = False
+        self,
+        wynd_id: int,
+        current_stage: int,
+        wynd_info: ProductMetadata,
+        verbose: bool = False,
     ) -> bool:
         options: DailyActivitySelection = self.wynd_w2.get_activity_selection(wynd_id)
 
@@ -352,7 +372,8 @@ class DailyActivitiesGame:
                     self.current_stats["elemental_stones"][rewards["elemental_stones"]] += 1
                     self.current_stats["elemental_stones"]["elemental_stones_qty"] += 1
                     previous_value = getattr(
-                        da.elemental_stones[0], rewards["elemental_stones"].lower()
+                        da.elemental_stones[0],
+                        rewards["elemental_stones"].lower(),
                     )
                     setattr(
                         da.elemental_stones[0],
@@ -389,7 +410,11 @@ class DailyActivitiesGame:
         return did_succeed
 
     def _get_best_action(
-        self, current_stage: int, actions: Action, wynd_info: ProductMetadata, verbose: bool = False
+        self,
+        current_stage: int,
+        actions: Action,
+        wynd_info: ProductMetadata,
+        verbose: bool = False,
     ) -> ActivitySelection:
         best_percent = 0.0
         wynd_class = wynd_info["class"]

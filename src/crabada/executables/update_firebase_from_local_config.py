@@ -19,10 +19,14 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--user", choices=sorted(list(USERS.keys())) + ["ALL"], default="ALL")
     parser.add_argument(
-        "--from-crabada", action="store_true", help="setup teams by querying address"
+        "--from-crabada",
+        action="store_true",
+        help="setup teams by querying address",
     )
     parser.add_argument(
-        "--force-erase", action="store_true", help="erase existing config regardless of alias"
+        "--force-erase",
+        action="store_true",
+        help="erase existing config regardless of alias",
     )
     return parser.parse_args()
 

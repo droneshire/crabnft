@@ -69,7 +69,10 @@ class PatLifetimeGameStatsLogger(LifetimeGameStatsLogger):
         return diffed_stats
 
     def merge_game_stats(
-        self, user_a_stats: LifetimeStats, user_b_stats: LifetimeStats, log_dir: str
+        self,
+        user_a_stats: LifetimeStats,
+        user_b_stats: LifetimeStats,
+        log_dir: str,
     ) -> LifetimeStats:
         diff = deepdiff.DeepDiff(user_a_stats, user_b_stats)
         if not diff:

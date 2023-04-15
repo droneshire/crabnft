@@ -84,7 +84,8 @@ class TokenAllocator:
             amount = self.token_w3.get_balance() * self._percents[category]
         else:
             amount = min(
-                self.token_w3.get_balance() * self._percents[category], self._allocations[category]
+                self.token_w3.get_balance() * self._percents[category],
+                self._allocations[category],
             )
 
         if self.verbose:
@@ -143,7 +144,10 @@ class TokenAllocator:
         self._allocations[category] = new_balance
 
     def update_percent(
-        self, category: Category, percent: float, to_categories: T.List[Category] = ALL_CATEGORIES
+        self,
+        category: Category,
+        percent: float,
+        to_categories: T.List[Category] = ALL_CATEGORIES,
     ) -> None:
         # update category percent and distribute the delta in percent
         # among the rest of the categories

@@ -11,7 +11,11 @@ from utils import logger, file_util
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--log-level", choices=["INFO", "DEBUG", "ERROR", "NONE"], default="INFO")
+    parser.add_argument(
+        "--log-level",
+        choices=["INFO", "DEBUG", "ERROR", "NONE"],
+        default="INFO",
+    )
     log_dir = logger.get_logging_dir("mint_sniper")
     parser.add_argument("--log-dir", default=log_dir)
     parser.add_argument("--collection", choices=[c.value for c in collection_select.Collections])

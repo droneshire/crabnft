@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import web3
+import threading
 import time
 import typing as T
 
@@ -176,7 +177,9 @@ class MechBot:
 
     def get_last_mech_mint(self) -> float:
         events = self.get_events(
-            self.w3_mech.contract.events.MechPurchased, cadence=1, latest_only=True
+            self.w3_mech.contract.events.MechPurchased,
+            cadence=1,
+            latest_only=True,
         )
 
         latest_event = 0
@@ -198,7 +201,9 @@ class MechBot:
 
     def get_last_marm_mint(self) -> float:
         events = self.get_events(
-            self.w3_arm.contract.events.PagePurchased, cadence=1, latest_only=True
+            self.w3_arm.contract.events.PagePurchased,
+            cadence=1,
+            latest_only=True,
         )
 
         latest_event = 0
@@ -498,7 +503,7 @@ class MechBot:
         self.webhook.send(message)
         await asyncio.sleep(self.MINT_BOT_INTERVAL)
 
-    async def parse_stats_iteration(self) -> None:
+    def parse_stats_iteration(self) -> None:
         current_balances = {}
         for nft_id in range(1, self.MAX_SUPPLY + 1):
             address = await async_func_wrapper(self.w3_mech.get_owner_of, nft_id)
@@ -511,12 +516,8 @@ class MechBot:
                 continue
 
             current_balances[address] = {}
-            current_balances[address]["shk"] = await async_func_wrapper(
-                self.w3_mech.get_deposited_shk, address
-            )
-            current_balances[address]["mechs"] = await async_func_wrapper(
-                self.w3_mech.get_num_mechs, address
-            )
+            current_balances[address]["shk"] = self.w3_mech.get_deposited_shk(address)
+            current_balances[address]["mechs"] = self.w3_mech.get_num_mechs(address)
             logger.print_normal(
                 f"Found {address} with {current_balances[address]['shk']}, {current_balances[address]['mechs']} mechs"
             )
@@ -549,9 +550,7 @@ class MechBot:
                         data[address][k] = []
                     data[address][k].append(v)
 
-                resolved_address = await async_func_wrapper(
-                    resolve_address_to_avvy, self.w3_mech.w3, address
-                )
+                resolved_address = resolve_address_to_avvy(self.w3_mech.w3, address)
                 if resolved_address in data and resolved_address != address:
                     data[address] = data[resolved_address]
                     del data[resolved_address]
@@ -559,7 +558,7 @@ class MechBot:
             json.dump(data, outfile, indent=4)
 
         logger.print_bold("Updated cache file!")
-        await asyncio.sleep(1.0)
+        time.sleep(1.0)
 
     async def update_guild_stats(self) -> None:
         if os.path.isfile(MECH_GUILD_STATS_FILE):
@@ -617,8 +616,8 @@ class MechBot:
 
         await asyncio.sleep(1.0)
 
-    async def parse_stats(self) -> None:
-        await self.parse_stats_iteration()
+    def parse_stats(self) -> None:
+        self.parse_stats_iteration()
         try:
             pass
         except KeyboardInterrupt:
@@ -630,6 +629,9 @@ class MechBot:
         loop = asyncio.get_event_loop()
         logger.print_bold("Starting monitor...")
 
+        # thread = threading.Thread(target=self.parse_stats, name="inventory", daemon=True)
+        # thread.start()
+
         try:
             while True:
                 loop.run_until_complete(
@@ -639,7 +641,6 @@ class MechBot:
                         self.event_monitors(self.MONITOR_INTERVAL),
                         self.stats_monitor(self.interval),
                         self.mint_bot(),
-                        self.parse_stats(),
                     )
                 )
         finally:

@@ -17,7 +17,10 @@ class GameConfig(AccountBase):  # type: ignore
     wallet_id = Column(types.String, ForeignKey("Wallet.address"))
     created_at = Column(types.DateTime(timezone=True), server_default=func.now())
 
-    __mapper_args__ = {"polymorphic_on": discriminator, "polymorphic_identity": "GameConfig"}
+    __mapper_args__ = {
+        "polymorphic_on": discriminator,
+        "polymorphic_identity": "GameConfig",
+    }
 
 
 class GameConfigSchema(Schema):  # type: ignore

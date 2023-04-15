@@ -365,7 +365,15 @@ def get_actual_game_profit(
     revenue_tus = game_stats["reward_tus"] + prices.cra_to_tus(game_stats["reward_cra"])
 
     gas_used_tus = sum(
-        [game_stats[g] for g in ["gas_close", "gas_start", "gas_reinforce1", "gas_reinforce2"]]
+        [
+            game_stats[g]
+            for g in [
+                "gas_close",
+                "gas_start",
+                "gas_reinforce1",
+                "gas_reinforce2",
+            ]
+        ]
     )
 
     reinforcement_used_tus = game_stats["reinforce1"] + game_stats["reinforce2"]
@@ -383,7 +391,9 @@ def get_actual_game_profit(
     return profit_tus, profit_usd
 
 
-def get_rewards_from_tx_receipt(tx_receipt: T.Any) -> T.Tuple[T.Optional[float], T.Optional[float]]:
+def get_rewards_from_tx_receipt(
+    tx_receipt: T.Any,
+) -> T.Tuple[T.Optional[float], T.Optional[float]]:
     DATA_SIZE = 64
 
     tus_rewards = None

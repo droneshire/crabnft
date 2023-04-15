@@ -174,7 +174,10 @@ class PumpskinTokenProfitManager:
             logger.print_warn(f"Skipping swap since nothing to swap!")
             return []
 
-        path = [self.token_w3.contract_checksum_address, AvaxCWeb3Client.WAVAX_ADDRESS]
+        path = [
+            self.token_w3.contract_checksum_address,
+            AvaxCWeb3Client.WAVAX_ADDRESS,
+        ]
 
         logger.print_normal(
             f"From {self.allocator[self.token].get_total():.2f} {self.token} available, testing {avax_token:.4f} {self.token} in..."
@@ -254,13 +257,18 @@ class PumpskinTokenProfitManager:
         return total_txns
 
     def _send_discord_profit_lp_purchase(
-        self, profit_avax: float, lp_avax: float, lp_token: float, lp_amount: float
+        self,
+        profit_avax: float,
+        lp_avax: float,
+        lp_token: float,
+        lp_amount: float,
     ) -> None:
         if self.quiet:
             return
 
         webhook = DiscordWebhook(
-            url=discord.DISCORD_WEBHOOK_URL["PUMPSKIN_ACTIVITY"], rate_limit_retry=True
+            url=discord.DISCORD_WEBHOOK_URL["PUMPSKIN_ACTIVITY"],
+            rate_limit_retry=True,
         )
         discord_username = self.discord_handle.split("#")[0].upper()
         embed = DiscordEmbed(

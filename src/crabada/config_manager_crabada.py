@@ -24,7 +24,14 @@ class CrabadaConfigManager(ConfigManager):
         dry_run: bool = False,
         verbose: bool = False,
     ):
-        super().__init__(user, config, send_email_accounts, encrypt_password, log_dir, dry_run)
+        super().__init__(
+            user,
+            config,
+            send_email_accounts,
+            encrypt_password,
+            log_dir,
+            dry_run,
+        )
         self.crabada_w2 = crabada_w2
         self.team_composition_and_mp = self.crabada_w2.get_team_compositions_and_mp(
             self.config["address"]
@@ -54,7 +61,10 @@ class CrabadaConfigManager(ConfigManager):
                         load_config["game_specific_configs"][old_game_key] = copy_config[
                             old_game_key
                         ]
-                        if old_game_key in ["max_reinforcement_price_tus", "should_reinforce"]:
+                        if old_game_key in [
+                            "max_reinforcement_price_tus",
+                            "should_reinforce",
+                        ]:
                             del load_config[old_game_key]
 
                 if load_config["sms_number"] == "+1":
@@ -62,7 +72,11 @@ class CrabadaConfigManager(ConfigManager):
                 load_config["private_key"] = decrypt(
                     byte_key, load_config["private_key"], decode=True
                 ).decode()
-                for config_key in ["mining_teams", "looting_teams", "reinforcing_crabs"]:
+                for config_key in [
+                    "mining_teams",
+                    "looting_teams",
+                    "reinforcing_crabs",
+                ]:
                     for k, v in copy_config["game_specific_configs"].get(config_key, {}).items():
                         del load_config["game_specific_configs"][config_key][k]
                         load_config["game_specific_configs"][config_key][int(k)] = v

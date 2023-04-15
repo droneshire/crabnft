@@ -12,7 +12,10 @@ from crabada.miners_revenge import calc_miners_revenge
 from crabada.config_manager_sheets import ConfigManagerSheets
 from crabada.config_manager_firebase import ConfigManagerFirebase
 from crabada.crabada_web2_client import CrabadaWeb2Client
-from crabada.profitability import get_scenario_profitability, is_profitable_to_take_action
+from crabada.profitability import (
+    get_scenario_profitability,
+    is_profitable_to_take_action,
+)
 from crabada.types import CrabadaClass, MineOption, Team
 from utils import email, logger, security
 from utils.config_manager import ConfigManager
@@ -149,7 +152,12 @@ def test_config_manager_firebase() -> None:
     encrypt_password = ""
 
     cm = ConfigManagerFirebase(
-        "TEST", TEST_CONFIG, email_accounts, encrypt_password, CrabadaWeb2Client(), dry_run=False
+        "TEST",
+        TEST_CONFIG,
+        email_accounts,
+        encrypt_password,
+        CrabadaWeb2Client(),
+        dry_run=False,
     )
     cm.update_user_from_local_config("TEST")
 

@@ -32,7 +32,9 @@ class GameCollection:
         self.commission: T.Dict[str, float] = None
         self.explorer_url: str = ""
         self.lifetime_stats_file: str = os.path.join(
-            logger.get_logging_dir(self.GAME.lower()), "stats", "commission_lifetime_bot_stats.json"
+            logger.get_logging_dir(self.GAME.lower()),
+            "stats",
+            "commission_lifetime_bot_stats.json",
         )
         logger.print_ok_arrow(f"Using {self} token for collections")
 
@@ -49,7 +51,11 @@ class Crabada(GameCollection):
     DISCORD = "CRABADA_UPDATES"
 
     def __init__(
-        self, user: str, config: T.Dict[str, T.Any], log_dir: str, dry_run: bool = False
+        self,
+        user: str,
+        config: T.Dict[str, T.Any],
+        log_dir: str,
+        dry_run: bool = False,
     ) -> None:
         super().__init__(user, config, 15)
 
@@ -74,7 +80,11 @@ class Wyndblast(GameCollection):
     DISCORD = "WYNDBLAST_UPDATES"
 
     def __init__(
-        self, user: str, config: T.Dict[str, T.Any], log_dir: str, dry_run: bool = False
+        self,
+        user: str,
+        config: T.Dict[str, T.Any],
+        log_dir: str,
+        dry_run: bool = False,
     ) -> None:
         super().__init__(user, config, 50)
 
@@ -99,7 +109,11 @@ class Pumpskin(GameCollection):
     DISCORD = "PUMPSKIN_UPDATES"
 
     def __init__(
-        self, user: str, config: T.Dict[str, T.Any], log_dir: str, dry_run: bool = False
+        self,
+        user: str,
+        config: T.Dict[str, T.Any],
+        log_dir: str,
+        dry_run: bool = False,
     ) -> None:
         super().__init__(user, config, 25)
 

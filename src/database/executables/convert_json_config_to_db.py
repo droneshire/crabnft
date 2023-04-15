@@ -14,7 +14,10 @@ from database.connect import init_database
 from database.models.account import Account, AccountSchema
 from database.models.commission_percents import CommissionPercents
 from plantatree.database.models.game_config import PatGameConfig
-from pumpskin.database.models.game_config import PumpskinsGameConfig, SpecialPumpskins
+from pumpskin.database.models.game_config import (
+    PumpskinsGameConfig,
+    SpecialPumpskins,
+)
 from wyndblast.database.models.game_config import WyndblastGameConfig
 from utils import file_util, logger
 from utils.user import get_alias_from_user
@@ -23,7 +26,11 @@ from utils.user import get_alias_from_user
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     log_dir = logger.get_logging_dir("p2e")
-    parser.add_argument("--log-level", choices=["INFO", "DEBUG", "ERROR", "NONE"], default="INFO")
+    parser.add_argument(
+        "--log-level",
+        choices=["INFO", "DEBUG", "ERROR", "NONE"],
+        default="INFO",
+    )
     parser.add_argument("--log-dir", default=log_dir)
     parser.add_argument("--verbose", action="store_true")
     return parser.parse_args()

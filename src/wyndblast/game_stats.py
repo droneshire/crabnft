@@ -70,7 +70,12 @@ NULL_GAME_STATS = {
 
 class WyndblastLifetimeGameStats:
     def __init__(
-        self, user: str, address: str, commission_address: str, token: str, db_str: str = STATS_DB
+        self,
+        user: str,
+        address: str,
+        commission_address: str,
+        token: str,
+        db_str: str = STATS_DB,
     ) -> None:
         self.db_str = db_str  # must come first
 

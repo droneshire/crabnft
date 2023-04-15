@@ -35,7 +35,11 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
     PVE_LOBBY_ID = "TESTING"
 
     def __init__(
-        self, private_key: str, user_address: Address, base_url: str, dry_run: bool = False
+        self,
+        private_key: str,
+        user_address: Address,
+        base_url: str,
+        dry_run: bool = False,
     ) -> None:
         super().__init__(
             private_key,
@@ -73,7 +77,10 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
             return {}
 
     def _get_level_quests_raw(
-        self, level: str, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+        self,
+        level: str,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
         url = self.PVE_BASE_URL + f"/quest/{level}"
         return self._get_request(url, headers=headers, params=params)
@@ -197,7 +204,10 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
             return False
 
     def _level_up_wynd_raw(
-        self, product_id: str, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+        self,
+        product_id: str,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
         url = self.PVE_BASE_URL + f"/rewards/wynd/claim/{product_id}"
         return self._post_request(url, json_data={}, headers=headers, params=params)
@@ -244,7 +254,11 @@ class PveWyndblastWeb2Client(WyndblastWeb2Client):
         )
 
     def battle(
-        self, stage_id: str, battle_setup: BattleSetup, duration: int = 28, result: str = "win"
+        self,
+        stage_id: str,
+        battle_setup: BattleSetup,
+        duration: int = 28,
+        result: str = "win",
     ) -> bool:
         payload: BattlePayload = BattlePayload()
         payload["duration"] = duration

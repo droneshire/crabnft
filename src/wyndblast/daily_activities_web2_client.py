@@ -26,7 +26,11 @@ TIMESTAMP_FORMAT = "%Y-%m-%d"
 
 class DailyActivitiesWyndblastWeb2Client(WyndblastWeb2Client):
     def __init__(
-        self, private_key: str, user_address: Address, base_url: str, dry_run: bool = False
+        self,
+        private_key: str,
+        user_address: Address,
+        base_url: str,
+        dry_run: bool = False,
     ) -> None:
         super().__init__(
             private_key,
@@ -88,7 +92,10 @@ class DailyActivitiesWyndblastWeb2Client(WyndblastWeb2Client):
             return []
 
     def _get_activity_selection_raw(
-        self, nft_id: int, headers: T.Dict[str, T.Any] = {}, params: T.Dict[str, T.Any] = {}
+        self,
+        nft_id: int,
+        headers: T.Dict[str, T.Any] = {},
+        params: T.Dict[str, T.Any] = {},
     ) -> T.Any:
         url = self.DAILY_ACTIVITY_BASE_URL + "/select"
         json_data = {"product_ids": [self._get_product_id(nft_id)]}

@@ -5,7 +5,10 @@ import typing as T
 from config_pumpskin import USERS
 from discord_bots.command_bots.default import OnMessage
 from pumpskin.utils import calc_ppie_earned_per_day
-from pumpskin.pumpskin_web3_client import PumpskinCollectionWeb3Client, PumpskinContractWeb3Client
+from pumpskin.pumpskin_web3_client import (
+    PumpskinCollectionWeb3Client,
+    PumpskinContractWeb3Client,
+)
 from utils import logger
 from utils.config_types import UserConfig
 from utils.price import wei_to_token
@@ -121,7 +124,11 @@ class ManageAccounts(OnMessage):
 
         try:
             return cls._get_config_stats(
-                discord_user, pfp, potn_per_day, ppie_per_day, user_config["game_specific_configs"]
+                discord_user,
+                pfp,
+                potn_per_day,
+                ppie_per_day,
+                user_config["game_specific_configs"],
             )
         except:
             logger.print_normal(f"Failed to get config")

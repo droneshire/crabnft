@@ -14,7 +14,11 @@ from config_crabada import BETA_TEST_LIST, USERS, SMALL_TEAM_GAS_LIMIT
 from crabada.game_stats import LifetimeGameStats, NULL_GAME_STATS
 from crabada.crabada_web2_client import CrabadaWeb2Client
 from crabada.teams import assign_crabs_to_groups, assign_teams_to_groups
-from crabada.teams import LOOTING_GROUP_NUM, MINING_GROUP_NUM, INACTIVE_GROUP_NUM
+from crabada.teams import (
+    LOOTING_GROUP_NUM,
+    MINING_GROUP_NUM,
+    INACTIVE_GROUP_NUM,
+)
 from crabada.types import MineOption
 from crabada.config_manager_crabada import CrabadaConfigManager
 from utils import logger

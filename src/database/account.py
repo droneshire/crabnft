@@ -85,7 +85,10 @@ class AccountDb:
 
     @staticmethod
     def add_account(
-        user: str, email: str, discord_handle: str, db_str: str = USER_CONFIGS_DB
+        user: str,
+        email: str,
+        discord_handle: str,
+        db_str: str = USER_CONFIGS_DB,
     ) -> None:
         with ManagedSession(db_str) as db:
             account = db.query(Account).filter(Account.owner == user).first()
@@ -115,7 +118,11 @@ class AccountDb:
 
             logger.print_ok_arrow(f"Created {address} wallet for {user}")
 
-            wallet = Wallet(address=address, private_key=private_key, account_id=account.owner)
+            wallet = Wallet(
+                address=address,
+                private_key=private_key,
+                account_id=account.owner,
+            )
 
             db.add(wallet)
 

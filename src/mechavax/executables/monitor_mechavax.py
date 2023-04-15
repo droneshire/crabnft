@@ -24,7 +24,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dry-run", action="store_true", help="Dry run")
     parser.add_argument("--quiet", action="store_true", help="Disable alerts")
     parser.add_argument(
-        "--log-level", choices=["INFO", "DEBUG", "ERROR", "NONE"], default="INFO"
+        "--log-level",
+        choices=["INFO", "DEBUG", "ERROR", "NONE"],
+        default="INFO",
     )
     parser.add_argument("--log-dir", default=log_dir)
     parser.add_argument("--address", default=GUILD_WALLET_ADDRESS)
@@ -38,9 +40,9 @@ def run_bot() -> None:
     log_dir = os.path.join(args.log_dir, "mechavax")
     logger.setup_log(args.log_level, log_dir, "mechavax_monitor")
 
-    health_monitor = HealthMonitor(
-        args.server_url, "mechavax", ["Cashflow Cartel Guild"]
-    ).run(daemon=True)
+    health_monitor = HealthMonitor(args.server_url, "mechavax", ["Cashflow Cartel Guild"]).run(
+        daemon=True
+    )
 
     encrypt_password = ""
 
@@ -52,7 +54,11 @@ def run_bot() -> None:
     private_key = decrypt_secret(encrypt_password, GUILD_WALLET_PRIVATE_KEY)
 
     monitor = MechBot(
-        args.address, private_key, GUILD_WALLET_MAPPING, "MECHAVAX_BOT", STATS_INTERVAL
+        args.address,
+        private_key,
+        GUILD_WALLET_MAPPING,
+        "MECHAVAX_BOT",
+        STATS_INTERVAL,
     )
     monitor.run()
 

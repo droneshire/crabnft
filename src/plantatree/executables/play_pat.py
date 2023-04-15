@@ -29,7 +29,11 @@ def parse_args() -> argparse.Namespace:
     log_dir = logger.get_logging_dir("pat")
     parser.add_argument("--dry-run", action="store_true", help="Dry run")
     parser.add_argument("--quiet", action="store_true", help="Disable alerts")
-    parser.add_argument("--log-level", choices=["INFO", "DEBUG", "ERROR", "NONE"], default="INFO")
+    parser.add_argument(
+        "--log-level",
+        choices=["INFO", "DEBUG", "ERROR", "NONE"],
+        default="INFO",
+    )
     parser.add_argument("--log-dir", default=log_dir)
     parser.add_argument("--server-url", default="http://localhost:8080/monitor")
     return parser.parse_args()
@@ -103,7 +107,10 @@ def harvester() -> None:
         stop_message = f"PAT Alert \U0001F332\n\n"
         stop_message += f"PAT Bot Stopped \U0000203C\n"
         if alerts_enabled and TWILIO_CONFIG["enable_admin_sms"]:
-            sms_client = Client(TWILIO_CONFIG["account_sid"], TWILIO_CONFIG["account_auth_token"])
+            sms_client = Client(
+                TWILIO_CONFIG["account_sid"],
+                TWILIO_CONFIG["account_auth_token"],
+            )
             message = sms_client.messages.create(
                 body=stop_message,
                 from_=TWILIO_CONFIG["from_sms_number"],

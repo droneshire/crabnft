@@ -2,7 +2,10 @@ import argparse
 
 from config_admin import IEX_API_TOKEN, COINMARKETCAP_API_TOKEN
 from config_crabada import USERS
-from crabada.profitability import get_profitability_message, STATIC_WIN_PERCENTAGES
+from crabada.profitability import (
+    get_profitability_message,
+    STATIC_WIN_PERCENTAGES,
+)
 from crabada.game_stats import CrabadaLifetimeGameStatsLogger
 from crabada.types import MineOption
 from utils import logger
@@ -17,14 +20,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--avg-reinforce-tus", type=float, default=14.0)
     parser.add_argument("--commission-percent", type=float, default=10.0)
     parser.add_argument(
-        "--gas-price-gwei", type=float, default=STATIC_WIN_PERCENTAGES[MineOption.MINE]
+        "--gas-price-gwei",
+        type=float,
+        default=STATIC_WIN_PERCENTAGES[MineOption.MINE],
     )
     parser.add_argument("--user", choices=list(USERS.keys()) + ["ALL"], required=False)
     parser.add_argument(
-        "--mine-win-percent", type=float, default=STATIC_WIN_PERCENTAGES[MineOption.MINE]
+        "--mine-win-percent",
+        type=float,
+        default=STATIC_WIN_PERCENTAGES[MineOption.MINE],
     )
     parser.add_argument(
-        "--loot-win-percent", type=float, default=STATIC_WIN_PERCENTAGES[MineOption.LOOT]
+        "--loot-win-percent",
+        type=float,
+        default=STATIC_WIN_PERCENTAGES[MineOption.LOOT],
     )
     parser.add_argument("--dry-run", action="store_true")
     return parser.parse_args()

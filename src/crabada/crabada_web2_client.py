@@ -139,7 +139,12 @@ class CrabadaWeb2Client:
 
         try:
             return self.requests.request(
-                request_type, url, json=json_data, params=params, headers=headers, timeout=5.0
+                request_type,
+                url,
+                json=json_data,
+                params=params,
+                headers=headers,
+                timeout=5.0,
             ).json()
         except KeyboardInterrupt:
             raise
@@ -191,7 +196,10 @@ class CrabadaWeb2Client:
 
         try:
             res = self._post_put_request(
-                "POST", url, json_data=json.loads(json.dumps(data)), headers=self.BROWSER_HEADERS
+                "POST",
+                url,
+                json_data=json.loads(json.dumps(data)),
+                headers=self.BROWSER_HEADERS,
             )
             self.authorization_token = res["result"]["accessToken"]
             return self.authorization_token
@@ -398,7 +406,11 @@ class CrabadaWeb2Client:
 
     def list_teams_raw(self, user_address: Address, params: T.Dict[str, T.Any] = {}) -> T.Any:
         url = self.BASE_URL + "/teams"
-        actual_params = {"limit": self.TEAM_AND_MINE_LIMIT, "page": 1, "user_address": user_address}
+        actual_params = {
+            "limit": self.TEAM_AND_MINE_LIMIT,
+            "page": 1,
+            "user_address": user_address,
+        }
         actual_params.update(params)
         return self._get_request(url, actual_params)
 
@@ -477,7 +489,8 @@ class CrabadaWeb2Client:
             affordable_crabs.append(crab)
 
         sorted_affordable_crabs = sorted(
-            affordable_crabs, key=lambda c: (-c[lending_category], c.get("price", max_tus))
+            affordable_crabs,
+            key=lambda c: (-c[lending_category], c.get("price", max_tus)),
         )
         if len(affordable_crabs) < 25:
             nth_crab = len(affordable_crabs) - 1
@@ -506,7 +519,10 @@ class CrabadaWeb2Client:
             }
             high_mp_crabs = self.list_high_mp_crabs_for_lending(params=params)
             high_mp_crab = self.get_cheapest_best_crab_from_list_for_lending(
-                high_mp_crabs, max_tus, reinforcement_search_backoff, "mine_point"
+                high_mp_crabs,
+                max_tus,
+                reinforcement_search_backoff,
+                "mine_point",
             )
 
             if high_mp_crab is None:
@@ -520,7 +536,10 @@ class CrabadaWeb2Client:
             )
             miners_revenge_after = min(
                 calc_miners_revenge(
-                    mine, is_looting=False, additional_crabs=[high_mp_crab], verbose=False
+                    mine,
+                    is_looting=False,
+                    additional_crabs=[high_mp_crab],
+                    verbose=False,
                 ),
                 40.0,
             )
@@ -572,7 +591,10 @@ class CrabadaWeb2Client:
             )
             miners_revenge_after = min(
                 calc_miners_revenge(
-                    mine, is_looting=True, additional_crabs=[high_bp_crab], verbose=False
+                    mine,
+                    is_looting=True,
+                    additional_crabs=[high_bp_crab],
+                    verbose=False,
                 ),
                 40.0,
             )

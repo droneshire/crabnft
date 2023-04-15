@@ -4,14 +4,23 @@ import typing as T
 
 from utils import logger
 from wyndblast.pve_google_storage_web2_client import PveGoogleStorageWeb2Client
-from wyndblast.types import AccountLevels, LevelsInformation, WyndLevelsStats, Skills
+from wyndblast.types import (
+    AccountLevels,
+    LevelsInformation,
+    WyndLevelsStats,
+    Skills,
+)
 from wyndblast.wyndblast_web2_client import WyndblastWeb2Client
 
 
 def get_cache_info(
     log_dir: str,
 ) -> T.Tuple[
-    T.List[LevelsInformation], T.List[AccountLevels], T.Any, WyndLevelsStats, T.List[Skills]
+    T.List[LevelsInformation],
+    T.List[AccountLevels],
+    T.Any,
+    WyndLevelsStats,
+    T.List[Skills],
 ]:
     google_w2: PveGoogleStorageWeb2Client = PveGoogleStorageWeb2Client()
 

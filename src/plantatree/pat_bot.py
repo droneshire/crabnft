@@ -88,7 +88,8 @@ class PatBot:
         self, action: Action, gas: float, rewards_avax: float
     ) -> None:
         webhook = DiscordWebhook(
-            url=discord.DISCORD_WEBHOOK_URL["PAT_ACTIVITY"], rate_limit_retry=True
+            url=discord.DISCORD_WEBHOOK_URL["PAT_ACTIVITY"],
+            rate_limit_retry=True,
         )
         discord_username = self.config_mgr.config["discord_handle"].split("#")[0].upper()
         EMBED_COLOR = {
@@ -107,10 +108,14 @@ class PatBot:
 
         contract_balance = self.pat_w3.get_contract_balance()
         embed.add_embed_field(
-            name=f"Contract Balance", value=f"{contract_balance:.2f} $AVAX", inline=True
+            name=f"Contract Balance",
+            value=f"{contract_balance:.2f} $AVAX",
+            inline=True,
         )
         embed.add_embed_field(
-            name=f"Rewards Earned", value=f"{rewards_avax:.2f} $AVAX", inline=True
+            name=f"Rewards Earned",
+            value=f"{rewards_avax:.2f} $AVAX",
+            inline=True,
         )
         lifetime_avax = self.stats_logger.lifetime_stats["avax_harvested"]
         if action == Action.HARVEST:

@@ -7,7 +7,10 @@ from crabada.crabada_web2_client import CrabadaWeb2Client
 from discord_bots.command_bots.default import OnMessage
 from joepegs.joepegs_api import JOEPEGS_ICON_URL, JOEPEGS_URL
 from pumpskin.listings import post_rarist_listings
-from pumpskin.pumpskin_web3_client import PumpskinCollectionWeb3Client, PumpskinNftWeb3Client
+from pumpskin.pumpskin_web3_client import (
+    PumpskinCollectionWeb3Client,
+    PumpskinNftWeb3Client,
+)
 from pumpskin.pumpskin_web2_client import PumpskinWeb2Client
 from pumpskin.types import ATTRIBUTE_TO_EMOJI, StakedPumpskin
 from pumpskin.utils import ATTRIBUTES_FILE
@@ -72,7 +75,9 @@ class GetPumpkinLevel(OnMessage):
             )
 
         embed.add_field(
-            name=f"{ATTRIBUTE_TO_EMOJI[trait]} Overall", value=f"{overall_rarity:.2f}%", inline=True
+            name=f"{ATTRIBUTE_TO_EMOJI[trait]} Overall",
+            value=f"{overall_rarity:.2f}%",
+            inline=True,
         )
         embed.set_thumbnail(url=image_uri)
         url = JOEPEGS_URL.format(PumpskinNftWeb3Client.contract_address) + str(token_id)
@@ -158,7 +163,9 @@ class GetPumpkinRoi(OnMessage):
         )
         embed.add_field(name=f"ROI", value=f"{roi_days:.2f} days", inline=False)
         embed.add_field(
-            name=f"\U0001F383 Price", value=f"{pumpskin_price_avax:.2f} $AVAX", inline=True
+            name=f"\U0001F383 Price",
+            value=f"{pumpskin_price_avax:.2f} $AVAX",
+            inline=True,
         )
         embed.add_field(name=f"$PPIE Price", value=f"{ppie_price_usd:.5f} $USD", inline=True)
         return embed

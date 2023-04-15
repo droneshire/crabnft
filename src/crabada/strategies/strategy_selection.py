@@ -2,7 +2,11 @@ import typing as T
 
 from crabada.strategies.strategy import Strategy
 from crabada.strategies import looting, looting_delayed_reinforce
-from crabada.strategies import mining, mining_delayed_reinforce, mining_scattered_reinforce
+from crabada.strategies import (
+    mining,
+    mining_delayed_reinforce,
+    mining_scattered_reinforce,
+)
 from crabada.types import MineOption
 
 STRATEGY_SELECTION: T.Dict[str, Strategy] = {
