@@ -356,14 +356,12 @@ class MechBot:
         if self.MINTING_INFO["MECH"]["enable"]:
             await self.try_to_mint(
                 self.w3_mech,
-                self.w3_mech.contract.events.MechPurchased,
                 "MECH",
                 self.last_time_mech_minted,
             )
         if self.MINTING_INFO["MARM"]["enable"]:
             await self.try_to_mint(
                 self.w3_arm,
-                self.w3_arm.contract.events.PagePurchased,
                 "MARM",
                 self.last_time_marm_minted,
             )
@@ -396,7 +394,6 @@ class MechBot:
     async def try_to_mint(
         self,
         w3: AvalancheCWeb3Client,
-        event_function: T.Any,
         nft_type: T.Literal["MECH", "MARM"],
         last_time_minted: float,
     ) -> None:
@@ -404,23 +401,32 @@ class MechBot:
         time_since_last_mint = now - last_time_minted
         time_window = self.MINTING_INFO[nft_type]["period"]
 
-        mints_within_past_period = self.get_events_within(event_function, time_window)
+        event_function = self.w3_mech.contract.events.ShirakBalanceUpdated
+        events_within_past_period = self.get_events_within(event_function, time_window)
 
-        num_mints = 0
-        for mint in mints_within_past_period:
+        num_our_mints = 0
+        mints_within_past_period = 0
+        for mint in events_within_past_period:
+            event_data = json.loads(Web3.toJSON(event))
+            try:
+                tx_hash = event_data["transactionHash"]
+                tx_receipt = w3.get_transaction_receipt(tx_hash)
+                transaction = tx_receipt["logs"][1]
+                if transaction["address"] != w3.contract_address:
+                    continue
+                mints_within_past_period += 1
+            except:
+                logger.print_warn(
+                    f"Failed to process shirak transfer event\n{event_data}"
+                )
+                continue
+
             minter = mint["args"]["user"]
             if minter == self.address:
-                num_mints += 1
-
-        if time_window > 60.0 * 60.0:
-            time_unit_str = "hours"
-            time_window /= 60.0 * 60.0
-        else:
-            time_unit_str = "minutes"
-            time_window /= 60.0
+                num_our_mints += 1
 
         logger.print_bold(
-            f"We've minted {num_mints} {nft_type}s in past {time_window} {time_unit_str} out of {len(mints_within_past_period)} mints"
+            f"We've minted {num_our_mints} {nft_type}s in past {get_pretty_seconds(time_window)} out of {mints_within_past_period} mints"
         )
 
         if time_since_last_mint < self.MINTING_INFO[nft_type]["cooldown"]:

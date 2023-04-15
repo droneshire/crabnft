@@ -105,9 +105,7 @@ def do_multicall(inputs: T.List[T.Any], fn: T.Callable) -> T.List[T.Tuple]:
 @bot.event
 async def on_ready() -> None:
     for guild in bot.guilds:
-        logger.print_ok(
-            f"{bot.user} is connected to guild:\n" f"{guild.name}(id: {guild.id})"
-        )
+        logger.print_ok(f"{bot.user} is connected to guild:\n" f"{guild.name}(id: {guild.id})")
 
     logger.print_bold(f"Starting bot...")
 
@@ -144,7 +142,9 @@ async def mint_mech_command(interaction: discord.Interaction, mech_id: int) -> N
     name = item.get("metadata", {}).get("name", "UNKNONWN")
     emission_multiplier = w3_mech.get_mech_multiplier(mech_id)
     url = JOEPEGS_ITEM_URL.format(w3_mech.contract_address, mech_id)
-    message = f"[**MECH {mech_id}**]({url}) [{name.upper()}] emissions: `{emission_multiplier / 10.0}`"
+    message = (
+        f"[**MECH {mech_id}**]({url}) [{name.upper()}] emissions: `{emission_multiplier / 10.0}`"
+    )
 
     await interaction.followup.send(message)
 
@@ -186,13 +186,9 @@ async def shk_holders_command(interaction: discord.Interaction) -> None:
     leader_shk = None
     for address, totals in sorted_balances[:TOP_N]:
         shk = totals["shk"]
-        resolved_address = await async_func_wrapper(
-            resolve_address_to_avvy, w3.w3, address
-        )
+        resolved_address = await async_func_wrapper(resolve_address_to_avvy, w3.w3, address)
         if Web3.isChecksumAddress(resolved_address):
-            resolved_address = await async_func_wrapper(
-                shortened_address_str, resolved_address
-            )
+            resolved_address = await async_func_wrapper(shortened_address_str, resolved_address)
         row = [resolved_address, f"{shk:,.2f}", f"{shk/total_shk * 100.0:.2f}%"]
         if leader_shk is None:
             leader_shk = shk
@@ -300,9 +296,7 @@ async def shk_plots_command(
     with open(MECH_STATS_CACHE_FILE, "r") as infile:
         current_balances = json.load(infile)
 
-    sorted_balances = sorted(
-        current_balances.items(), key=lambda x: -x[1][nft_type.lower()]
-    )
+    sorted_balances = sorted(current_balances.items(), key=lambda x: -x[1][nft_type.lower()])
 
     top_holders = []
 
@@ -335,13 +329,9 @@ async def shk_plots_command(
         if address not in top_holders:
             continue
 
-        resolved_address = await async_func_wrapper(
-            resolve_address_to_avvy, w3.w3, address
-        )
+        resolved_address = await async_func_wrapper(resolve_address_to_avvy, w3.w3, address)
         if Web3.isChecksumAddress(resolved_address):
-            resolved_address = await async_func_wrapper(
-                shortened_address_str, resolved_address
-            )
+            resolved_address = await async_func_wrapper(shortened_address_str, resolved_address)
         legend_labels[address] = resolved_address
         row_label.append(address)
         if delta:
@@ -422,13 +412,9 @@ async def mech_holders_command(interaction: discord.Interaction) -> None:
 
     body = []
     for address, totals in sorted_balances[:TOP_N]:
-        resolved_address = await async_func_wrapper(
-            resolve_address_to_avvy, w3.w3, address
-        )
+        resolved_address = await async_func_wrapper(resolve_address_to_avvy, w3.w3, address)
         if Web3.isChecksumAddress(resolved_address):
-            resolved_address = await async_func_wrapper(
-                shortened_address_str, resolved_address
-            )
+            resolved_address = await async_func_wrapper(shortened_address_str, resolved_address)
         row = [
             resolved_address,
             totals["mechs"],
@@ -479,18 +465,16 @@ async def mint_mech_command(interaction: discord.Interaction) -> None:
         .set_dry_run(False)
     )
 
-    shk_balance = await async_func_wrapper(
-        w3_mech.get_deposited_shk, GUILD_WALLET_ADDRESS
-    )
+    shk_balance = await async_func_wrapper(w3_mech.get_deposited_shk, GUILD_WALLET_ADDRESS)
     min_mint_shk = await async_func_wrapper(w3_mech.get_min_mint_bid)
 
     tx_hash = await async_func_wrapper(w3_mech.mint_from_shk)
-    action_str = (
-        f"Mint MECH for {min_mint_shk:.2f} using $SHK balance of {shk_balance:.2f}"
-    )
+    action_str = f"Mint MECH for {min_mint_shk:.2f} using $SHK balance of {shk_balance:.2f}"
     _, txn_url = process_w3_results(w3_mech, action_str, tx_hash)
     if txn_url:
-        message = f"\U0001F389\U0001F389 Successfully minted a new MECH!\U0001F389\U0001F389\n{txn_url}"
+        message = (
+            f"\U0001F389\U0001F389 Successfully minted a new MECH!\U0001F389\U0001F389\n{txn_url}"
+        )
         logger.print_ok_arrow(message)
     else:
         message = f"\U00002620\U00002620 Failed to mint new MECH!\U00002620\U00002620"
@@ -541,9 +525,7 @@ async def get_last_mint_command(
 
     events = []
     for i in range(500):
-        events.extend(
-            event_function.getLogs(fromBlock=latest_block - 2048, toBlock=latest_block)
-        )
+        events.extend(event_function.getLogs(fromBlock=latest_block - 2048, toBlock=latest_block))
         if len(events) > 0:
             break
 
@@ -579,7 +561,9 @@ async def get_last_mint_command(
 
     time_since = int(time.time() - latest_event)
 
-    message = f"Last mint happened `{general.get_pretty_seconds(time_since)}` ago for `{price:.2f} $SHK`"
+    message = (
+        f"Last mint happened `{general.get_pretty_seconds(time_since)}` ago for `{price:.2f} $SHK`"
+    )
     logger.print_normal(message)
     await interaction.response.send_message(message)
 
@@ -605,9 +589,7 @@ async def guild_stats_command(interaction: discord.Interaction) -> None:
     )
 
     mint_cost_shk = await async_func_wrapper(w3_mech.get_min_mint_bid)
-    await interaction.response.send_message(
-        f"Next mint cost: `{mint_cost_shk:.2f} $SHK`"
-    )
+    await interaction.response.send_message(f"Next mint cost: `{mint_cost_shk:.2f} $SHK`")
 
 
 async def get_guild_table_row(
@@ -706,12 +688,8 @@ async def guild_stats_command(interaction: discord.Interaction) -> None:
         if address in GUILD_WALLET_ADDRESS:
             continue
         row, points = data
-        fee_percent = (
-            GUILD_MANAGEMENT_FEE.get(address, 0.0) / total_guild_management_percents
-        )
-        fee_points = fee_percent * (
-            total_ownership_points_after_fees - total_ownership_points
-        )
+        fee_percent = GUILD_MANAGEMENT_FEE.get(address, 0.0) / total_guild_management_percents
+        fee_points = fee_percent * (total_ownership_points_after_fees - total_ownership_points)
         ownership_percent = points + fee_points
         ownership_percent /= total_ownership_points_after_fees
         ownership_percent *= 100.0
@@ -762,12 +740,8 @@ async def guild_stats_command(interaction: discord.Interaction) -> None:
         .set_dry_run(False)
     )
 
-    multiplier = await async_func_wrapper(
-        w3_mech.get_emmissions_multiplier, GUILD_WALLET_ADDRESS
-    )
-    shk_balance = await async_func_wrapper(
-        w3_mech.get_deposited_shk, GUILD_WALLET_ADDRESS
-    )
+    multiplier = await async_func_wrapper(w3_mech.get_emmissions_multiplier, GUILD_WALLET_ADDRESS)
+    shk_balance = await async_func_wrapper(w3_mech.get_deposited_shk, GUILD_WALLET_ADDRESS)
 
     message += f"**SHK Deposited**: `{shk_balance:.2f}` | "
     message += f"**Multiplier**: `{multiplier:.2f}`\n"
