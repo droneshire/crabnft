@@ -218,3 +218,61 @@ class MechContractWeb3Client(AvalancheCWeb3Client):
         except Exception as e:
             logger.print_fail(f"{e}")
             return ""
+
+
+class MechHangerContractWeb3Client(AvalancheCWeb3Client):
+    """
+    https://snowtrace.io/address/0xAb13B3a9923CC6549944f5fb5035B473e14FEB99
+    """
+
+    contract_address = T.cast(
+        Address, "0xAb13B3a9923CC6549944f5fb5035B473e14FEB99"
+    )
+    this_dir = os.path.dirname(os.path.realpath(__file__))
+    abi_dir = os.path.join(
+        os.path.dirname(this_dir), "web3_utils", "abi", "abi-mech-hanger.json"
+    )
+    abi = Web3Client._get_contract_abi_from_file(abi_dir)
+
+    def time_till_next_tour(self) -> int:
+        try:
+            return self.contract.functions.nextStageStart().call()
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return 0
+
+    def stake_mechs_on_tour(self, token_ids: T.List[int]) -> HexStr:
+        try:
+            tx: TxParams = self.build_contract_transaction(
+                self.contract.functions.stake(token_ids)
+            )
+            return self.sign_and_send_transaction(tx)
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return ""
+
+    def get_pending_shk(self, address: Address) -> TokenWei:
+        address = Web3.toChecksumAddress(address)
+        try:
+            return self.contract.functions.pendingReward(address).call()
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return 0
+
+    def withdraw_rewards(self, amount: float = None) -> HexStr:
+        if amount is None:
+            amount = self.get_pending_shk(self.address)
+        else:
+            amount = token_to_wei(amount)
+
+        if amount == 0:
+            return
+
+        try:
+            tx: TxParams = self.build_contract_transaction(
+                self.contract.functions.withdrawRewards(amount)
+            )
+            return self.sign_and_send_transaction(tx)
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return ""

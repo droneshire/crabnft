@@ -51,14 +51,16 @@ def dict_keys_camel_to_snake(d: T.Dict[T.Any, T.Any]) -> T.Dict[T.Any, T.Any]:
     return new
 
 
-def get_pretty_seconds(s: int) -> str:
+def get_pretty_seconds(s: int, use_days: bool = False) -> str:
     """Given an amount of seconds, return a formatted string with
     hours, minutes and seconds; taken from
     https://stackoverflow.com/a/775075/2972183"""
     s = int(s)
     m, s = divmod(s, 60)
     h, m = divmod(m, 60)
-    return f"{h:d}h:{m:02d}m:{s:02d}s"
+    if use_days:
+        d, m = divmod(h, 24)
+    return f"{d:d}:d{h:d}h:{m:02d}m:{s:02d}s"
 
 
 def first_or_none(l: T.List[T.Any]) -> T.Any:
