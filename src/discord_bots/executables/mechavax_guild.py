@@ -36,6 +36,7 @@ from joepegs.joepegs_api import JOEPEGS_ITEM_URL, JoePegsClient
 from mechavax.mechavax_web3client import (
     MechArmContractWeb3Client,
     MechContractWeb3Client,
+    MechHangerContractWeb3Client,
     ShirakContractWeb3Client,
 )
 from utils import general, logger
@@ -801,6 +802,34 @@ async def guild_stats_command(interaction: discord.Interaction) -> None:
     logger.print_ok_blue(message)
 
     await interaction.followup.send(message)
+
+
+@bot.tree.command(
+    name="tourend",
+    description="Get when the next tour ends",
+    guild=discord.Object(id=ALLOWLIST_GUILD),
+)
+async def get_last_mint_command(interaction: discord.Interaction) -> None:
+    if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
+        await interaction.response.send_message("Invalid channel")
+        return
+
+    logger.print_bold(f"Received lastmint command")
+
+    w3_hanger: MechHangerContractWeb3Client = (
+        MechHangerWeb3Client()
+        .set_credentials(ADMIN_ADDRESS, "")
+        .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+        .set_contract()
+        .set_dry_run(False)
+    )
+
+    time_till_tour_seconds = w3_hanger.time_till_next_tour()
+    time_till_tour_pretty = get_pretty_time(time_till_tour_seconds)
+
+    logger.print_ok_blue(f"Time till next tour: {time_till_tour_pretty}")
+
+    await interaction.followup.send(f"**{time_till_tour_pretty}**")
 
 
 bot.run(DISCORD_MECHAVAX_SALES_BOT_TOKEN)
