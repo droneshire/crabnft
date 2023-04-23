@@ -749,7 +749,17 @@ class MechBot:
 
         logger.print_bold(f"Staking {len(mechs_off_duty_list)} mechs...")
 
-        self.w3_hanger.stake_mechs_on_tour(token_ids=mechs_off_duty_list)
+        await async_func_wrapper(
+            self.w3_hanger.stake_mechs_on_tour, token_ids=mechs_off_duty_list
+        )
+
+        logger.print_bold("Removing rewards...")
+
+        await async_func_wrapper(self.w3_hanger.withdraw_rewards)
+
+        logger.print_ok_arrow(
+            "Done staking mechs and claiming rewards during off duty!"
+        )
 
     def parse_stats(self) -> None:
         while True:

@@ -524,12 +524,15 @@ async def mint_mech_command(
         action_str = f"Mint {nft_type} for {min_mint_shk:.2f} using $SHK balance of {shk_balance:.2f}"
         _, txn_url = process_w3_results(w3_mint, action_str, tx_hash)
         if txn_url:
-            message = f"\U0001F389\U0001F389 Successfully minted a new MECH!\U0001F389\U0001F389\n{txn_url}"
+            message = f"Successfully minted a new {nft_type}!\n{txn_url}"
             logger.print_ok_arrow(message)
         else:
-            message = f"\U00002620\U00002620 Failed to mint new MECH!\U00002620\U00002620"
+            message = f"Failed to mint new {nft_type}!"
             logger.print_fail_arrow(message)
+            await interaction.followup.send(message)
+            return
 
+    message = f"Successfully minted {num_to_mint} new {nft_type}s!"
     await interaction.followup.send(message)
 
 
