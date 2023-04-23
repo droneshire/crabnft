@@ -799,7 +799,7 @@ async def get_last_mint_command(interaction: discord.Interaction) -> None:
     )
 
     time_till_tour_seconds = w3_hanger.time_till_next_tour()
-    time_till_tour_pretty = general.get_pretty_time(time_till_tour_seconds)
+    time_till_tour_pretty = general.get_pretty_seconds(time_till_tour_seconds)
 
     logger.print_ok_blue(f"Time till next tour: {time_till_tour_pretty}")
 
