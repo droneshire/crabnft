@@ -20,6 +20,7 @@ from config_mechavax import (
 from mechavax.mechavax_web3client import (
     MechContractWeb3Client,
     MechArmContractWeb3Client,
+    MechHangerContractWeb3Client,
     ShirakContractWeb3Client,
 )
 from utils import discord, logger
@@ -73,6 +74,13 @@ class MechBot:
 
         self.w3_mech: MechContractWeb3Client = (
             MechContractWeb3Client()
+            .set_credentials(address, private_key)
+            .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+            .set_contract()
+            .set_dry_run(False)
+        )
+        self.w3_hanger: MechHangerContractWeb3Client = (
+            MechHangerContractWeb3Client()
             .set_credentials(address, private_key)
             .set_node_uri(AvalancheCWeb3Client.NODE_URL)
             .set_contract()
@@ -461,29 +469,29 @@ class MechBot:
             time_block = self.w3_mech.w3.eth.get_block(
                 mint["blockNumber"]
             ).timestamp
-            # try:
-            tx_hash = event_data["transactionHash"]
-            tx_receipt = self.w3_mech.get_transaction_receipt(tx_hash)
-            transaction = tx_receipt["logs"][1]
-            if transaction["address"] == self.w3_mech.contract.address:
-                if now - time_block > self.MINTING_INFO["MECH"]["period"]:
+            try:
+                tx_hash = event_data["transactionHash"]
+                tx_receipt = self.w3_mech.get_transaction_receipt(tx_hash)
+                transaction = tx_receipt["logs"][1]
+                if transaction["address"] == self.w3_mech.contract.address:
+                    if now - time_block > self.MINTING_INFO["MECH"]["period"]:
+                        continue
+                    mints_within_past_period["MECH"]["total"] += 1
+                    if minter == self.address:
+                        mints_within_past_period["MECH"]["ours"] += 1
+                elif transaction["address"] == self.w3_arm.contract.address:
+                    if now - time_block > self.MINTING_INFO["MARM"]["period"]:
+                        continue
+                    mints_within_past_period["MARM"]["total"] += 1
+                    if minter == self.address:
+                        mints_within_past_period["MARM"]["ours"] += 1
+                else:
                     continue
-                mints_within_past_period["MECH"]["total"] += 1
-                if minter == self.address:
-                    mints_within_past_period["MECH"]["ours"] += 1
-            elif transaction["address"] == self.w3_arm.contract.address:
-                if now - time_block > self.MINTING_INFO["MARM"]["period"]:
-                    continue
-                mints_within_past_period["MARM"]["total"] += 1
-                if minter == self.address:
-                    mints_within_past_period["MARM"]["ours"] += 1
-            else:
+            except:
+                logger.print_warn(
+                    f"Failed to process shirak transfer event\n{event_data}"
+                )
                 continue
-            # except:
-            #     logger.print_warn(
-            #         f"Failed to process shirak transfer event\n{event_data}"
-            #     )
-            #     continue
 
         for nft_type in mints_within_past_period.keys():
             ours = mints_within_past_period[nft_type]["ours"]
@@ -705,6 +713,44 @@ class MechBot:
         with open(MECH_GUILD_STATS_FILE, "w") as outfile:
             json.dump(guild_stats, outfile, indent=4)
 
+    async def check_and_stake_mechs_in_hangar(self) -> None:
+        if self.w3_hanger.is_tour_active():
+            logger.print_normal("Tour still going, skipping staking...")
+            return
+
+        logger.print_normal("Checking for mechs to stake...")
+
+        if os.path.isfile(MECH_GUILD_STATS_FILE):
+            with open(MECH_GUILD_STATS_FILE, "r") as infile:
+                guild_stats = json.load(infile)
+        else:
+            guild_stats = {}
+
+        mechs_list = []
+        for address, stats in guild_stats.items():
+            if "MECH" not in stats:
+                continue
+            mechs_list.extend([int(m) for m in stats["MECH"].keys()])
+
+        mechs_list = list(set(mechs_list))
+
+        mechs_off_duty_list = []
+        for mech in track(mechs_list, description="Mech Stake Check"):
+            is_staked = await async_func_wrapper(
+                self.w3_hanger.is_mech_in_hangar, self.address, mech
+            )
+            if not is_staked:
+                logger.print_normal(f"Found off duty mech {mech}...")
+                mechs_off_duty_list.append(mech)
+
+        if len(mechs_off_duty_list) == 0:
+            logger.print_normal("No mechs to stake...")
+            return
+
+        logger.print_bold(f"Staking {len(mechs_off_duty_list)} mechs...")
+
+        self.w3_hanger.stake_mechs_on_tour(token_ids=mechs_off_duty_list)
+
     def parse_stats(self) -> None:
         while True:
             try:
@@ -725,6 +771,7 @@ class MechBot:
             while True:
                 loop.run_until_complete(
                     asyncio.gather(
+                        self.check_and_stake_mechs_in_hangar(),
                         self.update_guild_stats(),
                         self.try_to_deposit_shk(),
                         self.event_monitors(),

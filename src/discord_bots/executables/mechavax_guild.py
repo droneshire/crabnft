@@ -824,10 +824,9 @@ async def get_last_mint_command(interaction: discord.Interaction) -> None:
         .set_dry_run(False)
     )
 
-    time_next_tour_seconds = await async_func_wrapper(
+    time_till_tour_seconds = await async_func_wrapper(
         w3_hanger.time_till_next_tour
     )
-    time_till_tour_seconds = time_next_tour_seconds - time.time()
     time_till_tour_pretty = general.get_pretty_seconds(
         time_till_tour_seconds, use_days=True
     )
