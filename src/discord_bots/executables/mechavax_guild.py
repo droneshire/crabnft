@@ -79,6 +79,7 @@ def get_credentials() -> T.Tuple[str, str]:
     if not encrypt_password:
         encrypt_password = getpass.getpass(prompt="Enter decryption password: ")
 
+    logger.print_bold("Decrypting credentials...")
     private_key = decrypt_secret(encrypt_password, GUILD_WALLET_PRIVATE_KEY)
     return GUILD_WALLET_ADDRESS, private_key
 
@@ -462,12 +463,39 @@ async def mech_holders_command(interaction: discord.Interaction) -> None:
     await interaction.response.send_message(message)
 
 
+async def mint_nft(
+    w3_mint: AvalancheCWeb3Client,
+    num_to_mint: int,
+    nft_type: str,
+    min_mint_shk: float,
+    shk_balance: float,
+) -> None:
+    for item in range(num_to_mint):
+        start = time.time()
+        tx_hash = await async_func_wrapper(w3_mint.mint_from_shk)
+        action_str = f"Mint {nft_type} for `{min_mint_shk:.2f}` using $SHK balance of `{shk_balance:.2f}`"
+        _, txn_url = process_w3_results(w3_mint, action_str, tx_hash)
+        if txn_url:
+            message = f"Successfully minted a new {nft_type}!\n{txn_url}"
+            logger.print_ok_arrow(message)
+        else:
+            message = f"Failed to mint new {nft_type}!"
+            logger.print_fail_arrow(message)
+            await interaction.followup.send(message)
+            return
+        end = time.time()
+        logger.print_bold(f"Time taken: {end - start:.2f} seconds")
+
+    message = f"Successfully minted {num_to_mint} new {nft_type}s!"
+    logger.print_ok_arrow(message)
+
+
 @bot.tree.command(
     name="mint",
     description="Mint specified nums of mechs/marms from the guild wallet. Authorized users only",
     guild=discord.Object(id=ALLOWLIST_GUILD),
 )
-async def mint_mech_command(
+async def mint_command(
     interaction: discord.Interaction,
     nft_type: T.Literal["MECH", "MARM"],
     num_to_mint: int,
@@ -496,7 +524,7 @@ async def mint_mech_command(
     )
     w3_marm: MechArmContractWeb3Client = (
         MechArmContractWeb3Client()
-        .set_credentials(ADMIN_ADDRESS, "")
+        .set_credentials(ADDRESS, PRIVATE_KEY)
         .set_node_uri(AvalancheCWeb3Client.NODE_URL)
         .set_contract()
         .set_dry_run(False)
@@ -519,21 +547,19 @@ async def mint_mech_command(
 
     w3_mint = w3_mech if nft_type == "MECH" else w3_marm
 
-    for item in range(num_to_mint):
-        tx_hash = await async_func_wrapper(w3_mint.mint_from_shk)
-        action_str = f"Mint {nft_type} for {min_mint_shk:.2f} using $SHK balance of {shk_balance:.2f}"
-        _, txn_url = process_w3_results(w3_mint, action_str, tx_hash)
-        if txn_url:
-            message = f"Successfully minted a new {nft_type}!\n{txn_url}"
-            logger.print_ok_arrow(message)
-        else:
-            message = f"Failed to mint new {nft_type}!"
-            logger.print_fail_arrow(message)
-            await interaction.followup.send(message)
-            return
+    EST_TIME_PER_MINT = 5
+    time_to_mint_seconds = num_to_mint * EST_TIME_PER_MINT
+    time_to_mint_pretty = general.get_pretty_seconds(time_to_mint_seconds)
 
-    message = f"Successfully minted {num_to_mint} new {nft_type}s!"
+    message = (
+        f"Minting {num_to_mint} new {nft_type}s for `{min_mint_shk:.2f} $SHK` each.\n\t"
+        f"Will take approximately `{time_to_mint_pretty} seconds`."
+    )
     await interaction.followup.send(message)
+
+    asyncio.create_task(
+        mint_nft(w3_mint, num_to_mint, nft_type, min_mint_shk, shk_balance)
+    )
 
 
 @bot.tree.command(
