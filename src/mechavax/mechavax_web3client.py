@@ -20,9 +20,7 @@ class ShirakContractWeb3Client(AvalancheCWeb3Client):
     https://snowtrace.io/address/0x7D57f563db93F257BD556D86e6FEe7079c80226e
     """
 
-    contract_address = T.cast(
-        Address, "0x7D57f563db93F257BD556D86e6FEe7079c80226e"
-    )
+    contract_address = T.cast(Address, "0x7D57f563db93F257BD556D86e6FEe7079c80226e")
     this_dir = os.path.dirname(os.path.realpath(__file__))
     abi_dir = os.path.join(
         os.path.dirname(this_dir), "web3_utils", "abi", "abi-erc20.json"
@@ -35,9 +33,7 @@ class MechArmContractWeb3Client(AvalancheCWeb3Client):
     https://snowtrace.io/address/0x311E1a6c9190fA6847dC6B4617AE36c1277Fb24b
     """
 
-    contract_address = T.cast(
-        Address, "0x311E1a6c9190fA6847dC6B4617AE36c1277Fb24b"
-    )
+    contract_address = T.cast(Address, "0x311E1a6c9190fA6847dC6B4617AE36c1277Fb24b")
     this_dir = os.path.dirname(os.path.realpath(__file__))
     abi_dir = os.path.join(
         os.path.dirname(this_dir),
@@ -73,9 +69,7 @@ class MechArmContractWeb3Client(AvalancheCWeb3Client):
 
         try:
             tx: TxParams = self.build_contract_transaction(
-                self.contract.functions.mintFromShirak(
-                    price_shk_wei, use_deposit
-                )
+                self.contract.functions.mintFromShirak(price_shk_wei, use_deposit)
             )
             return self.sign_and_send_transaction(tx)
         except Exception as e:
@@ -88,9 +82,7 @@ class MechContractWeb3Client(AvalancheCWeb3Client):
     https://snowtrace.io/address/0xB68f42c2c805b81DaD78d2f07244917431c7F322
     """
 
-    contract_address = T.cast(
-        Address, "0xB68f42c2c805b81DaD78d2f07244917431c7F322"
-    )
+    contract_address = T.cast(Address, "0xB68f42c2c805b81DaD78d2f07244917431c7F322")
     this_dir = os.path.dirname(os.path.realpath(__file__))
     abi_dir = os.path.join(
         os.path.dirname(this_dir), "web3_utils", "abi", "abi-mechavax.json"
@@ -109,9 +101,7 @@ class MechContractWeb3Client(AvalancheCWeb3Client):
             return -1
 
         try:
-            return self.contract.functions.getMechEmissionMultiple(
-                token_id
-            ).call()
+            return self.contract.functions.getMechEmissionMultiple(token_id).call()
         except Exception as e:
             logger.print_fail(f"{e}")
             return -1
@@ -126,9 +116,7 @@ class MechContractWeb3Client(AvalancheCWeb3Client):
     def get_num_mechs(self, address: Address) -> int:
         address = Web3.toChecksumAddress(address)
         try:
-            data: T.List[T.Any] = self.contract.functions.getUserData(
-                address
-            ).call()
+            data: T.List[T.Any] = self.contract.functions.getUserData(address).call()
             return data[0]
         except Exception as e:
             logger.print_fail(f"{e}")
@@ -137,9 +125,7 @@ class MechContractWeb3Client(AvalancheCWeb3Client):
     def get_emmissions_multiplier(self, address: Address) -> float:
         address = Web3.toChecksumAddress(address)
         try:
-            data: T.List[T.Any] = self.contract.functions.getUserData(
-                address
-            ).call()
+            data: T.List[T.Any] = self.contract.functions.getUserData(address).call()
             return data[1] / 10.0
         except Exception as e:
             logger.print_fail(f"{e}")
@@ -148,9 +134,7 @@ class MechContractWeb3Client(AvalancheCWeb3Client):
     def get_user_emmissions_multiplier(self, address: Address) -> float:
         address = Web3.toChecksumAddress(address)
         try:
-            return self.contract.functions.getUserEmissionMultiple(
-                address
-            ).call()
+            return self.contract.functions.getUserEmissionMultiple(address).call()
         except Exception as e:
             logger.print_fail(f"{e}")
             return 0.0
@@ -158,9 +142,7 @@ class MechContractWeb3Client(AvalancheCWeb3Client):
     def get_deposited_shk(self, address: Address) -> float:
         address = Web3.toChecksumAddress(address)
         try:
-            shirak: TokenWei = self.contract.functions.shirakBalance(
-                address
-            ).call()
+            shirak: TokenWei = self.contract.functions.shirakBalance(address).call()
             return wei_to_token(shirak)
         except Exception as e:
             logger.print_fail(f"{e}")
@@ -200,9 +182,7 @@ class MechContractWeb3Client(AvalancheCWeb3Client):
 
         try:
             tx: TxParams = self.build_contract_transaction(
-                self.contract.functions.mintFromShirak(
-                    price_shk_wei, use_deposit
-                )
+                self.contract.functions.mintFromShirak(price_shk_wei, use_deposit)
             )
             return self.sign_and_send_transaction(tx)
         except Exception as e:
@@ -225,9 +205,7 @@ class MechHangerContractWeb3Client(AvalancheCWeb3Client):
     https://snowtrace.io/address/0xAb13B3a9923CC6549944f5fb5035B473e14FEB99
     """
 
-    contract_address = T.cast(
-        Address, "0xAb13B3a9923CC6549944f5fb5035B473e14FEB99"
-    )
+    contract_address = T.cast(Address, "0xAb13B3a9923CC6549944f5fb5035B473e14FEB99")
     this_dir = os.path.dirname(os.path.realpath(__file__))
     abi_dir = os.path.join(
         os.path.dirname(this_dir), "web3_utils", "abi", "abi-mech-hanger.json"
@@ -235,11 +213,11 @@ class MechHangerContractWeb3Client(AvalancheCWeb3Client):
     abi = Web3Client._get_contract_abi_from_file(abi_dir)
 
     def time_till_next_tour(self) -> int:
-        # try:
-        return self.contract.functions.nextStageStart().call()
-        # except Exception as e:
-        #     logger.print_fail(f"{e}")
-        #     return 0
+        try:
+            return self.contract.functions.nextStageStart().call()
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return 0
 
     def get_pending_shk(self, address: Address) -> TokenWei:
         address = Web3.toChecksumAddress(address)
