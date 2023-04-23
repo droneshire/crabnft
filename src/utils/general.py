@@ -58,11 +58,12 @@ def get_pretty_seconds(s: int, use_days: bool = False) -> str:
     s = int(s)
     m, s = divmod(s, 60)
     h, m = divmod(m, 60)
-    string = f"{h:d}h:{m:02d}m:{s:02d}s"
     if use_days:
-        d, m = divmod(h, 24)
-        string = f"{d:d}d:" + string
-    return
+        d, h = divmod(h, 24)
+        string = f"{d:d}d:{h:d}h:{m:02d}m:{s:02d}s"
+    else:
+        string = f"{h:d}h:{m:02d}m:{s:02d}s"
+    return string
 
 
 def first_or_none(l: T.List[T.Any]) -> T.Any:

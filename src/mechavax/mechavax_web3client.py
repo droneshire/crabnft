@@ -235,8 +235,16 @@ class MechHangerContractWeb3Client(AvalancheCWeb3Client):
     abi = Web3Client._get_contract_abi_from_file(abi_dir)
 
     def time_till_next_tour(self) -> int:
+        # try:
+        return self.contract.functions.nextStageStart().call()
+        # except Exception as e:
+        #     logger.print_fail(f"{e}")
+        #     return 0
+
+    def get_pending_shk(self, address: Address) -> TokenWei:
+        address = Web3.toChecksumAddress(address)
         try:
-            return self.contract.functions.nextStageStart().call()
+            return self.contract.functions.pendingReward(address).call()
         except Exception as e:
             logger.print_fail(f"{e}")
             return 0
@@ -250,14 +258,6 @@ class MechHangerContractWeb3Client(AvalancheCWeb3Client):
         except Exception as e:
             logger.print_fail(f"{e}")
             return ""
-
-    def get_pending_shk(self, address: Address) -> TokenWei:
-        address = Web3.toChecksumAddress(address)
-        try:
-            return self.contract.functions.pendingReward(address).call()
-        except Exception as e:
-            logger.print_fail(f"{e}")
-            return 0
 
     def withdraw_rewards(self, amount: float = None) -> HexStr:
         if amount is None:
