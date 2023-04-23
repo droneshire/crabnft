@@ -54,7 +54,7 @@ from web3_utils.snowtrace import SnowtraceApi
 
 bot = commands.Bot(command_prefix="/", intents=discord.Intents.all())
 
-ENABLE_MINTING = False
+ENABLE_MINTING = True
 TOP_N = 5
 MAX_DELTA = 1000
 WINDOW = 1000
@@ -463,11 +463,15 @@ async def mech_holders_command(interaction: discord.Interaction) -> None:
 
 
 @bot.tree.command(
-    name="mintmech",
-    description="Mint a mech from the guild wallet. Authorized users only",
+    name="mint",
+    description="Mint specified nums of mechs/marms from the guild wallet. Authorized users only",
     guild=discord.Object(id=ALLOWLIST_GUILD),
 )
-async def mint_mech_command(interaction: discord.Interaction) -> None:
+async def mint_mech_command(
+    interaction: discord.Interaction,
+    nft_type: T.Literal["MECH", "MARM"],
+    num_to_mint: int,
+) -> None:
     if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
         await interaction.response.send_message("Invalid channel")
         return
@@ -490,23 +494,41 @@ async def mint_mech_command(interaction: discord.Interaction) -> None:
         .set_contract()
         .set_dry_run(False)
     )
+    w3_marm: MechArmContractWeb3Client = (
+        MechArmContractWeb3Client()
+        .set_credentials(ADMIN_ADDRESS, "")
+        .set_node_uri(AvalancheCWeb3Client.NODE_URL)
+        .set_contract()
+        .set_dry_run(False)
+    )
 
     shk_balance = await async_func_wrapper(
         w3_mech.get_deposited_shk, GUILD_WALLET_ADDRESS
     )
-    min_mint_shk = await async_func_wrapper(w3_mech.get_min_mint_bid)
 
-    tx_hash = await async_func_wrapper(w3_mech.mint_from_shk)
-    action_str = f"Mint MECH for {min_mint_shk:.2f} using $SHK balance of {shk_balance:.2f}"
-    _, txn_url = process_w3_results(w3_mech, action_str, tx_hash)
-    if txn_url:
-        message = f"\U0001F389\U0001F389 Successfully minted a new MECH!\U0001F389\U0001F389\n{txn_url}"
-        logger.print_ok_arrow(message)
-    else:
-        message = (
-            f"\U00002620\U00002620 Failed to mint new MECH!\U00002620\U00002620"
-        )
+    if nft_type == "MECH":
+        min_mint_shk = await async_func_wrapper(w3_mech.get_min_mint_bid)
+    elif nft_type == "MARM":
+        min_mint_shk = await async_func_wrapper(w3_marm.get_min_mint_bid)
+
+    if shk_balance < min_mint_shk:
+        message = f"Insufficient $SHK balance of {shk_balance:.2f} to mint {num_to_mint} new {nft_type}s"
         logger.print_fail_arrow(message)
+        await interaction.followup.send(message)
+        return
+
+    w3_mint = w3_mech if nft_type == "MECH" else w3_marm
+
+    for item in range(num_to_mint):
+        tx_hash = await async_func_wrapper(w3_mint.mint_from_shk)
+        action_str = f"Mint {nft_type} for {min_mint_shk:.2f} using $SHK balance of {shk_balance:.2f}"
+        _, txn_url = process_w3_results(w3_mint, action_str, tx_hash)
+        if txn_url:
+            message = f"\U0001F389\U0001F389 Successfully minted a new MECH!\U0001F389\U0001F389\n{txn_url}"
+            logger.print_ok_arrow(message)
+        else:
+            message = f"\U00002620\U00002620 Failed to mint new MECH!\U00002620\U00002620"
+            logger.print_fail_arrow(message)
 
     await interaction.followup.send(message)
 
