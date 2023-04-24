@@ -45,7 +45,7 @@ class MechBot:
             "max": 1,
             "period": 60.0 * 60.0 * 48.0,
             "multiplier": 5,
-            "enable": True,
+            "enable": False,
             "percent_shk": 0.0,
         },
         "MARM": {
@@ -53,7 +53,7 @@ class MechBot:
             "max": 4,
             "period": 60.0 * 60.0,
             "multiplier": 100,
-            "enable": True,
+            "enable": False,
             "percent_shk": 0.0,
         },
     }
