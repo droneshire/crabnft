@@ -109,7 +109,8 @@ def do_multicall(inputs: T.List[T.Any], fn: T.Callable) -> T.List[T.Tuple]:
 async def on_ready() -> None:
     for guild in bot.guilds:
         logger.print_ok(
-            f"{bot.user} is connected to guild:\n" f"{guild.name}(id: {guild.id})"
+            f"{bot.user} is connected to guild:\n"
+            f"{guild.name}(id: {guild.id})"
         )
 
     logger.print_bold(f"Starting bot...")
@@ -126,7 +127,9 @@ async def on_ready() -> None:
     description="Get emissions for a given mech id",
     guild=discord.Object(id=ALLOWLIST_GUILD),
 )
-async def mint_mech_command(interaction: discord.Interaction, mech_id: int) -> None:
+async def mint_mech_command(
+    interaction: discord.Interaction, mech_id: int
+) -> None:
     if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
         await interaction.response.send_message("Invalid channel")
         return
@@ -175,7 +178,9 @@ async def shk_holders_command(interaction: discord.Interaction) -> None:
     for _, totals in current_balances.items():
         total_shk += totals["shk"]
 
-    sorted_balances = sorted(current_balances.items(), key=lambda x: -x[1]["shk"])
+    sorted_balances = sorted(
+        current_balances.items(), key=lambda x: -x[1]["shk"]
+    )
 
     w3: MechContractWeb3Client = (
         MechContractWeb3Client()
@@ -376,13 +381,17 @@ async def shk_plots_command(
     else:
         title = f"{nft_type.upper()} Over Time"
     dataframe.plot(x="sample", y=top_holders, kind="line", title=title)
-    legend = plt.legend(bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0)
+    legend = plt.legend(
+        bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0
+    )
     legend_txts = legend.get_texts()
     for i in range(len(legend_txts)):
         legend_text = legend.get_texts()[i]
         address = legend_text.get_text()
         legend_text.set_text(legend_labels[address])
-    await async_func_wrapper(plt.savefig, MECH_STATS_PLOT, bbox_inches="tight", dpi=100)
+    await async_func_wrapper(
+        plt.savefig, MECH_STATS_PLOT, bbox_inches="tight", dpi=100
+    )
 
     embed = discord.Embed()
     attachment = discord.File(MECH_STATS_PLOT)
@@ -409,7 +418,9 @@ async def mech_holders_command(interaction: discord.Interaction) -> None:
     with open(MECH_STATS_CACHE_FILE, "r") as infile:
         current_balances = json.load(infile)
 
-    sorted_balances = sorted(current_balances.items(), key=lambda x: -x[1]["mechs"])
+    sorted_balances = sorted(
+        current_balances.items(), key=lambda x: -x[1]["mechs"]
+    )
 
     total_mechs = 0
     for _, totals in sorted_balances:
@@ -453,8 +464,9 @@ async def mech_holders_command(interaction: discord.Interaction) -> None:
     await interaction.response.send_message(message)
 
 
-async def mint_nft(
+def mint_nft(
     w3_mint: AvalancheCWeb3Client,
+    w3_mech: AvalancheCWeb3Client,
     num_to_mint: int,
     nft_type: str,
     min_mint_shk: float,
@@ -462,7 +474,21 @@ async def mint_nft(
 ) -> None:
     for item in range(num_to_mint):
         start = time.time()
-        tx_hash = await async_func_wrapper(w3_mint.mint_from_shk)
+
+        if nft_type == "MECH":
+            min_mint_shk = await async_func_wrapper(w3_mint.get_min_mint_bid)
+        elif nft_type == "MARM":
+            min_mint_shk = await async_func_wrapper(w3_mint.get_min_mint_bid)
+
+        shk_balance = w3_mech.get_deposited_shk(GUILD_WALLET_ADDRESS)
+
+        if shk_balance < min_mint_shk:
+            message = f"Insufficient $SHK balance of {shk_balance:.2f} to mint {num_to_mint} new {nft_type}s"
+            logger.print_fail_arrow(message)
+            await interaction.followup.send(message)
+            return
+
+        tx_hash = w3_mint.mint_from_shk()
         action_str = f"Mint {nft_type} for `{min_mint_shk:.2f}` using $SHK balance of `{shk_balance:.2f}`"
         _, txn_url = process_w3_results(w3_mint, action_str, tx_hash)
         if txn_url:
@@ -471,8 +497,6 @@ async def mint_nft(
         else:
             message = f"Failed to mint new {nft_type}!"
             logger.print_fail_arrow(message)
-            await interaction.followup.send(message)
-            return
         end = time.time()
         logger.print_bold(f"Time taken: {end - start:.2f} seconds")
 
@@ -524,17 +548,6 @@ async def mint_command(
         w3_mech.get_deposited_shk, GUILD_WALLET_ADDRESS
     )
 
-    if nft_type == "MECH":
-        min_mint_shk = await async_func_wrapper(w3_mech.get_min_mint_bid)
-    elif nft_type == "MARM":
-        min_mint_shk = await async_func_wrapper(w3_marm.get_min_mint_bid)
-
-    if shk_balance < min_mint_shk:
-        message = f"Insufficient $SHK balance of {shk_balance:.2f} to mint {num_to_mint} new {nft_type}s"
-        logger.print_fail_arrow(message)
-        await interaction.followup.send(message)
-        return
-
     w3_mint = w3_mech if nft_type == "MECH" else w3_marm
 
     EST_TIME_PER_MINT = 5
@@ -548,7 +561,13 @@ async def mint_command(
     await interaction.followup.send(message)
 
     thread = asyncio.to_thread(
-        mint_nft, w3_mint, num_to_mint, nft_type, min_mint_shk, shk_balance
+        mint_nft,
+        w3_mint,
+        w3_mech,
+        num_to_mint,
+        nft_type,
+        min_mint_shk,
+        shk_balance,
     )
 
     await thread
@@ -597,7 +616,9 @@ async def get_last_mint_command(
     events = []
     for i in range(500):
         events.extend(
-            event_function.getLogs(fromBlock=latest_block - 2048, toBlock=latest_block)
+            event_function.getLogs(
+                fromBlock=latest_block - 2048, toBlock=latest_block
+            )
         )
         if len(events) > 0:
             break
@@ -646,7 +667,9 @@ async def get_last_mint_command(
 )
 async def guild_stats_command(interaction: discord.Interaction) -> None:
     if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
-        await interaction.response.send_message("Invalid channel", ephemeral=True)
+        await interaction.response.send_message(
+            "Invalid channel", ephemeral=True
+        )
         return
 
     logger.print_bold(f"Received mintcost command")
@@ -708,12 +731,16 @@ async def get_guild_table_row(
 )
 async def guild_stats_command(interaction: discord.Interaction) -> None:
     if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
-        await interaction.response.send_message("Invalid channel", ephemeral=True)
+        await interaction.response.send_message(
+            "Invalid channel", ephemeral=True
+        )
         return
 
     logger.print_bold(f"Received guildweights command")
 
-    weights = " ".join([f"**{k}:** `{v}x`, " for k, v in GUILD_MULTIPLIERS.items()])
+    weights = " ".join(
+        [f"**{k}:** `{v}x`, " for k, v in GUILD_MULTIPLIERS.items()]
+    )
     message = f"**Ownership Weights:**\n{weights}\n\n"
     message += f"**Ownership % includes management fee\n"
     await interaction.response.send_message(message)
@@ -726,7 +753,9 @@ async def guild_stats_command(interaction: discord.Interaction) -> None:
 )
 async def guild_stats_command(interaction: discord.Interaction) -> None:
     if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
-        await interaction.response.send_message("Invalid channel", ephemeral=True)
+        await interaction.response.send_message(
+            "Invalid channel", ephemeral=True
+        )
         return
 
     logger.print_bold(f"Received guildstats command")
@@ -738,7 +767,9 @@ async def guild_stats_command(interaction: discord.Interaction) -> None:
         guild_stats = json.load(infile)
 
     if not guild_stats:
-        await interaction.followup.send("Could not obtain data. Try again later...")
+        await interaction.followup.send(
+            "Could not obtain data. Try again later..."
+        )
         return
 
     info = {}
@@ -749,7 +780,9 @@ async def guild_stats_command(interaction: discord.Interaction) -> None:
 
         info[address] = (row, points)
 
-    total_guild_management_percents = sum([f for f in GUILD_MANAGEMENT_FEE.values()])
+    total_guild_management_percents = sum(
+        [f for f in GUILD_MANAGEMENT_FEE.values()]
+    )
     total_ownership_points = sum([points for _, points in info.values()])
     total_ownership_points_after_fees = total_ownership_points / (
         1 - total_guild_management_percents
@@ -762,7 +795,8 @@ async def guild_stats_command(interaction: discord.Interaction) -> None:
             continue
         row, points = data
         fee_percent = (
-            GUILD_MANAGEMENT_FEE.get(address, 0.0) / total_guild_management_percents
+            GUILD_MANAGEMENT_FEE.get(address, 0.0)
+            / total_guild_management_percents
         )
         fee_points = fee_percent * (
             total_ownership_points_after_fees - total_ownership_points
@@ -852,7 +886,9 @@ async def get_last_mint_command(interaction: discord.Interaction) -> None:
         .set_dry_run(False)
     )
 
-    time_till_tour_seconds = await async_func_wrapper(w3_hanger.time_till_next_tour)
+    time_till_tour_seconds = await async_func_wrapper(
+        w3_hanger.time_till_next_tour
+    )
     time_till_tour_pretty = general.get_pretty_seconds(
         time_till_tour_seconds, use_days=True
     )
