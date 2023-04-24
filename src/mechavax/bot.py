@@ -44,9 +44,9 @@ class MechBot:
             "cooldown": 60.0 * 60.0 * 5.0,
             "max": 1,
             "period": 60.0 * 60.0 * 48.0,
-            "multiplier": 5,
+            "multiplier": 20,
             "enable": False,
-            "percent_shk": 0.0,
+            "percent_shk": 1.0,
         },
         "MARM": {
             "cooldown": 60.0 * 1.0,
@@ -54,7 +54,7 @@ class MechBot:
             "period": 60.0 * 60.0,
             "multiplier": 100,
             "enable": False,
-            "percent_shk": 0.0,
+            "percent_shk": 1.0,
         },
     }
     AUTO_DEPOSIT = True
