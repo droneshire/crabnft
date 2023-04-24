@@ -469,23 +469,21 @@ def mint_nft(
     w3_mech: AvalancheCWeb3Client,
     num_to_mint: int,
     nft_type: str,
-    min_mint_shk: float,
     shk_balance: float,
 ) -> None:
     for item in range(num_to_mint):
         start = time.time()
 
         if nft_type == "MECH":
-            min_mint_shk = await async_func_wrapper(w3_mint.get_min_mint_bid)
+            min_mint_shk = w3_mint.get_min_mint_bid()
         elif nft_type == "MARM":
-            min_mint_shk = await async_func_wrapper(w3_mint.get_min_mint_bid)
+            min_mint_shk = w3_mint.get_min_mint_bid()
 
         shk_balance = w3_mech.get_deposited_shk(GUILD_WALLET_ADDRESS)
 
         if shk_balance < min_mint_shk:
             message = f"Insufficient $SHK balance of {shk_balance:.2f} to mint {num_to_mint} new {nft_type}s"
             logger.print_fail_arrow(message)
-            await interaction.followup.send(message)
             return
 
         tx_hash = w3_mint.mint_from_shk()
@@ -555,7 +553,7 @@ async def mint_command(
     time_to_mint_pretty = general.get_pretty_seconds(time_to_mint_seconds)
 
     message = (
-        f"Minting {num_to_mint} new {nft_type}s for `{min_mint_shk:.2f} $SHK` each.\n\t"
+        f"Minting {num_to_mint} new {nft_type}s.\n\t"
         f"Will take approximately `{time_to_mint_pretty} seconds`."
     )
     await interaction.followup.send(message)
@@ -566,7 +564,6 @@ async def mint_command(
         w3_mech,
         num_to_mint,
         nft_type,
-        min_mint_shk,
         shk_balance,
     )
 
