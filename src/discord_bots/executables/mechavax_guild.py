@@ -547,19 +547,11 @@ async def mint_command(
     )
     await interaction.followup.send(message)
 
-    # create a thread using threading module and run the mint_nft fuction in it
-    thread = threading.Thread(
-        target=mint_nft,
-        args=(
-            w3_mint,
-            num_to_mint,
-            nft_type,
-            min_mint_shk,
-            shk_balance,
-        ),
-        daemon=True,
+    thread = asyncio.to_thread(
+        mint_nft, w3_mint, num_to_mint, nft_type, min_mint_shk, shk_balance
     )
-    thread.start()
+
+    await thread
 
 
 @bot.tree.command(
