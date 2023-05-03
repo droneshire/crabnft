@@ -278,9 +278,12 @@ class MechHangerContractWeb3Client(AvalancheCWeb3Client):
             logger.print_fail(f"{e}")
             return ""
 
-    def withdraw_rewards(self, amount: float = None) -> HexStr:
+    def withdraw_rewards(
+        self, address: Address, amount: float = None
+    ) -> HexStr:
+        address = Web3.toChecksumAddress(address)
         if amount is None:
-            amount = self.get_pending_shk(self.address)
+            amount = self.get_pending_shk(address)
         else:
             amount = token_to_wei(amount)
 

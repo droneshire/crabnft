@@ -761,7 +761,7 @@ class MechBot:
 
         logger.print_bold("Removing rewards...")
 
-        await async_func_wrapper(self.w3_hanger.withdraw_rewards)
+        await async_func_wrapper(self.w3_hanger.withdraw_rewards, self.address)
 
         logger.print_ok_arrow(
             "Done staking mechs and claiming rewards during off duty!"
