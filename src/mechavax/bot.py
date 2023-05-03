@@ -143,9 +143,15 @@ class MechBot:
 
         events = []
         for i in track(range(NUM_CHUNKS), description=f"{event_function}"):
-            new_events = event_function.getLogs(
-                fromBlock=latest_block - 2048, toBlock=latest_block
-            )
+            try:
+                new_events = event_function.getLogs(
+                    fromBlock=latest_block - 2048, toBlock=latest_block
+                )
+            except ValueError:
+                logger.print_fail(
+                    f"Failed to get events for {event_function} at block {latest_block}"
+                )
+                break
 
             for event in new_events:
                 if age:
