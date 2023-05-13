@@ -388,7 +388,7 @@ async def shk_plots_command(
     embed = discord.Embed()
     attachment = discord.File(MECH_STATS_PLOT)
     embed.set_image(url=f"attachment://{os.path.basename(MECH_STATS_PLOT)}")
-    await interaction.response.send_message(embed=embed, file=attachment)
+    await interaction.followup.send(embed=embed, file=attachment)
 
 
 @bot.tree.command(
