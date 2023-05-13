@@ -310,6 +310,8 @@ async def shk_plots_command(
         current_balances.items(), key=lambda x: -x[1][nft_type.lower()]
     )
 
+    await interaction.response.defer()
+
     top_holders = []
 
     if address and top_n_holders:
