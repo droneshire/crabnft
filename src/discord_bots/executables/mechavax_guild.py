@@ -288,8 +288,6 @@ async def shk_plots_command(
     address: str = "",
     window: int = -1,
     top_n_holders: int = TOP_N,
-    delta: bool = False,
-    max_delta: int = MAX_DELTA,
 ) -> None:
     if not any([c for c in ALLOWLIST_CHANNELS if interaction.channel.id == c]):
         await interaction.response.send_message("Invalid channel")
@@ -352,10 +350,7 @@ async def shk_plots_command(
             )
         legend_labels[address] = resolved_address
         row_label.append(address)
-        if delta:
-            row = [min(v, max_delta) for v in np.diff(stats[nft_type.lower()])]
-        else:
-            row = stats[nft_type.lower()]
+        row = stats[nft_type.lower()]
         plot.append(row)
         row_length = max(row_length, len(row))
 
@@ -376,10 +371,7 @@ async def shk_plots_command(
     dataframe = pd.DataFrame(plot, index=row_label).T
     logger.print_normal(f"{dataframe}")
 
-    if delta:
-        title = f"{nft_type.upper()} Rate Change"
-    else:
-        title = f"{nft_type.upper()} Over Time"
+    title = f"{nft_type.upper()} Over Time"
     dataframe.plot(x="sample", y=top_holders, kind="line", title=title)
     legend = plt.legend(
         bbox_to_anchor=(1.05, 0.5), loc="center left", borderaxespad=0
