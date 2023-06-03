@@ -18,6 +18,7 @@ DISCORD_WEBHOOK_URL = {
     "PAT_ACTIVITY": "https://discord.com/api/webhooks/1037618937413771285/5ZFxRUYYaliSuPJ9TCvP6_3wULuwK-8mhk1liT6TuA-wDtxYw_YKDYJZ6eFC2jMCZkjw",
     "DEEP_ALPHA_MINT_MINER": "https://discord.com/api/webhooks/1052828382733291520/LtcJ23VRBdGV9agx8B4qN4SX4A_Fs8yTE1P3P7kQPzHzNrsJAV_7aGaCbu-te0CIWPUa",
     "MECHAVAX_BOT": "https://discordapp.com/api/webhooks/1069503958911037492/tPdv7-1-kSMMm-uFoGhgrBnlVOQ92MTYUD27F51gn0WrJ7xtjjenXQRGLfbWCuF5bdcE",
+    "MECHAVAX_MINT": "https://discord.com/api/webhooks/1114670541161365566/8bL1SzWjXO1prJKkJBDloSyb3yFi9_Qa_G5Ib5I1jSKVNU3QaEJBFENR0UDprNPLysla",
     # paid subscriptions
     "HEYA_SUBSCRIPTION": "https://discord.com/api/webhooks/969388295253553192/QZ3XqguHVi3DEQRLiMUMqjLyaspLxfb1gfqtKizYF6rW_azim9D0dhs0eXZzXlJf8bvw",
 }

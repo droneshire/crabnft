@@ -65,9 +65,11 @@ class MechBot:
         private_key: str,
         address_mapping: T.Dict[Address, str],
         discord_channel: str,
+        mint_discord_channel: str,
     ) -> None:
         self.webhook = discord.get_discord_hook(discord_channel)
-        self.address = address
+        self.mint_webhook = discord.get_discord_hook(mint_discord_channel)
+        self.address = Web3.toChecksumAddress(address)
         self.address_mapping = address_mapping
 
         self.mint_cost: T.List[float] = []
@@ -537,9 +539,7 @@ class MechBot:
         for _, totals in current_balances.items():
             total_shk += totals["shk"]
 
-        our_shk = current_balances.get(self.resolved_address, {}).get(
-            "shk", 0.0
-        )
+        our_shk = current_balances.get(self.address, {}).get("shk", 0.0)
 
         logger.print_normal(
             f"Total supply SHK: {total_shk:.2f}, ours: {our_shk:.2f}"
@@ -594,7 +594,7 @@ class MechBot:
             message = f"\U00002620 Failed to mint new {nft_type}!"
             logger.print_fail_arrow(message)
 
-        self.webhook.send(message)
+        self.mint_webhook.send(message)
 
     def parse_stats_iteration(self) -> None:
         current_balances = {}
@@ -787,11 +787,11 @@ class MechBot:
             while True:
                 loop.run_until_complete(
                     asyncio.gather(
-                        self.check_and_stake_mechs_in_hangar(),
-                        self.update_guild_stats(),
-                        self.try_to_deposit_shk(),
-                        self.event_monitors(),
-                        self.stats_monitor(),
+                        # self.check_and_stake_mechs_in_hangar(),
+                        # self.update_guild_stats(),
+                        # self.try_to_deposit_shk(),
+                        # self.event_monitors(),
+                        # self.stats_monitor(),
                         self.mint_bot(),
                     )
                 )

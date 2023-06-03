@@ -58,6 +58,7 @@ def run_bot() -> None:
         private_key,
         GUILD_WALLET_MAPPING,
         "MECHAVAX_BOT",
+        "MECHAVAX_MINT",
     )
     monitor.run()
 
