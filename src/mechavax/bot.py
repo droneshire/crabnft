@@ -601,7 +601,7 @@ class MechBot:
                 address
             )
             logger.print_normal(
-                f"Found {address} with {current_balances[address]['shk']}, {current_balances[address]['mechs']} mechs"
+                f"[{nft_id}/{self.MAX_SUPPLY}] Found {address} with {current_balances[address]['shk']}, {current_balances[address]['mechs']} mechs"
             )
 
         sorted_stats = {
