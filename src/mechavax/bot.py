@@ -579,7 +579,7 @@ class MechBot:
 
         if num_our_mints >= self.MINTING_INFO[nft_type]["max"]:
             logger.print_warn(
-                f"Skipping mint of {nft_type} since we've max minted today!"
+                f"Skipping mint of {nft_type} since we've max minted in the time window!"
             )
             return
 
