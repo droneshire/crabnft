@@ -295,7 +295,7 @@ class MechBot:
 
         self.mint_cost.append(price)
         explorer_link = f"Explorer: https://snowtrace.io/tx/{tx_hash}"
-        message = f"\U0001F916 New MARM Mint Alert!\n\tArm ID: {token_id}\n\rMinted Price: `{price:.2f} $SHK`\n\t{explorer_link}"
+        message = f"\U0001F916 New MARM Mint Alert!\n\tArm ID: {token_id}\n\rMinted Price: `{price:.2f} $SHK`\n\t`{explorer_link}`"
         logger.print_ok_blue(message)
         self.webhook.send(message)
 
