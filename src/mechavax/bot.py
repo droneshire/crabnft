@@ -588,7 +588,7 @@ class MechBot:
         action_str = f"Mint {nft_type} for {min_mint_shk:.2f} using $SHK balance of {shk_balance:.2f}"
         _, txn_url = process_w3_results(w3, action_str, tx_hash)
         if txn_url:
-            message = f"\U0001F389 Successfully minted {nft_type}!\n{txn_url}"
+            message = f"\U0001F389 \U0001F389 \U0001F389 \U0001F389 \U0001F389 \U0001F389 Successfully minted {nft_type}!\n{txn_url}"
             logger.print_ok_arrow(message)
         else:
             message = f"\U00002620 Failed to mint new {nft_type}!"
