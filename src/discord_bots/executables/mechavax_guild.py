@@ -334,7 +334,7 @@ async def shk_plots_command(
     with open(MECH_STATS_HISTORY_FILE, "r") as infile:
         data_str = infile.read()
         if data_str == "":
-            await interaction.response.send_message("Missing data")
+            await interaction.followup.send("Missing data")
             return
         data = json.loads(data_str)
 
