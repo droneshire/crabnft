@@ -620,7 +620,11 @@ class MechBot:
 
         if os.path.isfile(MECH_STATS_HISTORY_FILE):
             with open(MECH_STATS_HISTORY_FILE, "r") as infile:
-                data = json.load(infile)
+                data_str = infile.read()
+                if data_str:
+                    data = json.loads(data_str)
+                else:
+                    data = {}
         else:
             data = {}
 
@@ -651,7 +655,11 @@ class MechBot:
     async def update_guild_stats(self) -> None:
         if os.path.isfile(MECH_GUILD_STATS_FILE):
             with open(MECH_GUILD_STATS_FILE, "r") as infile:
-                guild_stats = json.load(infile)
+                data_str = infile.read()
+                if data_str:
+                    guild_stats = json.loads(data_str)
+                else:
+                    guild_stats = {}
         else:
             guild_stats = {}
 
@@ -715,7 +723,11 @@ class MechBot:
 
         if os.path.isfile(MECH_GUILD_STATS_FILE):
             with open(MECH_GUILD_STATS_FILE, "r") as infile:
-                guild_stats = json.load(infile)
+                data_str = infile.read()
+                if data_str:
+                    guild_stats = json.loads(data_str)
+                else:
+                    guild_stats = {}
         else:
             guild_stats = {}
 
