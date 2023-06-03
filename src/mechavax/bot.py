@@ -44,7 +44,7 @@ class MechBot:
             "cooldown": 60.0 * 60.0 * 5.0,
             "max": 1,
             "period": 60.0 * 60.0 * 24.0 * 7.0,
-            "multiplier": 20,
+            "multiplier": 10,
             "enable": True,
             "percent_shk": 1.0,
         },
@@ -52,7 +52,7 @@ class MechBot:
             "cooldown": 60.0 * 1.0,
             "max": 1,
             "period": 60.0 * 60.0,
-            "multiplier": 100,
+            "multiplier": 200,
             "enable": True,
             "percent_shk": 1.0,
         },
@@ -140,14 +140,19 @@ class MechBot:
         latest_only: bool = True,
         age: T.Optional[int] = None,
     ) -> T.List[T.Any]:
-        NUM_CHUNKS = int(250 / cadence)
+        NUM_CHUNKS = int(500 / cadence)
+        BLOCK_STEP = 2048
         latest_block = self.w3_mech.w3.eth.block_number
+        now = time.time()
 
-        events = []
-        for i in track(range(NUM_CHUNKS), description=f"{event_function}"):
+        txns = {}
+        should_break = False
+        for _ in track(range(NUM_CHUNKS), description=f"{event_function}"):
+            if should_break:
+                break
             try:
                 new_events = event_function.getLogs(
-                    fromBlock=latest_block - 2048, toBlock=latest_block
+                    fromBlock=latest_block - BLOCK_STEP, toBlock=latest_block
                 )
             except ValueError:
                 logger.print_fail(
@@ -156,6 +161,7 @@ class MechBot:
                 break
 
             for event in new_events:
+                tx_hash = event.get("transactionHash", "")
                 if age:
                     block_number = event.get("blockNumber", 0)
 
@@ -164,49 +170,31 @@ class MechBot:
                     timestamp = self.w3_mech.w3.eth.get_block(
                         block_number
                     ).timestamp
-                    if time.time() - timestamp < age:
-                        events.append(event)
-                else:
-                    events.append(event)
+                    if now - timestamp < age:
+                        if tx_hash:
+                            txns[tx_hash] = event
+                    else:
+                        should_break = True
+                elif tx_hash:
+                    txns[tx_hash] = event
 
-            events.extend(new_events)
-            if len(events) > 0 and latest_only:
+            if len(txns) > 0 and latest_only:
                 break
 
-            latest_block -= 2048 * cadence
+            latest_block -= BLOCK_STEP * cadence
             if latest_block < 0:
                 break
 
+        events = txns.values()
+        logger.print_ok_blue(f"Found {len(events)} events")
         return events
 
     def get_events_within(
         self, event_function: T.Any, time_window: float
     ) -> T.List[T.Any]:
-        events = self.get_events(event_function, cadence=1, latest_only=False)
-
-        now = time.time()
-        inx_min = 0
-        inx_max = len(events) - 1
-        inx = 0
-
-        while (inx_max - inx_min) > 1:
-            block_number = events[inx].get("blockNumber", 0)
-
-            if block_number == 0:
-                return []
-
-            timestamp = self.w3_mech.w3.eth.get_block(block_number).timestamp
-
-            if now - timestamp > time_window:
-                inx_max = inx
-            else:
-                inx_min = inx
-
-            avg = inx_max + inx_min
-            avg /= 2
-            inx = int(avg)
-
-        return events[:inx]
+        return self.get_events(
+            event_function, cadence=1, latest_only=False, age=time_window
+        )
 
     def get_last_mech_mint(self) -> float:
         events = self.get_events(
@@ -457,49 +445,43 @@ class MechBot:
 
     async def get_minting_info(self) -> T.Dict[str, T.Any]:
         now = time.time()
-        time_window = max(
-            self.MINTING_INFO["MECH"]["period"],
-            self.MINTING_INFO["MARM"]["period"],
-        )
-
-        event_function = self.w3_mech.contract.events.ShirakBalanceUpdated
-        events_within_past_period = self.get_events_within(
-            event_function, time_window
-        )
 
         mints_within_past_period = {
-            "MECH": {"total": 0, "ours": 0},
-            "MARM": {"total": 0, "ours": 0},
+            "MECH": {
+                "total": 0,
+                "ours": 0,
+                "event": self.w3_mech.contract.events.MechPurchased,
+            },
+            "MARM": {
+                "total": 0,
+                "ours": 0,
+                "event": self.w3_arm.contract.events.PagePurchased,
+            },
         }
-        for mint in events_within_past_period:
-            event_data = json.loads(Web3.toJSON(mint))
-            minter = mint["args"]["user"]
-            time_block = self.w3_mech.w3.eth.get_block(
-                mint["blockNumber"]
-            ).timestamp
-            try:
-                tx_hash = event_data["transactionHash"]
-                tx_receipt = self.w3_mech.get_transaction_receipt(tx_hash)
-                transaction = tx_receipt["logs"][1]
-                if transaction["address"] == self.w3_mech.contract.address:
-                    if now - time_block > self.MINTING_INFO["MECH"]["period"]:
+
+        for nft_type in ["MECH", "MARM"]:
+            event_function = mints_within_past_period[nft_type]["event"]
+            events_within_past_period = self.get_events_within(
+                event_function,
+                self.MINTING_INFO[nft_type]["period"],
+            )
+            for mint in events_within_past_period:
+                event_data = json.loads(Web3.toJSON(mint))
+                minter = mint["args"]["user"]
+                time_block = self.w3_mech.w3.eth.get_block(
+                    mint["blockNumber"]
+                ).timestamp
+                try:
+                    if now - time_block > self.MINTING_INFO[nft_type]["period"]:
                         continue
-                    mints_within_past_period["MECH"]["total"] += 1
+                    mints_within_past_period[nft_type]["total"] += 1
                     if minter == self.address:
-                        mints_within_past_period["MECH"]["ours"] += 1
-                elif transaction["address"] == self.w3_arm.contract.address:
-                    if now - time_block > self.MINTING_INFO["MARM"]["period"]:
-                        continue
-                    mints_within_past_period["MARM"]["total"] += 1
-                    if minter == self.address:
-                        mints_within_past_period["MARM"]["ours"] += 1
-                else:
+                        mints_within_past_period[nft_type]["ours"] += 1
+                except:
+                    logger.print_warn(
+                        f"Failed to process {nft_type} mint event\n{event_data}"
+                    )
                     continue
-            except:
-                logger.print_warn(
-                    f"Failed to process shirak transfer event\n{event_data}"
-                )
-                continue
 
         for nft_type in mints_within_past_period.keys():
             ours = mints_within_past_period[nft_type]["ours"]
@@ -524,7 +506,10 @@ class MechBot:
 
         if time_since_last_mint < self.MINTING_INFO[nft_type]["cooldown"]:
             logger.print_warn(
-                f"Skipping minting {nft_type} since still within window: {get_pretty_seconds(int(time_since_last_mint))}"
+                f"Skipping minting {nft_type} since still within window."
+            )
+            logger.print_normal(
+                f"Last mint: {get_pretty_seconds(int(time_since_last_mint))}"
             )
             return
 
@@ -789,11 +774,11 @@ class MechBot:
             while True:
                 loop.run_until_complete(
                     asyncio.gather(
-                        # self.check_and_stake_mechs_in_hangar(),
-                        # self.update_guild_stats(),
-                        # self.try_to_deposit_shk(),
-                        # self.event_monitors(),
-                        # self.stats_monitor(),
+                        self.check_and_stake_mechs_in_hangar(),
+                        self.update_guild_stats(),
+                        self.try_to_deposit_shk(),
+                        self.event_monitors(),
+                        self.stats_monitor(),
                         self.mint_bot(),
                     )
                 )
