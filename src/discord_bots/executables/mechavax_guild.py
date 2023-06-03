@@ -332,7 +332,11 @@ async def shk_plots_command(
             top_holders.append(address)
 
     with open(MECH_STATS_HISTORY_FILE, "r") as infile:
-        data = json.load(infile)
+        data_str = infile.read()
+        if data_str == "":
+            await interaction.response.send_message("Missing data")
+            return
+        data = json.loads(data_str)
 
     plot = []
     legend_labels = {}
