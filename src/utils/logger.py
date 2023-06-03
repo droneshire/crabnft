@@ -178,8 +178,8 @@ def make_formatter_printer(
 
 print_ok_blue = make_formatter_printer(Colors.OKBLUE)
 print_ok = make_formatter_printer(Colors.OKGREEN)
-print_warn = make_formatter_printer(Colors.WARNING)
-print_fail = make_formatter_printer(Colors.FAIL)
+print_warn = make_formatter_printer(Colors.WARNING, log_level=logging.ERROR)
+print_fail = make_formatter_printer(Colors.FAIL, log_level=logging.ERROR)
 print_bold = make_formatter_printer(Colors.BOLD)
 print_normal = make_formatter_printer(Colors.ENDC)
 print_ok_arrow = make_formatter_printer(Colors.OKGREEN, prefix=Prefixes.ARROW)
