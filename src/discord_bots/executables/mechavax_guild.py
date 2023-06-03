@@ -16,7 +16,6 @@ import numpy as np
 import pandas as pd
 
 from discord.ext import commands
-from rich.progress import track
 from web3 import Web3
 from config_admin import (
     ADMIN_ADDRESS,

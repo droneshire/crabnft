@@ -43,17 +43,17 @@ class MechBot:
         "MECH": {
             "cooldown": 60.0 * 60.0 * 5.0,
             "max": 1,
-            "period": 60.0 * 60.0 * 48.0,
+            "period": 60.0 * 60.0 * 24.0 * 7.0,
             "multiplier": 20,
-            "enable": False,
+            "enable": True,
             "percent_shk": 1.0,
         },
         "MARM": {
             "cooldown": 60.0 * 1.0,
-            "max": 4,
+            "max": 1,
             "period": 60.0 * 60.0,
             "multiplier": 100,
-            "enable": False,
+            "enable": True,
             "percent_shk": 1.0,
         },
     }
