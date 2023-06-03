@@ -14,7 +14,7 @@ from web3_utils.avalanche_c_web3_client import AvalancheCWeb3Client
 
 class MechavaxListingBot(JoePegsSalesBot):
     MIN_MULTIPLIER = 8
-    MIN_PRICE_AVAX = 1.98
+    MIN_PRICE_AVAX = 0.6
 
     def __init__(
         self,
