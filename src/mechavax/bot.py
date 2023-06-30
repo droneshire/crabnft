@@ -51,7 +51,7 @@ class MechBot:
         "MARM": {
             "cooldown": 60.0 * 1.0,
             "max": 1,
-            "period": 2* 60.0 * 60.0,
+            "period": 2 * 60.0 * 60.0,
             "multiplier": 200,
             "enable": True,
             "percent_shk": 1.0,
@@ -66,6 +66,7 @@ class MechBot:
         address_mapping: T.Dict[Address, str],
         discord_channel: str,
         mint_discord_channel: str,
+        verbose: bool = False,
     ) -> None:
         self.webhook = discord.get_discord_hook(discord_channel)
         self.mint_webhook = discord.get_discord_hook(mint_discord_channel)
@@ -108,6 +109,8 @@ class MechBot:
 
         self.lock = asyncio.Lock()
 
+        self.verbose = verbose
+
         self.event_filters: T.Dict[
             web3._utils.filters.LogFilter, T.Callable[[T.Any], None]
         ] = {
@@ -141,7 +144,7 @@ class MechBot:
         age: T.Optional[int] = None,
     ) -> T.List[T.Any]:
         NUM_CHUNKS = int(500 / cadence)
-        BLOCK_STEP = 2048
+        BLOCK_STEP = 2047
         latest_block = self.w3_mech.w3.eth.block_number
         now = time.time()
 
@@ -600,9 +603,10 @@ class MechBot:
             current_balances[address]["mechs"] = self.w3_mech.get_num_mechs(
                 address
             )
-            logger.print_normal(
-                f"[{nft_id}/{self.MAX_SUPPLY}] Found {address} with {current_balances[address]['shk']}, {current_balances[address]['mechs']} mechs"
-            )
+            if self.verbose:
+                logger.print_normal(
+                    f"[{nft_id}/{self.MAX_SUPPLY}] Found {address} with {current_balances[address]['shk']}, {current_balances[address]['mechs']} mechs"
+                )
 
         sorted_stats = {
             k: v

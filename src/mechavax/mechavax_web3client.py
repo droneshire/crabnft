@@ -209,6 +209,16 @@ class MechContractWeb3Client(AvalancheCWeb3Client):
             logger.print_fail(f"{e}")
             return ""
 
+    def mint_legendary(self, list_of_mechs: T.List[int]) -> HexStr:
+        try:
+            tx: TxParams = self.build_contract_transaction(
+                self.contract.functions.mintLegendaryMech(list_of_mechs)
+            )
+            return self.sign_and_send_transaction(tx)
+        except Exception as e:
+            logger.print_fail(f"{e}")
+            return ""
+
     def add_shirak(self, shk_amount_wei: int) -> HexStr:
         try:
             tx: TxParams = self.build_contract_transaction(

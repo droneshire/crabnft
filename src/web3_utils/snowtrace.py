@@ -16,7 +16,7 @@ class SnowtraceApi(Web2Client):
         super().__init__(self.SNOWTRACE_API_URL, rate_limit_delay=0.0)
 
     def get_erc721_token_transfers(
-        self, target_address: Address
+        self, target_address: Address, verbose: bool = False
     ) -> T.Dict[Address, T.Dict[str, T.List[int]]]:
         url = self.SNOWTRACE_API_URL
         params = {
@@ -40,9 +40,10 @@ class SnowtraceApi(Web2Client):
                 tokens[checksum_address][nft_type] = tokens[
                     checksum_address
                 ].get(nft_type, []) + [token_id]
-                logger.print_normal(
-                    f"Found {nft_type} {token_id} from {checksum_address}"
-                )
+                if verbose:
+                    logger.print_normal(
+                        f"Found {nft_type} {token_id} from {checksum_address}"
+                    )
         except:
             logger.print_fail(f"Failed to get ERC721 token transfers")
 
