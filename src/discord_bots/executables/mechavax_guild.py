@@ -814,8 +814,8 @@ async def guild_stats_command(interaction: discord.Interaction) -> None:
         total_ownership_percent, 100.0, abs_tol=0.0001
     ), f"ownership doesn't equal 100%! {total_ownership_percent}"
 
-    message = "**Guild Distribution**\n"
-    header = ["Address", "Owner", "MECH", "MARM", "SHK"]
+    message = "**Guild**\n"
+    header = ["Addr", "Owner", "MECH", "MARM", "SHK"]
     footer = [
         "Totals",
         "",
@@ -852,8 +852,8 @@ async def guild_stats_command(interaction: discord.Interaction) -> None:
         w3_mech.get_deposited_shk, GUILD_WALLET_ADDRESS
     )
 
-    message += f"**SHK Deposited**: `{shk_balance:.2f}` | "
-    message += f"**Multiplier**: `{multiplier:.2f}`\n"
+    message += f"**SHK**: `{shk_balance:.2f}` | "
+    message += f"**Mult**: `{multiplier:.2f}`\n"
 
     logger.print_ok_blue(message)
 

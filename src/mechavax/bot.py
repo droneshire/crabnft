@@ -38,7 +38,7 @@ from web3_utils.snowtrace import SnowtraceApi
 
 class MechBot:
     MINT_BOT_INTERVAL = 1.0
-    MAX_SUPPLY = 2250
+    MAX_SUPPLY = 6500
     MINTING_INFO = {
         "MECH": {
             "cooldown": 60.0 * 60.0 * 5.0,
