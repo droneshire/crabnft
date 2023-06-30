@@ -51,7 +51,7 @@ class MechBot:
         "MARM": {
             "cooldown": 60.0 * 1.0,
             "max": 1,
-            "period": 2 * 60.0 * 60.0,
+            "period": 4 * 60.0 * 60.0,
             "multiplier": 200,
             "enable": True,
             "percent_shk": 1.0,
