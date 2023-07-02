@@ -507,12 +507,13 @@ class MechBot:
         now = time.time()
         time_since_last_mint = now - last_time_minted
 
+        logger.print_normal(
+            f"Last mint: {get_pretty_seconds(int(time_since_last_mint))}"
+        )
+
         if time_since_last_mint < self.MINTING_INFO[nft_type]["cooldown"]:
             logger.print_warn(
                 f"Skipping minting {nft_type} since still within window."
-            )
-            logger.print_normal(
-                f"Last mint: {get_pretty_seconds(int(time_since_last_mint))}"
             )
             return
 
