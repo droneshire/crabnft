@@ -182,12 +182,13 @@ class MechContractWeb3Client(AvalancheCWeb3Client):
             logger.print_fail(f"{e}")
             return 0
 
-    def get_owner_of(self, token_id: int) -> Address:
+    def get_owner_of(self, token_id: int, verbose: bool = False) -> Address:
         try:
             address = self.contract.functions.ownerOf(token_id).call()
             return Web3.toChecksumAddress(address)
         except Exception as e:
-            logger.print_fail(f"{e}")
+            if verbose:
+                logger.print_fail(f"{e}")
             return ""
 
     def mint_from_shk(
