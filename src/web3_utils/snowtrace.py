@@ -50,7 +50,7 @@ class SnowtraceApi(Web2Client):
         return tokens
 
     def get_erc20_token_transfers(
-        self, target_address: Address
+        self, target_address: Address, verbose: bool = False
     ) -> T.Dict[Address, T.Dict[str, float]]:
         url = self.SNOWTRACE_API_URL
         params = {
@@ -82,9 +82,10 @@ class SnowtraceApi(Web2Client):
                 tokens[checksum_address][symbol] = (
                     tokens[checksum_address].get(symbol, 0) + amount
                 )
-                logger.print_normal(
-                    f"Found {amount:.2f} {symbol} from {checksum_address}"
-                )
+                if verbose:
+                    logger.print_normal(
+                        f"Found {amount:.2f} {symbol} from {checksum_address}"
+                    )
         except:
             logger.print_fail(f"Failed to get ERC20 token transfers")
         return tokens
